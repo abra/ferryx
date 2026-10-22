@@ -1,0 +1,30 @@
+name: settings_feature
+description: "The settings window and the keyboard cheat sheet."
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.1
+  equatable: ^2.0.8
+  file_selector: ^1.0.3
+  domain_models:
+    path: ../../domain_models
+  component_library:
+    path: ../../component_library
+  ferryx_localizations:
+    path: ../../ferryx_localizations
+  preferences_service:
+    path: ../../preferences_service
+  shortcuts:
+    path: ../../shortcuts
+
+dev_dependencies:
+  mocktail: ^1.0.4
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter

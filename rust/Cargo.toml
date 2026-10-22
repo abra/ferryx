@@ -1,0 +1,51 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+rust-version = "1.85"
+
+[workspace.dependencies]
+ferryx_core = { path = "crates/ferryx_core" }
+ferryx_vfs = { path = "crates/ferryx_vfs" }
+ferryx_ops = { path = "crates/ferryx_ops" }
+
+anyhow = "1"
+chrono = "0.4"
+crossbeam-channel = "0.5"
+flate2 = "1"
+flutter_rust_bridge = "=2.13.0"
+libc = "0.2"
+notify = "6"
+open = "5"
+parking_lot = "0.12"
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sysinfo = { version = "0.33", default-features = false, features = ["disk"] }
+tar = "0.4"
+tempfile = "3"
+thiserror = "2"
+trash = "5"
+walkdir = "2"
+zip = { version = "2", default-features = false, features = ["deflate", "aes-crypto", "time", "bzip2", "zstd"] }
+filetime = "0.2"
+nix = { version = "0.29", features = ["fs", "user"] }
+
+[profile.release]
+# Desktop app: favour runtime speed and a small binary over compile time.
+codegen-units = 1
+lto = "fat"
+opt-level = 3
+panic = "unwind"
+strip = "debuginfo"
+
+[profile.dev]
+# Listing a large folder and copying files are hot paths in debug builds too.
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3

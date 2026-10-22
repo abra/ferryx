@@ -1,0 +1,22 @@
+name: file_repository
+description: "Folder listings with their watchers, single items, volumes, the desktop's standard folders, attributes and links, over the Rust core."
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  domain_models:
+    path: ../domain_models
+  ferryx_backend:
+    path: ../ferryx_backend
+  monitoring:
+    path: ../monitoring
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter

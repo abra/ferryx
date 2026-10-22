@@ -1,0 +1,26 @@
+name: ferryx_localizations
+description: "Supported locales and UI copy (ARB)."
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+  domain_models:
+    path: ../domain_models
+  shortcuts:
+    path: ../shortcuts
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  generate: true

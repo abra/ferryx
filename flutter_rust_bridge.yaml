@@ -1,0 +1,5 @@
+rust_input: crate::api
+rust_root: rust/crates/ferryx_api/
+dart_output: packages/ferryx_backend/lib/src/rust
+dart_entrypoint_class_name: FerryxRustLib
+dart_format_line_length: 80

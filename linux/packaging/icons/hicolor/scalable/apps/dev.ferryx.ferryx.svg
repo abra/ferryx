@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+<title>Ferryx</title>
+<defs>
+  <g id="spoke">
+    <rect x="61" y="16" width="6" height="14" rx="3" fill="#986a44"/>
+    <rect x="62" y="28" width="4" height="22" fill="#865e3c"/>
+  </g>
+  <g id="spokeLip">
+    <rect x="61" y="18" width="6" height="14" rx="3" fill="#63452c"/>
+    <rect x="62" y="30" width="4" height="22" fill="#63452c"/>
+  </g>
+</defs>
+<!-- GNOME HIG: front-facing, the GNOME palette (Blue 3/5, Brown 3/4/5, Yellow 3/5), each object on a darker lip. -->
+<rect x="8" y="12" width="112" height="104" rx="12" fill="#1c71d8"/>
+<rect x="8" y="12" width="112" height="100" rx="12" fill="#3584e4"/>
+<g>
+  <use href="#spokeLip"/>
+  <use href="#spokeLip" transform="rotate(45 64 64)"/>
+  <use href="#spokeLip" transform="rotate(90 64 64)"/>
+  <use href="#spokeLip" transform="rotate(135 64 64)"/>
+  <use href="#spokeLip" transform="rotate(180 64 64)"/>
+  <use href="#spokeLip" transform="rotate(225 64 64)"/>
+  <use href="#spokeLip" transform="rotate(270 64 64)"/>
+  <use href="#spokeLip" transform="rotate(315 64 64)"/>
+  <circle cx="64" cy="66" r="36" fill="none" stroke="#63452c" stroke-width="7"/>
+</g>
+<use href="#spoke"/>
+<use href="#spoke" transform="rotate(45 64 64)"/>
+<use href="#spoke" transform="rotate(90 64 64)"/>
+<use href="#spoke" transform="rotate(135 64 64)"/>
+<use href="#spoke" transform="rotate(180 64 64)"/>
+<use href="#spoke" transform="rotate(225 64 64)"/>
+<use href="#spoke" transform="rotate(270 64 64)"/>
+<use href="#spoke" transform="rotate(315 64 64)"/>
+<circle cx="64" cy="64" r="36" fill="none" stroke="#986a44" stroke-width="7"/>
+<circle cx="64" cy="64" r="24" fill="none" stroke="#865e3c" stroke-width="4"/>
+<circle cx="64" cy="66" r="13" fill="#e5a50a"/>
+<circle cx="64" cy="64" r="13" fill="#f6d32d"/>
+<circle cx="64" cy="64" r="5" fill="#e5a50a"/>
+</svg>

@@ -1,0 +1,28 @@
+name: component_library
+description: "Design tokens, the platform-adaptive theme (macOS, Windows, GNOME) and reusable desktop widgets."
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  lucide_icons_flutter: ^3.1.14+2
+
+flutter:
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: fonts/Inter-Variable.ttf
+        - asset: fonts/Inter-Variable-Italic.ttf
+          style: italic
+    - family: Geist Mono
+      fonts:
+        - asset: fonts/GeistMono-Variable.ttf
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter

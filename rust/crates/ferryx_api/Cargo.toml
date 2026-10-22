@@ -1,0 +1,28 @@
+[package]
+name = "ferryx_api"
+description = "flutter_rust_bridge surface of Ferryx: listings, file operations, volumes, attributes, batch rename, find files, archives and the event stream to Flutter."
+# Literal values: cargokit parses this manifest and does not resolve
+# `workspace = true` inheritance.
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+rust-version = "1.85"
+
+[lib]
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+ferryx_core.workspace = true
+ferryx_vfs.workspace = true
+ferryx_ops.workspace = true
+anyhow.workspace = true
+flutter_rust_bridge.workspace = true
+parking_lot.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
+
+[dev-dependencies]
+tempfile.workspace = true

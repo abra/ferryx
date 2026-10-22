@@ -1,0 +1,79 @@
+name: ferryx
+description: "A dual-pane file manager for the keyboard: two panels, tabs, background operations, archives, a viewer and a find."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Internal packages
+  domain_models:
+    path: packages/domain_models
+  monitoring:
+    path: packages/monitoring
+  ferryx_backend:
+    path: packages/ferryx_backend
+  ferryx_localizations:
+    path: packages/ferryx_localizations
+  component_library:
+    path: packages/component_library
+  shortcuts:
+    path: packages/shortcuts
+  preferences_service:
+    path: packages/preferences_service
+  file_repository:
+    path: packages/file_repository
+  operations_service:
+    path: packages/operations_service
+
+  # Feature packages
+  panels_feature:
+    path: packages/features/panels
+  viewer_feature:
+    path: packages/features/viewer
+  find_feature:
+    path: packages/features/find
+  settings_feature:
+    path: packages/features/settings
+
+  # External packages
+  flutter_bloc: ^9.1.1
+  go_router: ^17.3.0
+  path: ^1.9.0
+  path_provider: ^2.1.6
+  package_info_plus: ^9.0.1
+  file_selector: ^1.0.3
+  screen_retriever: ^0.2.2
+  window_manager: ^0.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  # Tests load the host dylib directly.
+  flutter_rust_bridge: 2.13.0
+  flutter_lints: ^6.0.0
+  bloc_test: ^10.0.0
+  mocktail: ^1.0.4
+  # test/app/widget_helpers_test.dart reads the sources with their types.
+  analyzer: ^13.3.0
+
+flutter:
+  uses-material-design: true
+
+  # Fonts live in packages/component_library/fonts/ but must be declared at
+  # the app level to be bundled under their short family names.
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: packages/component_library/fonts/Inter-Variable.ttf
+        - asset: packages/component_library/fonts/Inter-Variable-Italic.ttf
+          style: italic
+    - family: Geist Mono
+      fonts:
+        - asset: packages/component_library/fonts/GeistMono-Variable.ttf

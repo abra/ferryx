@@ -1,0 +1,23 @@
+name: ferryx_backend
+description: "Generated flutter_rust_bridge bindings to the Rust core plus the typed Dart facade over them."
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.2
+  flutter: ">=3.47.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  domain_models:
+    path: ../domain_models
+  flutter_rust_bridge: 2.13.0
+  # Cargokit FFI plugin that builds rust/crates/ferryx_api for every platform.
+  ferryx_api:
+    path: ../../rust_builder
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter

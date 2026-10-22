@@ -1,0 +1,125 @@
+# The quality gate (`make verify`) and a release build on Linux and
+# Windows, where the macOS desk the app is written at cannot look: the
+# platform's toolchain, file system and plugins, and the tests run there.
+# By hand (Actions → CI → Run workflow), on pull requests and on pushes to
+# `ci/**` branches: a run costs the better part of an hour on each system.
+name: CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: ['ci/**']
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    # Windows runs the suite in some 90 minutes, then builds.
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    env:
+      # The Makefile calls `fvm flutter`; the runners have Flutter itself.
+      MAKEFLAGS: FLUTTER=flutter DART=dart
+    steps:
+      # The texts and fixtures are LF; Git for Windows would hand them over
+      # as CRLF.
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+
+      - name: Flutter version pinned in .fvmrc
+        id: pin
+        run: |
+          version=$(sed -n 's/.*"flutter": *"\([^"]*\)".*/\1/p' .fvmrc)
+          echo "flutter=$version" >> "$GITHUB_OUTPUT"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ steps.pin.outputs.flutter }}
+          cache: true
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+          cache-on-failure: true
+
+      - name: Linux desktop packages
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev libstdc++-12-dev
+      - name: GNU make
+        if: runner.os == 'Windows'
+        run: choco install make --no-progress -y
+
+      - run: make get
+      - run: make verify
+      - name: Release build
+        run: make build-${{ runner.os == 'Windows' && 'windows' || 'linux' }}
+
+      # The app as built: it starts and stays up; on Windows the window
+      # opens inside the small screen's work area. What it shows after
+      # 20 s is kept with the screenshots.
+      - name: Start the app (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y imagemagick
+          mkdir -p test/ui/snapshots
+          xvfb-run -a -s '-screen 0 1280x800x24' bash -c '
+            build/linux/x64/release/bundle/ferryx & app=$!
+            sleep 20
+            import -window root test/ui/snapshots/app_linux.png
+            kill -0 $app || { echo "the app quit"; exit 1; }
+            kill $app'
+      - name: Start the app (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force test/ui/snapshots | Out-Null
+          $app = Start-Process build/windows/x64/runner/Release/ferryx.exe -PassThru
+          Start-Sleep -Seconds 20
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          Add-Type @"
+          using System;
+          using System.Runtime.InteropServices;
+          public struct Frame { public int Left, Top, Right, Bottom; }
+          public static class User32 {
+            [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr window, out Frame frame);
+          }
+          "@
+          $screen = [System.Windows.Forms.Screen]::PrimaryScreen
+          $shot = New-Object System.Drawing.Bitmap $screen.Bounds.Width, $screen.Bounds.Height
+          [System.Drawing.Graphics]::FromImage($shot).CopyFromScreen($screen.Bounds.Location, [System.Drawing.Point]::Empty, $screen.Bounds.Size)
+          $shot.Save("test/ui/snapshots/app_windows.png")
+          if ($app.HasExited) { Write-Error "the app quit with $($app.ExitCode)" }
+          $app.Refresh()
+          $frame = New-Object Frame
+          if (-not [User32]::GetWindowRect($app.MainWindowHandle, [ref]$frame)) { Write-Error "no window" }
+          $work = $screen.WorkingArea
+          "window $($frame.Left),$($frame.Top) to $($frame.Right),$($frame.Bottom); work area $work"
+          if ($frame.Top -lt $work.Top -or $frame.Left -lt $work.Left -or $frame.Right -gt $work.Right -or $frame.Bottom -gt $work.Bottom) {
+            Write-Error "the window is not inside the work area"
+          }
+          Stop-Process -Id $app.Id -Force
+
+      - name: Screenshots of the UI tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshots-${{ matrix.os }}
+          path: test/ui/snapshots/
+          if-no-files-found: ignore
+          retention-days: 7

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+<title>Ferryx</title>
+<!-- One colour, recoloured by the desktop: the rim, eight spokes, the hub. -->
+<g stroke="#241f31" stroke-width="1.5" stroke-linecap="round" fill="none">
+  <circle cx="8" cy="8" r="5.25"/>
+  <path d="M8 1.25V3.5M8 12.5v2.25M1.25 8H3.5M12.5 8h2.25M3.227 3.227l1.591 1.591M11.182 11.182l1.591 1.591M3.227 12.773l1.591-1.591M11.182 4.818l1.591-1.591"/>
+</g>
+<circle cx="8" cy="8" r="1.9" fill="#241f31"/>
+</svg>

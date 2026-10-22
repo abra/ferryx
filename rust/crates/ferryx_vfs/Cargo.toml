@@ -1,0 +1,30 @@
+[package]
+name = "ferryx_vfs"
+description = "File system access of Ferryx: listings with full metadata, folder watching, volumes, attributes, links, the trash, opening files, and read-only archives."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+ferryx_core.workspace = true
+chrono.workspace = true
+crossbeam-channel.workspace = true
+filetime.workspace = true
+flate2.workspace = true
+libc.workspace = true
+notify.workspace = true
+open.workspace = true
+parking_lot.workspace = true
+serde.workspace = true
+sysinfo.workspace = true
+tar.workspace = true
+thiserror.workspace = true
+trash.workspace = true
+zip.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+nix.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

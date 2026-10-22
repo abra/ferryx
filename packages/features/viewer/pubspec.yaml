@@ -1,0 +1,33 @@
+name: viewer_feature
+description: "The built-in viewer: text, hex and preview modes over any file, on disk or inside an archive."
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.1
+  equatable: ^2.0.8
+  meta: ^1.16.0
+  domain_models:
+    path: ../../domain_models
+  component_library:
+    path: ../../component_library
+  ferryx_localizations:
+    path: ../../ferryx_localizations
+  file_repository:
+    path: ../../file_repository
+  preferences_service:
+    path: ../../preferences_service
+  shortcuts:
+    path: ../../shortcuts
+
+dev_dependencies:
+  bloc_test: ^10.0.0
+  mocktail: ^1.0.4
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter

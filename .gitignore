@@ -1,0 +1,38 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+.vscode/
+.DS_Store
+pubspec.lock
+!/pubspec.lock
+packages/**/pubspec.lock
+rust_builder/**/pubspec.lock
+
+# FVM
+.fvm/
+
+# Rust
+rust/target/
+rust_builder/cargokit/build_tool/.dart_tool/
+
+# Generated localizations are checked in; everything else local stays out.
+.local/
+*.log
+
+# Screenshots written by the UI flow tests
+test/ui/snapshots/
+
+# Kept even where a global ignore file drops them: they build the project.
+!.gitignore
+!/.fvmrc
+!/Makefile
+!Cargo.lock
+!Podfile.lock
+!generated_plugin_registrant.*
+!GeneratedPluginRegistrant.swift
+!generated_plugins.cmake

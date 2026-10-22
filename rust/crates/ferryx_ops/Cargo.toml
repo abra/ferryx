@@ -1,0 +1,19 @@
+[package]
+name = "ferryx_ops"
+description = "File operations of Ferryx, run in the background with progress, pause, cancellation and questions: copy, move, delete, trash, duplicate, compress, extract, folder sizes, find files, batch rename."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+ferryx_core.workspace = true
+ferryx_vfs.workspace = true
+filetime.workspace = true
+parking_lot.workspace = true
+serde.workspace = true
+walkdir.workspace = true
+zip.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

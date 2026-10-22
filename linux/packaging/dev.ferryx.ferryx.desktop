@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Ferryx
+GenericName=File manager
+Comment=A dual-pane file manager for the keyboard
+Exec=ferryx
+Icon=dev.ferryx.ferryx
+Terminal=false
+Categories=System;FileTools;FileManager;Utility;
+Keywords=files;file manager;commander;dual pane;archive;
+StartupWMClass=dev.ferryx.ferryx
