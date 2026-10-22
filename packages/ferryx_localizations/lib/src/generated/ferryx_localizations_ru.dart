@@ -2228,4 +2228,102 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get cmdDismiss => 'Закрыть';
+
+  @override
+  String get cmdToggleTerminal => 'Терминал на всё окно';
+
+  @override
+  String get cmdShowTerminal => 'Показать терминал';
+
+  @override
+  String get cmdHideTerminal => 'Скрыть терминал';
+
+  @override
+  String get cmdTogglePanelsOverTerminal => 'Скрыть или показать панели';
+
+  @override
+  String get cmdTerminalCopy => 'Копировать';
+
+  @override
+  String get cmdTerminalPaste => 'Вставить';
+
+  @override
+  String get cmdTerminalSelectAll => 'Выделить всё';
+
+  @override
+  String get cmdTerminalClear => 'Очистить';
+
+  @override
+  String get cmdTerminalScrollPageUp => 'Прокрутить на страницу вверх';
+
+  @override
+  String get cmdTerminalScrollPageDown => 'Прокрутить на страницу вниз';
+
+  @override
+  String get scopeTerminal => 'Терминал';
+
+  @override
+  String get settingsTerminal => 'Терминал';
+
+  @override
+  String get terminalShellLabel => 'Оболочка';
+
+  @override
+  String terminalShellDefault(String shell) {
+    return 'По умолчанию: $shell';
+  }
+
+  @override
+  String get terminalShellNote =>
+      'Путь или имя из PATH, запускается как оболочка входа; действует со следующей запущенной оболочки';
+
+  @override
+  String get terminalFontSizeLabel => 'Размер шрифта';
+
+  @override
+  String get terminalScrollbackLabel => 'Строк для прокрутки назад';
+
+  @override
+  String terminalLineCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count строки',
+      many: '$count строк',
+      few: '$count строки',
+      one: '$count строка',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get terminalHeightTitle => 'Высота терминала';
+
+  @override
+  String get terminalHeightHintArrows => 'По строке';
+
+  @override
+  String get terminalHeightHintZero => 'Высота по умолчанию';
+
+  @override
+  String get terminalExited => 'Оболочка завершилась';
+
+  @override
+  String terminalExitedWithCode(int code) {
+    return 'Оболочка завершилась с кодом $code';
+  }
+
+  @override
+  String get terminalStartFailed => 'Не удалось запустить оболочку';
+
+  @override
+  String get terminalRestart => 'Новая оболочка';
+
+  @override
+  String terminalRestartHint(String key) {
+    return '$key — запустить новую оболочку';
+  }
+
+  @override
+  String get terminalTitle => 'Терминал';
 }

@@ -15,3 +15,4 @@ export 'src/panel_layout.dart';
 export 'src/rename.dart';
 export 'src/volumes.dart';
 export 'src/tools.dart';
+export 'src/terminal.dart';

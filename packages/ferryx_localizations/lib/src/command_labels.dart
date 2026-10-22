@@ -114,6 +114,11 @@ extension CommandLabels on FerryxLocalizations {
     AppCommand.hintMode => cmdHintMode,
     AppCommand.cheatSheet => cmdCheatSheet,
     AppCommand.contextMenu => cmdContextMenu,
+    // ─── Terminal ───
+    AppCommand.toggleTerminal => cmdToggleTerminal,
+    AppCommand.showTerminal => cmdShowTerminal,
+    AppCommand.hideTerminal => cmdHideTerminal,
+    AppCommand.togglePanelsOverTerminal => cmdTogglePanelsOverTerminal,
     AppCommand.moveUp => cmdMoveUp,
     AppCommand.moveDown => cmdMoveDown,
     AppCommand.moveLeft => cmdMoveLeft,
@@ -191,6 +196,13 @@ extension CommandLabels on FerryxLocalizations {
     AppCommand.viewerFindNext => cmdViewerFindNext,
     AppCommand.viewerFindPrevious => cmdViewerFindPrevious,
     AppCommand.viewerToggleWrap => cmdViewerToggleWrap,
+    // ─── Terminal ───
+    AppCommand.terminalCopy => cmdTerminalCopy,
+    AppCommand.terminalPaste => cmdTerminalPaste,
+    AppCommand.terminalSelectAll => cmdTerminalSelectAll,
+    AppCommand.terminalClear => cmdTerminalClear,
+    AppCommand.terminalScrollPageUp => cmdTerminalScrollPageUp,
+    AppCommand.terminalScrollPageDown => cmdTerminalScrollPageDown,
     AppCommand.renameItem => cmdRenameItem,
     AppCommand.deleteItem => cmdDeleteItem,
     AppCommand.filterList => cmdFilterList,
@@ -206,5 +218,6 @@ extension CommandLabels on FerryxLocalizations {
     CommandScope.viewer => scopeViewer,
     CommandScope.lists => scopeLists,
     CommandScope.dialogs => scopeDialogs,
+    CommandScope.terminal => scopeTerminal,
   };
 }

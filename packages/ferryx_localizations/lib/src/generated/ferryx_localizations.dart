@@ -3871,6 +3871,168 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Dismiss'**
   String get cmdDismiss;
+
+  /// No description provided for @cmdToggleTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal Over the Whole Window'**
+  String get cmdToggleTerminal;
+
+  /// No description provided for @cmdShowTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Terminal'**
+  String get cmdShowTerminal;
+
+  /// No description provided for @cmdHideTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Terminal'**
+  String get cmdHideTerminal;
+
+  /// No description provided for @cmdTogglePanelsOverTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide or Show the Panels'**
+  String get cmdTogglePanelsOverTerminal;
+
+  /// No description provided for @cmdTerminalCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get cmdTerminalCopy;
+
+  /// No description provided for @cmdTerminalPaste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get cmdTerminalPaste;
+
+  /// No description provided for @cmdTerminalSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get cmdTerminalSelectAll;
+
+  /// No description provided for @cmdTerminalClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get cmdTerminalClear;
+
+  /// No description provided for @cmdTerminalScrollPageUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll a Page Up'**
+  String get cmdTerminalScrollPageUp;
+
+  /// No description provided for @cmdTerminalScrollPageDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll a Page Down'**
+  String get cmdTerminalScrollPageDown;
+
+  /// No description provided for @scopeTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal'**
+  String get scopeTerminal;
+
+  /// No description provided for @settingsTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal'**
+  String get settingsTerminal;
+
+  /// No description provided for @terminalShellLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Shell'**
+  String get terminalShellLabel;
+
+  /// No description provided for @terminalShellDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default: {shell}'**
+  String terminalShellDefault(String shell);
+
+  /// No description provided for @terminalShellNote.
+  ///
+  /// In en, this message translates to:
+  /// **'A path or a name on PATH, run as a login shell; the next shell started takes it'**
+  String get terminalShellNote;
+
+  /// No description provided for @terminalFontSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Font size'**
+  String get terminalFontSizeLabel;
+
+  /// No description provided for @terminalScrollbackLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Lines kept to scroll back'**
+  String get terminalScrollbackLabel;
+
+  /// No description provided for @terminalLineCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} line} other{{count} lines}}'**
+  String terminalLineCount(int count);
+
+  /// No description provided for @terminalHeightTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal height'**
+  String get terminalHeightTitle;
+
+  /// No description provided for @terminalHeightHintArrows.
+  ///
+  /// In en, this message translates to:
+  /// **'Line by line'**
+  String get terminalHeightHintArrows;
+
+  /// No description provided for @terminalHeightHintZero.
+  ///
+  /// In en, this message translates to:
+  /// **'Default height'**
+  String get terminalHeightHintZero;
+
+  /// No description provided for @terminalExited.
+  ///
+  /// In en, this message translates to:
+  /// **'The shell has ended'**
+  String get terminalExited;
+
+  /// No description provided for @terminalExitedWithCode.
+  ///
+  /// In en, this message translates to:
+  /// **'The shell has ended with code {code}'**
+  String terminalExitedWithCode(int code);
+
+  /// No description provided for @terminalStartFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The shell could not start'**
+  String get terminalStartFailed;
+
+  /// No description provided for @terminalRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'New Shell'**
+  String get terminalRestart;
+
+  /// No description provided for @terminalRestartHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{key} starts a new shell'**
+  String terminalRestartHint(String key);
+
+  /// No description provided for @terminalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal'**
+  String get terminalTitle;
 }
 
 class _FerryxLocalizationsDelegate

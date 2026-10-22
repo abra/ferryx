@@ -14,6 +14,10 @@ enum CommandScope {
   /// Lists in dialogs and pop-ups.
   lists,
   dialogs,
+
+  /// The integrated terminal's own keys (copy, paste, clear…), installed
+  /// around it: inside it they win over the window's chords.
+  terminal,
 }
 
 /// Every user action that can be bound to a key or run from a menu.
@@ -137,6 +141,12 @@ enum AppCommand {
   cheatSheet(CommandScope.global),
   contextMenu(CommandScope.global),
 
+  // ─── Terminal ───
+  toggleTerminal(CommandScope.global),
+  showTerminal(CommandScope.global),
+  hideTerminal(CommandScope.global),
+  togglePanelsOverTerminal(CommandScope.global),
+
   // ─── File panel keys ───
   moveUp(CommandScope.panel),
   moveDown(CommandScope.panel),
@@ -219,6 +229,14 @@ enum AppCommand {
   viewerFindNext(CommandScope.viewer),
   viewerFindPrevious(CommandScope.viewer),
   viewerToggleWrap(CommandScope.viewer),
+
+  // ─── Terminal ───
+  terminalCopy(CommandScope.terminal),
+  terminalPaste(CommandScope.terminal),
+  terminalSelectAll(CommandScope.terminal),
+  terminalClear(CommandScope.terminal),
+  terminalScrollPageUp(CommandScope.terminal),
+  terminalScrollPageDown(CommandScope.terminal),
 
   // ─── Lists ───
   renameItem(CommandScope.lists),

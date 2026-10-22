@@ -2,6 +2,8 @@ import 'package:domain_models/domain_models.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
+import 'terminal_preferences.dart';
+
 enum AppThemeMode { system, light, dark }
 
 /// Immutable snapshot of the installation's preferences.
@@ -40,6 +42,7 @@ class Preferences extends Equatable {
     this.operationsVisible = true,
     this.vimMode = false,
     this.vimMarks = const {},
+    this.terminal = const TerminalPreferences(),
   });
 
   static const int schemaVersion = 1;
@@ -107,6 +110,9 @@ class Preferences extends Equatable {
   /// Vim marks: a letter to an encoded `Location`, set with `m`.
   final Map<String, String> vimMarks;
 
+  /// The integrated terminal: its settings and its height under the panels.
+  final TerminalPreferences terminal;
+
   /// The sort options a new panel starts with.
   SortOptions get defaultSort => SortOptions(
     foldersFirst: foldersFirst,
@@ -148,6 +154,7 @@ class Preferences extends Equatable {
     bool? operationsVisible,
     bool? vimMode,
     Map<String, String>? vimMarks,
+    TerminalPreferences? terminal,
   }) => Preferences(
     themeMode: themeMode ?? this.themeMode,
     localeCode: clearLocale ? null : (localeCode ?? this.localeCode),
@@ -182,6 +189,7 @@ class Preferences extends Equatable {
     operationsVisible: operationsVisible ?? this.operationsVisible,
     vimMode: vimMode ?? this.vimMode,
     vimMarks: vimMarks ?? this.vimMarks,
+    terminal: terminal ?? this.terminal,
   );
 
   Map<String, Object?> toJson() => {
@@ -218,6 +226,7 @@ class Preferences extends Equatable {
     'operationsVisible': operationsVisible,
     'vimMode': vimMode,
     'vimMarks': vimMarks,
+    'terminal': terminal.toJson(),
   };
 
   /// Tolerant decoding: unknown or malformed fields fall back to defaults so
@@ -335,6 +344,7 @@ class Preferences extends Equatable {
                 if (entry.value case final String location) entry.key: location,
             })
           : defaults.vimMarks,
+      terminal: TerminalPreferences.fromJson(json['terminal']),
     );
   }
 
@@ -386,6 +396,7 @@ class Preferences extends Equatable {
     operationsVisible,
     vimMode,
     vimMarks,
+    terminal,
   ];
 }
 

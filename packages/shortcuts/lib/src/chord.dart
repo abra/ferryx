@@ -103,6 +103,16 @@ class Chord extends Equatable {
     );
   }
 
+  /// Whether a program in a terminal is never given this chord, so the
+  /// window may keep it while the keys are in the integrated terminal: one
+  /// with ⌘ on macOS; one with Ctrl and Shift but not Alt elsewhere, where
+  /// Ctrl alone types a control character and Ctrl+Alt is AltGr.
+  bool reachesWindowFromTerminal(TargetPlatform platform) {
+    final activator = toActivator(platform);
+    if (platform == TargetPlatform.macOS) return activator.meta;
+    return activator.control && activator.shift && !activator.alt;
+  }
+
   /// Human-readable label: `⌘⇧K` on macOS, `Ctrl+Shift+K` elsewhere; a
   /// sequence reads as Vim writes it, `dd`, its second key as ⇧ makes it
   /// (`gE`).

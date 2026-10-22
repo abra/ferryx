@@ -1,0 +1,22 @@
+name: terminal_service
+description: "Shell sessions of the integrated terminal over the Rust core's pseudo-terminals: start, type, resize, follow a folder, close."
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  domain_models:
+    path: ../domain_models
+  ferryx_backend:
+    path: ../ferryx_backend
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+  # The real-core test loads the host library directly.
+  flutter_rust_bridge: 2.13.0
