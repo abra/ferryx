@@ -11,5 +11,6 @@ export 'src/app_command.dart';
 export 'src/chord.dart';
 export 'src/chord_codec.dart';
 export 'src/command_action.dart';
+export 'src/command_section.dart';
 export 'src/key_sequence.dart';
 export 'src/shortcut_map.dart';

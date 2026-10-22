@@ -103,7 +103,7 @@ class PanelView extends StatefulWidget {
   final ShortcutMap shortcutMap;
   final PanelHooks hooks;
 
-  /// What `yy` or `dd` took, for the footer.
+  /// What the shelf holds (Add to Shelf, `yy`, `dd`), for the footer.
   final String? registerNote;
 
   /// The window's top row, which the header is part of.
@@ -578,8 +578,8 @@ class _PanelViewState extends State<PanelView> {
 
   // ─── Build ───
 
-  /// The footer's Vim line: the mode, what waits, the rows taken, the
-  /// command line while it is open.
+  /// The footer's Vim line: the mode, what waits, the command line while
+  /// it is open.
   VimLine? _vimLine(PanelTabState tab) {
     if (!widget.vimMode) return null;
     final platform = Theme.of(context).platform;
@@ -597,7 +597,6 @@ class _PanelViewState extends State<PanelView> {
           ? VimMode.visual
           : VimMode.normal,
       pending: pending,
-      registerNote: widget.registerNote,
       commandLine: _commandLine
           ? VimCommandLine(
               shortcutMap: widget.shortcutMap,
@@ -749,6 +748,7 @@ class _PanelViewState extends State<PanelView> {
                     tab: tab,
                     active: widget.active,
                     vim: _vimLine(tab),
+                    shelfNote: widget.registerNote,
                   ),
                 ],
               ),

@@ -114,6 +114,12 @@ extension CommandLabels on FerryxLocalizations {
     AppCommand.hintMode => cmdHintMode,
     AppCommand.cheatSheet => cmdCheatSheet,
     AppCommand.contextMenu => cmdContextMenu,
+    // ─── Interface ───
+    AppCommand.commandPalette => cmdCommandPalette,
+    AppCommand.jumpToFolder => cmdJumpToFolder,
+    AppCommand.addToShelf => cmdAddToShelf,
+    AppCommand.toggleShelf => cmdToggleShelf,
+    AppCommand.renameInEditor => cmdRenameInEditor,
     AppCommand.moveUp => cmdMoveUp,
     AppCommand.moveDown => cmdMoveDown,
     AppCommand.moveLeft => cmdMoveLeft,
@@ -198,6 +204,21 @@ extension CommandLabels on FerryxLocalizations {
     AppCommand.moveItemDown => cmdMoveItemDown,
     AppCommand.confirm => cmdConfirm,
     AppCommand.dismiss => cmdDismiss,
+  };
+
+  /// A section's name, as the command palette groups commands.
+  String sectionLabel(CommandSection section) => switch (section) {
+    CommandSection.file => paletteSectionFile,
+    CommandSection.edit => paletteSectionEdit,
+    CommandSection.view => paletteSectionView,
+    CommandSection.go => paletteSectionGo,
+    CommandSection.command => paletteSectionCommand,
+    CommandSection.window => paletteSectionWindow,
+    CommandSection.panel => paletteSectionPanel,
+    CommandSection.vim => paletteSectionVim,
+    CommandSection.viewer => paletteSectionViewer,
+    CommandSection.lists => paletteSectionLists,
+    CommandSection.dialogs => paletteSectionDialogs,
   };
 
   String scopeLabel(CommandScope scope) => switch (scope) {

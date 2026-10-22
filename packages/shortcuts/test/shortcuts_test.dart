@@ -279,4 +279,206 @@ void main() {
     expect(reached, ['inner copy', 'outer refresh']);
     focus.dispose();
   });
+
+  group('Interface commands', () {
+    test('every command has a section; blocks keep their own', () {
+      expect(AppCommand.newFolder.section, CommandSection.file);
+      expect(AppCommand.findFiles.section, CommandSection.file);
+      expect(AppCommand.copyPaths.section, CommandSection.edit);
+      expect(AppCommand.refresh.section, CommandSection.view);
+      expect(AppCommand.goToFolder.section, CommandSection.go);
+      expect(AppCommand.openWith.section, CommandSection.command);
+      expect(AppCommand.contextMenu.section, CommandSection.window);
+      expect(AppCommand.commandPalette.section, CommandSection.window);
+      expect(AppCommand.jumpToFolder.section, CommandSection.go);
+      expect(AppCommand.addToShelf.section, CommandSection.edit);
+      expect(AppCommand.renameInEditor.section, CommandSection.command);
+      expect(AppCommand.moveDown.section, CommandSection.panel);
+      expect(AppCommand.vimReselect.section, CommandSection.vim);
+      expect(AppCommand.viewerFind.section, CommandSection.viewer);
+      expect(AppCommand.filterList.section, CommandSection.lists);
+      expect(AppCommand.dismiss.section, CommandSection.dialogs);
+    });
+
+    test('the chords and Vim keys of the palette, the jump, the shelf and '
+        'the names editor', () {
+      final map = ShortcutMap.forUser(TargetPlatform.macOS, vimMotions: true);
+      String? label(AppCommand command, {bool vim = false}) =>
+          map.labelOf(command, TargetPlatform.macOS, vim: vim);
+      expect(label(AppCommand.commandPalette), '⌘P');
+      expect(label(AppCommand.jumpToFolder), '⌘G');
+      expect(label(AppCommand.jumpToFolder, vim: true), 'gj');
+      expect(label(AppCommand.addToShelf), '⌥⌘S');
+      expect(label(AppCommand.addToShelf, vim: true), 'ys');
+      expect(label(AppCommand.toggleShelf), '⌃⌘S');
+      expect(label(AppCommand.toggleShelf, vim: true), 'gs');
+      expect(label(AppCommand.renameInEditor), '⌃⇧M');
+      expect(label(AppCommand.renameInEditor, vim: true), 'cn');
+      expect(
+        ShortcutMap.defaults(
+          TargetPlatform.windows,
+        ).labelOf(AppCommand.commandPalette, TargetPlatform.windows),
+        'Ctrl+P',
+      );
+    });
+  });
+
+  testWidgets('commandsAt answers every command the scopes above handle', (
+    tester,
+  ) async {
+    late BuildContext inner;
+    late BuildContext outer;
+    await tester.pumpWidget(
+      CommandHandlers(
+        handlers: {AppCommand.refresh: () {}, AppCommand.copyTo: () {}},
+        child: Builder(
+          builder: (context) {
+            outer = context;
+            return CommandHandlers(
+              handlers: {AppCommand.moveDown: () {}, AppCommand.copyTo: () {}},
+              child: Builder(
+                builder: (context) {
+                  inner = context;
+                  return const SizedBox();
+                },
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    expect(commandsAt(inner), {
+      AppCommand.moveDown,
+      AppCommand.copyTo,
+      AppCommand.refresh,
+    });
+    expect(commandsAt(outer), {AppCommand.refresh, AppCommand.copyTo});
+  });
+
+  testWidgets('a prefix key is text in a text field, a prefix elsewhere', (
+    tester,
+  ) async {
+    final reached = <AppCommand>[];
+    final field = FocusNode();
+    final plain = FocusNode();
+    final controller = TextEditingController();
+    final map = ShortcutMap.forUser(TargetPlatform.macOS, vimMotions: true);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CommandShortcuts(
+            shortcuts: map.toShortcuts(
+              TargetPlatform.macOS,
+              scopes: const {CommandScope.global},
+            ),
+            child: CommandHandlers(
+              handlers: {
+                AppCommand.jumpToFolder: () => reached.add(
+                  AppCommand.jumpToFolder,
+                ),
+              },
+              child: Column(
+                children: [
+                  TextField(controller: controller, focusNode: field),
+                  Focus(focusNode: plain, child: const SizedBox(height: 10)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    field.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    expect(KeySequenceState.pending, isNull);
+    plain.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyJ);
+    expect(reached, [AppCommand.jumpToFolder]);
+    field.dispose();
+    plain.dispose();
+    controller.dispose();
+  });
+
+  testWidgets('a window sequence whose second key is a panel key completes '
+      'from inside the panel', (tester) async {
+    final map = ShortcutMap.forUser(TargetPlatform.macOS, vimMotions: true);
+    final ran = <AppCommand>[];
+    final focus = FocusNode();
+    void record(AppCommand command) => ran.add(command);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CommandShortcuts(
+          shortcuts: map.toShortcuts(
+            TargetPlatform.macOS,
+            scopes: const {CommandScope.global},
+          ),
+          child: CommandHandlers(
+            handlers: {
+              for (final command in [
+                AppCommand.newTab,
+                AppCommand.jumpToFolder,
+                AppCommand.goToFolder,
+                AppCommand.renameInEditor,
+              ])
+                command: () => record(command),
+            },
+            child: CommandShortcuts(
+              shortcuts: map.toShortcuts(
+                TargetPlatform.macOS,
+                scopes: const {CommandScope.panel},
+                sequencesOf: const {CommandScope.global},
+              ),
+              child: CommandHandlers(
+                handlers: {
+                  for (final command in [
+                    AppCommand.vimSearchNext,
+                    AppCommand.moveDown,
+                    AppCommand.moveFirst,
+                    AppCommand.vimCut,
+                  ])
+                    command: () => record(command),
+                },
+                child: Focus(
+                  focusNode: focus,
+                  autofocus: true,
+                  child: const SizedBox(),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    Future<void> press(List<LogicalKeyboardKey> keys) async {
+      for (final key in keys) {
+        await tester.sendKeyEvent(key, platform: 'macos');
+      }
+    }
+
+    const g = LogicalKeyboardKey.keyG;
+    const c = LogicalKeyboardKey.keyC;
+    const d = LogicalKeyboardKey.keyD;
+    await press([g, LogicalKeyboardKey.keyN]);
+    await press([g, LogicalKeyboardKey.keyJ]);
+    await press([c, d]);
+    await press([c, LogicalKeyboardKey.keyN]);
+    await press([g, g]);
+    await press([d, d]);
+    await press([LogicalKeyboardKey.keyN, LogicalKeyboardKey.keyJ]);
+    expect(ran, [
+      AppCommand.newTab,
+      AppCommand.jumpToFolder,
+      AppCommand.goToFolder,
+      AppCommand.renameInEditor,
+      AppCommand.moveFirst,
+      AppCommand.vimCut,
+      AppCommand.vimSearchNext,
+      AppCommand.moveDown,
+    ]);
+    focus.dispose();
+  });
 }

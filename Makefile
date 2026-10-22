@@ -17,7 +17,8 @@ PACKAGES = \
 	packages/features/panels \
 	packages/features/viewer \
 	packages/features/find \
-	packages/features/settings
+	packages/features/settings \
+	packages/features/palette
 
 ROOT_ANALYZE_PATHS = lib test
 

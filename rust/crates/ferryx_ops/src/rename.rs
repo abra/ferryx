@@ -35,19 +35,24 @@ pub fn apply(pairs: &[(PathBuf, String)]) -> Vec<RenameFailure> {
         return failures;
     }
     // Stage through unique temporary names, then land each on its target.
-    let mut staged: Vec<(PathBuf, PathBuf)> = Vec::new();
+    let mut staged: Vec<(PathBuf, PathBuf, PathBuf)> = Vec::new();
     for (i, ((path, _), target)) in active.iter().zip(&targets).enumerate() {
         let temp = path.with_file_name(format!(".ferryx-rename-{}-{i}", std::process::id()));
         match std::fs::rename(path, &temp).at(path) {
-            Ok(()) => staged.push((temp, target.clone())),
+            Ok(()) => staged.push((path.clone(), temp, target.clone())),
             Err(e) => failures.push(RenameFailure { path: path.clone(), message: e.message }),
         }
     }
-    for (temp, target) in staged {
+    for (original, temp, target) in staged {
         if let Err(e) = rename_checked(&temp, &target) {
-            failures.push(RenameFailure { path: target.clone(), message: e.message });
-            // Leave nothing under a temporary name: back to the old name.
-            let _ = std::fs::rename(&temp, temp.with_file_name(target.file_name().unwrap_or_default()));
+            // Back to the old name while it is free; never over another
+            // item. Taken meanwhile, it stays under the temporary name,
+            // which the message gives.
+            let message = match rename_checked(&temp, &original) {
+                Ok(()) => e.message,
+                Err(_) => format!("{} (kept as {})", e.message, temp.display()),
+            };
+            failures.push(RenameFailure { path: original, message });
         }
     }
     failures
@@ -86,6 +91,63 @@ mod tests {
         assert_eq!(fs::read(dir.path().join("a")).unwrap(), b"B");
         assert_eq!(fs::read(dir.path().join("b")).unwrap(), b"A");
         assert!(fs::read_dir(dir.path()).unwrap().count() == 2);
+    }
+
+    #[test]
+    fn a_staged_item_that_cannot_land_goes_back_never_over_another() {
+        let dir = tempfile::tempdir().unwrap();
+        for (name, body) in [("a", "A"), ("b", "B"), ("c", "C"), ("d", "D")] {
+            fs::write(dir.path().join(name), body).unwrap();
+        }
+        // The swap stages every item; `d` is taken and not renamed.
+        let failures = apply(&[
+            (dir.path().join("a"), "b".to_string()),
+            (dir.path().join("b"), "a".to_string()),
+            (dir.path().join("c"), "d".to_string()),
+        ]);
+        assert_eq!(failures.len(), 1);
+        assert_eq!(failures[0].path, dir.path().join("c"));
+        assert_eq!(fs::read(dir.path().join("a")).unwrap(), b"B");
+        assert_eq!(fs::read(dir.path().join("b")).unwrap(), b"A");
+        assert_eq!(fs::read(dir.path().join("c")).unwrap(), b"C");
+        assert_eq!(fs::read(dir.path().join("d")).unwrap(), b"D");
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 4);
+    }
+
+    #[test]
+    fn two_items_for_one_name_leave_the_second_where_it_was() {
+        let dir = tempfile::tempdir().unwrap();
+        for (name, body) in [("a", "A"), ("b", "B"), ("c", "C")] {
+            fs::write(dir.path().join(name), body).unwrap();
+        }
+        let failures = apply(&[
+            (dir.path().join("a"), "c".to_string()),
+            (dir.path().join("b"), "c".to_string()),
+            (dir.path().join("c"), "a".to_string()),
+        ]);
+        assert_eq!(failures.len(), 1);
+        assert_eq!(failures[0].path, dir.path().join("b"));
+        assert_eq!(fs::read(dir.path().join("c")).unwrap(), b"A");
+        assert_eq!(fs::read(dir.path().join("a")).unwrap(), b"C");
+        assert_eq!(fs::read(dir.path().join("b")).unwrap(), b"B");
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 3);
+    }
+
+    #[test]
+    fn a_rotation_lands_every_item() {
+        let dir = tempfile::tempdir().unwrap();
+        for (name, body) in [("1", "one"), ("2", "two"), ("3", "three")] {
+            fs::write(dir.path().join(name), body).unwrap();
+        }
+        let failures = apply(&[
+            (dir.path().join("1"), "2".to_string()),
+            (dir.path().join("2"), "3".to_string()),
+            (dir.path().join("3"), "1".to_string()),
+        ]);
+        assert!(failures.is_empty());
+        assert_eq!(fs::read(dir.path().join("2")).unwrap(), b"one");
+        assert_eq!(fs::read(dir.path().join("3")).unwrap(), b"two");
+        assert_eq!(fs::read(dir.path().join("1")).unwrap(), b"three");
     }
 
     #[test]

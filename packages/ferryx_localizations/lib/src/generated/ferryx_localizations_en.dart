@@ -2192,4 +2192,285 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get cmdDismiss => 'Dismiss';
+
+  @override
+  String get cmdCommandPalette => 'Command Palette';
+
+  @override
+  String get cmdJumpToFolder => 'Jump to a Frequent Folder';
+
+  @override
+  String get cmdAddToShelf => 'Add to the Shelf';
+
+  @override
+  String get cmdToggleShelf => 'Show or Hide the Shelf';
+
+  @override
+  String get cmdRenameInEditor => 'Rename in an Editor';
+
+  @override
+  String get paletteHint => 'Type a command';
+
+  @override
+  String get paletteNoResults => 'No command matches';
+
+  @override
+  String get paletteRecent => 'Recently used';
+
+  @override
+  String get paletteKeySelect => 'select';
+
+  @override
+  String get paletteKeyRun => 'run';
+
+  @override
+  String get paletteKeyClose => 'close';
+
+  @override
+  String get paletteSectionFile => 'File';
+
+  @override
+  String get paletteSectionEdit => 'Edit';
+
+  @override
+  String get paletteSectionView => 'View';
+
+  @override
+  String get paletteSectionGo => 'Go';
+
+  @override
+  String get paletteSectionCommand => 'Command';
+
+  @override
+  String get paletteSectionWindow => 'Window';
+
+  @override
+  String get paletteSectionPanel => 'File panel';
+
+  @override
+  String get paletteSectionVim => 'Vim';
+
+  @override
+  String get paletteSectionViewer => 'Viewer';
+
+  @override
+  String get paletteSectionLists => 'Lists';
+
+  @override
+  String get paletteSectionDialogs => 'Dialogs';
+
+  @override
+  String get jumpTitle => 'Jump to a frequent folder';
+
+  @override
+  String get jumpHint => 'Type parts of the folder’s path';
+
+  @override
+  String get jumpEmpty => 'The folders you open show here, the most used first';
+
+  @override
+  String get jumpNoResults => 'No folder you visited matches';
+
+  @override
+  String get jumpKeyOpen => 'open';
+
+  @override
+  String get jumpKeyNewTab => 'in a new tab';
+
+  @override
+  String get jumpKeyOtherPanel => 'in the other panel';
+
+  @override
+  String jumpGone(String path) {
+    return '$path is gone; it is off the list now';
+  }
+
+  @override
+  String jumpNoMatch(String query) {
+    return 'No folder you visited matches “$query”';
+  }
+
+  @override
+  String get shelfTitle => 'Shelf';
+
+  @override
+  String shelfNote(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count on the shelf',
+      one: '1 on the shelf',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shelfAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items put on the shelf',
+      one: '1 item put on the shelf',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shelfEmpty(String key) {
+    return 'Gather files from any folder with $key, then copy or move them here together';
+  }
+
+  @override
+  String get shelfClear => 'Clear';
+
+  @override
+  String get shelfCopyHere => 'Copy Here';
+
+  @override
+  String get shelfMoveHere => 'Move Here';
+
+  @override
+  String shelfInto(String folder) {
+    return 'Into $folder';
+  }
+
+  @override
+  String get shelfRemove => 'Take off the shelf';
+
+  @override
+  String get shelfMissing => 'no longer there';
+
+  @override
+  String shelfMissingTooltip(String path) {
+    return '$path is no longer on disk';
+  }
+
+  @override
+  String get shelfCutTooltip => 'Moved, not copied, when put';
+
+  @override
+  String get shelfAlreadyHere => 'The shelf’s items are in this folder already';
+
+  @override
+  String get shelfNothingToPut =>
+      'None of the shelf’s items is on disk any more';
+
+  @override
+  String get shelfHintReveal => 'Show in the panel';
+
+  @override
+  String get shelfHintRemove => 'Take off';
+
+  @override
+  String namesTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Rename $count Items',
+      one: 'Rename 1 Item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String namesHint(String apply, String newline) {
+    return 'One name per line, in the order shown. $apply renames, $newline starts a new line.';
+  }
+
+  @override
+  String namesToRename(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count to rename',
+      one: '1 to rename',
+      zero: 'Nothing renamed yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String namesErrors(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count errors',
+      one: '1 error',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String namesLineCount(int names, int lines) {
+    return 'The names need $names lines; there are $lines';
+  }
+
+  @override
+  String namesProblemEmpty(int line) {
+    return 'Line $line: the name is empty';
+  }
+
+  @override
+  String namesProblemSeparator(int line) {
+    return 'Line $line: a name cannot hold “/”';
+  }
+
+  @override
+  String namesProblemInvalid(int line) {
+    return 'Line $line: no file can have this name';
+  }
+
+  @override
+  String namesProblemDuplicate(int line, int other) {
+    return 'Line $line: the same name as line $other';
+  }
+
+  @override
+  String namesProblemExists(int line, String name) {
+    return 'Line $line: “$name” is in this folder already';
+  }
+
+  @override
+  String namesProblemExtra(int line) {
+    return 'Line $line: there is no item for this line';
+  }
+
+  @override
+  String namesProblemMissing(int line) {
+    return 'Line $line: this item has no line';
+  }
+
+  @override
+  String get namesShortEmpty => 'empty';
+
+  @override
+  String get namesShortSeparator => 'has /';
+
+  @override
+  String get namesShortInvalid => 'not a name';
+
+  @override
+  String get namesShortDuplicate => 'repeated';
+
+  @override
+  String get namesShortExists => 'taken';
+
+  @override
+  String get namesShortExtra => 'extra';
+
+  @override
+  String get namesShortMissing => 'no line';
+
+  @override
+  String get namesDiscardTitle => 'Discard the new names?';
+
+  @override
+  String get namesDiscardMessage =>
+      'The names you typed are lost; nothing is renamed.';
+
+  @override
+  String get namesDiscard => 'Discard';
+
+  @override
+  String get namesKeepEditing => 'Keep Editing';
 }

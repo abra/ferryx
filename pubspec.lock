@@ -596,6 +596,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.2.1"
+  palette_feature:
+    dependency: "direct main"
+    description:
+      path: "packages/features/palette"
+      relative: true
+    source: path
+    version: "0.1.0"
   panels_feature:
     dependency: "direct main"
     description:

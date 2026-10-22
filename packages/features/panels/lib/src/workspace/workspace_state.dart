@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
 import '../panel/panel_side.dart';
-import 'vim_register.dart';
+import 'shelf.dart';
 
 /// The window around the panels: which panel is active, whether one or
 /// two show, where the edge between them is.
@@ -14,7 +14,8 @@ class WorkspaceState extends Equatable {
     this.splitFraction = 0.5,
     this.operationsShown = true,
     this.resizingPanels = false,
-    this.register,
+    this.shelf = Shelf.empty,
+    this.shelfShown = false,
   });
 
   final PanelSide active;
@@ -29,8 +30,12 @@ class WorkspaceState extends Equatable {
   /// The keys are on the edge between the panels.
   final bool resizingPanels;
 
-  /// What Vim's `yy` or `dd` took, for `p` in either panel.
-  final VimRegister? register;
+  /// Items gathered to copy or move together (Add to Shelf, Vim's `yy`
+  /// and `dd`), for either panel.
+  final Shelf shelf;
+
+  /// The shelf's strip shows above the key hints.
+  final bool shelfShown;
 
   WorkspaceState copyWith({
     PanelSide? active,
@@ -38,15 +43,16 @@ class WorkspaceState extends Equatable {
     double? splitFraction,
     bool? operationsShown,
     bool? resizingPanels,
-    VimRegister? register,
-    bool clearRegister = false,
+    Shelf? shelf,
+    bool? shelfShown,
   }) => WorkspaceState(
     active: active ?? this.active,
     singlePane: singlePane ?? this.singlePane,
     splitFraction: splitFraction ?? this.splitFraction,
     operationsShown: operationsShown ?? this.operationsShown,
     resizingPanels: resizingPanels ?? this.resizingPanels,
-    register: clearRegister ? null : (register ?? this.register),
+    shelf: shelf ?? this.shelf,
+    shelfShown: shelfShown ?? this.shelfShown,
   );
 
   @override
@@ -56,6 +62,7 @@ class WorkspaceState extends Equatable {
     splitFraction,
     operationsShown,
     resizingPanels,
-    register,
+    shelf,
+    shelfShown,
   ];
 }

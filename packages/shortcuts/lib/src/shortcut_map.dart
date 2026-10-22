@@ -95,8 +95,10 @@ class ShortcutMap {
   /// are the tabs; `o…` sorts (`on os om oe oc oa ox`, `or` reverses);
   /// `zh` hidden items, `R` reloads, `i` previews, `gx` opens with the
   /// desktop, `gf` enters, `gh` `gr` home and root, `cd` asks for a
-  /// folder, `:` is the command line, `?` the keys. `/`, Space and `~`
-  /// move from their plain meanings to make room.
+  /// folder, `:` is the command line, `?` the keys; `gj` jumps to a
+  /// frecent folder, `ys` adds to the shelf and `gs` shows it, `cn` edits
+  /// the names as text. `/`, Space and `~` move from their plain meanings
+  /// to make room.
   ShortcutMap withVimMotions(TargetPlatform platform) {
     var map = this;
     void add(AppCommand command, Chord chord) =>
@@ -214,6 +216,11 @@ class ShortcutMap {
     add(AppCommand.refresh, key(LogicalKeyboardKey.keyR, shift: true));
     add(AppCommand.openItem, seq(g, LogicalKeyboardKey.keyX));
     add(AppCommand.cheatSheet, key(LogicalKeyboardKey.slash, shift: true));
+    // ─── Interface ───
+    add(AppCommand.jumpToFolder, seq(g, LogicalKeyboardKey.keyJ));
+    add(AppCommand.addToShelf, seq(y, LogicalKeyboardKey.keyS));
+    add(AppCommand.toggleShelf, seq(g, LogicalKeyboardKey.keyS));
+    add(AppCommand.renameInEditor, seq(c, LogicalKeyboardKey.keyN));
     return map;
   }
 
@@ -236,9 +243,14 @@ class ShortcutMap {
   /// A `Shortcuts`-compatible map for [platform], limited to [scopes] so
   /// single keys never fire while typing. A plain Enter or Space yields to
   /// a focused button or row ([CommandIntent.yieldsToControls]).
+  ///
+  /// [sequencesOf] adds the two-key sequences of other scopes: an inner
+  /// map (the panel's) must try `gn` before its own `n`, or the sequence
+  /// of an outer map never completes.
   Map<ShortcutActivator, Intent> toShortcuts(
     TargetPlatform platform, {
     required Set<CommandScope> scopes,
+    Set<CommandScope> sequencesOf = const {},
   }) {
     final out = <ShortcutActivator, Intent>{};
     final prefixes = <LogicalKeyboardKey>{};
@@ -246,7 +258,11 @@ class ShortcutMap {
     // own too, and the sequence must be tried before it.
     for (final sequences in [true, false]) {
       for (final entry in _bindings.entries) {
-        if (!scopes.contains(entry.key.scope)) continue;
+        final scope = entry.key.scope;
+        if (!scopes.contains(scope) &&
+            !(sequences && sequencesOf.contains(scope))) {
+          continue;
+        }
         for (final chord in entry.value) {
           if ((chord.prefix != null) != sequences) continue;
           out[chord.toShortcutActivator(platform)] = CommandIntent(
@@ -502,6 +518,19 @@ const _defaults = <AppCommand, List<Chord>>{
     Chord(LogicalKeyboardKey.enter, control: true),
     Chord(LogicalKeyboardKey.f10, shift: true),
     Chord(LogicalKeyboardKey.contextMenu),
+  ],
+
+  // ─── Interface ───
+  AppCommand.commandPalette: [Chord(LogicalKeyboardKey.keyP, primary: true)],
+  AppCommand.jumpToFolder: [Chord(LogicalKeyboardKey.keyG, primary: true)],
+  AppCommand.addToShelf: [
+    Chord(LogicalKeyboardKey.keyS, primary: true, alt: true),
+  ],
+  AppCommand.toggleShelf: [
+    Chord(LogicalKeyboardKey.keyS, primary: true, control: true),
+  ],
+  AppCommand.renameInEditor: [
+    Chord(LogicalKeyboardKey.keyM, control: true, shift: true),
   ],
 
   // File panel keys

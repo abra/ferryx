@@ -94,7 +94,8 @@ See `ARCHITECTURE.md`. The rules that matter most:
   the theme or a component-library widget. Menus go through `showAppMenu`,
   pop-up choices through `AppPopupButton`, dialogs through `AppDialog` with
   actions dismissive first (an `OutlinedButton`), notices through
-  `showAppNotice`, search fields through `AppSearchField`.
+  `showAppNotice`, search fields through `AppSearchField`, a list picked
+  from by typing (a palette, a jump) through `AppQuickPicker`.
 - Focus rings: draw them with `FocusRing`, which shows only after keyboard
   use (`FocusHighlightTracker`). Every part of the window the keys can be in
   (each panel, the viewer) is an `AppFocusArea`, which bars the active one
@@ -130,6 +131,9 @@ See `ARCHITECTURE.md`. The rules that matter most:
   `make l10n`. File names and paths are never translated. A Russian plural
   takes `one{…}`, never `=1{…}`. Sizes and dates go through
   `FerryxFormatting` (`fileSize`, `dateTime`), never `toStringAsFixed`.
+- Data that changes as the user works (visits, recent picks) goes under a
+  key of its own through `SideStorage`, throttled, never into the
+  preferences blob, which is written whole.
 - Vim mode: a key that is a command only with Vim keys on is an
   `AppCommand` named `vim…` (no default chord; bound in `withVimMotions`),
   handled in `PanelView` or through a `PanelHooks` callback; a `:` command

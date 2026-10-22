@@ -3871,6 +3871,426 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Dismiss'**
   String get cmdDismiss;
+
+  /// No description provided for @cmdCommandPalette.
+  ///
+  /// In en, this message translates to:
+  /// **'Command Palette'**
+  String get cmdCommandPalette;
+
+  /// No description provided for @cmdJumpToFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Jump to a Frequent Folder'**
+  String get cmdJumpToFolder;
+
+  /// No description provided for @cmdAddToShelf.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to the Shelf'**
+  String get cmdAddToShelf;
+
+  /// No description provided for @cmdToggleShelf.
+  ///
+  /// In en, this message translates to:
+  /// **'Show or Hide the Shelf'**
+  String get cmdToggleShelf;
+
+  /// No description provided for @cmdRenameInEditor.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename in an Editor'**
+  String get cmdRenameInEditor;
+
+  /// No description provided for @paletteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a command'**
+  String get paletteHint;
+
+  /// No description provided for @paletteNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No command matches'**
+  String get paletteNoResults;
+
+  /// No description provided for @paletteRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently used'**
+  String get paletteRecent;
+
+  /// No description provided for @paletteKeySelect.
+  ///
+  /// In en, this message translates to:
+  /// **'select'**
+  String get paletteKeySelect;
+
+  /// No description provided for @paletteKeyRun.
+  ///
+  /// In en, this message translates to:
+  /// **'run'**
+  String get paletteKeyRun;
+
+  /// No description provided for @paletteKeyClose.
+  ///
+  /// In en, this message translates to:
+  /// **'close'**
+  String get paletteKeyClose;
+
+  /// No description provided for @paletteSectionFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get paletteSectionFile;
+
+  /// No description provided for @paletteSectionEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get paletteSectionEdit;
+
+  /// No description provided for @paletteSectionView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get paletteSectionView;
+
+  /// No description provided for @paletteSectionGo.
+  ///
+  /// In en, this message translates to:
+  /// **'Go'**
+  String get paletteSectionGo;
+
+  /// No description provided for @paletteSectionCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Command'**
+  String get paletteSectionCommand;
+
+  /// No description provided for @paletteSectionWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get paletteSectionWindow;
+
+  /// No description provided for @paletteSectionPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'File panel'**
+  String get paletteSectionPanel;
+
+  /// No description provided for @paletteSectionVim.
+  ///
+  /// In en, this message translates to:
+  /// **'Vim'**
+  String get paletteSectionVim;
+
+  /// No description provided for @paletteSectionViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewer'**
+  String get paletteSectionViewer;
+
+  /// No description provided for @paletteSectionLists.
+  ///
+  /// In en, this message translates to:
+  /// **'Lists'**
+  String get paletteSectionLists;
+
+  /// No description provided for @paletteSectionDialogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Dialogs'**
+  String get paletteSectionDialogs;
+
+  /// No description provided for @jumpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Jump to a frequent folder'**
+  String get jumpTitle;
+
+  /// No description provided for @jumpHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type parts of the folder’s path'**
+  String get jumpHint;
+
+  /// No description provided for @jumpEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The folders you open show here, the most used first'**
+  String get jumpEmpty;
+
+  /// No description provided for @jumpNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No folder you visited matches'**
+  String get jumpNoResults;
+
+  /// No description provided for @jumpKeyOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'open'**
+  String get jumpKeyOpen;
+
+  /// No description provided for @jumpKeyNewTab.
+  ///
+  /// In en, this message translates to:
+  /// **'in a new tab'**
+  String get jumpKeyNewTab;
+
+  /// No description provided for @jumpKeyOtherPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'in the other panel'**
+  String get jumpKeyOtherPanel;
+
+  /// No description provided for @jumpGone.
+  ///
+  /// In en, this message translates to:
+  /// **'{path} is gone; it is off the list now'**
+  String jumpGone(String path);
+
+  /// No description provided for @jumpNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No folder you visited matches “{query}”'**
+  String jumpNoMatch(String query);
+
+  /// No description provided for @shelfTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shelf'**
+  String get shelfTitle;
+
+  /// No description provided for @shelfNote.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 on the shelf} other{{count} on the shelf}}'**
+  String shelfNote(int count);
+
+  /// No description provided for @shelfAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item put on the shelf} other{{count} items put on the shelf}}'**
+  String shelfAdded(int count);
+
+  /// No description provided for @shelfEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Gather files from any folder with {key}, then copy or move them here together'**
+  String shelfEmpty(String key);
+
+  /// No description provided for @shelfClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get shelfClear;
+
+  /// No description provided for @shelfCopyHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Here'**
+  String get shelfCopyHere;
+
+  /// No description provided for @shelfMoveHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Here'**
+  String get shelfMoveHere;
+
+  /// No description provided for @shelfInto.
+  ///
+  /// In en, this message translates to:
+  /// **'Into {folder}'**
+  String shelfInto(String folder);
+
+  /// No description provided for @shelfRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Take off the shelf'**
+  String get shelfRemove;
+
+  /// No description provided for @shelfMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'no longer there'**
+  String get shelfMissing;
+
+  /// No description provided for @shelfMissingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'{path} is no longer on disk'**
+  String shelfMissingTooltip(String path);
+
+  /// No description provided for @shelfCutTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved, not copied, when put'**
+  String get shelfCutTooltip;
+
+  /// No description provided for @shelfAlreadyHere.
+  ///
+  /// In en, this message translates to:
+  /// **'The shelf’s items are in this folder already'**
+  String get shelfAlreadyHere;
+
+  /// No description provided for @shelfNothingToPut.
+  ///
+  /// In en, this message translates to:
+  /// **'None of the shelf’s items is on disk any more'**
+  String get shelfNothingToPut;
+
+  /// No description provided for @shelfHintReveal.
+  ///
+  /// In en, this message translates to:
+  /// **'Show in the panel'**
+  String get shelfHintReveal;
+
+  /// No description provided for @shelfHintRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Take off'**
+  String get shelfHintRemove;
+
+  /// No description provided for @namesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Rename 1 Item} other{Rename {count} Items}}'**
+  String namesTitle(int count);
+
+  /// No description provided for @namesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One name per line, in the order shown. {apply} renames, {newline} starts a new line.'**
+  String namesHint(String apply, String newline);
+
+  /// No description provided for @namesToRename.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing renamed yet} =1{1 to rename} other{{count} to rename}}'**
+  String namesToRename(int count);
+
+  /// No description provided for @namesErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 error} other{{count} errors}}'**
+  String namesErrors(int count);
+
+  /// No description provided for @namesLineCount.
+  ///
+  /// In en, this message translates to:
+  /// **'The names need {names} lines; there are {lines}'**
+  String namesLineCount(int names, int lines);
+
+  /// No description provided for @namesProblemEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: the name is empty'**
+  String namesProblemEmpty(int line);
+
+  /// No description provided for @namesProblemSeparator.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: a name cannot hold “/”'**
+  String namesProblemSeparator(int line);
+
+  /// No description provided for @namesProblemInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: no file can have this name'**
+  String namesProblemInvalid(int line);
+
+  /// No description provided for @namesProblemDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: the same name as line {other}'**
+  String namesProblemDuplicate(int line, int other);
+
+  /// No description provided for @namesProblemExists.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: “{name}” is in this folder already'**
+  String namesProblemExists(int line, String name);
+
+  /// No description provided for @namesProblemExtra.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: there is no item for this line'**
+  String namesProblemExtra(int line);
+
+  /// No description provided for @namesProblemMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: this item has no line'**
+  String namesProblemMissing(int line);
+
+  /// No description provided for @namesShortEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'empty'**
+  String get namesShortEmpty;
+
+  /// No description provided for @namesShortSeparator.
+  ///
+  /// In en, this message translates to:
+  /// **'has /'**
+  String get namesShortSeparator;
+
+  /// No description provided for @namesShortInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'not a name'**
+  String get namesShortInvalid;
+
+  /// No description provided for @namesShortDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'repeated'**
+  String get namesShortDuplicate;
+
+  /// No description provided for @namesShortExists.
+  ///
+  /// In en, this message translates to:
+  /// **'taken'**
+  String get namesShortExists;
+
+  /// No description provided for @namesShortExtra.
+  ///
+  /// In en, this message translates to:
+  /// **'extra'**
+  String get namesShortExtra;
+
+  /// No description provided for @namesShortMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'no line'**
+  String get namesShortMissing;
+
+  /// No description provided for @namesDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard the new names?'**
+  String get namesDiscardTitle;
+
+  /// No description provided for @namesDiscardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The names you typed are lost; nothing is renamed.'**
+  String get namesDiscardMessage;
+
+  /// No description provided for @namesDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get namesDiscard;
+
+  /// No description provided for @namesKeepEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Editing'**
+  String get namesKeepEditing;
 }
 
 class _FerryxLocalizationsDelegate

@@ -49,6 +49,13 @@ abstract final class PathText {
     return '$base$name';
   }
 
+  /// [path] with `~` for the [home] folder it is in or under.
+  static String tilde(String path, {required String home}) {
+    if (home.length <= 1) return path;
+    if (path == home) return '~';
+    return path.startsWith('$home/') ? '~${path.substring(home.length)}' : path;
+  }
+
   /// [path] shortened in the middle for a menu's label when it is longer
   /// than [maxLength]: its root, an ellipsis and its last two components.
   static String shortened(String path, {int maxLength = 48}) {

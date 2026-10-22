@@ -33,6 +33,7 @@ class PanelCubit extends Cubit<PanelState> {
     required OperationsService operations,
     required PreferencesService preferences,
     required this.logger,
+    this.onFolderShown,
   }) : _files = files,
        _operations = operations,
        _preferences = preferences,
@@ -48,6 +49,11 @@ class PanelCubit extends Cubit<PanelState> {
   final OperationsService _operations;
   final PreferencesService _preferences;
   final Logger logger;
+
+  /// A folder on disk the user went to is shown: the window counts the
+  /// visit for Jump to Folder. Not for the tabs a start restores, nor for
+  /// a folder read again where it is.
+  final void Function(String path)? onFolderShown;
   StreamSubscription<String>? _changes;
   StreamSubscription<OperationProgress>? _progress;
   StreamSubscription<Preferences>? _prefs;
@@ -94,7 +100,13 @@ class PanelCubit extends Cubit<PanelState> {
       ),
     );
     for (var i = 0; i < states.length; i++) {
-      await _load(i, states[i].location, pushHistory: true, fallback: fallback);
+      await _load(
+        i,
+        states[i].location,
+        pushHistory: true,
+        fallback: fallback,
+        visit: false,
+      );
     }
   }
 
@@ -124,6 +136,7 @@ class PanelCubit extends Cubit<PanelState> {
     required bool pushHistory,
     String? focusName,
     Location? fallback,
+    bool visit = true,
   }) async {
     final tab = state.tabs.elementAtOrNull(index);
     if (tab == null) return;
@@ -145,6 +158,11 @@ class PanelCubit extends Cubit<PanelState> {
       );
       final current = state.tabs.elementAtOrNull(index);
       if (current == null || current.id != tab.id) return;
+      if (visit &&
+          location.isNative &&
+          (current.listing == null || current.location != location)) {
+        onFolderShown?.call(location.path);
+      }
       var history = current.history;
       var historyIndex = current.historyIndex;
       if (pushHistory) {
@@ -201,7 +219,9 @@ class PanelCubit extends Cubit<PanelState> {
             ),
           ),
         );
-        if (next != null) await _load(index, next, pushHistory: pushHistory);
+        if (next != null) {
+          await _load(index, next, pushHistory: pushHistory, visit: visit);
+        }
         return;
       }
       emit(

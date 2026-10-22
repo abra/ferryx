@@ -137,6 +137,13 @@ enum AppCommand {
   cheatSheet(CommandScope.global),
   contextMenu(CommandScope.global),
 
+  // ─── Interface ───
+  commandPalette(CommandScope.global),
+  jumpToFolder(CommandScope.global),
+  addToShelf(CommandScope.global),
+  toggleShelf(CommandScope.global),
+  renameInEditor(CommandScope.global),
+
   // ─── File panel keys ───
   moveUp(CommandScope.panel),
   moveDown(CommandScope.panel),
