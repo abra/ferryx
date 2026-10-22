@@ -9,6 +9,8 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 import 'types.dart';
 
+// These functions are ignored because they are not marked as `pub`: `record_created`
+
 Future<EntryView> stat({required String path}) =>
     FerryxRustLib.instance.api.crateApiFilesStat(path: path);
 
@@ -37,14 +39,16 @@ Future<String> extractToTemp({
   inner: inner,
 );
 
-/// Makes the folder at `path`, and every missing folder above it.
+/// Makes the folder at `path`, and every missing folder above it. On the
+/// journal: undo trashes the topmost folder made.
 Future<void> createDirectory({required String path}) =>
     FerryxRustLib.instance.api.crateApiFilesCreateDirectory(path: path);
 
 Future<void> createFile({required String path}) =>
     FerryxRustLib.instance.api.crateApiFilesCreateFile(path: path);
 
-/// Renames the item at `path` to `new_name`; answers its new path.
+/// Renames the item at `path` to `new_name`; answers its new path. On the
+/// journal: undo renames it back.
 Future<String> renameItem({required String path, required String newName}) =>
     FerryxRustLib.instance.api.crateApiFilesRenameItem(
       path: path,

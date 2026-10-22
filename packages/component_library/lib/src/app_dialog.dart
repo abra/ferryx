@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -682,4 +683,24 @@ class _DefaultAction extends Action<_DefaultIntent> {
     _press?.call();
     return null;
   }
+}
+
+/// The most a dialog's body may take of the window's height: the window
+/// less the dialog's inset, its margins, its title and its buttons (grown
+/// with the text). A tall body (a table of results) held to it shrinks
+/// instead of pushing the buttons off a low window.
+double appDialogBodyMaxHeight(BuildContext context) {
+  final metrics = context.metrics;
+  final inset =
+      DialogTheme.of(context).insetPadding ??
+      const EdgeInsets.symmetric(horizontal: 40, vertical: 24);
+  final scale = MediaQuery.textScalerOf(context).scale(1);
+  final chrome =
+      inset.vertical +
+      3 * metrics.contentMargin +
+      2 * metrics.topBarHeight * scale;
+  return math.max(
+    AppSizes.pickerListMaxHeight,
+    MediaQuery.sizeOf(context).height - chrome,
+  );
 }

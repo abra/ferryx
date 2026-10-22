@@ -56,11 +56,19 @@ pub fn batch_rename_preview(
         .collect())
 }
 
-/// Renames every pair; answers what failed.
+/// Renames every pair; answers what failed. What was renamed is one step
+/// of the journal.
 pub fn batch_rename_apply(pairs: Vec<RenamePairView>) -> Vec<RenameFailureView> {
     let pairs: Vec<(PathBuf, String)> =
         pairs.into_iter().map(|p| (PathBuf::from(p.path), p.new_name)).collect();
-    ferryx_ops::rename::apply(&pairs)
+    let (failures, done) = ferryx_ops::rename::apply_recorded(&pairs);
+    let renamed: Vec<PathBuf> = done.iter().map(|(from, _)| from.clone()).collect();
+    crate::tasks::record(
+        ferryx_ops::journal::StepKind::Rename,
+        &renamed,
+        done.into_iter().map(|(from, to)| ferryx_ops::journal::Change::Moved { from, to }).collect(),
+    );
+    failures
         .into_iter()
         .map(|f| RenameFailureView { path: f.path.to_string_lossy().into_owned(), message: f.message })
         .collect()

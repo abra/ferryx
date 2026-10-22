@@ -6,14 +6,20 @@
 //! through an [`OpContext`] that checks for cancellation, waits while
 //! paused and reports.
 
+pub mod checksum;
 pub mod compress;
 pub mod copy;
 pub mod delete;
+pub mod duplicates;
 pub mod find;
+pub mod hashing;
+pub mod journal;
 pub mod rename;
 pub mod runner;
 pub mod sizes;
+pub mod sync;
 pub mod types;
+pub mod undo;
 
 pub use runner::{OpContext, Runner};
 pub use types::*;

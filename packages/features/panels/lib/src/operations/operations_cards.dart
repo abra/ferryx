@@ -17,8 +17,13 @@ class OperationsCards extends StatelessWidget {
     required this.onCancel,
     required this.onDismiss,
     required this.onAnswer,
+    this.titles = const {},
     super.key,
   });
+
+  /// Titles that say more than the operation's kind (an undo names its
+  /// step), by operation id.
+  final Map<int, String> titles;
 
   /// A card's width: room for a title with its destination and the
   /// buttons beside it.
@@ -49,6 +54,7 @@ class OperationsCards extends StatelessWidget {
           _OperationCard(
             key: ValueKey(operation.id),
             progress: operation,
+            title: titles[operation.id],
             onPause: () => onPause(operation.id),
             onResume: () => onResume(operation.id),
             onCancel: () => onCancel(operation.id),
@@ -63,6 +69,7 @@ class OperationsCards extends StatelessWidget {
 class _OperationCard extends StatelessWidget {
   const _OperationCard({
     required this.progress,
+    this.title,
     required this.onPause,
     required this.onResume,
     required this.onCancel,
@@ -72,6 +79,9 @@ class _OperationCard extends StatelessWidget {
   });
 
   final OperationProgress progress;
+
+  /// The title instead of the kind's own, when there is one.
+  final String? title;
   final VoidCallback onPause;
   final VoidCallback onResume;
   final VoidCallback onCancel;
@@ -89,7 +99,7 @@ class _OperationCard extends StatelessWidget {
         progress.state == OpState.failed ||
         progress.state == OpState.doneWithErrors;
     final destination = progress.destination;
-    final title = l10n.operationTitle(progress);
+    final title = this.title ?? l10n.operationTitle(progress);
     final detail = finished
         ? l10n.operationState(progress.state)
         : waiting
@@ -231,5 +241,9 @@ class _OperationCard extends StatelessWidget {
     OpKind.compress => AppIcons.fileArchive,
     OpKind.extract => AppIcons.fileArchive,
     OpKind.calcSizes => AppIcons.calculator,
+    OpKind.synchronize => AppIcons.synchronize,
+    OpKind.compareContents => AppIcons.compareFolders,
+    OpKind.undo => AppIcons.undo,
+    OpKind.redo => AppIcons.redo,
   };
 }

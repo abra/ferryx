@@ -43,12 +43,19 @@ pub fn state() -> &'static Mutex<AppState> {
 }
 
 /// The operations runner, made on first use; its listener forwards every
-/// progress report as an event.
+/// progress report as an event, its journal every change of what undo and
+/// redo would do.
 pub fn runner() -> &'static Runner {
     RUNNER.get_or_init(|| {
         let runner = Runner::new();
         runner.set_listener(Arc::new(|progress| {
             emit(AppEvent::progress(crate::api::types::ProgressView::from(progress)));
+        }));
+        runner.journal().set_listener(Arc::new(|summary| {
+            emit(AppEvent {
+                journal: Some(crate::api::journal::JournalSummaryView::from_ops(summary)),
+                ..AppEvent::of(AppEventKind::JournalChanged, None)
+            });
         }));
         runner
     })
@@ -108,4 +115,6 @@ pub fn reset_for_tests() {
     guard.finds.clear();
     *EVENTS.lock() = None;
     *RECORDED.lock() = None;
+    crate::tasks::reset();
+    runner().journal().clear();
 }

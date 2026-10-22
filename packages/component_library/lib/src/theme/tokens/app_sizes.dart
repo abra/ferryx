@@ -98,4 +98,19 @@ abstract final class AppSizes {
   static const double menuMaxWidth = 420;
   static const double minWindowWidth = 900;
   static const double minWindowHeight = 600;
+
+  // ─── Operations stream ───
+
+  /// A dialog around a table of results (Synchronize Folders, Find
+  /// Duplicates, Checksums): room for a path and two sides of figures.
+  static const double resultsDialogWidth = 960;
+
+  /// Its table at most; a lower window shrinks it.
+  static const double resultsTableHeight = 360;
+
+  /// A table's narrow column of one glyph (an action, a check box).
+  static const double glyphColumnWidth = 36;
+
+  /// A field for a short mask (`*.jpg;*.png`) beside other options.
+  static const double maskFieldWidth = 220;
 }

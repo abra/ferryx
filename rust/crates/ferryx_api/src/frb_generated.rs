@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -596323344;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -731103385;
 
 // Section: executor
 
@@ -218,6 +218,74 @@ fn wire__crate__api__rename__batch_rename_preview_impl(
         },
     )
 }
+fn wire__crate__api__checksum__cancel_checksums_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "cancel_checksums",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_task_id = <i64>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>({
+                        crate::api::checksum::cancel_checksums(api_task_id);
+                    })?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__duplicates__cancel_duplicates_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "cancel_duplicates",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_task_id = <i64>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>({
+                        crate::api::duplicates::cancel_duplicates(api_task_id);
+                    })?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__find__cancel_find_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -245,6 +313,40 @@ fn wire__crate__api__find__cancel_find_impl(
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Ok::<_, ()>({
                         crate::api::find::cancel_find(api_id);
+                    })?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__sync__cancel_folder_compare_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "cancel_folder_compare",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_task_id = <i64>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>({
+                        crate::api::sync::cancel_folder_compare(api_task_id);
                     })?;
                     std::result::Result::Ok(output_ok)
                 })())
@@ -280,6 +382,38 @@ fn wire__crate__api__ops__cancel_operation_impl(
                     let output_ok = Ok::<_, ()>({
                         crate::api::ops::cancel_operation(api_id);
                     })?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__journal__check_journal_step_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "check_journal_step",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_redo = <bool>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::journal::check_journal_step(api_redo))?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -580,6 +714,40 @@ fn wire__crate__api__files__file_size_impl(
         },
     )
 }
+fn wire__crate__api__journal__forget_journal_step_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "forget_journal_step",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_redo = <bool>::sse_decode(&mut deserializer);
+            let api_step_id = <i64>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok =
+                        Ok::<_, ()>(crate::api::journal::forget_journal_step(api_redo, api_step_id))?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__ops__forget_operation_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -764,6 +932,37 @@ fn wire__crate__api__listing__is_directory_impl(
                 let output_ok = Ok::<_, ()>(crate::api::listing::is_directory(api_path))?;
                 std::result::Result::Ok(output_ok)
             })())
+        },
+    )
+}
+fn wire__crate__api__journal__journal_summary_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "journal_summary",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::journal::journal_summary())?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
         },
     )
 }
@@ -1386,6 +1585,41 @@ fn wire__crate__api__system__reveal_in_file_manager_impl(
         },
     )
 }
+fn wire__crate__api__checksum__save_checksum_file_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "save_checksum_file",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_path = <String>::sse_decode(&mut deserializer);
+            let api_lines = <Vec<crate::api::checksum::ChecksumLineView>>::sse_decode(&mut deserializer);
+            let api_overwrite = <bool>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::types::FerryxError>((move || {
+                    let output_ok =
+                        crate::api::checksum::save_checksum_file(api_path, api_lines, api_overwrite)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__system__standard_folders_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1411,6 +1645,134 @@ fn wire__crate__api__system__standard_folders_impl(
                 let output_ok = Ok::<_, ()>(crate::api::system::standard_folders())?;
                 std::result::Result::Ok(output_ok)
             })())
+        },
+    )
+}
+fn wire__crate__api__checksum__start_checksum_verify_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "start_checksum_verify",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_sums_path = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::checksum::start_checksum_verify(api_sums_path))?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__checksum__start_checksums_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "start_checksums",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_request = <crate::api::checksum::ChecksumRequestView>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::checksum::start_checksums(api_request))?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__sync__start_content_compare_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "start_content_compare",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_pairs = <Vec<crate::api::sync::ContentPairView>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::sync::start_content_compare(api_pairs))?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__duplicates__start_duplicates_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "start_duplicates",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_request = <crate::api::duplicates::DuplicatesRequestView>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::duplicates::start_duplicates(api_request))?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
         },
     )
 }
@@ -1446,6 +1808,38 @@ fn wire__crate__api__find__start_find_impl(
         },
     )
 }
+fn wire__crate__api__sync__start_folder_compare_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "start_folder_compare",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_request = <crate::api::sync::FolderCompareRequestView>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::sync::start_folder_compare(api_request))?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__ops__start_operation_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -1472,6 +1866,38 @@ fn wire__crate__api__ops__start_operation_impl(
             move |context| {
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Ok::<_, ()>(crate::api::ops::start_operation(api_request))?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__sync__start_synchronize_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "start_synchronize",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_plan = <crate::api::sync::SyncPlanView>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::sync::start_synchronize(api_plan))?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -1547,6 +1973,71 @@ fn wire__crate__api__events__subscribe_events_impl(
         },
     )
 }
+fn wire__crate__api__sync__take_content_differences_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "take_content_differences",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_op_id = <i64>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::sync::take_content_differences(api_op_id))?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__journal__walk_journal_step_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "walk_journal_step",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_redo = <bool>::sse_decode(&mut deserializer);
+            let api_step_id = <i64>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::types::FerryxError>((move || {
+                    let output_ok = crate::api::journal::walk_journal_step(api_redo, api_step_id)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 
 // Section: dart2rust
 
@@ -1606,6 +2097,11 @@ impl SseDecode for crate::api::types::AppEvent {
         let mut var_findCurrent = <Option<String>>::sse_decode(deserializer);
         let mut var_findScanned = <i64>::sse_decode(deserializer);
         let mut var_findError = <Option<String>>::sse_decode(deserializer);
+        let mut var_journal = <Option<crate::api::journal::JournalSummaryView>>::sse_decode(deserializer);
+        let mut var_compare = <Option<crate::api::sync::CompareUpdateView>>::sse_decode(deserializer);
+        let mut var_checksum = <Option<crate::api::checksum::ChecksumUpdateView>>::sse_decode(deserializer);
+        let mut var_duplicates =
+            <Option<crate::api::duplicates::DuplicatesUpdateView>>::sse_decode(deserializer);
         return crate::api::types::AppEvent {
             kind: var_kind,
             listing_id: var_listingId,
@@ -1615,6 +2111,10 @@ impl SseDecode for crate::api::types::AppEvent {
             find_current: var_findCurrent,
             find_scanned: var_findScanned,
             find_error: var_findError,
+            journal: var_journal,
+            compare: var_compare,
+            checksum: var_checksum,
+            duplicates: var_duplicates,
         };
     }
 }
@@ -1628,6 +2128,10 @@ impl SseDecode for crate::api::types::AppEventKind {
             1 => crate::api::types::AppEventKind::OperationProgress,
             2 => crate::api::types::AppEventKind::FindProgress,
             3 => crate::api::types::AppEventKind::FindDone,
+            4 => crate::api::types::AppEventKind::JournalChanged,
+            5 => crate::api::types::AppEventKind::CompareProgress,
+            6 => crate::api::types::AppEventKind::ChecksumProgress,
+            7 => crate::api::types::AppEventKind::DuplicatesProgress,
             _ => unreachable!("Invalid variant for AppEventKind: {}", inner),
         };
     }
@@ -1710,6 +2214,128 @@ impl SseDecode for crate::api::types::CaseTransformView {
     }
 }
 
+impl SseDecode for crate::api::checksum::ChecksumAlgorithmView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::checksum::ChecksumAlgorithmView::Sha256,
+            1 => crate::api::checksum::ChecksumAlgorithmView::Sha1,
+            2 => crate::api::checksum::ChecksumAlgorithmView::Md5,
+            3 => crate::api::checksum::ChecksumAlgorithmView::Blake3,
+            _ => unreachable!("Invalid variant for ChecksumAlgorithmView: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::checksum::ChecksumFileView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_index = <i64>::sse_decode(deserializer);
+        let mut var_name = <String>::sse_decode(deserializer);
+        let mut var_path = <String>::sse_decode(deserializer);
+        let mut var_size = <i64>::sse_decode(deserializer);
+        let mut var_expected = <Option<String>>::sse_decode(deserializer);
+        return crate::api::checksum::ChecksumFileView {
+            index: var_index,
+            name: var_name,
+            path: var_path,
+            size: var_size,
+            expected: var_expected,
+        };
+    }
+}
+
+impl SseDecode for crate::api::checksum::ChecksumLineView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_hash = <String>::sse_decode(deserializer);
+        let mut var_name = <String>::sse_decode(deserializer);
+        return crate::api::checksum::ChecksumLineView { hash: var_hash, name: var_name };
+    }
+}
+
+impl SseDecode for crate::api::checksum::ChecksumOutcomeView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_index = <i64>::sse_decode(deserializer);
+        let mut var_status = <crate::api::checksum::ChecksumStatusView>::sse_decode(deserializer);
+        let mut var_hash = <Option<String>>::sse_decode(deserializer);
+        let mut var_error = <Option<crate::api::types::FerryxError>>::sse_decode(deserializer);
+        return crate::api::checksum::ChecksumOutcomeView {
+            index: var_index,
+            status: var_status,
+            hash: var_hash,
+            error: var_error,
+        };
+    }
+}
+
+impl SseDecode for crate::api::checksum::ChecksumRequestView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_paths = <Vec<String>>::sse_decode(deserializer);
+        let mut var_base = <String>::sse_decode(deserializer);
+        let mut var_algorithm = <crate::api::checksum::ChecksumAlgorithmView>::sse_decode(deserializer);
+        let mut var_recursive = <bool>::sse_decode(deserializer);
+        let mut var_includeHidden = <bool>::sse_decode(deserializer);
+        return crate::api::checksum::ChecksumRequestView {
+            paths: var_paths,
+            base: var_base,
+            algorithm: var_algorithm,
+            recursive: var_recursive,
+            include_hidden: var_includeHidden,
+        };
+    }
+}
+
+impl SseDecode for crate::api::checksum::ChecksumStatusView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::checksum::ChecksumStatusView::Ok,
+            1 => crate::api::checksum::ChecksumStatusView::Mismatch,
+            2 => crate::api::checksum::ChecksumStatusView::Missing,
+            3 => crate::api::checksum::ChecksumStatusView::Error,
+            _ => unreachable!("Invalid variant for ChecksumStatusView: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::checksum::ChecksumUpdateView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_taskId = <i64>::sse_decode(deserializer);
+        let mut var_algorithm =
+            <Option<crate::api::checksum::ChecksumAlgorithmView>>::sse_decode(deserializer);
+        let mut var_files = <Vec<crate::api::checksum::ChecksumFileView>>::sse_decode(deserializer);
+        let mut var_outcomes = <Vec<crate::api::checksum::ChecksumOutcomeView>>::sse_decode(deserializer);
+        let mut var_filesDone = <i64>::sse_decode(deserializer);
+        let mut var_filesTotal = <i64>::sse_decode(deserializer);
+        let mut var_bytesDone = <i64>::sse_decode(deserializer);
+        let mut var_bytesTotal = <i64>::sse_decode(deserializer);
+        let mut var_current = <Option<String>>::sse_decode(deserializer);
+        let mut var_badLines = <i64>::sse_decode(deserializer);
+        let mut var_done = <bool>::sse_decode(deserializer);
+        let mut var_error = <Option<String>>::sse_decode(deserializer);
+        return crate::api::checksum::ChecksumUpdateView {
+            task_id: var_taskId,
+            algorithm: var_algorithm,
+            files: var_files,
+            outcomes: var_outcomes,
+            files_done: var_filesDone,
+            files_total: var_filesTotal,
+            bytes_done: var_bytesDone,
+            bytes_total: var_bytesTotal,
+            current: var_current,
+            bad_lines: var_badLines,
+            done: var_done,
+            error: var_error,
+        };
+    }
+}
+
 impl SseDecode for crate::api::types::CollationView {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1719,6 +2345,78 @@ impl SseDecode for crate::api::types::CollationView {
             1 => crate::api::types::CollationView::CaseInsensitive,
             2 => crate::api::types::CollationView::CaseSensitive,
             _ => unreachable!("Invalid variant for CollationView: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::sync::CompareErrorView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_path = <String>::sse_decode(deserializer);
+        let mut var_message = <String>::sse_decode(deserializer);
+        return crate::api::sync::CompareErrorView { path: var_path, message: var_message };
+    }
+}
+
+impl SseDecode for crate::api::sync::CompareRowView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_leftRel = <String>::sse_decode(deserializer);
+        let mut var_rightRel = <Option<String>>::sse_decode(deserializer);
+        let mut var_isDir = <bool>::sse_decode(deserializer);
+        let mut var_left = <Option<crate::api::sync::SideInfoView>>::sse_decode(deserializer);
+        let mut var_right = <Option<crate::api::sync::SideInfoView>>::sse_decode(deserializer);
+        let mut var_state = <crate::api::sync::CompareStateView>::sse_decode(deserializer);
+        return crate::api::sync::CompareRowView {
+            left_rel: var_leftRel,
+            right_rel: var_rightRel,
+            is_dir: var_isDir,
+            left: var_left,
+            right: var_right,
+            state: var_state,
+        };
+    }
+}
+
+impl SseDecode for crate::api::sync::CompareStateView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::sync::CompareStateView::LeftOnly,
+            1 => crate::api::sync::CompareStateView::RightOnly,
+            2 => crate::api::sync::CompareStateView::LeftNewer,
+            3 => crate::api::sync::CompareStateView::RightNewer,
+            4 => crate::api::sync::CompareStateView::Equal,
+            5 => crate::api::sync::CompareStateView::Different,
+            6 => crate::api::sync::CompareStateView::Conflict,
+            _ => unreachable!("Invalid variant for CompareStateView: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::sync::CompareUpdateView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_taskId = <i64>::sse_decode(deserializer);
+        let mut var_rows = <Vec<crate::api::sync::CompareRowView>>::sse_decode(deserializer);
+        let mut var_folders = <i64>::sse_decode(deserializer);
+        let mut var_files = <i64>::sse_decode(deserializer);
+        let mut var_bytesCompared = <i64>::sse_decode(deserializer);
+        let mut var_current = <Option<String>>::sse_decode(deserializer);
+        let mut var_errors = <Vec<crate::api::sync::CompareErrorView>>::sse_decode(deserializer);
+        let mut var_done = <bool>::sse_decode(deserializer);
+        let mut var_error = <Option<String>>::sse_decode(deserializer);
+        return crate::api::sync::CompareUpdateView {
+            task_id: var_taskId,
+            rows: var_rows,
+            folders: var_folders,
+            files: var_files,
+            bytes_compared: var_bytesCompared,
+            current: var_current,
+            errors: var_errors,
+            done: var_done,
+            error: var_error,
         };
     }
 }
@@ -1750,6 +2448,90 @@ impl SseDecode for crate::api::types::ConflictSideView {
             size: var_size,
             modified_ms: var_modifiedMs,
             is_dir: var_isDir,
+        };
+    }
+}
+
+impl SseDecode for crate::api::sync::ContentPairView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_left = <String>::sse_decode(deserializer);
+        let mut var_right = <String>::sse_decode(deserializer);
+        return crate::api::sync::ContentPairView { left: var_left, right: var_right };
+    }
+}
+
+impl SseDecode for crate::api::duplicates::DuplicateFileView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_path = <String>::sse_decode(deserializer);
+        let mut var_modifiedMs = <Option<i64>>::sse_decode(deserializer);
+        return crate::api::duplicates::DuplicateFileView { path: var_path, modified_ms: var_modifiedMs };
+    }
+}
+
+impl SseDecode for crate::api::duplicates::DuplicateGroupView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_size = <i64>::sse_decode(deserializer);
+        let mut var_files = <Vec<crate::api::duplicates::DuplicateFileView>>::sse_decode(deserializer);
+        return crate::api::duplicates::DuplicateGroupView { size: var_size, files: var_files };
+    }
+}
+
+impl SseDecode for crate::api::duplicates::DuplicatesPhaseView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::duplicates::DuplicatesPhaseView::Scanning,
+            1 => crate::api::duplicates::DuplicatesPhaseView::Comparing,
+            2 => crate::api::duplicates::DuplicatesPhaseView::Hashing,
+            _ => unreachable!("Invalid variant for DuplicatesPhaseView: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::duplicates::DuplicatesRequestView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_roots = <Vec<String>>::sse_decode(deserializer);
+        let mut var_minSize = <i64>::sse_decode(deserializer);
+        let mut var_nameMask = <String>::sse_decode(deserializer);
+        let mut var_includeHidden = <bool>::sse_decode(deserializer);
+        return crate::api::duplicates::DuplicatesRequestView {
+            roots: var_roots,
+            min_size: var_minSize,
+            name_mask: var_nameMask,
+            include_hidden: var_includeHidden,
+        };
+    }
+}
+
+impl SseDecode for crate::api::duplicates::DuplicatesUpdateView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_taskId = <i64>::sse_decode(deserializer);
+        let mut var_phase = <Option<crate::api::duplicates::DuplicatesPhaseView>>::sse_decode(deserializer);
+        let mut var_filesScanned = <i64>::sse_decode(deserializer);
+        let mut var_candidates = <i64>::sse_decode(deserializer);
+        let mut var_filesHashed = <i64>::sse_decode(deserializer);
+        let mut var_bytesDone = <i64>::sse_decode(deserializer);
+        let mut var_current = <Option<String>>::sse_decode(deserializer);
+        let mut var_groups = <Vec<crate::api::duplicates::DuplicateGroupView>>::sse_decode(deserializer);
+        let mut var_done = <bool>::sse_decode(deserializer);
+        let mut var_error = <Option<String>>::sse_decode(deserializer);
+        return crate::api::duplicates::DuplicatesUpdateView {
+            task_id: var_taskId,
+            phase: var_phase,
+            files_scanned: var_filesScanned,
+            candidates: var_candidates,
+            files_hashed: var_filesHashed,
+            bytes_done: var_bytesDone,
+            current: var_current,
+            groups: var_groups,
+            done: var_done,
+            error: var_error,
         };
     }
 }
@@ -1893,6 +2675,30 @@ impl SseDecode for crate::api::types::FindRequestView {
     }
 }
 
+impl SseDecode for crate::api::sync::FolderCompareRequestView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_left = <String>::sse_decode(deserializer);
+        let mut var_right = <String>::sse_decode(deserializer);
+        let mut var_recursive = <bool>::sse_decode(deserializer);
+        let mut var_compareContent = <bool>::sse_decode(deserializer);
+        let mut var_timeToleranceMs = <i64>::sse_decode(deserializer);
+        let mut var_nameMask = <String>::sse_decode(deserializer);
+        let mut var_includeHidden = <bool>::sse_decode(deserializer);
+        let mut var_caseSensitive = <bool>::sse_decode(deserializer);
+        return crate::api::sync::FolderCompareRequestView {
+            left: var_left,
+            right: var_right,
+            recursive: var_recursive,
+            compare_content: var_compareContent,
+            time_tolerance_ms: var_timeToleranceMs,
+            name_mask: var_nameMask,
+            include_hidden: var_includeHidden,
+            case_sensitive: var_caseSensitive,
+        };
+    }
+}
+
 impl SseDecode for crate::api::types::FolderSizeView {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1916,6 +2722,15 @@ impl SseDecode for i64 {
     }
 }
 
+impl SseDecode for crate::api::journal::JournalSummaryView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_undo = <Option<crate::api::journal::StepSummaryView>>::sse_decode(deserializer);
+        let mut var_redo = <Option<crate::api::journal::StepSummaryView>>::sse_decode(deserializer);
+        return crate::api::journal::JournalSummaryView { undo: var_undo, redo: var_redo };
+    }
+}
+
 impl SseDecode for Vec<String> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1935,6 +2750,102 @@ impl SseDecode for Vec<crate::api::types::AnswerView> {
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
             ans_.push(<crate::api::types::AnswerView>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::checksum::ChecksumFileView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::checksum::ChecksumFileView>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::checksum::ChecksumLineView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::checksum::ChecksumLineView>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::checksum::ChecksumOutcomeView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::checksum::ChecksumOutcomeView>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::sync::CompareErrorView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::sync::CompareErrorView>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::sync::CompareRowView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::sync::CompareRowView>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::sync::ContentPairView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::sync::ContentPairView>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::duplicates::DuplicateFileView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::duplicates::DuplicateFileView>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::duplicates::DuplicateGroupView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::duplicates::DuplicateGroupView>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -1995,6 +2906,18 @@ impl SseDecode for Vec<i32> {
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
             ans_.push(<i32>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<i64> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<i64>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -2067,6 +2990,30 @@ impl SseDecode for Vec<crate::api::types::RenamePairView> {
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
             ans_.push(<crate::api::types::RenamePairView>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::sync::SyncItemView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::sync::SyncItemView>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::journal::UndoIssueView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::journal::UndoIssueView>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -2175,6 +3122,10 @@ impl SseDecode for crate::api::types::OpKindView {
             5 => crate::api::types::OpKindView::Compress,
             6 => crate::api::types::OpKindView::Extract,
             7 => crate::api::types::OpKindView::CalcSizes,
+            8 => crate::api::types::OpKindView::Synchronize,
+            9 => crate::api::types::OpKindView::CompareContents,
+            10 => crate::api::types::OpKindView::Undo,
+            11 => crate::api::types::OpKindView::Redo,
             _ => unreachable!("Invalid variant for OpKindView: {}", inner),
         };
     }
@@ -2235,6 +3186,39 @@ impl SseDecode for Option<String> {
     }
 }
 
+impl SseDecode for Option<crate::api::checksum::ChecksumAlgorithmView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::checksum::ChecksumAlgorithmView>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::api::checksum::ChecksumUpdateView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::checksum::ChecksumUpdateView>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::api::sync::CompareUpdateView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::sync::CompareUpdateView>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for Option<crate::api::types::ConflictSideView> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2246,11 +3230,55 @@ impl SseDecode for Option<crate::api::types::ConflictSideView> {
     }
 }
 
+impl SseDecode for Option<crate::api::duplicates::DuplicatesPhaseView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::duplicates::DuplicatesPhaseView>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::api::duplicates::DuplicatesUpdateView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::duplicates::DuplicatesUpdateView>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::api::types::FerryxError> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::types::FerryxError>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for Option<i64> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
             return Some(<i64>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::api::journal::JournalSummaryView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::journal::JournalSummaryView>::sse_decode(deserializer));
         } else {
             return None;
         }
@@ -2279,6 +3307,17 @@ impl SseDecode for Option<crate::api::types::QuestionView> {
     }
 }
 
+impl SseDecode for Option<crate::api::sync::SideInfoView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::sync::SideInfoView>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for Option<crate::api::types::SizeOpView> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2290,11 +3329,33 @@ impl SseDecode for Option<crate::api::types::SizeOpView> {
     }
 }
 
+impl SseDecode for Option<crate::api::journal::StepSummaryView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::journal::StepSummaryView>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for Option<u32> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
             return Some(<u32>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::api::journal::UndoCheckView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::journal::UndoCheckView>::sse_decode(deserializer));
         } else {
             return None;
         }
@@ -2463,6 +3524,22 @@ impl SseDecode for crate::api::types::RenameProblemView {
     }
 }
 
+impl SseDecode for crate::api::sync::SideInfoView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_size = <i64>::sse_decode(deserializer);
+        let mut var_modifiedMs = <Option<i64>>::sse_decode(deserializer);
+        let mut var_isDir = <bool>::sse_decode(deserializer);
+        let mut var_isSymlink = <bool>::sse_decode(deserializer);
+        return crate::api::sync::SideInfoView {
+            size: var_size,
+            modified_ms: var_modifiedMs,
+            is_dir: var_isDir,
+            is_symlink: var_isSymlink,
+        };
+    }
+}
+
 impl SseDecode for crate::api::types::SizeOpView {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2539,6 +3616,101 @@ impl SseDecode for crate::api::types::StandardFoldersView {
     }
 }
 
+impl SseDecode for crate::api::journal::StepKindView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::journal::StepKindView::Copy,
+            1 => crate::api::journal::StepKindView::Move,
+            2 => crate::api::journal::StepKindView::Trash,
+            3 => crate::api::journal::StepKindView::Rename,
+            4 => crate::api::journal::StepKindView::CreateFolder,
+            5 => crate::api::journal::StepKindView::CreateFile,
+            6 => crate::api::journal::StepKindView::CreateLink,
+            7 => crate::api::journal::StepKindView::Duplicate,
+            8 => crate::api::journal::StepKindView::Compress,
+            9 => crate::api::journal::StepKindView::Extract,
+            10 => crate::api::journal::StepKindView::Synchronize,
+            _ => unreachable!("Invalid variant for StepKindView: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::journal::StepSummaryView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <i64>::sse_decode(deserializer);
+        let mut var_kind = <crate::api::journal::StepKindView>::sse_decode(deserializer);
+        let mut var_items = <i64>::sse_decode(deserializer);
+        let mut var_firstName = <String>::sse_decode(deserializer);
+        let mut var_partial = <bool>::sse_decode(deserializer);
+        let mut var_atMs = <i64>::sse_decode(deserializer);
+        return crate::api::journal::StepSummaryView {
+            id: var_id,
+            kind: var_kind,
+            items: var_items,
+            first_name: var_firstName,
+            partial: var_partial,
+            at_ms: var_atMs,
+        };
+    }
+}
+
+impl SseDecode for crate::api::sync::SyncActionView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::sync::SyncActionView::CopyToRight,
+            1 => crate::api::sync::SyncActionView::CopyToLeft,
+            2 => crate::api::sync::SyncActionView::DeleteLeft,
+            3 => crate::api::sync::SyncActionView::DeleteRight,
+            _ => unreachable!("Invalid variant for SyncActionView: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::sync::SyncItemView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_leftRel = <String>::sse_decode(deserializer);
+        let mut var_rightRel = <Option<String>>::sse_decode(deserializer);
+        let mut var_isDir = <bool>::sse_decode(deserializer);
+        let mut var_action = <crate::api::sync::SyncActionView>::sse_decode(deserializer);
+        let mut var_left = <Option<crate::api::sync::SideInfoView>>::sse_decode(deserializer);
+        let mut var_right = <Option<crate::api::sync::SideInfoView>>::sse_decode(deserializer);
+        return crate::api::sync::SyncItemView {
+            left_rel: var_leftRel,
+            right_rel: var_rightRel,
+            is_dir: var_isDir,
+            action: var_action,
+            left: var_left,
+            right: var_right,
+        };
+    }
+}
+
+impl SseDecode for crate::api::sync::SyncPlanView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_left = <String>::sse_decode(deserializer);
+        let mut var_right = <String>::sse_decode(deserializer);
+        let mut var_recursive = <bool>::sse_decode(deserializer);
+        let mut var_items = <Vec<crate::api::sync::SyncItemView>>::sse_decode(deserializer);
+        let mut var_preserveAttributes = <bool>::sse_decode(deserializer);
+        let mut var_verify = <bool>::sse_decode(deserializer);
+        return crate::api::sync::SyncPlanView {
+            left: var_left,
+            right: var_right,
+            recursive: var_recursive,
+            items: var_items,
+            preserve_attributes: var_preserveAttributes,
+            verify: var_verify,
+        };
+    }
+}
+
 impl SseDecode for u32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2550,6 +3722,51 @@ impl SseDecode for u8 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         deserializer.cursor.read_u8().unwrap()
+    }
+}
+
+impl SseDecode for crate::api::journal::UndoCheckView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_step = <crate::api::journal::StepSummaryView>::sse_decode(deserializer);
+        let mut var_issues = <Vec<crate::api::journal::UndoIssueView>>::sse_decode(deserializer);
+        let mut var_issuesTotal = <i64>::sse_decode(deserializer);
+        let mut var_doable = <i64>::sse_decode(deserializer);
+        let mut var_total = <i64>::sse_decode(deserializer);
+        return crate::api::journal::UndoCheckView {
+            step: var_step,
+            issues: var_issues,
+            issues_total: var_issuesTotal,
+            doable: var_doable,
+            total: var_total,
+        };
+    }
+}
+
+impl SseDecode for crate::api::journal::UndoIssueKindView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::journal::UndoIssueKindView::Missing,
+            1 => crate::api::journal::UndoIssueKindView::Occupied,
+            2 => crate::api::journal::UndoIssueKindView::Changed,
+            3 => crate::api::journal::UndoIssueKindView::Lost,
+            4 => crate::api::journal::UndoIssueKindView::NotInTrash,
+            5 => crate::api::journal::UndoIssueKindView::Unsupported,
+            6 => crate::api::journal::UndoIssueKindView::Truncated,
+            _ => unreachable!("Invalid variant for UndoIssueKindView: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::journal::UndoIssueView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_kind = <crate::api::journal::UndoIssueKindView>::sse_decode(deserializer);
+        let mut var_path = <String>::sse_decode(deserializer);
+        let mut var_blocks = <bool>::sse_decode(deserializer);
+        return crate::api::journal::UndoIssueView { kind: var_kind, path: var_path, blocks: var_blocks };
     }
 }
 
@@ -2594,43 +3811,58 @@ fn pde_ffi_dispatcher_primary_impl(
         3 => wire__crate__api__attrs__apply_attributes_impl(port, ptr, rust_vec_len, data_len),
         4 => wire__crate__api__rename__batch_rename_apply_impl(port, ptr, rust_vec_len, data_len),
         5 => wire__crate__api__rename__batch_rename_preview_impl(port, ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__find__cancel_find_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__ops__cancel_operation_impl(port, ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__listing__close_listing_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__files__create_directory_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__files__create_file_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__files__create_hardlink_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__files__create_symlink_impl(port, ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__files__edit_symlink_impl(port, ptr, rust_vec_len, data_len),
-        14 => wire__crate__api__system__eject_volume_impl(port, ptr, rust_vec_len, data_len),
-        15 => wire__crate__api__files__extract_to_temp_impl(port, ptr, rust_vec_len, data_len),
-        16 => wire__crate__api__files__file_size_impl(port, ptr, rust_vec_len, data_len),
-        17 => wire__crate__api__ops__forget_operation_impl(port, ptr, rust_vec_len, data_len),
-        19 => wire__crate__api__system__free_space_impl(port, ptr, rust_vec_len, data_len),
-        20 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
-        23 => wire__crate__api__ops__list_operations_impl(port, ptr, rust_vec_len, data_len),
-        24 => wire__crate__api__system__list_volumes_impl(port, ptr, rust_vec_len, data_len),
-        25 => wire__crate__api__attrs__lookup_group_impl(port, ptr, rust_vec_len, data_len),
-        26 => wire__crate__api__attrs__lookup_user_impl(port, ptr, rust_vec_len, data_len),
-        27 => wire__crate__api__system__open_default_impl(port, ptr, rust_vec_len, data_len),
-        28 => wire__crate__api__listing__open_listing_impl(port, ptr, rust_vec_len, data_len),
-        29 => wire__crate__api__system__open_with_impl(port, ptr, rust_vec_len, data_len),
-        30 => wire__crate__api__ops__operation_progress_impl(port, ptr, rust_vec_len, data_len),
-        31 => wire__crate__api__ops__pause_operation_impl(port, ptr, rust_vec_len, data_len),
-        32 => wire__crate__api__listing__peek_listing_impl(port, ptr, rust_vec_len, data_len),
-        33 => wire__crate__api__attrs__read_attributes_impl(port, ptr, rust_vec_len, data_len),
-        34 => wire__crate__api__files__read_file_range_impl(port, ptr, rust_vec_len, data_len),
-        35 => wire__crate__api__files__read_symlink_impl(port, ptr, rust_vec_len, data_len),
-        36 => wire__crate__api__listing__refresh_listing_impl(port, ptr, rust_vec_len, data_len),
-        37 => wire__crate__api__files__rename_item_impl(port, ptr, rust_vec_len, data_len),
-        38 => wire__crate__api__files__resolve_path_impl(port, ptr, rust_vec_len, data_len),
-        39 => wire__crate__api__listing__resort_listing_impl(port, ptr, rust_vec_len, data_len),
-        40 => wire__crate__api__ops__resume_operation_impl(port, ptr, rust_vec_len, data_len),
-        41 => wire__crate__api__system__reveal_in_file_manager_impl(port, ptr, rust_vec_len, data_len),
-        43 => wire__crate__api__find__start_find_impl(port, ptr, rust_vec_len, data_len),
-        44 => wire__crate__api__ops__start_operation_impl(port, ptr, rust_vec_len, data_len),
-        45 => wire__crate__api__files__stat_impl(port, ptr, rust_vec_len, data_len),
-        46 => wire__crate__api__events__subscribe_events_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__checksum__cancel_checksums_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__duplicates__cancel_duplicates_impl(port, ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__find__cancel_find_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__sync__cancel_folder_compare_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__ops__cancel_operation_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__journal__check_journal_step_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__listing__close_listing_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__files__create_directory_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__files__create_file_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__files__create_hardlink_impl(port, ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__files__create_symlink_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__crate__api__files__edit_symlink_impl(port, ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__system__eject_volume_impl(port, ptr, rust_vec_len, data_len),
+        19 => wire__crate__api__files__extract_to_temp_impl(port, ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__files__file_size_impl(port, ptr, rust_vec_len, data_len),
+        21 => wire__crate__api__journal__forget_journal_step_impl(port, ptr, rust_vec_len, data_len),
+        22 => wire__crate__api__ops__forget_operation_impl(port, ptr, rust_vec_len, data_len),
+        24 => wire__crate__api__system__free_space_impl(port, ptr, rust_vec_len, data_len),
+        25 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
+        28 => wire__crate__api__journal__journal_summary_impl(port, ptr, rust_vec_len, data_len),
+        29 => wire__crate__api__ops__list_operations_impl(port, ptr, rust_vec_len, data_len),
+        30 => wire__crate__api__system__list_volumes_impl(port, ptr, rust_vec_len, data_len),
+        31 => wire__crate__api__attrs__lookup_group_impl(port, ptr, rust_vec_len, data_len),
+        32 => wire__crate__api__attrs__lookup_user_impl(port, ptr, rust_vec_len, data_len),
+        33 => wire__crate__api__system__open_default_impl(port, ptr, rust_vec_len, data_len),
+        34 => wire__crate__api__listing__open_listing_impl(port, ptr, rust_vec_len, data_len),
+        35 => wire__crate__api__system__open_with_impl(port, ptr, rust_vec_len, data_len),
+        36 => wire__crate__api__ops__operation_progress_impl(port, ptr, rust_vec_len, data_len),
+        37 => wire__crate__api__ops__pause_operation_impl(port, ptr, rust_vec_len, data_len),
+        38 => wire__crate__api__listing__peek_listing_impl(port, ptr, rust_vec_len, data_len),
+        39 => wire__crate__api__attrs__read_attributes_impl(port, ptr, rust_vec_len, data_len),
+        40 => wire__crate__api__files__read_file_range_impl(port, ptr, rust_vec_len, data_len),
+        41 => wire__crate__api__files__read_symlink_impl(port, ptr, rust_vec_len, data_len),
+        42 => wire__crate__api__listing__refresh_listing_impl(port, ptr, rust_vec_len, data_len),
+        43 => wire__crate__api__files__rename_item_impl(port, ptr, rust_vec_len, data_len),
+        44 => wire__crate__api__files__resolve_path_impl(port, ptr, rust_vec_len, data_len),
+        45 => wire__crate__api__listing__resort_listing_impl(port, ptr, rust_vec_len, data_len),
+        46 => wire__crate__api__ops__resume_operation_impl(port, ptr, rust_vec_len, data_len),
+        47 => wire__crate__api__system__reveal_in_file_manager_impl(port, ptr, rust_vec_len, data_len),
+        48 => wire__crate__api__checksum__save_checksum_file_impl(port, ptr, rust_vec_len, data_len),
+        50 => wire__crate__api__checksum__start_checksum_verify_impl(port, ptr, rust_vec_len, data_len),
+        51 => wire__crate__api__checksum__start_checksums_impl(port, ptr, rust_vec_len, data_len),
+        52 => wire__crate__api__sync__start_content_compare_impl(port, ptr, rust_vec_len, data_len),
+        53 => wire__crate__api__duplicates__start_duplicates_impl(port, ptr, rust_vec_len, data_len),
+        54 => wire__crate__api__find__start_find_impl(port, ptr, rust_vec_len, data_len),
+        55 => wire__crate__api__sync__start_folder_compare_impl(port, ptr, rust_vec_len, data_len),
+        56 => wire__crate__api__ops__start_operation_impl(port, ptr, rust_vec_len, data_len),
+        57 => wire__crate__api__sync__start_synchronize_impl(port, ptr, rust_vec_len, data_len),
+        58 => wire__crate__api__files__stat_impl(port, ptr, rust_vec_len, data_len),
+        59 => wire__crate__api__events__subscribe_events_impl(port, ptr, rust_vec_len, data_len),
+        60 => wire__crate__api__sync__take_content_differences_impl(port, ptr, rust_vec_len, data_len),
+        61 => wire__crate__api__journal__walk_journal_step_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -2643,10 +3875,10 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        18 => wire__crate__api__files__free_name_impl(ptr, rust_vec_len, data_len),
-        21 => wire__crate__api__listing__is_archive_impl(ptr, rust_vec_len, data_len),
-        22 => wire__crate__api__listing__is_directory_impl(ptr, rust_vec_len, data_len),
-        42 => wire__crate__api__system__standard_folders_impl(ptr, rust_vec_len, data_len),
+        23 => wire__crate__api__files__free_name_impl(ptr, rust_vec_len, data_len),
+        26 => wire__crate__api__listing__is_archive_impl(ptr, rust_vec_len, data_len),
+        27 => wire__crate__api__listing__is_directory_impl(ptr, rust_vec_len, data_len),
+        49 => wire__crate__api__system__standard_folders_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -2690,6 +3922,10 @@ impl flutter_rust_bridge::IntoDart for crate::api::types::AppEvent {
             self.find_current.into_into_dart().into_dart(),
             self.find_scanned.into_into_dart().into_dart(),
             self.find_error.into_into_dart().into_dart(),
+            self.journal.into_into_dart().into_dart(),
+            self.compare.into_into_dart().into_dart(),
+            self.checksum.into_into_dart().into_dart(),
+            self.duplicates.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -2708,6 +3944,10 @@ impl flutter_rust_bridge::IntoDart for crate::api::types::AppEventKind {
             Self::OperationProgress => 1.into_dart(),
             Self::FindProgress => 2.into_dart(),
             Self::FindDone => 3.into_dart(),
+            Self::JournalChanged => 4.into_dart(),
+            Self::CompareProgress => 5.into_dart(),
+            Self::ChecksumProgress => 6.into_dart(),
+            Self::DuplicatesProgress => 7.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -2791,6 +4031,165 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::types::CaseTransformView>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::checksum::ChecksumAlgorithmView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Sha256 => 0.into_dart(),
+            Self::Sha1 => 1.into_dart(),
+            Self::Md5 => 2.into_dart(),
+            Self::Blake3 => 3.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::checksum::ChecksumAlgorithmView
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::checksum::ChecksumAlgorithmView>
+    for crate::api::checksum::ChecksumAlgorithmView
+{
+    fn into_into_dart(self) -> crate::api::checksum::ChecksumAlgorithmView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::checksum::ChecksumFileView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.index.into_into_dart().into_dart(),
+            self.name.into_into_dart().into_dart(),
+            self.path.into_into_dart().into_dart(),
+            self.size.into_into_dart().into_dart(),
+            self.expected.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::checksum::ChecksumFileView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::checksum::ChecksumFileView>
+    for crate::api::checksum::ChecksumFileView
+{
+    fn into_into_dart(self) -> crate::api::checksum::ChecksumFileView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::checksum::ChecksumLineView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.hash.into_into_dart().into_dart(), self.name.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::checksum::ChecksumLineView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::checksum::ChecksumLineView>
+    for crate::api::checksum::ChecksumLineView
+{
+    fn into_into_dart(self) -> crate::api::checksum::ChecksumLineView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::checksum::ChecksumOutcomeView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.index.into_into_dart().into_dart(),
+            self.status.into_into_dart().into_dart(),
+            self.hash.into_into_dart().into_dart(),
+            self.error.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::checksum::ChecksumOutcomeView
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::checksum::ChecksumOutcomeView>
+    for crate::api::checksum::ChecksumOutcomeView
+{
+    fn into_into_dart(self) -> crate::api::checksum::ChecksumOutcomeView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::checksum::ChecksumRequestView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.paths.into_into_dart().into_dart(),
+            self.base.into_into_dart().into_dart(),
+            self.algorithm.into_into_dart().into_dart(),
+            self.recursive.into_into_dart().into_dart(),
+            self.include_hidden.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::checksum::ChecksumRequestView
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::checksum::ChecksumRequestView>
+    for crate::api::checksum::ChecksumRequestView
+{
+    fn into_into_dart(self) -> crate::api::checksum::ChecksumRequestView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::checksum::ChecksumStatusView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Ok => 0.into_dart(),
+            Self::Mismatch => 1.into_dart(),
+            Self::Missing => 2.into_dart(),
+            Self::Error => 3.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::checksum::ChecksumStatusView
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::checksum::ChecksumStatusView>
+    for crate::api::checksum::ChecksumStatusView
+{
+    fn into_into_dart(self) -> crate::api::checksum::ChecksumStatusView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::checksum::ChecksumUpdateView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.task_id.into_into_dart().into_dart(),
+            self.algorithm.into_into_dart().into_dart(),
+            self.files.into_into_dart().into_dart(),
+            self.outcomes.into_into_dart().into_dart(),
+            self.files_done.into_into_dart().into_dart(),
+            self.files_total.into_into_dart().into_dart(),
+            self.bytes_done.into_into_dart().into_dart(),
+            self.bytes_total.into_into_dart().into_dart(),
+            self.current.into_into_dart().into_dart(),
+            self.bad_lines.into_into_dart().into_dart(),
+            self.done.into_into_dart().into_dart(),
+            self.error.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::checksum::ChecksumUpdateView
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::checksum::ChecksumUpdateView>
+    for crate::api::checksum::ChecksumUpdateView
+{
+    fn into_into_dart(self) -> crate::api::checksum::ChecksumUpdateView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::types::CollationView {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         match self {
@@ -2806,6 +4205,90 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::types::CollationView>
     for crate::api::types::CollationView
 {
     fn into_into_dart(self) -> crate::api::types::CollationView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::sync::CompareErrorView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.path.into_into_dart().into_dart(), self.message.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::sync::CompareErrorView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::sync::CompareErrorView>
+    for crate::api::sync::CompareErrorView
+{
+    fn into_into_dart(self) -> crate::api::sync::CompareErrorView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::sync::CompareRowView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.left_rel.into_into_dart().into_dart(),
+            self.right_rel.into_into_dart().into_dart(),
+            self.is_dir.into_into_dart().into_dart(),
+            self.left.into_into_dart().into_dart(),
+            self.right.into_into_dart().into_dart(),
+            self.state.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::sync::CompareRowView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::sync::CompareRowView>
+    for crate::api::sync::CompareRowView
+{
+    fn into_into_dart(self) -> crate::api::sync::CompareRowView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::sync::CompareStateView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::LeftOnly => 0.into_dart(),
+            Self::RightOnly => 1.into_dart(),
+            Self::LeftNewer => 2.into_dart(),
+            Self::RightNewer => 3.into_dart(),
+            Self::Equal => 4.into_dart(),
+            Self::Different => 5.into_dart(),
+            Self::Conflict => 6.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::sync::CompareStateView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::sync::CompareStateView>
+    for crate::api::sync::CompareStateView
+{
+    fn into_into_dart(self) -> crate::api::sync::CompareStateView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::sync::CompareUpdateView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.task_id.into_into_dart().into_dart(),
+            self.rows.into_into_dart().into_dart(),
+            self.folders.into_into_dart().into_dart(),
+            self.files.into_into_dart().into_dart(),
+            self.bytes_compared.into_into_dart().into_dart(),
+            self.current.into_into_dart().into_dart(),
+            self.errors.into_into_dart().into_dart(),
+            self.done.into_into_dart().into_dart(),
+            self.error.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::sync::CompareUpdateView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::sync::CompareUpdateView>
+    for crate::api::sync::CompareUpdateView
+{
+    fn into_into_dart(self) -> crate::api::sync::CompareUpdateView {
         self
     }
 }
@@ -2847,6 +4330,128 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::types::ConflictSideView>
     for crate::api::types::ConflictSideView
 {
     fn into_into_dart(self) -> crate::api::types::ConflictSideView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::sync::ContentPairView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.left.into_into_dart().into_dart(), self.right.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::sync::ContentPairView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::sync::ContentPairView>
+    for crate::api::sync::ContentPairView
+{
+    fn into_into_dart(self) -> crate::api::sync::ContentPairView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::duplicates::DuplicateFileView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.path.into_into_dart().into_dart(), self.modified_ms.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::duplicates::DuplicateFileView
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::duplicates::DuplicateFileView>
+    for crate::api::duplicates::DuplicateFileView
+{
+    fn into_into_dart(self) -> crate::api::duplicates::DuplicateFileView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::duplicates::DuplicateGroupView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.size.into_into_dart().into_dart(), self.files.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::duplicates::DuplicateGroupView
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::duplicates::DuplicateGroupView>
+    for crate::api::duplicates::DuplicateGroupView
+{
+    fn into_into_dart(self) -> crate::api::duplicates::DuplicateGroupView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::duplicates::DuplicatesPhaseView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Scanning => 0.into_dart(),
+            Self::Comparing => 1.into_dart(),
+            Self::Hashing => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::duplicates::DuplicatesPhaseView
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::duplicates::DuplicatesPhaseView>
+    for crate::api::duplicates::DuplicatesPhaseView
+{
+    fn into_into_dart(self) -> crate::api::duplicates::DuplicatesPhaseView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::duplicates::DuplicatesRequestView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.roots.into_into_dart().into_dart(),
+            self.min_size.into_into_dart().into_dart(),
+            self.name_mask.into_into_dart().into_dart(),
+            self.include_hidden.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::duplicates::DuplicatesRequestView
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::duplicates::DuplicatesRequestView>
+    for crate::api::duplicates::DuplicatesRequestView
+{
+    fn into_into_dart(self) -> crate::api::duplicates::DuplicatesRequestView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::duplicates::DuplicatesUpdateView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.task_id.into_into_dart().into_dart(),
+            self.phase.into_into_dart().into_dart(),
+            self.files_scanned.into_into_dart().into_dart(),
+            self.candidates.into_into_dart().into_dart(),
+            self.files_hashed.into_into_dart().into_dart(),
+            self.bytes_done.into_into_dart().into_dart(),
+            self.current.into_into_dart().into_dart(),
+            self.groups.into_into_dart().into_dart(),
+            self.done.into_into_dart().into_dart(),
+            self.error.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::duplicates::DuplicatesUpdateView
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::duplicates::DuplicatesUpdateView>
+    for crate::api::duplicates::DuplicatesUpdateView
+{
+    fn into_into_dart(self) -> crate::api::duplicates::DuplicatesUpdateView {
         self
     }
 }
@@ -2994,6 +4599,33 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::types::FindRequestView>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::sync::FolderCompareRequestView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.left.into_into_dart().into_dart(),
+            self.right.into_into_dart().into_dart(),
+            self.recursive.into_into_dart().into_dart(),
+            self.compare_content.into_into_dart().into_dart(),
+            self.time_tolerance_ms.into_into_dart().into_dart(),
+            self.name_mask.into_into_dart().into_dart(),
+            self.include_hidden.into_into_dart().into_dart(),
+            self.case_sensitive.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::sync::FolderCompareRequestView
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::sync::FolderCompareRequestView>
+    for crate::api::sync::FolderCompareRequestView
+{
+    fn into_into_dart(self) -> crate::api::sync::FolderCompareRequestView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::types::FolderSizeView {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [self.path.into_into_dart().into_dart(), self.bytes.into_into_dart().into_dart()].into_dart()
@@ -3004,6 +4636,20 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::types::FolderSizeView>
     for crate::api::types::FolderSizeView
 {
     fn into_into_dart(self) -> crate::api::types::FolderSizeView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::journal::JournalSummaryView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.undo.into_into_dart().into_dart(), self.redo.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::journal::JournalSummaryView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::journal::JournalSummaryView>
+    for crate::api::journal::JournalSummaryView
+{
+    fn into_into_dart(self) -> crate::api::journal::JournalSummaryView {
         self
     }
 }
@@ -3120,6 +4766,10 @@ impl flutter_rust_bridge::IntoDart for crate::api::types::OpKindView {
             Self::Compress => 5.into_dart(),
             Self::Extract => 6.into_dart(),
             Self::CalcSizes => 7.into_dart(),
+            Self::Synchronize => 8.into_dart(),
+            Self::CompareContents => 9.into_dart(),
+            Self::Undo => 10.into_dart(),
+            Self::Redo => 11.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -3357,6 +5007,24 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::types::RenameProblemView>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::sync::SideInfoView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.size.into_into_dart().into_dart(),
+            self.modified_ms.into_into_dart().into_dart(),
+            self.is_dir.into_into_dart().into_dart(),
+            self.is_symlink.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::sync::SideInfoView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::sync::SideInfoView> for crate::api::sync::SideInfoView {
+    fn into_into_dart(self) -> crate::api::sync::SideInfoView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::types::SizeOpView {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         match self {
@@ -3444,6 +5112,178 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::types::StandardFoldersView>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::journal::StepKindView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Copy => 0.into_dart(),
+            Self::Move => 1.into_dart(),
+            Self::Trash => 2.into_dart(),
+            Self::Rename => 3.into_dart(),
+            Self::CreateFolder => 4.into_dart(),
+            Self::CreateFile => 5.into_dart(),
+            Self::CreateLink => 6.into_dart(),
+            Self::Duplicate => 7.into_dart(),
+            Self::Compress => 8.into_dart(),
+            Self::Extract => 9.into_dart(),
+            Self::Synchronize => 10.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::journal::StepKindView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::journal::StepKindView>
+    for crate::api::journal::StepKindView
+{
+    fn into_into_dart(self) -> crate::api::journal::StepKindView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::journal::StepSummaryView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.id.into_into_dart().into_dart(),
+            self.kind.into_into_dart().into_dart(),
+            self.items.into_into_dart().into_dart(),
+            self.first_name.into_into_dart().into_dart(),
+            self.partial.into_into_dart().into_dart(),
+            self.at_ms.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::journal::StepSummaryView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::journal::StepSummaryView>
+    for crate::api::journal::StepSummaryView
+{
+    fn into_into_dart(self) -> crate::api::journal::StepSummaryView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::sync::SyncActionView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::CopyToRight => 0.into_dart(),
+            Self::CopyToLeft => 1.into_dart(),
+            Self::DeleteLeft => 2.into_dart(),
+            Self::DeleteRight => 3.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::sync::SyncActionView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::sync::SyncActionView>
+    for crate::api::sync::SyncActionView
+{
+    fn into_into_dart(self) -> crate::api::sync::SyncActionView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::sync::SyncItemView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.left_rel.into_into_dart().into_dart(),
+            self.right_rel.into_into_dart().into_dart(),
+            self.is_dir.into_into_dart().into_dart(),
+            self.action.into_into_dart().into_dart(),
+            self.left.into_into_dart().into_dart(),
+            self.right.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::sync::SyncItemView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::sync::SyncItemView> for crate::api::sync::SyncItemView {
+    fn into_into_dart(self) -> crate::api::sync::SyncItemView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::sync::SyncPlanView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.left.into_into_dart().into_dart(),
+            self.right.into_into_dart().into_dart(),
+            self.recursive.into_into_dart().into_dart(),
+            self.items.into_into_dart().into_dart(),
+            self.preserve_attributes.into_into_dart().into_dart(),
+            self.verify.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::sync::SyncPlanView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::sync::SyncPlanView> for crate::api::sync::SyncPlanView {
+    fn into_into_dart(self) -> crate::api::sync::SyncPlanView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::journal::UndoCheckView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.step.into_into_dart().into_dart(),
+            self.issues.into_into_dart().into_dart(),
+            self.issues_total.into_into_dart().into_dart(),
+            self.doable.into_into_dart().into_dart(),
+            self.total.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::journal::UndoCheckView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::journal::UndoCheckView>
+    for crate::api::journal::UndoCheckView
+{
+    fn into_into_dart(self) -> crate::api::journal::UndoCheckView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::journal::UndoIssueKindView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Missing => 0.into_dart(),
+            Self::Occupied => 1.into_dart(),
+            Self::Changed => 2.into_dart(),
+            Self::Lost => 3.into_dart(),
+            Self::NotInTrash => 4.into_dart(),
+            Self::Unsupported => 5.into_dart(),
+            Self::Truncated => 6.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::journal::UndoIssueKindView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::journal::UndoIssueKindView>
+    for crate::api::journal::UndoIssueKindView
+{
+    fn into_into_dart(self) -> crate::api::journal::UndoIssueKindView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::journal::UndoIssueView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.kind.into_into_dart().into_dart(),
+            self.path.into_into_dart().into_dart(),
+            self.blocks.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::journal::UndoIssueView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::journal::UndoIssueView>
+    for crate::api::journal::UndoIssueView
+{
+    fn into_into_dart(self) -> crate::api::journal::UndoIssueView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::types::VolumeView {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -3522,6 +5362,10 @@ impl SseEncode for crate::api::types::AppEvent {
         <Option<String>>::sse_encode(self.find_current, serializer);
         <i64>::sse_encode(self.find_scanned, serializer);
         <Option<String>>::sse_encode(self.find_error, serializer);
+        <Option<crate::api::journal::JournalSummaryView>>::sse_encode(self.journal, serializer);
+        <Option<crate::api::sync::CompareUpdateView>>::sse_encode(self.compare, serializer);
+        <Option<crate::api::checksum::ChecksumUpdateView>>::sse_encode(self.checksum, serializer);
+        <Option<crate::api::duplicates::DuplicatesUpdateView>>::sse_encode(self.duplicates, serializer);
     }
 }
 
@@ -3534,6 +5378,10 @@ impl SseEncode for crate::api::types::AppEventKind {
                 crate::api::types::AppEventKind::OperationProgress => 1,
                 crate::api::types::AppEventKind::FindProgress => 2,
                 crate::api::types::AppEventKind::FindDone => 3,
+                crate::api::types::AppEventKind::JournalChanged => 4,
+                crate::api::types::AppEventKind::CompareProgress => 5,
+                crate::api::types::AppEventKind::ChecksumProgress => 6,
+                crate::api::types::AppEventKind::DuplicatesProgress => 7,
                 _ => {
                     unimplemented!("");
                 }
@@ -3600,6 +5448,100 @@ impl SseEncode for crate::api::types::CaseTransformView {
     }
 }
 
+impl SseEncode for crate::api::checksum::ChecksumAlgorithmView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::checksum::ChecksumAlgorithmView::Sha256 => 0,
+                crate::api::checksum::ChecksumAlgorithmView::Sha1 => 1,
+                crate::api::checksum::ChecksumAlgorithmView::Md5 => 2,
+                crate::api::checksum::ChecksumAlgorithmView::Blake3 => 3,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::checksum::ChecksumFileView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i64>::sse_encode(self.index, serializer);
+        <String>::sse_encode(self.name, serializer);
+        <String>::sse_encode(self.path, serializer);
+        <i64>::sse_encode(self.size, serializer);
+        <Option<String>>::sse_encode(self.expected, serializer);
+    }
+}
+
+impl SseEncode for crate::api::checksum::ChecksumLineView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.hash, serializer);
+        <String>::sse_encode(self.name, serializer);
+    }
+}
+
+impl SseEncode for crate::api::checksum::ChecksumOutcomeView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i64>::sse_encode(self.index, serializer);
+        <crate::api::checksum::ChecksumStatusView>::sse_encode(self.status, serializer);
+        <Option<String>>::sse_encode(self.hash, serializer);
+        <Option<crate::api::types::FerryxError>>::sse_encode(self.error, serializer);
+    }
+}
+
+impl SseEncode for crate::api::checksum::ChecksumRequestView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<String>>::sse_encode(self.paths, serializer);
+        <String>::sse_encode(self.base, serializer);
+        <crate::api::checksum::ChecksumAlgorithmView>::sse_encode(self.algorithm, serializer);
+        <bool>::sse_encode(self.recursive, serializer);
+        <bool>::sse_encode(self.include_hidden, serializer);
+    }
+}
+
+impl SseEncode for crate::api::checksum::ChecksumStatusView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::checksum::ChecksumStatusView::Ok => 0,
+                crate::api::checksum::ChecksumStatusView::Mismatch => 1,
+                crate::api::checksum::ChecksumStatusView::Missing => 2,
+                crate::api::checksum::ChecksumStatusView::Error => 3,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::checksum::ChecksumUpdateView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i64>::sse_encode(self.task_id, serializer);
+        <Option<crate::api::checksum::ChecksumAlgorithmView>>::sse_encode(self.algorithm, serializer);
+        <Vec<crate::api::checksum::ChecksumFileView>>::sse_encode(self.files, serializer);
+        <Vec<crate::api::checksum::ChecksumOutcomeView>>::sse_encode(self.outcomes, serializer);
+        <i64>::sse_encode(self.files_done, serializer);
+        <i64>::sse_encode(self.files_total, serializer);
+        <i64>::sse_encode(self.bytes_done, serializer);
+        <i64>::sse_encode(self.bytes_total, serializer);
+        <Option<String>>::sse_encode(self.current, serializer);
+        <i64>::sse_encode(self.bad_lines, serializer);
+        <bool>::sse_encode(self.done, serializer);
+        <Option<String>>::sse_encode(self.error, serializer);
+    }
+}
+
 impl SseEncode for crate::api::types::CollationView {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -3614,6 +5556,62 @@ impl SseEncode for crate::api::types::CollationView {
             },
             serializer,
         );
+    }
+}
+
+impl SseEncode for crate::api::sync::CompareErrorView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.path, serializer);
+        <String>::sse_encode(self.message, serializer);
+    }
+}
+
+impl SseEncode for crate::api::sync::CompareRowView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.left_rel, serializer);
+        <Option<String>>::sse_encode(self.right_rel, serializer);
+        <bool>::sse_encode(self.is_dir, serializer);
+        <Option<crate::api::sync::SideInfoView>>::sse_encode(self.left, serializer);
+        <Option<crate::api::sync::SideInfoView>>::sse_encode(self.right, serializer);
+        <crate::api::sync::CompareStateView>::sse_encode(self.state, serializer);
+    }
+}
+
+impl SseEncode for crate::api::sync::CompareStateView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::sync::CompareStateView::LeftOnly => 0,
+                crate::api::sync::CompareStateView::RightOnly => 1,
+                crate::api::sync::CompareStateView::LeftNewer => 2,
+                crate::api::sync::CompareStateView::RightNewer => 3,
+                crate::api::sync::CompareStateView::Equal => 4,
+                crate::api::sync::CompareStateView::Different => 5,
+                crate::api::sync::CompareStateView::Conflict => 6,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::sync::CompareUpdateView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i64>::sse_encode(self.task_id, serializer);
+        <Vec<crate::api::sync::CompareRowView>>::sse_encode(self.rows, serializer);
+        <i64>::sse_encode(self.folders, serializer);
+        <i64>::sse_encode(self.files, serializer);
+        <i64>::sse_encode(self.bytes_compared, serializer);
+        <Option<String>>::sse_encode(self.current, serializer);
+        <Vec<crate::api::sync::CompareErrorView>>::sse_encode(self.errors, serializer);
+        <bool>::sse_encode(self.done, serializer);
+        <Option<String>>::sse_encode(self.error, serializer);
     }
 }
 
@@ -3643,6 +5641,73 @@ impl SseEncode for crate::api::types::ConflictSideView {
         <Option<i64>>::sse_encode(self.size, serializer);
         <Option<i64>>::sse_encode(self.modified_ms, serializer);
         <bool>::sse_encode(self.is_dir, serializer);
+    }
+}
+
+impl SseEncode for crate::api::sync::ContentPairView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.left, serializer);
+        <String>::sse_encode(self.right, serializer);
+    }
+}
+
+impl SseEncode for crate::api::duplicates::DuplicateFileView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.path, serializer);
+        <Option<i64>>::sse_encode(self.modified_ms, serializer);
+    }
+}
+
+impl SseEncode for crate::api::duplicates::DuplicateGroupView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i64>::sse_encode(self.size, serializer);
+        <Vec<crate::api::duplicates::DuplicateFileView>>::sse_encode(self.files, serializer);
+    }
+}
+
+impl SseEncode for crate::api::duplicates::DuplicatesPhaseView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::duplicates::DuplicatesPhaseView::Scanning => 0,
+                crate::api::duplicates::DuplicatesPhaseView::Comparing => 1,
+                crate::api::duplicates::DuplicatesPhaseView::Hashing => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::duplicates::DuplicatesRequestView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<String>>::sse_encode(self.roots, serializer);
+        <i64>::sse_encode(self.min_size, serializer);
+        <String>::sse_encode(self.name_mask, serializer);
+        <bool>::sse_encode(self.include_hidden, serializer);
+    }
+}
+
+impl SseEncode for crate::api::duplicates::DuplicatesUpdateView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i64>::sse_encode(self.task_id, serializer);
+        <Option<crate::api::duplicates::DuplicatesPhaseView>>::sse_encode(self.phase, serializer);
+        <i64>::sse_encode(self.files_scanned, serializer);
+        <i64>::sse_encode(self.candidates, serializer);
+        <i64>::sse_encode(self.files_hashed, serializer);
+        <i64>::sse_encode(self.bytes_done, serializer);
+        <Option<String>>::sse_encode(self.current, serializer);
+        <Vec<crate::api::duplicates::DuplicateGroupView>>::sse_encode(self.groups, serializer);
+        <bool>::sse_encode(self.done, serializer);
+        <Option<String>>::sse_encode(self.error, serializer);
     }
 }
 
@@ -3751,6 +5816,20 @@ impl SseEncode for crate::api::types::FindRequestView {
     }
 }
 
+impl SseEncode for crate::api::sync::FolderCompareRequestView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.left, serializer);
+        <String>::sse_encode(self.right, serializer);
+        <bool>::sse_encode(self.recursive, serializer);
+        <bool>::sse_encode(self.compare_content, serializer);
+        <i64>::sse_encode(self.time_tolerance_ms, serializer);
+        <String>::sse_encode(self.name_mask, serializer);
+        <bool>::sse_encode(self.include_hidden, serializer);
+        <bool>::sse_encode(self.case_sensitive, serializer);
+    }
+}
+
 impl SseEncode for crate::api::types::FolderSizeView {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -3773,6 +5852,14 @@ impl SseEncode for i64 {
     }
 }
 
+impl SseEncode for crate::api::journal::JournalSummaryView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Option<crate::api::journal::StepSummaryView>>::sse_encode(self.undo, serializer);
+        <Option<crate::api::journal::StepSummaryView>>::sse_encode(self.redo, serializer);
+    }
+}
+
 impl SseEncode for Vec<String> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -3789,6 +5876,86 @@ impl SseEncode for Vec<crate::api::types::AnswerView> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::api::types::AnswerView>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::checksum::ChecksumFileView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::checksum::ChecksumFileView>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::checksum::ChecksumLineView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::checksum::ChecksumLineView>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::checksum::ChecksumOutcomeView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::checksum::ChecksumOutcomeView>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::sync::CompareErrorView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::sync::CompareErrorView>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::sync::CompareRowView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::sync::CompareRowView>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::sync::ContentPairView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::sync::ContentPairView>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::duplicates::DuplicateFileView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::duplicates::DuplicateFileView>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::duplicates::DuplicateGroupView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::duplicates::DuplicateGroupView>::sse_encode(item, serializer);
         }
     }
 }
@@ -3839,6 +6006,16 @@ impl SseEncode for Vec<i32> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <i32>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<i64> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <i64>::sse_encode(item, serializer);
         }
     }
 }
@@ -3899,6 +6076,26 @@ impl SseEncode for Vec<crate::api::types::RenamePairView> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::api::types::RenamePairView>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::sync::SyncItemView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::sync::SyncItemView>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::journal::UndoIssueView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::journal::UndoIssueView>::sse_encode(item, serializer);
         }
     }
 }
@@ -3997,6 +6194,10 @@ impl SseEncode for crate::api::types::OpKindView {
                 crate::api::types::OpKindView::Compress => 5,
                 crate::api::types::OpKindView::Extract => 6,
                 crate::api::types::OpKindView::CalcSizes => 7,
+                crate::api::types::OpKindView::Synchronize => 8,
+                crate::api::types::OpKindView::CompareContents => 9,
+                crate::api::types::OpKindView::Undo => 10,
+                crate::api::types::OpKindView::Redo => 11,
                 _ => {
                     unimplemented!("");
                 }
@@ -4053,6 +6254,36 @@ impl SseEncode for Option<String> {
     }
 }
 
+impl SseEncode for Option<crate::api::checksum::ChecksumAlgorithmView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::checksum::ChecksumAlgorithmView>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::api::checksum::ChecksumUpdateView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::checksum::ChecksumUpdateView>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::api::sync::CompareUpdateView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::sync::CompareUpdateView>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for Option<crate::api::types::ConflictSideView> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -4063,12 +6294,52 @@ impl SseEncode for Option<crate::api::types::ConflictSideView> {
     }
 }
 
+impl SseEncode for Option<crate::api::duplicates::DuplicatesPhaseView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::duplicates::DuplicatesPhaseView>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::api::duplicates::DuplicatesUpdateView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::duplicates::DuplicatesUpdateView>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::api::types::FerryxError> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::types::FerryxError>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for Option<i64> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <i64>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::api::journal::JournalSummaryView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::journal::JournalSummaryView>::sse_encode(value, serializer);
         }
     }
 }
@@ -4093,6 +6364,16 @@ impl SseEncode for Option<crate::api::types::QuestionView> {
     }
 }
 
+impl SseEncode for Option<crate::api::sync::SideInfoView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::sync::SideInfoView>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for Option<crate::api::types::SizeOpView> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -4103,12 +6384,32 @@ impl SseEncode for Option<crate::api::types::SizeOpView> {
     }
 }
 
+impl SseEncode for Option<crate::api::journal::StepSummaryView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::journal::StepSummaryView>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for Option<u32> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <u32>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::api::journal::UndoCheckView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::journal::UndoCheckView>::sse_encode(value, serializer);
         }
     }
 }
@@ -4233,6 +6534,16 @@ impl SseEncode for crate::api::types::RenameProblemView {
     }
 }
 
+impl SseEncode for crate::api::sync::SideInfoView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i64>::sse_encode(self.size, serializer);
+        <Option<i64>>::sse_encode(self.modified_ms, serializer);
+        <bool>::sse_encode(self.is_dir, serializer);
+        <bool>::sse_encode(self.is_symlink, serializer);
+    }
+}
+
 impl SseEncode for crate::api::types::SizeOpView {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -4298,6 +6609,85 @@ impl SseEncode for crate::api::types::StandardFoldersView {
     }
 }
 
+impl SseEncode for crate::api::journal::StepKindView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::journal::StepKindView::Copy => 0,
+                crate::api::journal::StepKindView::Move => 1,
+                crate::api::journal::StepKindView::Trash => 2,
+                crate::api::journal::StepKindView::Rename => 3,
+                crate::api::journal::StepKindView::CreateFolder => 4,
+                crate::api::journal::StepKindView::CreateFile => 5,
+                crate::api::journal::StepKindView::CreateLink => 6,
+                crate::api::journal::StepKindView::Duplicate => 7,
+                crate::api::journal::StepKindView::Compress => 8,
+                crate::api::journal::StepKindView::Extract => 9,
+                crate::api::journal::StepKindView::Synchronize => 10,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::journal::StepSummaryView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i64>::sse_encode(self.id, serializer);
+        <crate::api::journal::StepKindView>::sse_encode(self.kind, serializer);
+        <i64>::sse_encode(self.items, serializer);
+        <String>::sse_encode(self.first_name, serializer);
+        <bool>::sse_encode(self.partial, serializer);
+        <i64>::sse_encode(self.at_ms, serializer);
+    }
+}
+
+impl SseEncode for crate::api::sync::SyncActionView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::sync::SyncActionView::CopyToRight => 0,
+                crate::api::sync::SyncActionView::CopyToLeft => 1,
+                crate::api::sync::SyncActionView::DeleteLeft => 2,
+                crate::api::sync::SyncActionView::DeleteRight => 3,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::sync::SyncItemView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.left_rel, serializer);
+        <Option<String>>::sse_encode(self.right_rel, serializer);
+        <bool>::sse_encode(self.is_dir, serializer);
+        <crate::api::sync::SyncActionView>::sse_encode(self.action, serializer);
+        <Option<crate::api::sync::SideInfoView>>::sse_encode(self.left, serializer);
+        <Option<crate::api::sync::SideInfoView>>::sse_encode(self.right, serializer);
+    }
+}
+
+impl SseEncode for crate::api::sync::SyncPlanView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.left, serializer);
+        <String>::sse_encode(self.right, serializer);
+        <bool>::sse_encode(self.recursive, serializer);
+        <Vec<crate::api::sync::SyncItemView>>::sse_encode(self.items, serializer);
+        <bool>::sse_encode(self.preserve_attributes, serializer);
+        <bool>::sse_encode(self.verify, serializer);
+    }
+}
+
 impl SseEncode for u32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -4309,6 +6699,47 @@ impl SseEncode for u8 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         serializer.cursor.write_u8(self).unwrap();
+    }
+}
+
+impl SseEncode for crate::api::journal::UndoCheckView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::journal::StepSummaryView>::sse_encode(self.step, serializer);
+        <Vec<crate::api::journal::UndoIssueView>>::sse_encode(self.issues, serializer);
+        <i64>::sse_encode(self.issues_total, serializer);
+        <i64>::sse_encode(self.doable, serializer);
+        <i64>::sse_encode(self.total, serializer);
+    }
+}
+
+impl SseEncode for crate::api::journal::UndoIssueKindView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::journal::UndoIssueKindView::Missing => 0,
+                crate::api::journal::UndoIssueKindView::Occupied => 1,
+                crate::api::journal::UndoIssueKindView::Changed => 2,
+                crate::api::journal::UndoIssueKindView::Lost => 3,
+                crate::api::journal::UndoIssueKindView::NotInTrash => 4,
+                crate::api::journal::UndoIssueKindView::Unsupported => 5,
+                crate::api::journal::UndoIssueKindView::Truncated => 6,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::journal::UndoIssueView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::journal::UndoIssueKindView>::sse_encode(self.kind, serializer);
+        <String>::sse_encode(self.path, serializer);
+        <bool>::sse_encode(self.blocks, serializer);
     }
 }
 

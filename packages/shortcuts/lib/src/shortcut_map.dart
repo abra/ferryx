@@ -214,6 +214,10 @@ class ShortcutMap {
     add(AppCommand.refresh, key(LogicalKeyboardKey.keyR, shift: true));
     add(AppCommand.openItem, seq(g, LogicalKeyboardKey.keyX));
     add(AppCommand.cheatSheet, key(LogicalKeyboardKey.slash, shift: true));
+    // ─── Operations ───
+    // `u` is a prefix here (`uv`, `uy`), so undo takes `uu`.
+    add(AppCommand.undo, seq(u, u));
+    add(AppCommand.redo, key(u, shift: true));
     return map;
   }
 
@@ -485,6 +489,21 @@ const _defaults = <AppCommand, List<Chord>>{
   AppCommand.editSymlink: [],
   AppCommand.revealInFileManager: [],
   AppCommand.openWith: [],
+
+  // ─── Operations ───
+  // Total Commander's Compare and Synchronize Directories.
+  AppCommand.compareFolders: [Chord(LogicalKeyboardKey.f2, shift: true)],
+  AppCommand.synchronizeFolders: [
+    Chord(LogicalKeyboardKey.f2, shift: true, alt: true),
+  ],
+  AppCommand.undo: [Chord(LogicalKeyboardKey.keyZ, primary: true)],
+  AppCommand.redo: [Chord(LogicalKeyboardKey.keyZ, primary: true, shift: true)],
+  AppCommand.checksums: [
+    Chord(LogicalKeyboardKey.keyH, primary: true, control: true),
+  ],
+  AppCommand.findDuplicates: [
+    Chord(LogicalKeyboardKey.keyF, primary: true, shift: true),
+  ],
 
   // Window and help
   AppCommand.focusLeftPanel: [

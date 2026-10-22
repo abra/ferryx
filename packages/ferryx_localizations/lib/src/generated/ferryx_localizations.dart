@@ -3871,6 +3871,1032 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Dismiss'**
   String get cmdDismiss;
+
+  /// No description provided for @cmdCompareFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare Folders'**
+  String get cmdCompareFolders;
+
+  /// No description provided for @cmdSynchronizeFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronize Folders…'**
+  String get cmdSynchronizeFolders;
+
+  /// No description provided for @cmdUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get cmdUndo;
+
+  /// No description provided for @cmdRedo.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get cmdRedo;
+
+  /// No description provided for @cmdChecksums.
+  ///
+  /// In en, this message translates to:
+  /// **'Checksums…'**
+  String get cmdChecksums;
+
+  /// No description provided for @cmdFindDuplicates.
+  ///
+  /// In en, this message translates to:
+  /// **'Find Duplicates…'**
+  String get cmdFindDuplicates;
+
+  /// No description provided for @opSynchronizeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Synchronizing 1 item} other{Synchronizing {count} items}}'**
+  String opSynchronizeTitle(int count);
+
+  /// No description provided for @opCompareContentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Comparing 1 pair of files} other{Comparing {count} pairs of files}}'**
+  String opCompareContentsTitle(int count);
+
+  /// No description provided for @opUndoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Undoing 1 change} other{Undoing {count} changes}}'**
+  String opUndoTitle(int count);
+
+  /// No description provided for @opRedoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Redoing 1 change} other{Redoing {count} changes}}'**
+  String opRedoTitle(int count);
+
+  /// After Compare Folders: how many rows each panel selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected {left} on the left, {right} on the right'**
+  String compareSelected(String left, String right);
+
+  /// No description provided for @compareSame.
+  ///
+  /// In en, this message translates to:
+  /// **'The folders hold the same files'**
+  String get compareSame;
+
+  /// No description provided for @compareNeedsFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Both panels need to show a folder'**
+  String get compareNeedsFolders;
+
+  /// No description provided for @compareSameFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Both panels show the same folder'**
+  String get compareSameFolder;
+
+  /// No description provided for @compareContentsStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Comparing the contents of 1 pair of files…} other{Comparing the contents of {count} pairs of files…}}'**
+  String compareContentsStarted(int count);
+
+  /// No description provided for @compareContentsNotHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Contents are compared for folders on disk only; compared by size and date'**
+  String get compareContentsNotHere;
+
+  /// No description provided for @compareGroupLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare Folders'**
+  String get compareGroupLabel;
+
+  /// No description provided for @compareContentsSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare the contents of files of the same size'**
+  String get compareContentsSetting;
+
+  /// One item a step of the undo journal acted on, by name.
+  ///
+  /// In en, this message translates to:
+  /// **'“{name}”'**
+  String journalWhatOne(String name);
+
+  /// How many items a step of the undo journal acted on.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item} other{{count} items}}'**
+  String journalWhatMany(int count);
+
+  /// No description provided for @journalStepCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy of {what}'**
+  String journalStepCopy(String what);
+
+  /// No description provided for @journalStepMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move of {what}'**
+  String journalStepMove(String what);
+
+  /// No description provided for @journalStepTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to Trash of {what}'**
+  String journalStepTrash(String what);
+
+  /// No description provided for @journalStepRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename of {what}'**
+  String journalStepRename(String what);
+
+  /// No description provided for @journalStepCreateFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'New Folder {what}'**
+  String journalStepCreateFolder(String what);
+
+  /// No description provided for @journalStepCreateFile.
+  ///
+  /// In en, this message translates to:
+  /// **'New File {what}'**
+  String journalStepCreateFile(String what);
+
+  /// No description provided for @journalStepCreateLink.
+  ///
+  /// In en, this message translates to:
+  /// **'New Link {what}'**
+  String journalStepCreateLink(String what);
+
+  /// No description provided for @journalStepDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate of {what}'**
+  String journalStepDuplicate(String what);
+
+  /// No description provided for @journalStepCompress.
+  ///
+  /// In en, this message translates to:
+  /// **'Compress of {what}'**
+  String journalStepCompress(String what);
+
+  /// No description provided for @journalStepExtract.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract of {what}'**
+  String journalStepExtract(String what);
+
+  /// No description provided for @journalStepSynchronize.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronize of {what}'**
+  String journalStepSynchronize(String what);
+
+  /// The Undo item of a menu, naming what it undoes.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo {step}'**
+  String undoMenu(String step);
+
+  /// No description provided for @redoMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo {step}'**
+  String redoMenu(String step);
+
+  /// The title of an undo under way, and the notice that starts it.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo {step}'**
+  String undoCardTitle(String step);
+
+  /// No description provided for @redoCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo {step}'**
+  String redoCardTitle(String step);
+
+  /// No description provided for @undoNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to undo'**
+  String get undoNothing;
+
+  /// No description provided for @redoNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to redo'**
+  String get redoNothing;
+
+  /// No description provided for @undoMoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Something else changed the files first; try again'**
+  String get undoMoved;
+
+  /// No description provided for @undoDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo {step}?'**
+  String undoDialogTitle(String step);
+
+  /// No description provided for @redoDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo {step}?'**
+  String redoDialogTitle(String step);
+
+  /// No description provided for @undoPartly.
+  ///
+  /// In en, this message translates to:
+  /// **'{doable} of {total} changes can be undone. These cannot:'**
+  String undoPartly(int doable, int total);
+
+  /// No description provided for @redoPartly.
+  ///
+  /// In en, this message translates to:
+  /// **'{doable} of {total} changes can be redone. These cannot:'**
+  String redoPartly(int doable, int total);
+
+  /// No description provided for @undoNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None of its changes can be undone any more:'**
+  String get undoNone;
+
+  /// No description provided for @redoNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None of its changes can be redone any more:'**
+  String get redoNone;
+
+  /// No description provided for @undoWarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'It can be undone, but note:'**
+  String get undoWarnings;
+
+  /// No description provided for @redoWarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'It can be redone, but note:'**
+  String get redoWarnings;
+
+  /// No description provided for @undoIssueMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No longer there'**
+  String get undoIssueMissing;
+
+  /// No description provided for @undoIssueOccupied.
+  ///
+  /// In en, this message translates to:
+  /// **'Its place is taken'**
+  String get undoIssueOccupied;
+
+  /// No description provided for @undoIssueChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed since; it goes to the Trash all the same'**
+  String get undoIssueChanged;
+
+  /// No description provided for @undoIssueLost.
+  ///
+  /// In en, this message translates to:
+  /// **'Overwritten: its earlier contents are gone, it stays as it is'**
+  String get undoIssueLost;
+
+  /// No description provided for @undoIssueNotInTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'No longer in the Trash'**
+  String get undoIssueNotInTrash;
+
+  /// No description provided for @undoIssueUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Items cannot be put back from the Trash here'**
+  String get undoIssueUnsupported;
+
+  /// No description provided for @undoIssueTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many items changed to undo'**
+  String get undoIssueTruncated;
+
+  /// No description provided for @undoMoreIssues.
+  ///
+  /// In en, this message translates to:
+  /// **'…and {count} more'**
+  String undoMoreIssues(int count);
+
+  /// No description provided for @undoAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undoAction;
+
+  /// No description provided for @redoAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get redoAction;
+
+  /// No description provided for @undoForget.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget Step'**
+  String get undoForget;
+
+  /// No description provided for @undoForgotten.
+  ///
+  /// In en, this message translates to:
+  /// **'The step is forgotten'**
+  String get undoForgotten;
+
+  /// No description provided for @syncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronize folders'**
+  String get syncTitle;
+
+  /// No description provided for @syncLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left folder'**
+  String get syncLeft;
+
+  /// No description provided for @syncRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right folder'**
+  String get syncRight;
+
+  /// No description provided for @syncSwap.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap the folders'**
+  String get syncSwap;
+
+  /// No description provided for @syncSubfolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Include subfolders'**
+  String get syncSubfolders;
+
+  /// No description provided for @syncByContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare contents'**
+  String get syncByContent;
+
+  /// No description provided for @syncFatTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore time differences up to 2 s'**
+  String get syncFatTime;
+
+  /// No description provided for @syncHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden files'**
+  String get syncHidden;
+
+  /// No description provided for @syncMask.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get syncMask;
+
+  /// No description provided for @syncMaskHint.
+  ///
+  /// In en, this message translates to:
+  /// **'All files, or a mask: *.jpg;*.png'**
+  String get syncMaskHint;
+
+  /// No description provided for @syncDirection.
+  ///
+  /// In en, this message translates to:
+  /// **'Direction'**
+  String get syncDirection;
+
+  /// No description provided for @syncBothWays.
+  ///
+  /// In en, this message translates to:
+  /// **'Both ways'**
+  String get syncBothWays;
+
+  /// No description provided for @syncLeftToRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Left to right'**
+  String get syncLeftToRight;
+
+  /// No description provided for @syncRightToLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Right to left'**
+  String get syncRightToLeft;
+
+  /// No description provided for @syncDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete what the source lacks'**
+  String get syncDelete;
+
+  /// No description provided for @syncShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get syncShow;
+
+  /// No description provided for @syncFilterLeftOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Left only'**
+  String get syncFilterLeftOnly;
+
+  /// No description provided for @syncFilterRightOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Right only'**
+  String get syncFilterRightOnly;
+
+  /// No description provided for @syncFilterNewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Newer'**
+  String get syncFilterNewer;
+
+  /// No description provided for @syncFilterDifferent.
+  ///
+  /// In en, this message translates to:
+  /// **'Different'**
+  String get syncFilterDifferent;
+
+  /// No description provided for @syncFilterIdentical.
+  ///
+  /// In en, this message translates to:
+  /// **'Identical'**
+  String get syncFilterIdentical;
+
+  /// No description provided for @syncColumnLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get syncColumnLeft;
+
+  /// No description provided for @syncColumnRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get syncColumnRight;
+
+  /// No description provided for @syncItemsCompared.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item compared} other{{count} items compared}}'**
+  String syncItemsCompared(int count);
+
+  /// No description provided for @syncToRight.
+  ///
+  /// In en, this message translates to:
+  /// **'To the right: {count}'**
+  String syncToRight(String count);
+
+  /// No description provided for @syncToLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'To the left: {count}'**
+  String syncToLeft(String count);
+
+  /// No description provided for @syncToDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'To delete: {count}'**
+  String syncToDelete(String count);
+
+  /// No description provided for @syncBytes.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} to copy'**
+  String syncBytes(String size);
+
+  /// No description provided for @syncNothingToDo.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to synchronize'**
+  String get syncNothingToDo;
+
+  /// No description provided for @syncIdentical.
+  ///
+  /// In en, this message translates to:
+  /// **'The folders are identical'**
+  String get syncIdentical;
+
+  /// No description provided for @syncUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 folder could not be read} other{{count} folders could not be read}}'**
+  String syncUnreadable(int count);
+
+  /// No description provided for @syncError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not compare: {message}'**
+  String syncError(String message);
+
+  /// No description provided for @syncSameFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'The left and right folders are the same'**
+  String get syncSameFolder;
+
+  /// No description provided for @syncStartHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the folders and press Compare'**
+  String get syncStartHint;
+
+  /// No description provided for @syncNoRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to show with these filters'**
+  String get syncNoRows;
+
+  /// No description provided for @syncCompare.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare'**
+  String get syncCompare;
+
+  /// No description provided for @syncSynchronize.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronize…'**
+  String get syncSynchronize;
+
+  /// No description provided for @syncActionCopyRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to the Right'**
+  String get syncActionCopyRight;
+
+  /// No description provided for @syncActionCopyLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to the Left'**
+  String get syncActionCopyLeft;
+
+  /// No description provided for @syncActionDeleteLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete on the Left'**
+  String get syncActionDeleteLeft;
+
+  /// No description provided for @syncActionDeleteRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete on the Right'**
+  String get syncActionDeleteRight;
+
+  /// No description provided for @syncActionSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave as Is'**
+  String get syncActionSkip;
+
+  /// No description provided for @syncActionDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested Action'**
+  String get syncActionDefault;
+
+  /// No description provided for @syncStateEqual.
+  ///
+  /// In en, this message translates to:
+  /// **'Identical'**
+  String get syncStateEqual;
+
+  /// No description provided for @syncStateDifferent.
+  ///
+  /// In en, this message translates to:
+  /// **'Different, neither is newer'**
+  String get syncStateDifferent;
+
+  /// No description provided for @syncStateConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'A file on one side, a folder on the other'**
+  String get syncStateConflict;
+
+  /// No description provided for @syncStateSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Left as is'**
+  String get syncStateSkipped;
+
+  /// No description provided for @syncConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronize the folders?'**
+  String get syncConfirmTitle;
+
+  /// No description provided for @syncConfirmDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item goes to the Trash.} other{{count} items go to the Trash.}}'**
+  String syncConfirmDelete(int count);
+
+  /// No description provided for @syncConfirmOverwrite.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file is replaced; its earlier version is lost.} other{{count} files are replaced; their earlier versions are lost.}}'**
+  String syncConfirmOverwrite(int count);
+
+  /// No description provided for @syncConfirmUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo ({key}) takes the copies back to the Trash and the deleted items out of it.'**
+  String syncConfirmUndo(String key);
+
+  /// No description provided for @syncSynchronizeNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronize'**
+  String get syncSynchronizeNow;
+
+  /// No description provided for @syncKeysHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{space} changes the action, {right} and {left} choose a side'**
+  String syncKeysHint(String space, String right, String left);
+
+  /// No description provided for @checksumTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Checksums'**
+  String get checksumTitle;
+
+  /// No description provided for @checksumVerifyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check {name}'**
+  String checksumVerifyTitle(String name);
+
+  /// No description provided for @checksumAlgorithm.
+  ///
+  /// In en, this message translates to:
+  /// **'Algorithm'**
+  String get checksumAlgorithm;
+
+  /// No description provided for @checksumModeCalculate.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate'**
+  String get checksumModeCalculate;
+
+  /// No description provided for @checksumModeVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get checksumModeVerify;
+
+  /// No description provided for @checksumSubfolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Include subfolders'**
+  String get checksumSubfolders;
+
+  /// No description provided for @checksumExpected.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected hash'**
+  String get checksumExpected;
+
+  /// No description provided for @checksumExpectedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste a hash to look for it'**
+  String get checksumExpectedHint;
+
+  /// No description provided for @checksumMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Matches {name}'**
+  String checksumMatch(String name);
+
+  /// No description provided for @checksumMatchMany.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Matches 1 file} other{Matches {count} files}}'**
+  String checksumMatchMany(int count);
+
+  /// No description provided for @checksumNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No file has this hash'**
+  String get checksumNoMatch;
+
+  /// No description provided for @checksumColumnHash.
+  ///
+  /// In en, this message translates to:
+  /// **'Hash'**
+  String get checksumColumnHash;
+
+  /// No description provided for @checksumColumnStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get checksumColumnStatus;
+
+  /// No description provided for @checksumStatusOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get checksumStatusOk;
+
+  /// No description provided for @checksumStatusMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Mismatch'**
+  String get checksumStatusMismatch;
+
+  /// No description provided for @checksumStatusMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing'**
+  String get checksumStatusMissing;
+
+  /// No description provided for @checksumStatusError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unreadable'**
+  String get checksumStatusError;
+
+  /// No description provided for @checksumPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get checksumPending;
+
+  /// No description provided for @checksumFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No files} =1{1 file} other{{count} files}}'**
+  String checksumFiles(int count);
+
+  /// No description provided for @checksumVerifySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{ok} OK, {mismatch} mismatched, {missing} missing'**
+  String checksumVerifySummary(String ok, String mismatch, String missing);
+
+  /// No description provided for @checksumBadLines.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 line was not understood} other{{count} lines were not understood}}'**
+  String checksumBadLines(int count);
+
+  /// No description provided for @checksumError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not check: {message}'**
+  String checksumError(String message);
+
+  /// No description provided for @checksumCopyHash.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Hash'**
+  String get checksumCopyHash;
+
+  /// No description provided for @checksumCopyLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Line'**
+  String get checksumCopyLine;
+
+  /// No description provided for @checksumCopyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy All'**
+  String get checksumCopyAll;
+
+  /// No description provided for @checksumSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Checksum File…'**
+  String get checksumSave;
+
+  /// No description provided for @checksumSaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save checksum file'**
+  String get checksumSaveTitle;
+
+  /// No description provided for @checksumSaveExists.
+  ///
+  /// In en, this message translates to:
+  /// **'“{name}” already exists. Replace it?'**
+  String checksumSaveExists(String name);
+
+  /// No description provided for @checksumReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get checksumReplace;
+
+  /// No description provided for @checksumSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {name}'**
+  String checksumSaved(String name);
+
+  /// No description provided for @checksumCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Hash copied} other{{count} hashes copied}}'**
+  String checksumCopied(int count);
+
+  /// No description provided for @checksumNoFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'No files to hash'**
+  String get checksumNoFiles;
+
+  /// No description provided for @dupesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find duplicates'**
+  String get dupesTitle;
+
+  /// No description provided for @dupesIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Look in'**
+  String get dupesIn;
+
+  /// An option: search the other panel's folder too.
+  ///
+  /// In en, this message translates to:
+  /// **'Also in {path}'**
+  String dupesAlsoIn(String path);
+
+  /// No description provided for @dupesMinSize.
+  ///
+  /// In en, this message translates to:
+  /// **'At least'**
+  String get dupesMinSize;
+
+  /// No description provided for @dupesNames.
+  ///
+  /// In en, this message translates to:
+  /// **'Names'**
+  String get dupesNames;
+
+  /// No description provided for @dupesScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking through files: {count}'**
+  String dupesScanning(String count);
+
+  /// No description provided for @dupesComparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Comparing files: {done} of {total}'**
+  String dupesComparing(String done, String total);
+
+  /// No description provided for @dupesRead.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} read'**
+  String dupesRead(String size);
+
+  /// No description provided for @dupesGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No duplicates} =1{1 group of duplicates} other{{count} groups of duplicates}}'**
+  String dupesGroups(int count);
+
+  /// No description provided for @dupesWasted.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} can be freed'**
+  String dupesWasted(String size);
+
+  /// A group of duplicates: the size of each file times the number of copies.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} × {count}'**
+  String dupesGroupHeader(String size, int count);
+
+  /// No description provided for @dupesMark.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark'**
+  String get dupesMark;
+
+  /// No description provided for @dupesMarkAllButNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'All but the Newest in Each Group'**
+  String get dupesMarkAllButNewest;
+
+  /// No description provided for @dupesMarkAllButOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'All but the Oldest in Each Group'**
+  String get dupesMarkAllButOldest;
+
+  /// No description provided for @dupesMarkAllButShortest.
+  ///
+  /// In en, this message translates to:
+  /// **'All but the Shortest Path in Each Group'**
+  String get dupesMarkAllButShortest;
+
+  /// No description provided for @dupesUnmarkAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmark All'**
+  String get dupesUnmarkAll;
+
+  /// No description provided for @dupesMarked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file marked} other{{count} files marked}}'**
+  String dupesMarked(int count);
+
+  /// No description provided for @dupesReveal.
+  ///
+  /// In en, this message translates to:
+  /// **'Show in Panel'**
+  String get dupesReveal;
+
+  /// No description provided for @dupesCopyPaths.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Paths'**
+  String get dupesCopyPaths;
+
+  /// No description provided for @dupesTrashTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Move 1 file to the Trash?} other{Move {count} files to the Trash?}}'**
+  String dupesTrashTitle(int count);
+
+  /// No description provided for @dupesTrashBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} is freed once the Trash is emptied; Undo ({key}) puts the files back.'**
+  String dupesTrashBody(String size, String key);
+
+  /// No description provided for @dupesTrashAllCopies.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{In 1 group every copy is marked: none of them stays.} other{In {count} groups every copy is marked: none of them stays.}}'**
+  String dupesTrashAllCopies(int count);
+
+  /// No description provided for @dupesNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No duplicates found'**
+  String get dupesNone;
+
+  /// No description provided for @dupesStartHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose where to look and press Find'**
+  String get dupesStartHint;
+
+  /// No description provided for @dupesError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not search: {message}'**
+  String dupesError(String message);
+
+  /// No description provided for @dupesKeysHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{space} marks a file'**
+  String dupesKeysHint(String space);
+
+  /// No description provided for @dupesMarkColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark'**
+  String get dupesMarkColumn;
+
+  /// No description provided for @dupesUnmark.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmark'**
+  String get dupesUnmark;
 }
 
 class _FerryxLocalizationsDelegate

@@ -13,6 +13,7 @@ import 'src/generated/ferryx_localizations.dart';
 export 'src/command_labels.dart';
 export 'src/formatting.dart';
 export 'src/generated/ferryx_localizations.dart';
+export 'src/operations_formatting.dart';
 
 /// Single source of truth for the locales the app ships.
 abstract final class FerryxSupportedLocales {

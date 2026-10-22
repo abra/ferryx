@@ -6,6 +6,7 @@ use std::path::Path;
 use ferryx_vfs::error::VfsError;
 use walkdir::WalkDir;
 
+use crate::journal::Change;
 use crate::runner::OpContext;
 use crate::types::*;
 
@@ -16,24 +17,38 @@ pub fn run(ctx: &OpContext, request: &OpRequest) -> Result<(), Abort> {
     }
 }
 
+/// Items trashed at once: the freedesktop trash is listed once per batch
+/// to find the receipts.
+const TRASH_BATCH: usize = 64;
+
+/// Moves the sources to the trash, keeping a receipt of each for undo;
+/// an item that fails is asked about on its own.
 fn trash(ctx: &OpContext, request: &OpRequest) -> Result<(), Abort> {
     ctx.set_totals(0, request.sources.len() as u64);
-    ctx.check()?;
-    if let Some(first) = request.sources.first() {
-        ctx.set_current(first);
-    }
-    loop {
-        match ferryx_vfs::system::trash(&request.sources) {
-            Ok(()) => break,
-            Err(e) => {
-                let path = request.sources.first().cloned().unwrap_or_default();
-                if !ctx.ask_error(&path, &e)? {
-                    return Ok(());
+    for batch in request.sources.chunks(TRASH_BATCH) {
+        ctx.check()?;
+        ctx.set_current(&batch[0]);
+        let results = ferryx_vfs::trash::trash_items(batch);
+        for (path, result) in batch.iter().zip(results) {
+            let mut result = result;
+            loop {
+                match result {
+                    Ok(receipt) => {
+                        ctx.record(Change::Trashed { receipt });
+                        break;
+                    }
+                    Err(e) => {
+                        if !ctx.ask_error(path, &e)? {
+                            break;
+                        }
+                        let retried = ferryx_vfs::trash::trash_items(std::slice::from_ref(path));
+                        result = retried.into_iter().next().unwrap_or_else(|| Err(e.clone()));
+                    }
                 }
             }
+            ctx.item_done();
         }
     }
-    ctx.update(|p| p.items_done = p.items_total);
     Ok(())
 }
 

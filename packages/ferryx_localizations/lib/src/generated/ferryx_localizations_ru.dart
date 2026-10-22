@@ -2228,4 +2228,794 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get cmdDismiss => 'Закрыть';
+
+  @override
+  String get cmdCompareFolders => 'Сравнить папки';
+
+  @override
+  String get cmdSynchronizeFolders => 'Синхронизировать папки…';
+
+  @override
+  String get cmdUndo => 'Отменить';
+
+  @override
+  String get cmdRedo => 'Повторить';
+
+  @override
+  String get cmdChecksums => 'Контрольные суммы…';
+
+  @override
+  String get cmdFindDuplicates => 'Найти дубликаты…';
+
+  @override
+  String opSynchronizeTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Синхронизация $count объекта',
+      many: 'Синхронизация $count объектов',
+      few: 'Синхронизация $count объектов',
+      one: 'Синхронизация $count объекта',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opCompareContentsTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Сравнение $count пары файлов',
+      many: 'Сравнение $count пар файлов',
+      few: 'Сравнение $count пар файлов',
+      one: 'Сравнение $count пары файлов',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opUndoTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Отмена $count изменения',
+      many: 'Отмена $count изменений',
+      few: 'Отмена $count изменений',
+      one: 'Отмена $count изменения',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opRedoTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Повтор $count изменения',
+      many: 'Повтор $count изменений',
+      few: 'Повтор $count изменений',
+      one: 'Повтор $count изменения',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String compareSelected(String left, String right) {
+    return 'Выделено: слева $left, справа $right';
+  }
+
+  @override
+  String get compareSame => 'В папках одни и те же файлы';
+
+  @override
+  String get compareNeedsFolders => 'В обеих панелях должны быть открыты папки';
+
+  @override
+  String get compareSameFolder => 'Обе панели показывают одну и ту же папку';
+
+  @override
+  String compareContentsStarted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Сравнение содержимого $count пары файлов…',
+      many: 'Сравнение содержимого $count пар файлов…',
+      few: 'Сравнение содержимого $count пар файлов…',
+      one: 'Сравнение содержимого $count пары файлов…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get compareContentsNotHere =>
+      'Содержимое сравнивается только для папок на диске; сравнено по размеру и дате';
+
+  @override
+  String get compareGroupLabel => 'Сравнение папок';
+
+  @override
+  String get compareContentsSetting =>
+      'Сравнивать содержимое файлов одного размера';
+
+  @override
+  String journalWhatOne(String name) {
+    return '«$name»';
+  }
+
+  @override
+  String journalWhatMany(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count объекта',
+      many: '$count объектов',
+      few: '$count объектов',
+      one: '$count объекта',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String journalStepCopy(String what) {
+    return 'копирование $what';
+  }
+
+  @override
+  String journalStepMove(String what) {
+    return 'перемещение $what';
+  }
+
+  @override
+  String journalStepTrash(String what) {
+    return 'перемещение в Корзину $what';
+  }
+
+  @override
+  String journalStepRename(String what) {
+    return 'переименование $what';
+  }
+
+  @override
+  String journalStepCreateFolder(String what) {
+    return 'новая папка $what';
+  }
+
+  @override
+  String journalStepCreateFile(String what) {
+    return 'новый файл $what';
+  }
+
+  @override
+  String journalStepCreateLink(String what) {
+    return 'новая ссылка $what';
+  }
+
+  @override
+  String journalStepDuplicate(String what) {
+    return 'дублирование $what';
+  }
+
+  @override
+  String journalStepCompress(String what) {
+    return 'сжатие $what';
+  }
+
+  @override
+  String journalStepExtract(String what) {
+    return 'извлечение $what';
+  }
+
+  @override
+  String journalStepSynchronize(String what) {
+    return 'синхронизация $what';
+  }
+
+  @override
+  String undoMenu(String step) {
+    return 'Отменить: $step';
+  }
+
+  @override
+  String redoMenu(String step) {
+    return 'Повторить: $step';
+  }
+
+  @override
+  String undoCardTitle(String step) {
+    return 'Отмена: $step';
+  }
+
+  @override
+  String redoCardTitle(String step) {
+    return 'Повтор: $step';
+  }
+
+  @override
+  String get undoNothing => 'Нечего отменять';
+
+  @override
+  String get redoNothing => 'Нечего повторять';
+
+  @override
+  String get undoMoved =>
+      'Файлы успели измениться другим действием; попробуйте ещё раз';
+
+  @override
+  String undoDialogTitle(String step) {
+    return 'Отменить: $step?';
+  }
+
+  @override
+  String redoDialogTitle(String step) {
+    return 'Повторить: $step?';
+  }
+
+  @override
+  String undoPartly(int doable, int total) {
+    return 'Можно отменить $doable из $total изменений. Нельзя отменить:';
+  }
+
+  @override
+  String redoPartly(int doable, int total) {
+    return 'Можно повторить $doable из $total изменений. Нельзя повторить:';
+  }
+
+  @override
+  String get undoNone => 'Ни одно из изменений уже нельзя отменить:';
+
+  @override
+  String get redoNone => 'Ни одно из изменений уже нельзя повторить:';
+
+  @override
+  String get undoWarnings => 'Отменить можно, но учтите:';
+
+  @override
+  String get redoWarnings => 'Повторить можно, но учтите:';
+
+  @override
+  String get undoIssueMissing => 'Больше нет на месте';
+
+  @override
+  String get undoIssueOccupied => 'Место уже занято';
+
+  @override
+  String get undoIssueChanged =>
+      'Изменился с тех пор; всё равно отправится в Корзину';
+
+  @override
+  String get undoIssueLost =>
+      'Был заменён: прежнее содержимое утеряно, останется как есть';
+
+  @override
+  String get undoIssueNotInTrash => 'Больше нет в Корзине';
+
+  @override
+  String get undoIssueUnsupported => 'Здесь нельзя вернуть объекты из Корзины';
+
+  @override
+  String get undoIssueTruncated =>
+      'Изменено слишком много объектов, чтобы отменить';
+
+  @override
+  String undoMoreIssues(int count) {
+    return '…и ещё $count';
+  }
+
+  @override
+  String get undoAction => 'Отменить';
+
+  @override
+  String get redoAction => 'Повторить';
+
+  @override
+  String get undoForget => 'Забыть шаг';
+
+  @override
+  String get undoForgotten => 'Шаг забыт';
+
+  @override
+  String get syncTitle => 'Синхронизация папок';
+
+  @override
+  String get syncLeft => 'Левая папка';
+
+  @override
+  String get syncRight => 'Правая папка';
+
+  @override
+  String get syncSwap => 'Поменять папки местами';
+
+  @override
+  String get syncSubfolders => 'С подпапками';
+
+  @override
+  String get syncByContent => 'Сравнивать содержимое';
+
+  @override
+  String get syncFatTime => 'Не различать время до 2 с';
+
+  @override
+  String get syncHidden => 'Скрытые файлы';
+
+  @override
+  String get syncMask => 'Файлы';
+
+  @override
+  String get syncMaskHint => 'Все файлы или маска: *.jpg;*.png';
+
+  @override
+  String get syncDirection => 'Направление';
+
+  @override
+  String get syncBothWays => 'В обе стороны';
+
+  @override
+  String get syncLeftToRight => 'Слева направо';
+
+  @override
+  String get syncRightToLeft => 'Справа налево';
+
+  @override
+  String get syncDelete => 'Удалять то, чего нет в источнике';
+
+  @override
+  String get syncShow => 'Показать';
+
+  @override
+  String get syncFilterLeftOnly => 'Только слева';
+
+  @override
+  String get syncFilterRightOnly => 'Только справа';
+
+  @override
+  String get syncFilterNewer => 'Новее';
+
+  @override
+  String get syncFilterDifferent => 'Различаются';
+
+  @override
+  String get syncFilterIdentical => 'Одинаковые';
+
+  @override
+  String get syncColumnLeft => 'Слева';
+
+  @override
+  String get syncColumnRight => 'Справа';
+
+  @override
+  String syncItemsCompared(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Сравнено $count объекта',
+      many: 'Сравнено $count объектов',
+      few: 'Сравнено $count объекта',
+      one: 'Сравнён $count объект',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncToRight(String count) {
+    return 'Направо: $count';
+  }
+
+  @override
+  String syncToLeft(String count) {
+    return 'Налево: $count';
+  }
+
+  @override
+  String syncToDelete(String count) {
+    return 'Удалить: $count';
+  }
+
+  @override
+  String syncBytes(String size) {
+    return 'Скопировать $size';
+  }
+
+  @override
+  String get syncNothingToDo => 'Синхронизировать нечего';
+
+  @override
+  String get syncIdentical => 'Папки одинаковы';
+
+  @override
+  String syncUnreadable(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Не удалось прочитать $count папки',
+      many: 'Не удалось прочитать $count папок',
+      few: 'Не удалось прочитать $count папки',
+      one: 'Не удалось прочитать $count папку',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncError(String message) {
+    return 'Не удалось сравнить: $message';
+  }
+
+  @override
+  String get syncSameFolder => 'Слева и справа одна и та же папка';
+
+  @override
+  String get syncStartHint => 'Выберите папки и нажмите «Сравнить»';
+
+  @override
+  String get syncNoRows => 'С этими фильтрами показать нечего';
+
+  @override
+  String get syncCompare => 'Сравнить';
+
+  @override
+  String get syncSynchronize => 'Синхронизировать…';
+
+  @override
+  String get syncActionCopyRight => 'Копировать направо';
+
+  @override
+  String get syncActionCopyLeft => 'Копировать налево';
+
+  @override
+  String get syncActionDeleteLeft => 'Удалить слева';
+
+  @override
+  String get syncActionDeleteRight => 'Удалить справа';
+
+  @override
+  String get syncActionSkip => 'Не трогать';
+
+  @override
+  String get syncActionDefault => 'Предложенное действие';
+
+  @override
+  String get syncStateEqual => 'Одинаковые';
+
+  @override
+  String get syncStateDifferent => 'Различаются, ни один не новее';
+
+  @override
+  String get syncStateConflict => 'С одной стороны файл, с другой папка';
+
+  @override
+  String get syncStateSkipped => 'Остаётся как есть';
+
+  @override
+  String get syncConfirmTitle => 'Синхронизировать папки?';
+
+  @override
+  String syncConfirmDelete(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count объекта отправятся в Корзину.',
+      many: '$count объектов отправятся в Корзину.',
+      few: '$count объекта отправятся в Корзину.',
+      one: '$count объект отправится в Корзину.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncConfirmOverwrite(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count файла будут заменены; прежние версии утеряются.',
+      many: '$count файлов будут заменены; прежние версии утеряются.',
+      few: '$count файла будут заменены; прежние версии утеряются.',
+      one: '$count файл будет заменён; прежняя версия утеряется.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncConfirmUndo(String key) {
+    return 'Отмена ($key) уберёт копии в Корзину и вернёт удалённое из неё.';
+  }
+
+  @override
+  String get syncSynchronizeNow => 'Синхронизировать';
+
+  @override
+  String syncKeysHint(String space, String right, String left) {
+    return '$space меняет действие, $right и $left выбирают сторону';
+  }
+
+  @override
+  String get checksumTitle => 'Контрольные суммы';
+
+  @override
+  String checksumVerifyTitle(String name) {
+    return 'Проверка $name';
+  }
+
+  @override
+  String get checksumAlgorithm => 'Алгоритм';
+
+  @override
+  String get checksumModeCalculate => 'Вычислить';
+
+  @override
+  String get checksumModeVerify => 'Проверить';
+
+  @override
+  String get checksumSubfolders => 'С подпапками';
+
+  @override
+  String get checksumExpected => 'Ожидаемая сумма';
+
+  @override
+  String get checksumExpectedHint => 'Вставьте сумму, чтобы найти её';
+
+  @override
+  String checksumMatch(String name) {
+    return 'Совпадает с $name';
+  }
+
+  @override
+  String checksumMatchMany(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Совпадает с $count файлами',
+      many: 'Совпадает с $count файлами',
+      few: 'Совпадает с $count файлами',
+      one: 'Совпадает с $count файлом',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get checksumNoMatch => 'Ни у одного файла нет такой суммы';
+
+  @override
+  String get checksumColumnHash => 'Сумма';
+
+  @override
+  String get checksumColumnStatus => 'Состояние';
+
+  @override
+  String get checksumStatusOk => 'Совпадает';
+
+  @override
+  String get checksumStatusMismatch => 'Не совпадает';
+
+  @override
+  String get checksumStatusMissing => 'Нет файла';
+
+  @override
+  String get checksumStatusError => 'Не читается';
+
+  @override
+  String get checksumPending => 'В очереди';
+
+  @override
+  String checksumFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count файла',
+      many: '$count файлов',
+      few: '$count файла',
+      one: '$count файл',
+      zero: 'Нет файлов',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String checksumVerifySummary(String ok, String mismatch, String missing) {
+    return 'Совпадает: $ok, не совпадает: $mismatch, нет файла: $missing';
+  }
+
+  @override
+  String checksumBadLines(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Не разобрано $count строки',
+      many: 'Не разобрано $count строк',
+      few: 'Не разобраны $count строки',
+      one: 'Не разобрана $count строка',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String checksumError(String message) {
+    return 'Не удалось проверить: $message';
+  }
+
+  @override
+  String get checksumCopyHash => 'Копировать сумму';
+
+  @override
+  String get checksumCopyLine => 'Копировать строку';
+
+  @override
+  String get checksumCopyAll => 'Копировать всё';
+
+  @override
+  String get checksumSave => 'Сохранить файл сумм…';
+
+  @override
+  String get checksumSaveTitle => 'Сохранить файл контрольных сумм';
+
+  @override
+  String checksumSaveExists(String name) {
+    return '«$name» уже существует. Заменить?';
+  }
+
+  @override
+  String get checksumReplace => 'Заменить';
+
+  @override
+  String checksumSaved(String name) {
+    return 'Сохранено: $name';
+  }
+
+  @override
+  String checksumCopied(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Скопировано $count суммы',
+      many: 'Скопировано $count сумм',
+      few: 'Скопированы $count суммы',
+      one: 'Скопирована $count сумма',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get checksumNoFiles => 'Нет файлов для подсчёта';
+
+  @override
+  String get dupesTitle => 'Поиск дубликатов';
+
+  @override
+  String get dupesIn => 'Искать в';
+
+  @override
+  String dupesAlsoIn(String path) {
+    return 'Также в $path';
+  }
+
+  @override
+  String get dupesMinSize => 'Не меньше';
+
+  @override
+  String get dupesNames => 'Имена';
+
+  @override
+  String dupesScanning(String count) {
+    return 'Просмотрено файлов: $count';
+  }
+
+  @override
+  String dupesComparing(String done, String total) {
+    return 'Сравнение файлов: $done из $total';
+  }
+
+  @override
+  String dupesRead(String size) {
+    return 'прочитано $size';
+  }
+
+  @override
+  String dupesGroups(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count группы дубликатов',
+      many: '$count групп дубликатов',
+      few: '$count группы дубликатов',
+      one: '$count группа дубликатов',
+      zero: 'Дубликатов нет',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String dupesWasted(String size) {
+    return 'Можно освободить $size';
+  }
+
+  @override
+  String dupesGroupHeader(String size, int count) {
+    return '$size × $count';
+  }
+
+  @override
+  String get dupesMark => 'Отметить';
+
+  @override
+  String get dupesMarkAllButNewest => 'Все, кроме самого нового в группе';
+
+  @override
+  String get dupesMarkAllButOldest => 'Все, кроме самого старого в группе';
+
+  @override
+  String get dupesMarkAllButShortest =>
+      'Все, кроме самого короткого пути в группе';
+
+  @override
+  String get dupesUnmarkAll => 'Снять все отметки';
+
+  @override
+  String dupesMarked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Отмечено $count файла',
+      many: 'Отмечено $count файлов',
+      few: 'Отмечено $count файла',
+      one: 'Отмечен $count файл',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dupesReveal => 'Показать в панели';
+
+  @override
+  String get dupesCopyPaths => 'Копировать пути';
+
+  @override
+  String dupesTrashTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Отправить $count файла в Корзину?',
+      many: 'Отправить $count файлов в Корзину?',
+      few: 'Отправить $count файла в Корзину?',
+      one: 'Отправить $count файл в Корзину?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String dupesTrashBody(String size, String key) {
+    return '$size освободится, когда Корзина будет очищена; отмена ($key) вернёт файлы.';
+  }
+
+  @override
+  String dupesTrashAllCopies(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'В $count группы отмечены все копии: ни одной не останется.',
+      many: 'В $count группах отмечены все копии: ни одной не останется.',
+      few: 'В $count группах отмечены все копии: ни одной не останется.',
+      one: 'В $count группе отмечены все копии: ни одной не останется.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dupesNone => 'Дубликатов не найдено';
+
+  @override
+  String get dupesStartHint => 'Выберите, где искать, и нажмите «Найти»';
+
+  @override
+  String dupesError(String message) {
+    return 'Не удалось найти: $message';
+  }
+
+  @override
+  String dupesKeysHint(String space) {
+    return '$space отмечает файл';
+  }
+
+  @override
+  String get dupesMarkColumn => 'Отметка';
+
+  @override
+  String get dupesUnmark => 'Снять отметку';
 }

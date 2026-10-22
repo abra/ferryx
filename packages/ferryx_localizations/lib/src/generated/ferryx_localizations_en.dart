@@ -2192,4 +2192,757 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get cmdDismiss => 'Dismiss';
+
+  @override
+  String get cmdCompareFolders => 'Compare Folders';
+
+  @override
+  String get cmdSynchronizeFolders => 'Synchronize Folders…';
+
+  @override
+  String get cmdUndo => 'Undo';
+
+  @override
+  String get cmdRedo => 'Redo';
+
+  @override
+  String get cmdChecksums => 'Checksums…';
+
+  @override
+  String get cmdFindDuplicates => 'Find Duplicates…';
+
+  @override
+  String opSynchronizeTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Synchronizing $count items',
+      one: 'Synchronizing 1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opCompareContentsTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Comparing $count pairs of files',
+      one: 'Comparing 1 pair of files',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opUndoTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Undoing $count changes',
+      one: 'Undoing 1 change',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String opRedoTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Redoing $count changes',
+      one: 'Redoing 1 change',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String compareSelected(String left, String right) {
+    return 'Selected $left on the left, $right on the right';
+  }
+
+  @override
+  String get compareSame => 'The folders hold the same files';
+
+  @override
+  String get compareNeedsFolders => 'Both panels need to show a folder';
+
+  @override
+  String get compareSameFolder => 'Both panels show the same folder';
+
+  @override
+  String compareContentsStarted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Comparing the contents of $count pairs of files…',
+      one: 'Comparing the contents of 1 pair of files…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get compareContentsNotHere =>
+      'Contents are compared for folders on disk only; compared by size and date';
+
+  @override
+  String get compareGroupLabel => 'Compare Folders';
+
+  @override
+  String get compareContentsSetting =>
+      'Compare the contents of files of the same size';
+
+  @override
+  String journalWhatOne(String name) {
+    return '“$name”';
+  }
+
+  @override
+  String journalWhatMany(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String journalStepCopy(String what) {
+    return 'Copy of $what';
+  }
+
+  @override
+  String journalStepMove(String what) {
+    return 'Move of $what';
+  }
+
+  @override
+  String journalStepTrash(String what) {
+    return 'Move to Trash of $what';
+  }
+
+  @override
+  String journalStepRename(String what) {
+    return 'Rename of $what';
+  }
+
+  @override
+  String journalStepCreateFolder(String what) {
+    return 'New Folder $what';
+  }
+
+  @override
+  String journalStepCreateFile(String what) {
+    return 'New File $what';
+  }
+
+  @override
+  String journalStepCreateLink(String what) {
+    return 'New Link $what';
+  }
+
+  @override
+  String journalStepDuplicate(String what) {
+    return 'Duplicate of $what';
+  }
+
+  @override
+  String journalStepCompress(String what) {
+    return 'Compress of $what';
+  }
+
+  @override
+  String journalStepExtract(String what) {
+    return 'Extract of $what';
+  }
+
+  @override
+  String journalStepSynchronize(String what) {
+    return 'Synchronize of $what';
+  }
+
+  @override
+  String undoMenu(String step) {
+    return 'Undo $step';
+  }
+
+  @override
+  String redoMenu(String step) {
+    return 'Redo $step';
+  }
+
+  @override
+  String undoCardTitle(String step) {
+    return 'Undo $step';
+  }
+
+  @override
+  String redoCardTitle(String step) {
+    return 'Redo $step';
+  }
+
+  @override
+  String get undoNothing => 'Nothing to undo';
+
+  @override
+  String get redoNothing => 'Nothing to redo';
+
+  @override
+  String get undoMoved => 'Something else changed the files first; try again';
+
+  @override
+  String undoDialogTitle(String step) {
+    return 'Undo $step?';
+  }
+
+  @override
+  String redoDialogTitle(String step) {
+    return 'Redo $step?';
+  }
+
+  @override
+  String undoPartly(int doable, int total) {
+    return '$doable of $total changes can be undone. These cannot:';
+  }
+
+  @override
+  String redoPartly(int doable, int total) {
+    return '$doable of $total changes can be redone. These cannot:';
+  }
+
+  @override
+  String get undoNone => 'None of its changes can be undone any more:';
+
+  @override
+  String get redoNone => 'None of its changes can be redone any more:';
+
+  @override
+  String get undoWarnings => 'It can be undone, but note:';
+
+  @override
+  String get redoWarnings => 'It can be redone, but note:';
+
+  @override
+  String get undoIssueMissing => 'No longer there';
+
+  @override
+  String get undoIssueOccupied => 'Its place is taken';
+
+  @override
+  String get undoIssueChanged =>
+      'Changed since; it goes to the Trash all the same';
+
+  @override
+  String get undoIssueLost =>
+      'Overwritten: its earlier contents are gone, it stays as it is';
+
+  @override
+  String get undoIssueNotInTrash => 'No longer in the Trash';
+
+  @override
+  String get undoIssueUnsupported =>
+      'Items cannot be put back from the Trash here';
+
+  @override
+  String get undoIssueTruncated => 'Too many items changed to undo';
+
+  @override
+  String undoMoreIssues(int count) {
+    return '…and $count more';
+  }
+
+  @override
+  String get undoAction => 'Undo';
+
+  @override
+  String get redoAction => 'Redo';
+
+  @override
+  String get undoForget => 'Forget Step';
+
+  @override
+  String get undoForgotten => 'The step is forgotten';
+
+  @override
+  String get syncTitle => 'Synchronize folders';
+
+  @override
+  String get syncLeft => 'Left folder';
+
+  @override
+  String get syncRight => 'Right folder';
+
+  @override
+  String get syncSwap => 'Swap the folders';
+
+  @override
+  String get syncSubfolders => 'Include subfolders';
+
+  @override
+  String get syncByContent => 'Compare contents';
+
+  @override
+  String get syncFatTime => 'Ignore time differences up to 2 s';
+
+  @override
+  String get syncHidden => 'Hidden files';
+
+  @override
+  String get syncMask => 'Files';
+
+  @override
+  String get syncMaskHint => 'All files, or a mask: *.jpg;*.png';
+
+  @override
+  String get syncDirection => 'Direction';
+
+  @override
+  String get syncBothWays => 'Both ways';
+
+  @override
+  String get syncLeftToRight => 'Left to right';
+
+  @override
+  String get syncRightToLeft => 'Right to left';
+
+  @override
+  String get syncDelete => 'Delete what the source lacks';
+
+  @override
+  String get syncShow => 'Show';
+
+  @override
+  String get syncFilterLeftOnly => 'Left only';
+
+  @override
+  String get syncFilterRightOnly => 'Right only';
+
+  @override
+  String get syncFilterNewer => 'Newer';
+
+  @override
+  String get syncFilterDifferent => 'Different';
+
+  @override
+  String get syncFilterIdentical => 'Identical';
+
+  @override
+  String get syncColumnLeft => 'Left';
+
+  @override
+  String get syncColumnRight => 'Right';
+
+  @override
+  String syncItemsCompared(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items compared',
+      one: '1 item compared',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncToRight(String count) {
+    return 'To the right: $count';
+  }
+
+  @override
+  String syncToLeft(String count) {
+    return 'To the left: $count';
+  }
+
+  @override
+  String syncToDelete(String count) {
+    return 'To delete: $count';
+  }
+
+  @override
+  String syncBytes(String size) {
+    return '$size to copy';
+  }
+
+  @override
+  String get syncNothingToDo => 'Nothing to synchronize';
+
+  @override
+  String get syncIdentical => 'The folders are identical';
+
+  @override
+  String syncUnreadable(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count folders could not be read',
+      one: '1 folder could not be read',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncError(String message) {
+    return 'Could not compare: $message';
+  }
+
+  @override
+  String get syncSameFolder => 'The left and right folders are the same';
+
+  @override
+  String get syncStartHint => 'Choose the folders and press Compare';
+
+  @override
+  String get syncNoRows => 'Nothing to show with these filters';
+
+  @override
+  String get syncCompare => 'Compare';
+
+  @override
+  String get syncSynchronize => 'Synchronize…';
+
+  @override
+  String get syncActionCopyRight => 'Copy to the Right';
+
+  @override
+  String get syncActionCopyLeft => 'Copy to the Left';
+
+  @override
+  String get syncActionDeleteLeft => 'Delete on the Left';
+
+  @override
+  String get syncActionDeleteRight => 'Delete on the Right';
+
+  @override
+  String get syncActionSkip => 'Leave as Is';
+
+  @override
+  String get syncActionDefault => 'Suggested Action';
+
+  @override
+  String get syncStateEqual => 'Identical';
+
+  @override
+  String get syncStateDifferent => 'Different, neither is newer';
+
+  @override
+  String get syncStateConflict => 'A file on one side, a folder on the other';
+
+  @override
+  String get syncStateSkipped => 'Left as is';
+
+  @override
+  String get syncConfirmTitle => 'Synchronize the folders?';
+
+  @override
+  String syncConfirmDelete(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items go to the Trash.',
+      one: '1 item goes to the Trash.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncConfirmOverwrite(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files are replaced; their earlier versions are lost.',
+      one: '1 file is replaced; its earlier version is lost.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncConfirmUndo(String key) {
+    return 'Undo ($key) takes the copies back to the Trash and the deleted items out of it.';
+  }
+
+  @override
+  String get syncSynchronizeNow => 'Synchronize';
+
+  @override
+  String syncKeysHint(String space, String right, String left) {
+    return '$space changes the action, $right and $left choose a side';
+  }
+
+  @override
+  String get checksumTitle => 'Checksums';
+
+  @override
+  String checksumVerifyTitle(String name) {
+    return 'Check $name';
+  }
+
+  @override
+  String get checksumAlgorithm => 'Algorithm';
+
+  @override
+  String get checksumModeCalculate => 'Calculate';
+
+  @override
+  String get checksumModeVerify => 'Verify';
+
+  @override
+  String get checksumSubfolders => 'Include subfolders';
+
+  @override
+  String get checksumExpected => 'Expected hash';
+
+  @override
+  String get checksumExpectedHint => 'Paste a hash to look for it';
+
+  @override
+  String checksumMatch(String name) {
+    return 'Matches $name';
+  }
+
+  @override
+  String checksumMatchMany(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Matches $count files',
+      one: 'Matches 1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get checksumNoMatch => 'No file has this hash';
+
+  @override
+  String get checksumColumnHash => 'Hash';
+
+  @override
+  String get checksumColumnStatus => 'Status';
+
+  @override
+  String get checksumStatusOk => 'OK';
+
+  @override
+  String get checksumStatusMismatch => 'Mismatch';
+
+  @override
+  String get checksumStatusMissing => 'Missing';
+
+  @override
+  String get checksumStatusError => 'Unreadable';
+
+  @override
+  String get checksumPending => 'Waiting';
+
+  @override
+  String checksumFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+      zero: 'No files',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String checksumVerifySummary(String ok, String mismatch, String missing) {
+    return '$ok OK, $mismatch mismatched, $missing missing';
+  }
+
+  @override
+  String checksumBadLines(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lines were not understood',
+      one: '1 line was not understood',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String checksumError(String message) {
+    return 'Could not check: $message';
+  }
+
+  @override
+  String get checksumCopyHash => 'Copy Hash';
+
+  @override
+  String get checksumCopyLine => 'Copy Line';
+
+  @override
+  String get checksumCopyAll => 'Copy All';
+
+  @override
+  String get checksumSave => 'Save Checksum File…';
+
+  @override
+  String get checksumSaveTitle => 'Save checksum file';
+
+  @override
+  String checksumSaveExists(String name) {
+    return '“$name” already exists. Replace it?';
+  }
+
+  @override
+  String get checksumReplace => 'Replace';
+
+  @override
+  String checksumSaved(String name) {
+    return 'Saved $name';
+  }
+
+  @override
+  String checksumCopied(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hashes copied',
+      one: 'Hash copied',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get checksumNoFiles => 'No files to hash';
+
+  @override
+  String get dupesTitle => 'Find duplicates';
+
+  @override
+  String get dupesIn => 'Look in';
+
+  @override
+  String dupesAlsoIn(String path) {
+    return 'Also in $path';
+  }
+
+  @override
+  String get dupesMinSize => 'At least';
+
+  @override
+  String get dupesNames => 'Names';
+
+  @override
+  String dupesScanning(String count) {
+    return 'Looking through files: $count';
+  }
+
+  @override
+  String dupesComparing(String done, String total) {
+    return 'Comparing files: $done of $total';
+  }
+
+  @override
+  String dupesRead(String size) {
+    return '$size read';
+  }
+
+  @override
+  String dupesGroups(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count groups of duplicates',
+      one: '1 group of duplicates',
+      zero: 'No duplicates',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String dupesWasted(String size) {
+    return '$size can be freed';
+  }
+
+  @override
+  String dupesGroupHeader(String size, int count) {
+    return '$size × $count';
+  }
+
+  @override
+  String get dupesMark => 'Mark';
+
+  @override
+  String get dupesMarkAllButNewest => 'All but the Newest in Each Group';
+
+  @override
+  String get dupesMarkAllButOldest => 'All but the Oldest in Each Group';
+
+  @override
+  String get dupesMarkAllButShortest =>
+      'All but the Shortest Path in Each Group';
+
+  @override
+  String get dupesUnmarkAll => 'Unmark All';
+
+  @override
+  String dupesMarked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files marked',
+      one: '1 file marked',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dupesReveal => 'Show in Panel';
+
+  @override
+  String get dupesCopyPaths => 'Copy Paths';
+
+  @override
+  String dupesTrashTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Move $count files to the Trash?',
+      one: 'Move 1 file to the Trash?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String dupesTrashBody(String size, String key) {
+    return '$size is freed once the Trash is emptied; Undo ($key) puts the files back.';
+  }
+
+  @override
+  String dupesTrashAllCopies(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'In $count groups every copy is marked: none of them stays.',
+      one: 'In 1 group every copy is marked: none of them stays.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dupesNone => 'No duplicates found';
+
+  @override
+  String get dupesStartHint => 'Choose where to look and press Find';
+
+  @override
+  String dupesError(String message) {
+    return 'Could not search: $message';
+  }
+
+  @override
+  String dupesKeysHint(String space) {
+    return '$space marks a file';
+  }
+
+  @override
+  String get dupesMarkColumn => 'Mark';
+
+  @override
+  String get dupesUnmark => 'Unmark';
 }

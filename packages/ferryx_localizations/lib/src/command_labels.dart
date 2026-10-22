@@ -108,6 +108,13 @@ extension CommandLabels on FerryxLocalizations {
     AppCommand.editSymlink => cmdEditSymlink,
     AppCommand.revealInFileManager => cmdRevealInFileManager,
     AppCommand.openWith => cmdOpenWith,
+    // ─── Operations ───
+    AppCommand.compareFolders => cmdCompareFolders,
+    AppCommand.synchronizeFolders => cmdSynchronizeFolders,
+    AppCommand.undo => cmdUndo,
+    AppCommand.redo => cmdRedo,
+    AppCommand.checksums => cmdChecksums,
+    AppCommand.findDuplicates => cmdFindDuplicates,
     AppCommand.focusLeftPanel => cmdFocusLeftPanel,
     AppCommand.focusRightPanel => cmdFocusRightPanel,
     AppCommand.openSettings => cmdOpenSettings,

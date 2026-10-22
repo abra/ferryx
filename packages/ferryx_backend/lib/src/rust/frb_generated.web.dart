@@ -7,12 +7,16 @@
 // ignore_for_file: argument_type_not_assignable
 
 import 'api/attrs.dart';
+import 'api/checksum.dart';
+import 'api/duplicates.dart';
 import 'api/events.dart';
 import 'api/files.dart';
 import 'api/find.dart';
+import 'api/journal.dart';
 import 'api/listing.dart';
 import 'api/ops.dart';
 import 'api/rename.dart';
+import 'api/sync.dart';
 import 'api/system.dart';
 import 'api/types.dart';
 
@@ -65,13 +69,51 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  ChecksumAlgorithmView dco_decode_box_autoadd_checksum_algorithm_view(
+    dynamic raw,
+  );
+
+  @protected
+  ChecksumRequestView dco_decode_box_autoadd_checksum_request_view(dynamic raw);
+
+  @protected
+  ChecksumUpdateView dco_decode_box_autoadd_checksum_update_view(dynamic raw);
+
+  @protected
+  CompareUpdateView dco_decode_box_autoadd_compare_update_view(dynamic raw);
+
+  @protected
   ConflictSideView dco_decode_box_autoadd_conflict_side_view(dynamic raw);
+
+  @protected
+  DuplicatesPhaseView dco_decode_box_autoadd_duplicates_phase_view(dynamic raw);
+
+  @protected
+  DuplicatesRequestView dco_decode_box_autoadd_duplicates_request_view(
+    dynamic raw,
+  );
+
+  @protected
+  DuplicatesUpdateView dco_decode_box_autoadd_duplicates_update_view(
+    dynamic raw,
+  );
+
+  @protected
+  FerryxError dco_decode_box_autoadd_ferryx_error(dynamic raw);
 
   @protected
   FindRequestView dco_decode_box_autoadd_find_request_view(dynamic raw);
 
   @protected
+  FolderCompareRequestView dco_decode_box_autoadd_folder_compare_request_view(
+    dynamic raw,
+  );
+
+  @protected
   PlatformInt64 dco_decode_box_autoadd_i_64(dynamic raw);
+
+  @protected
+  JournalSummaryView dco_decode_box_autoadd_journal_summary_view(dynamic raw);
 
   @protected
   ListingOptionsView dco_decode_box_autoadd_listing_options_view(dynamic raw);
@@ -92,22 +134,85 @@ abstract class FerryxRustLibApiImplPlatform
   RenameOptionsView dco_decode_box_autoadd_rename_options_view(dynamic raw);
 
   @protected
+  SideInfoView dco_decode_box_autoadd_side_info_view(dynamic raw);
+
+  @protected
   SizeOpView dco_decode_box_autoadd_size_op_view(dynamic raw);
+
+  @protected
+  StepSummaryView dco_decode_box_autoadd_step_summary_view(dynamic raw);
+
+  @protected
+  SyncPlanView dco_decode_box_autoadd_sync_plan_view(dynamic raw);
 
   @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
 
   @protected
+  UndoCheckView dco_decode_box_autoadd_undo_check_view(dynamic raw);
+
+  @protected
   CaseTransformView dco_decode_case_transform_view(dynamic raw);
 
   @protected
+  ChecksumAlgorithmView dco_decode_checksum_algorithm_view(dynamic raw);
+
+  @protected
+  ChecksumFileView dco_decode_checksum_file_view(dynamic raw);
+
+  @protected
+  ChecksumLineView dco_decode_checksum_line_view(dynamic raw);
+
+  @protected
+  ChecksumOutcomeView dco_decode_checksum_outcome_view(dynamic raw);
+
+  @protected
+  ChecksumRequestView dco_decode_checksum_request_view(dynamic raw);
+
+  @protected
+  ChecksumStatusView dco_decode_checksum_status_view(dynamic raw);
+
+  @protected
+  ChecksumUpdateView dco_decode_checksum_update_view(dynamic raw);
+
+  @protected
   CollationView dco_decode_collation_view(dynamic raw);
+
+  @protected
+  CompareErrorView dco_decode_compare_error_view(dynamic raw);
+
+  @protected
+  CompareRowView dco_decode_compare_row_view(dynamic raw);
+
+  @protected
+  CompareStateView dco_decode_compare_state_view(dynamic raw);
+
+  @protected
+  CompareUpdateView dco_decode_compare_update_view(dynamic raw);
 
   @protected
   ConflictPolicyView dco_decode_conflict_policy_view(dynamic raw);
 
   @protected
   ConflictSideView dco_decode_conflict_side_view(dynamic raw);
+
+  @protected
+  ContentPairView dco_decode_content_pair_view(dynamic raw);
+
+  @protected
+  DuplicateFileView dco_decode_duplicate_file_view(dynamic raw);
+
+  @protected
+  DuplicateGroupView dco_decode_duplicate_group_view(dynamic raw);
+
+  @protected
+  DuplicatesPhaseView dco_decode_duplicates_phase_view(dynamic raw);
+
+  @protected
+  DuplicatesRequestView dco_decode_duplicates_request_view(dynamic raw);
+
+  @protected
+  DuplicatesUpdateView dco_decode_duplicates_update_view(dynamic raw);
 
   @protected
   EntryKindView dco_decode_entry_kind_view(dynamic raw);
@@ -128,6 +233,9 @@ abstract class FerryxRustLibApiImplPlatform
   FindRequestView dco_decode_find_request_view(dynamic raw);
 
   @protected
+  FolderCompareRequestView dco_decode_folder_compare_request_view(dynamic raw);
+
+  @protected
   FolderSizeView dco_decode_folder_size_view(dynamic raw);
 
   @protected
@@ -137,10 +245,37 @@ abstract class FerryxRustLibApiImplPlatform
   PlatformInt64 dco_decode_i_64(dynamic raw);
 
   @protected
+  JournalSummaryView dco_decode_journal_summary_view(dynamic raw);
+
+  @protected
   List<String> dco_decode_list_String(dynamic raw);
 
   @protected
   List<AnswerView> dco_decode_list_answer_view(dynamic raw);
+
+  @protected
+  List<ChecksumFileView> dco_decode_list_checksum_file_view(dynamic raw);
+
+  @protected
+  List<ChecksumLineView> dco_decode_list_checksum_line_view(dynamic raw);
+
+  @protected
+  List<ChecksumOutcomeView> dco_decode_list_checksum_outcome_view(dynamic raw);
+
+  @protected
+  List<CompareErrorView> dco_decode_list_compare_error_view(dynamic raw);
+
+  @protected
+  List<CompareRowView> dco_decode_list_compare_row_view(dynamic raw);
+
+  @protected
+  List<ContentPairView> dco_decode_list_content_pair_view(dynamic raw);
+
+  @protected
+  List<DuplicateFileView> dco_decode_list_duplicate_file_view(dynamic raw);
+
+  @protected
+  List<DuplicateGroupView> dco_decode_list_duplicate_group_view(dynamic raw);
 
   @protected
   List<EntryView> dco_decode_list_entry_view(dynamic raw);
@@ -156,6 +291,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   Int32List dco_decode_list_prim_i_32_strict(dynamic raw);
+
+  @protected
+  Int64List dco_decode_list_prim_i_64_strict(dynamic raw);
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
@@ -174,6 +312,12 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   List<RenamePairView> dco_decode_list_rename_pair_view(dynamic raw);
+
+  @protected
+  List<SyncItemView> dco_decode_list_sync_item_view(dynamic raw);
+
+  @protected
+  List<UndoIssueView> dco_decode_list_undo_issue_view(dynamic raw);
 
   @protected
   List<VolumeView> dco_decode_list_volume_view(dynamic raw);
@@ -209,10 +353,43 @@ abstract class FerryxRustLibApiImplPlatform
   String? dco_decode_opt_String(dynamic raw);
 
   @protected
+  ChecksumAlgorithmView? dco_decode_opt_box_autoadd_checksum_algorithm_view(
+    dynamic raw,
+  );
+
+  @protected
+  ChecksumUpdateView? dco_decode_opt_box_autoadd_checksum_update_view(
+    dynamic raw,
+  );
+
+  @protected
+  CompareUpdateView? dco_decode_opt_box_autoadd_compare_update_view(
+    dynamic raw,
+  );
+
+  @protected
   ConflictSideView? dco_decode_opt_box_autoadd_conflict_side_view(dynamic raw);
 
   @protected
+  DuplicatesPhaseView? dco_decode_opt_box_autoadd_duplicates_phase_view(
+    dynamic raw,
+  );
+
+  @protected
+  DuplicatesUpdateView? dco_decode_opt_box_autoadd_duplicates_update_view(
+    dynamic raw,
+  );
+
+  @protected
+  FerryxError? dco_decode_opt_box_autoadd_ferryx_error(dynamic raw);
+
+  @protected
   PlatformInt64? dco_decode_opt_box_autoadd_i_64(dynamic raw);
+
+  @protected
+  JournalSummaryView? dco_decode_opt_box_autoadd_journal_summary_view(
+    dynamic raw,
+  );
 
   @protected
   ProgressView? dco_decode_opt_box_autoadd_progress_view(dynamic raw);
@@ -221,10 +398,19 @@ abstract class FerryxRustLibApiImplPlatform
   QuestionView? dco_decode_opt_box_autoadd_question_view(dynamic raw);
 
   @protected
+  SideInfoView? dco_decode_opt_box_autoadd_side_info_view(dynamic raw);
+
+  @protected
   SizeOpView? dco_decode_opt_box_autoadd_size_op_view(dynamic raw);
 
   @protected
+  StepSummaryView? dco_decode_opt_box_autoadd_step_summary_view(dynamic raw);
+
+  @protected
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
+
+  @protected
+  UndoCheckView? dco_decode_opt_box_autoadd_undo_check_view(dynamic raw);
 
   @protected
   ProgressView dco_decode_progress_view(dynamic raw);
@@ -254,6 +440,9 @@ abstract class FerryxRustLibApiImplPlatform
   RenameProblemView dco_decode_rename_problem_view(dynamic raw);
 
   @protected
+  SideInfoView dco_decode_side_info_view(dynamic raw);
+
+  @protected
   SizeOpView dco_decode_size_op_view(dynamic raw);
 
   @protected
@@ -266,10 +455,34 @@ abstract class FerryxRustLibApiImplPlatform
   StandardFoldersView dco_decode_standard_folders_view(dynamic raw);
 
   @protected
+  StepKindView dco_decode_step_kind_view(dynamic raw);
+
+  @protected
+  StepSummaryView dco_decode_step_summary_view(dynamic raw);
+
+  @protected
+  SyncActionView dco_decode_sync_action_view(dynamic raw);
+
+  @protected
+  SyncItemView dco_decode_sync_item_view(dynamic raw);
+
+  @protected
+  SyncPlanView dco_decode_sync_plan_view(dynamic raw);
+
+  @protected
   int dco_decode_u_32(dynamic raw);
 
   @protected
   int dco_decode_u_8(dynamic raw);
+
+  @protected
+  UndoCheckView dco_decode_undo_check_view(dynamic raw);
+
+  @protected
+  UndoIssueKindView dco_decode_undo_issue_kind_view(dynamic raw);
+
+  @protected
+  UndoIssueView dco_decode_undo_issue_view(dynamic raw);
 
   @protected
   void dco_decode_unit(dynamic raw);
@@ -314,9 +527,47 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  ChecksumAlgorithmView sse_decode_box_autoadd_checksum_algorithm_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ChecksumRequestView sse_decode_box_autoadd_checksum_request_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ChecksumUpdateView sse_decode_box_autoadd_checksum_update_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CompareUpdateView sse_decode_box_autoadd_compare_update_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   ConflictSideView sse_decode_box_autoadd_conflict_side_view(
     SseDeserializer deserializer,
   );
+
+  @protected
+  DuplicatesPhaseView sse_decode_box_autoadd_duplicates_phase_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  DuplicatesRequestView sse_decode_box_autoadd_duplicates_request_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  DuplicatesUpdateView sse_decode_box_autoadd_duplicates_update_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  FerryxError sse_decode_box_autoadd_ferryx_error(SseDeserializer deserializer);
 
   @protected
   FindRequestView sse_decode_box_autoadd_find_request_view(
@@ -324,7 +575,17 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  FolderCompareRequestView sse_decode_box_autoadd_folder_compare_request_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PlatformInt64 sse_decode_box_autoadd_i_64(SseDeserializer deserializer);
+
+  @protected
+  JournalSummaryView sse_decode_box_autoadd_journal_summary_view(
+    SseDeserializer deserializer,
+  );
 
   @protected
   ListingOptionsView sse_decode_box_autoadd_listing_options_view(
@@ -357,10 +618,30 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  SideInfoView sse_decode_box_autoadd_side_info_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   SizeOpView sse_decode_box_autoadd_size_op_view(SseDeserializer deserializer);
 
   @protected
+  StepSummaryView sse_decode_box_autoadd_step_summary_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SyncPlanView sse_decode_box_autoadd_sync_plan_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  UndoCheckView sse_decode_box_autoadd_undo_check_view(
+    SseDeserializer deserializer,
+  );
 
   @protected
   CaseTransformView sse_decode_case_transform_view(
@@ -368,7 +649,52 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  ChecksumAlgorithmView sse_decode_checksum_algorithm_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ChecksumFileView sse_decode_checksum_file_view(SseDeserializer deserializer);
+
+  @protected
+  ChecksumLineView sse_decode_checksum_line_view(SseDeserializer deserializer);
+
+  @protected
+  ChecksumOutcomeView sse_decode_checksum_outcome_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ChecksumRequestView sse_decode_checksum_request_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ChecksumStatusView sse_decode_checksum_status_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ChecksumUpdateView sse_decode_checksum_update_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   CollationView sse_decode_collation_view(SseDeserializer deserializer);
+
+  @protected
+  CompareErrorView sse_decode_compare_error_view(SseDeserializer deserializer);
+
+  @protected
+  CompareRowView sse_decode_compare_row_view(SseDeserializer deserializer);
+
+  @protected
+  CompareStateView sse_decode_compare_state_view(SseDeserializer deserializer);
+
+  @protected
+  CompareUpdateView sse_decode_compare_update_view(
+    SseDeserializer deserializer,
+  );
 
   @protected
   ConflictPolicyView sse_decode_conflict_policy_view(
@@ -377,6 +703,34 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   ConflictSideView sse_decode_conflict_side_view(SseDeserializer deserializer);
+
+  @protected
+  ContentPairView sse_decode_content_pair_view(SseDeserializer deserializer);
+
+  @protected
+  DuplicateFileView sse_decode_duplicate_file_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  DuplicateGroupView sse_decode_duplicate_group_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  DuplicatesPhaseView sse_decode_duplicates_phase_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  DuplicatesRequestView sse_decode_duplicates_request_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  DuplicatesUpdateView sse_decode_duplicates_update_view(
+    SseDeserializer deserializer,
+  );
 
   @protected
   EntryKindView sse_decode_entry_kind_view(SseDeserializer deserializer);
@@ -397,6 +751,11 @@ abstract class FerryxRustLibApiImplPlatform
   FindRequestView sse_decode_find_request_view(SseDeserializer deserializer);
 
   @protected
+  FolderCompareRequestView sse_decode_folder_compare_request_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   FolderSizeView sse_decode_folder_size_view(SseDeserializer deserializer);
 
   @protected
@@ -406,10 +765,55 @@ abstract class FerryxRustLibApiImplPlatform
   PlatformInt64 sse_decode_i_64(SseDeserializer deserializer);
 
   @protected
+  JournalSummaryView sse_decode_journal_summary_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer);
 
   @protected
   List<AnswerView> sse_decode_list_answer_view(SseDeserializer deserializer);
+
+  @protected
+  List<ChecksumFileView> sse_decode_list_checksum_file_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<ChecksumLineView> sse_decode_list_checksum_line_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<ChecksumOutcomeView> sse_decode_list_checksum_outcome_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<CompareErrorView> sse_decode_list_compare_error_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<CompareRowView> sse_decode_list_compare_row_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<ContentPairView> sse_decode_list_content_pair_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<DuplicateFileView> sse_decode_list_duplicate_file_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<DuplicateGroupView> sse_decode_list_duplicate_group_view(
+    SseDeserializer deserializer,
+  );
 
   @protected
   List<EntryView> sse_decode_list_entry_view(SseDeserializer deserializer);
@@ -427,6 +831,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   Int32List sse_decode_list_prim_i_32_strict(SseDeserializer deserializer);
+
+  @protected
+  Int64List sse_decode_list_prim_i_64_strict(SseDeserializer deserializer);
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
@@ -453,6 +860,16 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   List<RenamePairView> sse_decode_list_rename_pair_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<SyncItemView> sse_decode_list_sync_item_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<UndoIssueView> sse_decode_list_undo_issue_view(
     SseDeserializer deserializer,
   );
 
@@ -492,12 +909,47 @@ abstract class FerryxRustLibApiImplPlatform
   String? sse_decode_opt_String(SseDeserializer deserializer);
 
   @protected
+  ChecksumAlgorithmView? sse_decode_opt_box_autoadd_checksum_algorithm_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ChecksumUpdateView? sse_decode_opt_box_autoadd_checksum_update_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CompareUpdateView? sse_decode_opt_box_autoadd_compare_update_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   ConflictSideView? sse_decode_opt_box_autoadd_conflict_side_view(
     SseDeserializer deserializer,
   );
 
   @protected
+  DuplicatesPhaseView? sse_decode_opt_box_autoadd_duplicates_phase_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  DuplicatesUpdateView? sse_decode_opt_box_autoadd_duplicates_update_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  FerryxError? sse_decode_opt_box_autoadd_ferryx_error(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PlatformInt64? sse_decode_opt_box_autoadd_i_64(SseDeserializer deserializer);
+
+  @protected
+  JournalSummaryView? sse_decode_opt_box_autoadd_journal_summary_view(
+    SseDeserializer deserializer,
+  );
 
   @protected
   ProgressView? sse_decode_opt_box_autoadd_progress_view(
@@ -510,12 +962,27 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  SideInfoView? sse_decode_opt_box_autoadd_side_info_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   SizeOpView? sse_decode_opt_box_autoadd_size_op_view(
     SseDeserializer deserializer,
   );
 
   @protected
+  StepSummaryView? sse_decode_opt_box_autoadd_step_summary_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  UndoCheckView? sse_decode_opt_box_autoadd_undo_check_view(
+    SseDeserializer deserializer,
+  );
 
   @protected
   ProgressView sse_decode_progress_view(SseDeserializer deserializer);
@@ -553,6 +1020,9 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  SideInfoView sse_decode_side_info_view(SseDeserializer deserializer);
+
+  @protected
   SizeOpView sse_decode_size_op_view(SseDeserializer deserializer);
 
   @protected
@@ -567,10 +1037,36 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  StepKindView sse_decode_step_kind_view(SseDeserializer deserializer);
+
+  @protected
+  StepSummaryView sse_decode_step_summary_view(SseDeserializer deserializer);
+
+  @protected
+  SyncActionView sse_decode_sync_action_view(SseDeserializer deserializer);
+
+  @protected
+  SyncItemView sse_decode_sync_item_view(SseDeserializer deserializer);
+
+  @protected
+  SyncPlanView sse_decode_sync_plan_view(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_u_32(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
+
+  @protected
+  UndoCheckView sse_decode_undo_check_view(SseDeserializer deserializer);
+
+  @protected
+  UndoIssueKindView sse_decode_undo_issue_kind_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  UndoIssueView sse_decode_undo_issue_view(SseDeserializer deserializer);
 
   @protected
   void sse_decode_unit(SseDeserializer deserializer);
@@ -624,8 +1120,56 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_box_autoadd_checksum_algorithm_view(
+    ChecksumAlgorithmView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_checksum_request_view(
+    ChecksumRequestView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_checksum_update_view(
+    ChecksumUpdateView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_compare_update_view(
+    CompareUpdateView self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_conflict_side_view(
     ConflictSideView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_duplicates_phase_view(
+    DuplicatesPhaseView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_duplicates_request_view(
+    DuplicatesRequestView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_duplicates_update_view(
+    DuplicatesUpdateView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_ferryx_error(
+    FerryxError self,
     SseSerializer serializer,
   );
 
@@ -636,8 +1180,20 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_box_autoadd_folder_compare_request_view(
+    FolderCompareRequestView self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_i_64(
     PlatformInt64 self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_journal_summary_view(
+    JournalSummaryView self,
     SseSerializer serializer,
   );
 
@@ -678,13 +1234,37 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_box_autoadd_side_info_view(
+    SideInfoView self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_size_op_view(
     SizeOpView self,
     SseSerializer serializer,
   );
 
   @protected
+  void sse_encode_box_autoadd_step_summary_view(
+    StepSummaryView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_sync_plan_view(
+    SyncPlanView self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_undo_check_view(
+    UndoCheckView self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_case_transform_view(
@@ -693,7 +1273,73 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_checksum_algorithm_view(
+    ChecksumAlgorithmView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_checksum_file_view(
+    ChecksumFileView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_checksum_line_view(
+    ChecksumLineView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_checksum_outcome_view(
+    ChecksumOutcomeView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_checksum_request_view(
+    ChecksumRequestView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_checksum_status_view(
+    ChecksumStatusView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_checksum_update_view(
+    ChecksumUpdateView self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_collation_view(CollationView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_compare_error_view(
+    CompareErrorView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_compare_row_view(
+    CompareRowView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_compare_state_view(
+    CompareStateView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_compare_update_view(
+    CompareUpdateView self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_conflict_policy_view(
@@ -704,6 +1350,42 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_conflict_side_view(
     ConflictSideView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_content_pair_view(
+    ContentPairView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_duplicate_file_view(
+    DuplicateFileView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_duplicate_group_view(
+    DuplicateGroupView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_duplicates_phase_view(
+    DuplicatesPhaseView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_duplicates_request_view(
+    DuplicatesRequestView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_duplicates_update_view(
+    DuplicatesUpdateView self,
     SseSerializer serializer,
   );
 
@@ -732,6 +1414,12 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_folder_compare_request_view(
+    FolderCompareRequestView self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_folder_size_view(
     FolderSizeView self,
     SseSerializer serializer,
@@ -744,11 +1432,65 @@ abstract class FerryxRustLibApiImplPlatform
   void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer);
 
   @protected
+  void sse_encode_journal_summary_view(
+    JournalSummaryView self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_answer_view(
     List<AnswerView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_checksum_file_view(
+    List<ChecksumFileView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_checksum_line_view(
+    List<ChecksumLineView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_checksum_outcome_view(
+    List<ChecksumOutcomeView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_compare_error_view(
+    List<CompareErrorView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_compare_row_view(
+    List<CompareRowView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_content_pair_view(
+    List<ContentPairView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_duplicate_file_view(
+    List<DuplicateFileView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_duplicate_group_view(
+    List<DuplicateGroupView> self,
     SseSerializer serializer,
   );
 
@@ -779,6 +1521,12 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_list_prim_i_32_strict(
     Int32List self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_prim_i_64_strict(
+    Int64List self,
     SseSerializer serializer,
   );
 
@@ -815,6 +1563,18 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_list_rename_pair_view(
     List<RenamePairView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_sync_item_view(
+    List<SyncItemView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_undo_issue_view(
+    List<UndoIssueView> self,
     SseSerializer serializer,
   );
 
@@ -858,14 +1618,56 @@ abstract class FerryxRustLibApiImplPlatform
   void sse_encode_opt_String(String? self, SseSerializer serializer);
 
   @protected
+  void sse_encode_opt_box_autoadd_checksum_algorithm_view(
+    ChecksumAlgorithmView? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_checksum_update_view(
+    ChecksumUpdateView? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_compare_update_view(
+    CompareUpdateView? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_conflict_side_view(
     ConflictSideView? self,
     SseSerializer serializer,
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_duplicates_phase_view(
+    DuplicatesPhaseView? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_duplicates_update_view(
+    DuplicatesUpdateView? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_ferryx_error(
+    FerryxError? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_i_64(
     PlatformInt64? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_journal_summary_view(
+    JournalSummaryView? self,
     SseSerializer serializer,
   );
 
@@ -882,13 +1684,31 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_side_info_view(
+    SideInfoView? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_size_op_view(
     SizeOpView? self,
     SseSerializer serializer,
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_step_summary_view(
+    StepSummaryView? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_undo_check_view(
+    UndoCheckView? self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_progress_view(ProgressView self, SseSerializer serializer);
@@ -939,6 +1759,9 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_side_info_view(SideInfoView self, SseSerializer serializer);
+
+  @protected
   void sse_encode_size_op_view(SizeOpView self, SseSerializer serializer);
 
   @protected
@@ -957,10 +1780,43 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_step_kind_view(StepKindView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_step_summary_view(
+    StepSummaryView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_sync_action_view(
+    SyncActionView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_sync_item_view(SyncItemView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_sync_plan_view(SyncPlanView self, SseSerializer serializer);
+
+  @protected
   void sse_encode_u_32(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_undo_check_view(UndoCheckView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_undo_issue_kind_view(
+    UndoIssueKindView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_undo_issue_view(UndoIssueView self, SseSerializer serializer);
 
   @protected
   void sse_encode_unit(void self, SseSerializer serializer);

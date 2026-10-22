@@ -1,6 +1,6 @@
 //! Runs operations on threads and holds their state.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
@@ -10,10 +10,31 @@ use std::time::{Duration, Instant, SystemTime};
 use ferryx_vfs::VfsError;
 use parking_lot::{Condvar, Mutex};
 
+use crate::journal::{Change, Direction, Fingerprint, Journal, Step, StepKind, StepRecord};
 use crate::types::*;
 use crate::{compress, copy, delete, sizes};
 
 pub type Listener = Arc<dyn Fn(Progress) + Send + Sync>;
+
+/// Work the runner runs as an operation: a module's own job, with the
+/// operation's context to check, report and ask through.
+pub type Job = Box<dyn FnOnce(&OpContext) -> Result<(), Abort> + Send>;
+
+/// What becomes of an operation's changes in the journal.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Journaling {
+    /// Nothing is recorded (sizes, a comparison, a permanent delete).
+    Off,
+    /// The changes become a new step of this kind.
+    Record { kind: StepKind, items: u64, first_name: String },
+    /// The operation walks `step` one way: what it does goes on the other
+    /// stack, what it leaves back on the step's own.
+    Walk { direction: Direction, step: Box<Step> },
+}
+
+/// More changes than this in one operation are not kept: its step is on
+/// record, but cannot be undone.
+const MAX_CHANGES: usize = 200_000;
 
 /// How often progress is reported while bytes flow.
 const REPORT_EVERY: Duration = Duration::from_millis(100);
@@ -23,6 +44,7 @@ pub struct Runner {
     ops: Mutex<HashMap<u64, Arc<OpContext>>>,
     next_id: AtomicU64,
     listener: Mutex<Option<Listener>>,
+    journal: Arc<Journal>,
 }
 
 impl Default for Runner {
@@ -33,7 +55,17 @@ impl Default for Runner {
 
 impl Runner {
     pub fn new() -> Runner {
-        Runner { ops: Mutex::new(HashMap::new()), next_id: AtomicU64::new(1), listener: Mutex::new(None) }
+        Runner {
+            ops: Mutex::new(HashMap::new()),
+            next_id: AtomicU64::new(1),
+            listener: Mutex::new(None),
+            journal: Arc::new(Journal::new()),
+        }
+    }
+
+    /// The undo journal every operation records into.
+    pub fn journal(&self) -> &Arc<Journal> {
+        &self.journal
     }
 
     /// The one listener every operation reports to; a later call replaces
@@ -44,13 +76,28 @@ impl Runner {
 
     /// Starts `request` on a thread and answers its id.
     pub fn start(&self, request: OpRequest) -> u64 {
+        let journaling = journaling_of(&request);
+        let job: Job = {
+            let request = request.clone();
+            Box::new(move |ctx: &OpContext| run(ctx, request))
+        };
+        self.start_job(request, journaling, job)
+    }
+
+    /// Starts `job` as an operation described by `request` (its kind,
+    /// sources and destination are what the interface shows) and answers
+    /// its id. At its end its changes go to the journal as `journaling`
+    /// says, before the last report.
+    pub fn start_job(&self, request: OpRequest, journaling: Journaling, job: Job) -> u64 {
         let id = self.next_id.fetch_add(1, Ordering::SeqCst);
         let ctx = Arc::new(OpContext::new(id, &request, self.listener.lock().clone()));
         self.ops.lock().insert(id, ctx.clone());
         let worker = ctx.clone();
+        let journal = self.journal.clone();
         let name = format!("op {id} {:?}", request.kind);
         let spawned = thread::Builder::new().name(name).spawn(move || {
-            let outcome = run(&worker, request);
+            let outcome = job(&worker);
+            worker.commit(&journal, journaling);
             worker.finish(outcome);
         });
         if let Err(e) = spawned {
@@ -108,12 +155,36 @@ impl Runner {
     }
 }
 
+/// How an operation of `request`'s kind goes on record.
+fn journaling_of(request: &OpRequest) -> Journaling {
+    let kind = match request.kind {
+        OpKind::Copy => StepKind::Copy,
+        OpKind::Move => StepKind::Move,
+        OpKind::Trash => StepKind::Trash,
+        OpKind::Duplicate => StepKind::Duplicate,
+        OpKind::Compress => StepKind::Compress,
+        OpKind::Extract => StepKind::Extract,
+        OpKind::Synchronize => StepKind::Synchronize,
+        OpKind::Delete | OpKind::CalcSizes | OpKind::CompareContents | OpKind::Undo | OpKind::Redo => {
+            return Journaling::Off
+        }
+    };
+    let record = StepRecord::for_paths(kind, &request.sources, Vec::new());
+    Journaling::Record { kind, items: record.items, first_name: record.first_name }
+}
+
 fn run(ctx: &OpContext, request: OpRequest) -> Result<(), Abort> {
     match request.kind {
         OpKind::Copy | OpKind::Move | OpKind::Extract | OpKind::Duplicate => copy::run(ctx, &request),
         OpKind::Delete | OpKind::Trash => delete::run(ctx, &request),
         OpKind::Compress => compress::run(ctx, &request),
         OpKind::CalcSizes => sizes::run(ctx, &request),
+        // Jobs of their own (`Runner::start_job`): nothing runs from the
+        // request alone.
+        OpKind::Synchronize | OpKind::CompareContents | OpKind::Undo | OpKind::Redo => {
+            ctx.record_error(Path::new(""), format!("{:?} runs as a job of its own", request.kind));
+            Err(Abort::Stopped)
+        }
     }
 }
 
@@ -137,6 +208,35 @@ pub struct OpContext {
     listener: Option<Listener>,
     started: Instant,
     last_report: Mutex<Instant>,
+    recorder: Mutex<Recorder>,
+}
+
+/// The changes an operation made, for the journal.
+#[derive(Default)]
+struct Recorder {
+    changes: Vec<Change>,
+    /// Items this operation created: what is made inside them needs no
+    /// record of its own.
+    created: HashSet<PathBuf>,
+    /// Items this operation replaced: what takes their place is not new.
+    overwritten: HashSet<PathBuf>,
+    /// Walking a step: the changes it did not get to.
+    left: Vec<Change>,
+    overflow: bool,
+}
+
+impl Recorder {
+    fn push(&mut self, change: Change) {
+        if self.changes.len() >= MAX_CHANGES {
+            self.overflow = true;
+            return;
+        }
+        self.changes.push(change);
+    }
+
+    fn inside_created(&self, path: &Path) -> bool {
+        !self.created.is_empty() && path.ancestors().skip(1).any(|a| self.created.contains(a))
+    }
 }
 
 impl OpContext {
@@ -175,6 +275,7 @@ impl OpContext {
             listener,
             started: Instant::now(),
             last_report: Mutex::new(Instant::now() - REPORT_EVERY),
+            recorder: Mutex::new(Recorder::default()),
         }
     }
 
@@ -395,8 +496,9 @@ impl OpContext {
             return Err(Abort::Cancelled);
         }
         if self.listener.is_none() {
-            // Nobody to ask: the first answer offered stands.
-            return Ok(answers.first().copied().unwrap_or(Answer::Abort));
+            // Nobody to ask: the first answer offered stands, but never
+            // Retry, which would try the same thing for ever.
+            return Ok(answers.iter().copied().find(|a| *a != Answer::Retry).unwrap_or(Answer::Abort));
         }
         let id = self.next_question.fetch_add(1, Ordering::SeqCst);
         let question = Question { id, kind, message, source, existing, answers };
@@ -423,6 +525,128 @@ impl OpContext {
             return Err(Abort::Cancelled);
         }
         Ok(answer)
+    }
+
+    // ─── The journal ───
+
+    /// Records `change` as done by this operation.
+    pub fn record(&self, change: Change) {
+        self.recorder.lock().push(change);
+    }
+
+    /// Records the item at `path` as made by this operation, unless it is
+    /// inside an item the operation made. Called once the item is complete
+    /// (attributes set), so its fingerprint is the final one.
+    pub fn record_created(&self, path: &Path) {
+        let mut recorder = self.recorder.lock();
+        if recorder.created.contains(path)
+            || recorder.overwritten.contains(path)
+            || recorder.inside_created(path)
+        {
+            return;
+        }
+        recorder.created.insert(path.to_path_buf());
+        recorder.push(Change::Created { path: path.to_path_buf(), fingerprint: Fingerprint::of(path) });
+    }
+
+    /// Records the item at `path` as replaced: its earlier contents are
+    /// lost, and what takes its place is no new item.
+    pub fn record_overwritten(&self, path: &Path) {
+        let mut recorder = self.recorder.lock();
+        if !recorder.inside_created(path) && recorder.overwritten.insert(path.to_path_buf()) {
+            recorder.push(Change::Overwritten { path: path.to_path_buf() });
+        }
+    }
+
+    /// Records the item at `from` as moved to `to`. A move across volumes
+    /// copies first: what that copy recorded at `to` (or inside it)
+    /// becomes the move of the item it came from.
+    pub fn record_moved(&self, from: &Path, to: &Path) {
+        self.convert_to_moves(from, to, true);
+    }
+
+    /// Records the items of the folder `from` as moved into the folder
+    /// `to` that was there before (a merge across volumes): only what the
+    /// copy recorded inside `to` moved, never `to` itself.
+    pub fn record_merged(&self, from: &Path, to: &Path) {
+        self.convert_to_moves(from, to, false);
+    }
+
+    fn convert_to_moves(&self, from: &Path, to: &Path, whole: bool) {
+        let mut recorder = self.recorder.lock();
+        let source_of = |path: &Path| {
+            path.strip_prefix(to).ok().map(|rest| {
+                if rest.as_os_str().is_empty() {
+                    from.to_path_buf()
+                } else {
+                    from.join(rest)
+                }
+            })
+        };
+        let mut converted = false;
+        let mut changes = Vec::with_capacity(recorder.changes.len());
+        for change in std::mem::take(&mut recorder.changes) {
+            match change {
+                Change::Created { path, fingerprint } => match source_of(&path) {
+                    Some(source) => {
+                        converted = true;
+                        changes.push(Change::Moved { from: source, to: path });
+                    }
+                    None => changes.push(Change::Created { path, fingerprint }),
+                },
+                Change::Overwritten { path } => {
+                    let source = source_of(&path);
+                    changes.push(Change::Overwritten { path: path.clone() });
+                    if let Some(source) = source {
+                        converted = true;
+                        changes.push(Change::Moved { from: source, to: path });
+                    }
+                }
+                other => changes.push(other),
+            }
+        }
+        recorder.changes = changes;
+        recorder.created.retain(|p| !p.starts_with(to));
+        // Even into a folder this operation made: the item came from
+        // elsewhere, and going back it must leave before the folder goes.
+        if whole && !converted {
+            recorder.push(Change::Moved { from: from.to_path_buf(), to: to.to_path_buf() });
+        }
+    }
+
+    /// Walking a step: records `change` as not done, for the next walk.
+    pub fn record_left(&self, change: Change) {
+        self.recorder.lock().left.push(change);
+    }
+
+    /// Hands the recorded changes to `journal` as `journaling` says.
+    fn commit(&self, journal: &Journal, journaling: Journaling) {
+        let recorder = std::mem::take(&mut *self.recorder.lock());
+        match journaling {
+            Journaling::Off => {}
+            Journaling::Record { kind, items, first_name } => {
+                journal.record(StepRecord {
+                    kind,
+                    items,
+                    first_name,
+                    changes: if recorder.overflow { Vec::new() } else { recorder.changes },
+                    truncated: recorder.overflow,
+                });
+            }
+            Journaling::Walk { direction, step } => {
+                journal.finish_walk(direction, &step, recorder.changes, recorder.left);
+            }
+        }
+    }
+
+    /// The changes recorded so far, for the modules' tests.
+    pub fn recorded(&self) -> Vec<Change> {
+        self.recorder.lock().changes.clone()
+    }
+
+    /// The changes recorded as not done, for the modules' tests.
+    pub fn recorded_left(&self) -> Vec<Change> {
+        self.recorder.lock().left.clone()
     }
 
     fn finish(&self, outcome: Result<(), Abort>) {

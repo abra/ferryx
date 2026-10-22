@@ -17,3 +17,8 @@ export 'src/rust/api/rename.dart';
 export 'src/rust/api/system.dart';
 export 'src/rust/api/types.dart';
 export 'src/rust/frb_generated.dart' show FerryxRustLib;
+export 'src/mapping_operations.dart';
+export 'src/rust/api/checksum.dart';
+export 'src/rust/api/duplicates.dart';
+export 'src/rust/api/journal.dart';
+export 'src/rust/api/sync.dart';
