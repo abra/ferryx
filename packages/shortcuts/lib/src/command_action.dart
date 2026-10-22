@@ -71,6 +71,18 @@ class _CommandScope extends InheritedWidget {
   bool updateShouldNotify(_CommandScope oldWidget) => false;
 }
 
+/// Every command some scope above [context] handles: what a key press
+/// there could run. The command palette offers these and no others.
+Set<AppCommand> commandsAt(BuildContext context) => {
+  for (
+    _CommandScope? scope = context
+        .getInheritedWidgetOfExactType<_CommandScope>();
+    scope != null;
+    scope = scope.parent
+  )
+    ...scope.handlers.keys,
+};
+
 /// Whether some scope above [context] handles [command].
 bool canInvokeCommand(BuildContext context, AppCommand command) =>
     context.getInheritedWidgetOfExactType<_CommandScope>()?._find(command) !=

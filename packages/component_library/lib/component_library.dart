@@ -35,6 +35,7 @@ export 'src/app_scroll_keys.dart';
 export 'src/app_search_field.dart';
 export 'src/app_splitter.dart';
 export 'src/app_progress_bar.dart';
+export 'src/app_quick_picker.dart';
 export 'src/pixel_snap.dart';
 export 'src/popup_focus.dart';
 export 'src/app_section_label.dart';

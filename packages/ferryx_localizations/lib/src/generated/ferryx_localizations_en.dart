@@ -2192,4 +2192,70 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get cmdDismiss => 'Dismiss';
+
+  @override
+  String get cmdCommandPalette => 'Command Palette';
+
+  @override
+  String get cmdJumpToFolder => 'Jump to a Frequent Folder';
+
+  @override
+  String get cmdAddToShelf => 'Add to the Shelf';
+
+  @override
+  String get cmdToggleShelf => 'Show or Hide the Shelf';
+
+  @override
+  String get cmdRenameInEditor => 'Rename in an Editor';
+
+  @override
+  String get paletteHint => 'Type a command';
+
+  @override
+  String get paletteNoResults => 'No command matches';
+
+  @override
+  String get paletteRecent => 'Recently used';
+
+  @override
+  String get paletteKeySelect => 'select';
+
+  @override
+  String get paletteKeyRun => 'run';
+
+  @override
+  String get paletteKeyClose => 'close';
+
+  @override
+  String get paletteSectionFile => 'File';
+
+  @override
+  String get paletteSectionEdit => 'Edit';
+
+  @override
+  String get paletteSectionView => 'View';
+
+  @override
+  String get paletteSectionGo => 'Go';
+
+  @override
+  String get paletteSectionCommand => 'Command';
+
+  @override
+  String get paletteSectionWindow => 'Window';
+
+  @override
+  String get paletteSectionPanel => 'File panel';
+
+  @override
+  String get paletteSectionVim => 'Vim';
+
+  @override
+  String get paletteSectionViewer => 'Viewer';
+
+  @override
+  String get paletteSectionLists => 'Lists';
+
+  @override
+  String get paletteSectionDialogs => 'Dialogs';
 }

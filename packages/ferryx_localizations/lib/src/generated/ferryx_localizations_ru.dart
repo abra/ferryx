@@ -2228,4 +2228,70 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get cmdDismiss => 'Закрыть';
+
+  @override
+  String get cmdCommandPalette => 'Палитра команд';
+
+  @override
+  String get cmdJumpToFolder => 'Перейти к частой папке';
+
+  @override
+  String get cmdAddToShelf => 'Положить на полку';
+
+  @override
+  String get cmdToggleShelf => 'Показать или скрыть полку';
+
+  @override
+  String get cmdRenameInEditor => 'Переименовать в редакторе';
+
+  @override
+  String get paletteHint => 'Введите команду';
+
+  @override
+  String get paletteNoResults => 'Нет подходящих команд';
+
+  @override
+  String get paletteRecent => 'Недавние';
+
+  @override
+  String get paletteKeySelect => 'выбрать';
+
+  @override
+  String get paletteKeyRun => 'выполнить';
+
+  @override
+  String get paletteKeyClose => 'закрыть';
+
+  @override
+  String get paletteSectionFile => 'Файл';
+
+  @override
+  String get paletteSectionEdit => 'Правка';
+
+  @override
+  String get paletteSectionView => 'Вид';
+
+  @override
+  String get paletteSectionGo => 'Переход';
+
+  @override
+  String get paletteSectionCommand => 'Команды';
+
+  @override
+  String get paletteSectionWindow => 'Окно';
+
+  @override
+  String get paletteSectionPanel => 'Файловая панель';
+
+  @override
+  String get paletteSectionVim => 'Vim';
+
+  @override
+  String get paletteSectionViewer => 'Просмотр';
+
+  @override
+  String get paletteSectionLists => 'Списки';
+
+  @override
+  String get paletteSectionDialogs => 'Диалоги';
 }

@@ -21,6 +21,8 @@ class DependenciesContainer {
     required this.operations,
     required this.find,
     required this.rename,
+    required this.frecency,
+    required this.recentCommands,
     required this._resourceDisposer,
     TargetPlatform? platform,
     WindowFrame? windowFrame,
@@ -37,6 +39,12 @@ class DependenciesContainer {
   final OperationsService operations;
   final FindService find;
   final RenameService rename;
+
+  /// The folders the panels showed, for Jump to Folder (⌘G).
+  final FolderFrecency frecency;
+
+  /// The commands the palette ran lately, the newest first.
+  final RecentItems recentCommands;
 
   /// The desktop the app runs on; the default chords follow its
   /// conventions.

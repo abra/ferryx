@@ -75,9 +75,18 @@ class PrefixActivator extends ShortcutActivator {
         state.isMetaPressed) {
       return false;
     }
+    // In a text field the letter is text: a prefix armed there would eat
+    // it (a picker's query, a dialog's field) and wait to complete a
+    // sequence the user never meant.
+    if (_typing) return false;
     KeySequenceState.arm(prefix);
     return true;
   }
+
+  static bool get _typing =>
+      FocusManager.instance.primaryFocus?.context
+          ?.findAncestorStateOfType<EditableTextState>() !=
+      null;
 
   @override
   String debugDescribeKeys() => '${prefix.debugName} (prefix)';

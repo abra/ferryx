@@ -45,6 +45,14 @@ Future<DependenciesContainer> composeDependencies({
     // ─── Preferences ───
     final preferencesService = await PreferencesService.create();
     resources.add('preferencesService.dispose', preferencesService.dispose);
+    // High-churn values beside the preferences, under keys of their own.
+    final sideStorage = SharedPreferencesSideStorage();
+    final frecency = await FolderFrecency.load(sideStorage);
+    resources.add('frecency.dispose', frecency.dispose);
+    final recentCommands = await RecentItems.load(
+      sideStorage,
+      key: RecentItems.commandsKey,
+    );
 
     // ─── Files and operations ───
     final files = FileRepository(backend: backend, logger: logger);
@@ -66,6 +74,8 @@ Future<DependenciesContainer> composeDependencies({
       operations: operations,
       find: find,
       rename: const RenameService(),
+      frecency: frecency,
+      recentCommands: recentCommands,
       resourceDisposer: resources,
       windowFrame: windowFrame,
     );

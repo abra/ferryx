@@ -41,6 +41,8 @@ dependencies:
     path: packages/features/find
   settings_feature:
     path: packages/features/settings
+  palette_feature:
+    path: packages/features/palette
 
   # External packages
   flutter_bloc: ^9.1.1

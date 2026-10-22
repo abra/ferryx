@@ -3871,6 +3871,138 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Dismiss'**
   String get cmdDismiss;
+
+  /// No description provided for @cmdCommandPalette.
+  ///
+  /// In en, this message translates to:
+  /// **'Command Palette'**
+  String get cmdCommandPalette;
+
+  /// No description provided for @cmdJumpToFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Jump to a Frequent Folder'**
+  String get cmdJumpToFolder;
+
+  /// No description provided for @cmdAddToShelf.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to the Shelf'**
+  String get cmdAddToShelf;
+
+  /// No description provided for @cmdToggleShelf.
+  ///
+  /// In en, this message translates to:
+  /// **'Show or Hide the Shelf'**
+  String get cmdToggleShelf;
+
+  /// No description provided for @cmdRenameInEditor.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename in an Editor'**
+  String get cmdRenameInEditor;
+
+  /// No description provided for @paletteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a command'**
+  String get paletteHint;
+
+  /// No description provided for @paletteNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No command matches'**
+  String get paletteNoResults;
+
+  /// No description provided for @paletteRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently used'**
+  String get paletteRecent;
+
+  /// No description provided for @paletteKeySelect.
+  ///
+  /// In en, this message translates to:
+  /// **'select'**
+  String get paletteKeySelect;
+
+  /// No description provided for @paletteKeyRun.
+  ///
+  /// In en, this message translates to:
+  /// **'run'**
+  String get paletteKeyRun;
+
+  /// No description provided for @paletteKeyClose.
+  ///
+  /// In en, this message translates to:
+  /// **'close'**
+  String get paletteKeyClose;
+
+  /// No description provided for @paletteSectionFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get paletteSectionFile;
+
+  /// No description provided for @paletteSectionEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get paletteSectionEdit;
+
+  /// No description provided for @paletteSectionView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get paletteSectionView;
+
+  /// No description provided for @paletteSectionGo.
+  ///
+  /// In en, this message translates to:
+  /// **'Go'**
+  String get paletteSectionGo;
+
+  /// No description provided for @paletteSectionCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Command'**
+  String get paletteSectionCommand;
+
+  /// No description provided for @paletteSectionWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get paletteSectionWindow;
+
+  /// No description provided for @paletteSectionPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'File panel'**
+  String get paletteSectionPanel;
+
+  /// No description provided for @paletteSectionVim.
+  ///
+  /// In en, this message translates to:
+  /// **'Vim'**
+  String get paletteSectionVim;
+
+  /// No description provided for @paletteSectionViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewer'**
+  String get paletteSectionViewer;
+
+  /// No description provided for @paletteSectionLists.
+  ///
+  /// In en, this message translates to:
+  /// **'Lists'**
+  String get paletteSectionLists;
+
+  /// No description provided for @paletteSectionDialogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Dialogs'**
+  String get paletteSectionDialogs;
 }
 
 class _FerryxLocalizationsDelegate

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:component_library/component_library.dart';
 import 'package:ferryx/app/dependency_scope.dart';
 import 'package:ferryx/app/routing.dart';
@@ -5,6 +7,7 @@ import 'package:ferryx/app/window_chrome.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:palette_feature/palette_feature.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 
@@ -88,6 +91,20 @@ class _FerryxAppState extends State<FerryxApp> {
                 handlers: {
                   AppCommand.hintMode: () =>
                       HintModeHost.maybeOf(context)?.toggle(),
+                  // Over every route: the palette lists what can run where
+                  // the focus is (a panel, the viewer, a dialog).
+                  AppCommand.commandPalette: () {
+                    final focused = FocusManager.instance.primaryFocus?.context;
+                    if (focused == null) return;
+                    unawaited(
+                      showCommandPalette(
+                        focused,
+                        shortcutMap: deps.shortcutMap,
+                        vim: deps.preferencesService.current.vimMode,
+                        recents: deps.recentCommands,
+                      ),
+                    );
+                  },
                 },
                 child: MediaQuery.withClampedTextScaling(
                   maxScaleFactor: 1.6,
