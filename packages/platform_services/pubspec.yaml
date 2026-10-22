@@ -1,0 +1,24 @@
+name: platform_services
+description: "What only some desktops offer (Quick Look, the share picker, files dragged to and from other applications), behind one injected service."
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  component_library:
+    path: ../component_library
+  # Drag and drop through the desktop's own session on macOS, Windows and
+  # Linux (ARCHITECTURE.md, "Drag and drop"). Pinned together: the three
+  # are released as one.
+  super_clipboard: 0.9.1
+  super_drag_and_drop: 0.9.1
+  super_native_extensions: 0.9.1
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter

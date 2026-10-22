@@ -11,6 +11,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:monitoring/monitoring.dart';
 import 'package:operations_service/operations_service.dart';
 import 'package:panels_feature/panels_feature.dart';
+import 'package:platform_services/testing.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 
@@ -34,6 +35,7 @@ class WorkspaceHarness {
   final progress = StreamController<OperationProgress>.broadcast();
   late PreferencesService preferences;
   late FolderFrecency frecency;
+  final desktop = FakePlatformServices();
   final sideStorage = InMemorySideStorage();
 
   /// Folder path → its rows (no `..`).
@@ -221,6 +223,7 @@ class WorkspaceHarness {
 
   Future<void> tearDown() async {
     await frecency.dispose();
+    await desktop.dispose();
     await preferences.dispose();
     await changes.close();
     await progress.close();
@@ -275,6 +278,7 @@ class WorkspaceHarness {
           logger: Logger(),
           shortcutMap: map,
           windowDecor: WindowDecor.none,
+          platformServices: desktop,
           navigation: WorkspaceNavigation(
             openViewer: (context, location, {preview = false}) async {},
             openFind: (context, root, {required view}) async => null,

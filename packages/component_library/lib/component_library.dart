@@ -46,6 +46,8 @@ export 'src/app_tooltip.dart';
 export 'src/app_top_bar_row.dart';
 export 'src/app_value_tip.dart';
 export 'src/focus_highlight.dart';
+export 'src/app_drop_outline.dart';
+export 'src/file_drag_source.dart';
 export 'src/file_drop_target.dart';
 export 'src/focus_ring.dart';
 export 'src/tap_outside_keeps_focus.dart';

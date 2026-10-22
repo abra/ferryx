@@ -21,6 +21,7 @@ class RowLook {
     required this.selected,
     required this.match,
     this.dimmed = false,
+    this.dropTarget = false,
   });
 
   final bool cursor;
@@ -36,10 +37,16 @@ class RowLook {
   /// A row that does not match the quick search while all rows show.
   final bool dimmed;
 
-  /// The cursor row in the active panel: light text on the accent.
-  bool get emphasized => cursor && active;
+  /// A folder row files hang over and would be dropped into: the
+  /// emphasized selection, as Finder lights it, wherever the keys are.
+  final bool dropTarget;
+
+  /// The cursor row in the active panel, or the drop's folder: light text
+  /// on the accent.
+  bool get emphasized => (cursor && active) || dropTarget;
 
   Color? background(AppColorsExt colors) {
+    if (dropTarget) return colors.selectionAccent;
     if (cursor) return active ? colors.selectionAccent : colors.selectionMuted;
     if (selected) return active ? colors.accentSoft : colors.selectionMuted;
     return null;
@@ -110,7 +117,7 @@ class RowName extends StatelessWidget {
       color: look.foreground(context),
       fontStyle: entry.isSymlink ? FontStyle.italic : null,
     );
-    final style = entry.isHidden && !look.cursor
+    final style = entry.isHidden && !look.cursor && !look.dropTarget
         ? base.copyWith(color: colors.textFaint)
         : base;
     final match = look.match;

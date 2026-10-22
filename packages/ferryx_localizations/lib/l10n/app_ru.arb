@@ -724,5 +724,12 @@
   "namesDiscardTitle": "Отменить новые имена?",
   "namesDiscardMessage": "Введённые имена пропадут, ничего не переименуется.",
   "namesDiscard": "Не сохранять",
-  "namesKeepEditing": "Продолжить"
+  "namesKeepEditing": "Продолжить",
+  "cmdQuickLook": "Быстрый просмотр",
+  "cmdShare": "Поделиться…",
+  "nativeUnavailable": "Недоступно в этой системе",
+  "quickLookNothing": "Здесь нечего смотреть",
+  "quickLookTooLarge": "«{name}» слишком велик для просмотра из архива",
+  "dropIntoItself": "Папку нельзя положить в неё саму",
+  "dropNoFiles": "Сюда можно перетащить только файлы и папки"
 }

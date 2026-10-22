@@ -25,6 +25,7 @@ class SettingsScreen extends StatefulWidget {
     required this.version,
     required this.onClose,
     this.initialSection = SettingsSection.general,
+    this.unavailableCommands = const {},
     super.key,
   });
 
@@ -33,6 +34,10 @@ class SettingsScreen extends StatefulWidget {
   final String version;
   final SettingsSection initialSection;
   final VoidCallback onClose;
+
+  /// Commands this desktop cannot run (no Quick Look, no share picker
+  /// here): the hotkeys leave them out.
+  final Set<AppCommand> unavailableCommands;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -75,6 +80,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         widget.platform,
         vimMotions: prefs.vimMode,
         overrides: prefs.shortcutOverrides,
+        unavailable: widget.unavailableCommands,
       );
       return CommandShortcuts(
         shortcuts: map.toShortcuts(

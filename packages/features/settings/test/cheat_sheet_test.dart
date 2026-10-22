@@ -38,4 +38,44 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(en.cheatSheetTitle), findsNothing);
   });
+
+  testWidgets('leaves out the commands this desktop cannot run', (
+    tester,
+  ) async {
+    Future<void> open(ShortcutMap map) async {
+      await pumpScreen(
+        tester,
+        Builder(
+          builder: (context) => Center(
+            child: FilledButton(
+              onPressed: () => showCheatSheet(
+                context,
+                shortcutMap: map,
+                platform: TargetPlatform.macOS,
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+    }
+
+    await open(ShortcutMap.forUser(TargetPlatform.macOS));
+    expect(find.text(en.cmdQuickLook), findsOneWidget);
+    expect(find.text(en.cmdShare), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await open(
+      ShortcutMap.forUser(
+        TargetPlatform.macOS,
+        unavailable: const {AppCommand.quickLook, AppCommand.share},
+      ),
+    );
+    expect(find.text(en.cmdQuickLook), findsNothing);
+    expect(find.text(en.cmdShare), findsNothing);
+    expect(find.text(en.cmdPreview), findsWidgets);
+  });
 }

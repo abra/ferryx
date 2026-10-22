@@ -11,9 +11,11 @@ import 'package:ferryx/app/window_frame.dart';
 import 'package:ferryx_backend/ferryx_backend.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:file_repository/file_repository.dart';
+import 'package:flutter/foundation.dart';
 import 'package:monitoring/monitoring.dart';
 import 'package:operations_service/operations_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:platform_services/platform_services.dart';
 import 'package:preferences_service/preferences_service.dart';
 
 /// The app's strings where no widget tree is yet: the language chosen in
@@ -62,6 +64,12 @@ Future<DependenciesContainer> composeDependencies({
     final find = FindService(backend: backend);
     resources.add('find.dispose', find.dispose);
 
+    // ─── The desktop's own services ───
+    final platformServices = PlatformServices.forPlatform(
+      defaultTargetPlatform,
+    );
+    resources.add('platformServices.dispose', platformServices.dispose);
+
     stopwatch.stop();
     logger.info('Dependencies ready in ${stopwatch.elapsedMilliseconds} ms');
 
@@ -76,6 +84,7 @@ Future<DependenciesContainer> composeDependencies({
       rename: const RenameService(),
       frecency: frecency,
       recentCommands: recentCommands,
+      platformServices: platformServices,
       resourceDisposer: resources,
       windowFrame: windowFrame,
     );

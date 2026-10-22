@@ -155,6 +155,11 @@ extension _VimActions on _WorkspaceScreenState {
         _toggleShelf();
       case 'names':
         await _renameInEditor();
+      // ─── Native ───
+      case 'ql' || 'quicklook':
+        await _toggleQuickLook();
+      case 'share':
+        await _share();
       default:
         showAppNotice(context, _l10n.vimUnknownCommand(name));
     }
@@ -400,9 +405,11 @@ extension _VimActions on _WorkspaceScreenState {
     'marks',
     'mkdir',
     'mv',
+    'ql',
     'refresh',
     'rename',
     'set',
+    'share',
     'sort',
     'swap',
     'sync',

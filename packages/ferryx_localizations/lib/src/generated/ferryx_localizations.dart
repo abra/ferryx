@@ -4291,6 +4291,48 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Keep Editing'**
   String get namesKeepEditing;
+
+  /// No description provided for @cmdQuickLook.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Look'**
+  String get cmdQuickLook;
+
+  /// No description provided for @cmdShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share…'**
+  String get cmdShare;
+
+  /// No description provided for @nativeUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available on this desktop'**
+  String get nativeUnavailable;
+
+  /// No description provided for @quickLookNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here to look at'**
+  String get quickLookNothing;
+
+  /// No description provided for @quickLookTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'“{name}” is too large to look at from an archive'**
+  String quickLookTooLarge(String name);
+
+  /// No description provided for @dropIntoItself.
+  ///
+  /// In en, this message translates to:
+  /// **'A folder cannot go into itself'**
+  String get dropIntoItself;
+
+  /// No description provided for @dropNoFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Only files and folders can be dropped here'**
+  String get dropNoFiles;
 }
 
 class _FerryxLocalizationsDelegate

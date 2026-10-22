@@ -108,6 +108,9 @@ extension CommandLabels on FerryxLocalizations {
     AppCommand.editSymlink => cmdEditSymlink,
     AppCommand.revealInFileManager => cmdRevealInFileManager,
     AppCommand.openWith => cmdOpenWith,
+    // ─── Native ───
+    AppCommand.quickLook => cmdQuickLook,
+    AppCommand.share => cmdShare,
     AppCommand.focusLeftPanel => cmdFocusLeftPanel,
     AppCommand.focusRightPanel => cmdFocusRightPanel,
     AppCommand.openSettings => cmdOpenSettings,

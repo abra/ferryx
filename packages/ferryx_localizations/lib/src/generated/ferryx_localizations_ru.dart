@@ -2520,4 +2520,27 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get namesKeepEditing => 'Продолжить';
+
+  @override
+  String get cmdQuickLook => 'Быстрый просмотр';
+
+  @override
+  String get cmdShare => 'Поделиться…';
+
+  @override
+  String get nativeUnavailable => 'Недоступно в этой системе';
+
+  @override
+  String get quickLookNothing => 'Здесь нечего смотреть';
+
+  @override
+  String quickLookTooLarge(String name) {
+    return '«$name» слишком велик для просмотра из архива';
+  }
+
+  @override
+  String get dropIntoItself => 'Папку нельзя положить в неё саму';
+
+  @override
+  String get dropNoFiles => 'Сюда можно перетащить только файлы и папки';
 }

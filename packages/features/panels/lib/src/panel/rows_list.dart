@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shortcuts/shortcuts.dart';
 
+import '../native/panel_drag_hooks.dart';
 import 'inline_rename.dart';
 import 'panel_row.dart';
 import 'panel_state.dart';
@@ -19,6 +20,7 @@ class RowCallbacks {
     required this.onSecondaryTapDown,
     required this.onRenameCommit,
     required this.onRenameCancel,
+    this.drag,
   });
 
   final void Function(int index, {bool toggle, bool range}) onTapDown;
@@ -26,6 +28,9 @@ class RowCallbacks {
   final void Function(int index, Offset globalPosition) onSecondaryTapDown;
   final void Function(String name) onRenameCommit;
   final VoidCallback onRenameCancel;
+
+  /// Rows dragged out, files dropped on folder rows; none without it.
+  final PanelDragHooks? drag;
 }
 
 /// How a row's rename field is built: the caret's place and the keys it
@@ -38,8 +43,14 @@ class RenameSpec {
 }
 
 /// The look of row [index] of [tab] in a panel that is [active] (its
-/// flag and the focus area's together).
-RowLook rowLookOf(PanelTabState tab, int index, {required bool active}) {
+/// flag and the focus area's together); [dropRow] names the folder row
+/// files hang over.
+RowLook rowLookOf(
+  PanelTabState tab,
+  int index, {
+  required bool active,
+  String? dropRow,
+}) {
   final entry = tab.rows[index];
   return RowLook(
     cursor: index == tab.cursor,
@@ -50,7 +61,46 @@ RowLook rowLookOf(PanelTabState tab, int index, {required bool active}) {
         tab.quickSearch.isNotEmpty &&
         !entry.isParent &&
         !tab.matches.containsKey(entry.name),
+    dropTarget: dropRow != null && entry.name == dropRow,
   );
+}
+
+/// A row's gestures with what dragging adds: the row as a drag source
+/// (past the desktop's threshold, never while it is renamed) and, for a
+/// folder, as a drop target.
+class RowDragArea extends StatelessWidget {
+  const RowDragArea({
+    required this.index,
+    required this.entry,
+    required this.location,
+    required this.renaming,
+    required this.drag,
+    required this.child,
+    super.key,
+  });
+
+  final int index;
+  final FileEntry entry;
+
+  /// The folder the row is in.
+  final Location location;
+  final bool renaming;
+  final PanelDragHooks? drag;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final drag = this.drag;
+    return RowDropTarget(
+      spot: drag == null ? null : rowDropSpot(location, entry),
+      hooks: drag,
+      child: FileDragSource(
+        enabled: drag != null && !renaming && !entry.isParent,
+        onDragStart: (global) => drag?.onDragStart(index, global),
+        child: child,
+      ),
+    );
+  }
 }
 
 /// The room a row keeps at its end for the selection's check mark, so
@@ -68,6 +118,7 @@ class RowsList extends StatefulWidget {
     required this.onGeometry,
     required this.rename,
     this.cursorKey,
+    this.dropRow,
     super.key,
   });
 
@@ -82,6 +133,9 @@ class RowsList extends StatefulWidget {
   /// Goes on the cursor's row while it is built, so the window can open a
   /// menu by it.
   final GlobalKey? cursorKey;
+
+  /// The folder row files hang over, lit up.
+  final String? dropRow;
 
   @override
   State<RowsList> createState() => _RowsListState();
@@ -251,7 +305,13 @@ class _RowsListState extends State<RowsList> {
                           entry: widget.tab.rows[index],
                           columns: columns,
                           widths: widths,
-                          look: rowLookOf(widget.tab, index, active: active),
+                          look: rowLookOf(
+                            widget.tab,
+                            index,
+                            active: active,
+                            dropRow: widget.dropRow,
+                          ),
+                          location: widget.tab.location,
                           renaming: widget.tab.renaming == index,
                           rename: widget.rename,
                           callbacks: widget.callbacks,
@@ -284,11 +344,13 @@ class _ListRow extends StatelessWidget {
     required this.callbacks,
     required this.height,
     required this.cursorKey,
+    required this.location,
     super.key,
   });
 
   final int index;
   final FileEntry entry;
+  final Location location;
   final List<ListColumn> columns;
   final List<double> widths;
   final RowLook look;
@@ -310,79 +372,86 @@ class _ListRow extends StatelessWidget {
         onActivate: () => callbacks.onDoubleTap(index),
         onActivateAlt: () =>
             callbacks.onTapDown(index, toggle: true, range: false),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: (details) => callbacks.onTapDown(
-            index,
-            toggle: Chord.primaryHeld(Theme.of(context).platform),
-            range: HardwareKeyboard.instance.isShiftPressed,
-          ),
-          onDoubleTap: () => callbacks.onDoubleTap(index),
-          onSecondaryTapDown: (details) =>
-              callbacks.onSecondaryTapDown(index, details.globalPosition),
-          child: KeyedSubtree(
-            key: cursorKey,
-            child: Container(
-              height: height,
-              margin: EdgeInsets.symmetric(
-                horizontal: context.metrics.rowInset,
-              ),
-              decoration: BoxDecoration(
-                // The field is opaque on its own; no fill under it.
-                color: renaming ? null : look.background(colors),
-                borderRadius: BorderRadius.circular(
-                  context.metrics.radius.row,
+        child: RowDragArea(
+          index: index,
+          entry: entry,
+          location: location,
+          renaming: renaming,
+          drag: callbacks.drag,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (details) => callbacks.onTapDown(
+              index,
+              toggle: Chord.primaryHeld(Theme.of(context).platform),
+              range: HardwareKeyboard.instance.isShiftPressed,
+            ),
+            onDoubleTap: () => callbacks.onDoubleTap(index),
+            onSecondaryTapDown: (details) =>
+                callbacks.onSecondaryTapDown(index, details.globalPosition),
+            child: KeyedSubtree(
+              key: cursorKey,
+              child: Container(
+                height: height,
+                margin: EdgeInsets.symmetric(
+                  horizontal: context.metrics.rowInset,
                 ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: RowName(
-                      entry: entry,
-                      look: look,
-                      field: renaming
-                          ? InlineRename(
-                              name: entry.name,
-                              caret: rename.caret,
-                              shortcutMap: rename.shortcutMap,
-                              onCommit: callbacks.onRenameCommit,
-                              onCancel: callbacks.onRenameCancel,
+                decoration: BoxDecoration(
+                  // The field is opaque on its own; no fill under it.
+                  color: renaming ? null : look.background(colors),
+                  borderRadius: BorderRadius.circular(
+                    context.metrics.radius.row,
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: RowName(
+                        entry: entry,
+                        look: look,
+                        field: renaming
+                            ? InlineRename(
+                                name: entry.name,
+                                caret: rename.caret,
+                                shortcutMap: rename.shortcutMap,
+                                onCommit: callbacks.onRenameCommit,
+                                onCancel: callbacks.onRenameCancel,
+                              )
+                            : null,
+                      ),
+                    ),
+                    for (var i = 0; i < columns.length; i++) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      SizedBox(
+                        width: widths[i],
+                        child: Text(
+                          columnText(context, entry, columns[i]),
+                          style: columnStyle(
+                            context,
+                            column: columns[i],
+                          ).copyWith(color: secondary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                          textAlign: columnRightAligned(columns[i])
+                              ? TextAlign.end
+                              : TextAlign.start,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(width: AppSpacing.xs),
+                    SizedBox(
+                      width: checkSlotWidth,
+                      child: look.selected && !renaming
+                          ? Icon(
+                              AppIcons.check,
+                              size: AppIconSize.xs,
+                              color: look.checkMark(colors),
                             )
                           : null,
                     ),
-                  ),
-                  for (var i = 0; i < columns.length; i++) ...[
-                    const SizedBox(width: AppSpacing.sm),
-                    SizedBox(
-                      width: widths[i],
-                      child: Text(
-                        columnText(context, entry, columns[i]),
-                        style: columnStyle(
-                          context,
-                          column: columns[i],
-                        ).copyWith(color: secondary),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        softWrap: false,
-                        textAlign: columnRightAligned(columns[i])
-                            ? TextAlign.end
-                            : TextAlign.start,
-                      ),
-                    ),
                   ],
-                  const SizedBox(width: AppSpacing.xs),
-                  SizedBox(
-                    width: checkSlotWidth,
-                    child: look.selected && !renaming
-                        ? Icon(
-                            AppIcons.check,
-                            size: AppIconSize.xs,
-                            color: look.checkMark(colors),
-                          )
-                        : null,
-                  ),
-                ],
+                ),
               ),
             ),
           ),

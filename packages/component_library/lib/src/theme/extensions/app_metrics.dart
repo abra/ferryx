@@ -122,6 +122,7 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
     this.menuItemPadding = 8,
     this.menuSeparatorSpace = 4,
     this.menuShortcutGap = 16,
+    this.dragThreshold = 4,
   }) : toggleKnobWidth = toggleKnobWidth ?? toggleKnob;
 
   /// The metrics of [style]; on macOS, of the system's [generation].
@@ -251,6 +252,11 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
   /// Least room between an item's label and its key: 24 (macOS, Fluent),
   /// 12 (libadwaita).
   final double menuShortcutGap;
+
+  /// How far the pointer moves with the button down before a press
+  /// becomes a drag: AppKit's and Windows' 4 (`SM_CXDRAG`), GTK's 8
+  /// (`gtk-dnd-drag-threshold`). Shorter moves stay clicks.
+  final double dragThreshold;
 
   /// [style] in the platform's monospace face: its family and fallbacks.
   TextStyle monospace(TextStyle style) => style.copyWith(
@@ -438,6 +444,7 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
     menuItemPadding: 12,
     menuSeparatorSpace: 6,
     menuShortcutGap: 12,
+    dragThreshold: 8,
   );
 
   /// Metrics are fixed per style; a theme for another style is a new

@@ -211,6 +211,9 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     AppCommand.addToShelf: () => _shelveTargets(cut: false, replace: false),
     AppCommand.toggleShelf: _toggleShelf,
     AppCommand.renameInEditor: () => unawaited(_renameInEditor()),
+    // ─── Native ───
+    AppCommand.quickLook: () => unawaited(_toggleQuickLook()),
+    AppCommand.share: () => unawaited(_share()),
   };
 
   // ─── Opening ───
@@ -639,6 +642,11 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     if (picked == AppCommand.enterItem) {
       final request = await _active.enter();
       if (request != null) await _openFile(request);
+      return;
+    }
+    if (picked == AppCommand.share) {
+      // The picker points where the menu was opened.
+      await _share(anchor: anchor);
       return;
     }
     _globalHandlers(context)[picked]?.call();

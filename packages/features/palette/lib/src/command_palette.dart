@@ -29,7 +29,7 @@ Future<void> showCommandPalette(
       : lookupFerryxLocalizations(const Locale('en'));
   final commands = [
     for (final command in commandsAt(context))
-      if (_offered(command, vim: vim))
+      if (_offered(command, shortcutMap, vim: vim))
         PaletteCommand(
           command: command,
           label: l10n.commandLabel(command),
@@ -65,9 +65,16 @@ Future<void> showCommandPalette(
 }
 
 /// The palette itself does not list itself, nor Vim's keys while they are
-/// off (the panel answers some of them all the same).
-bool _offered(AppCommand command, {required bool vim}) =>
-    command != AppCommand.commandPalette && (vim || !command.isVimOnly);
+/// off (the panel answers some of them all the same), nor what this
+/// desktop lacks (Quick Look, Share), though a handler takes it.
+bool _offered(
+  AppCommand command,
+  ShortcutMap shortcutMap, {
+  required bool vim,
+}) =>
+    command != AppCommand.commandPalette &&
+    (vim || !command.isVimOnly) &&
+    shortcutMap.isAvailable(command);
 
 /// The palette's list over [PaletteCubit]: a row per command with its
 /// section (or its English name, when that is what matched) and its keys;

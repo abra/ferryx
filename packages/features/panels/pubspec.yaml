@@ -22,6 +22,8 @@ dependencies:
     path: ../../file_repository
   operations_service:
     path: ../../operations_service
+  platform_services:
+    path: ../../platform_services
   preferences_service:
     path: ../../preferences_service
   monitoring:

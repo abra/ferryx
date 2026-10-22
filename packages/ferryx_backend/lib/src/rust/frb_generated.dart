@@ -12,6 +12,7 @@ import 'api/ops.dart';
 import 'api/rename.dart';
 import 'api/system.dart';
 import 'api/types.dart';
+import 'api/volume_id.dart';
 
 import 'dart:async';
 import 'dart:convert';
@@ -87,7 +88,7 @@ class FerryxRustLib
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -596323344;
+  int get rustContentHash => 2021161805;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -243,6 +244,8 @@ abstract class FerryxRustLibApi extends BaseApi {
   Future<EntryView> crateApiFilesStat({required String path});
 
   Stream<AppEvent> crateApiEventsSubscribeEvents();
+
+  PlatformInt64? crateApiVolumeIdVolumeId({required String path});
 }
 
 class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
@@ -1700,6 +1703,31 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
         debugName: "subscribe_events",
         argNames: ["sink"],
       );
+
+  @override
+  PlatformInt64? crateApiVolumeIdVolumeId({required String path}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(path, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 47)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_box_autoadd_i_64,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiVolumeIdVolumeIdConstMeta,
+        argValues: [path],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiVolumeIdVolumeIdConstMeta => const TaskConstMeta(
+    debugName: "volume_id",
+    argNames: ["path"],
+  );
 
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw) {

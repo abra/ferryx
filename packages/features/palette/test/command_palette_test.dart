@@ -31,11 +31,17 @@ void main() {
     WidgetTester tester, {
     bool vim = false,
     Locale locale = const Locale('en'),
+    Map<AppCommand, VoidCallback> panelHandlers = const {},
+    Set<AppCommand> unavailable = const {},
   }) async {
     tester.view.physicalSize = const Size(1000, 700);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    final map = ShortcutMap.forUser(platform, vimMotions: vim);
+    final map = ShortcutMap.forUser(
+      platform,
+      vimMotions: vim,
+      unavailable: unavailable,
+    );
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(AppPlatformStyle.macos),
@@ -82,6 +88,7 @@ void main() {
                     ran.add('panel copy, focus ${panel.hasPrimaryFocus}');
                   },
                   AppCommand.vimVisual: () => ran.add('visual'),
+                  ...panelHandlers,
                 },
                 child: Focus(
                   focusNode: panel,
@@ -127,6 +134,28 @@ void main() {
           'Vim keys while they are off, nothing no handler takes',
     );
     expect(find.text('F5'), findsOneWidget, reason: 'its key in a cap');
+  });
+
+  testWidgets('what this desktop lacks is left out, though a handler '
+      'takes it', (tester) async {
+    final handlers = {AppCommand.quickLook: () => ran.add('quick look')};
+    await pump(tester, panelHandlers: handlers);
+    await openPalette(tester);
+    expect(labels(tester), contains('Quick Look'));
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await pump(
+      tester,
+      panelHandlers: handlers,
+      unavailable: const {AppCommand.quickLook},
+    );
+    await openPalette(tester);
+    expect(labels(tester), isNot(contains('Quick Look')));
+    await tester.enterText(find.byType(TextField), 'quick look');
+    await tester.pump();
+    expect(labels(tester), isEmpty);
+    expect(ran, isEmpty);
   });
 
   testWidgets('a command picked runs after the focus is back, as its key '

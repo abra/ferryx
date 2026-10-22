@@ -100,7 +100,7 @@ buttons'. The window is shown only after the preferences are read
 | `ferryx_core` | Pure logic: the `Entry` of a panel row, natural / case-insensitive / case-sensitive collation (`collation`), sorting by field with folders first and extensionless folders (`sorting`), file masks and regular expressions (`mask`), quick-search matching with the ranges to underline (`quick_search`), and the batch-rename language (`batch_rename`: placeholders, substrings, dates, counters, case commands, then search and replace and a case change). No I/O. |
 | `ferryx_vfs` | The file system: a folder's rows with their metadata (size, times, the macOS added time through `getattrlist`, mode, owner and group names, BSD flags, hidden), one entry, byte ranges of a file (`native`); archives as read-only folders (`archive`: zip, jar, tar, tar.gz; an index per archive read once and again when the file changed, members extracted to a temporary folder for opening); a folder watched for changes reported once per burst (`watch`, `notify`); the volumes (`volumes`, `sysinfo`) and the free space; the standard folders, opening with the desktop or an application, revealing in the file manager, the trash, ejecting (`system`); permissions, flags, owners and times read and written (`attrs`); symbolic and hard links (`links`). Every error is a `VfsError` with a kind the interface words. |
 | `ferryx_ops` | Operations on threads with progress, pause, cancellation and questions: copy and move (a rename on the same volume, else a copy and a delete; folders merge; conflicts ask or follow the policy; attributes preserved; optional verification), duplicate (`name copy.ext`), extract out of an archive, delete and trash, compress to zip (deflate, optional AES-256), folder sizes, plus Find Files (`find`: name, contents in overlapping windows, size, streamed hits) and the application of a batch rename (`rename`: staged through temporary names when names swap). `Runner` holds every operation; `OpContext` is what an operation checks, reports and asks through. |
-| `ferryx_api` | `flutter_rust_bridge` surface. Holds the open listings (`app.rs`: one per panel tab, with its raw rows for resorting and its watcher), the archive indexes, the operations runner (whose listener forwards progress as events) and the searches; converts to plain DTOs (`api/types.rs`, `…View` types, enums without payloads so Dart sees enums, `i64` counts so Dart sees `int`). Its `Cargo.toml` uses literal fields because cargokit parses it without workspace inheritance. |
+| `ferryx_api` | `flutter_rust_bridge` surface. Holds the open listings (`app.rs`: one per panel tab, with its raw rows for resorting and its watcher), the archive indexes, the operations runner (whose listener forwards progress as events) and the searches; converts to plain DTOs (`api/types.rs`, `…View` types, enums without payloads so Dart sees enums, `i64` counts so Dart sees `int`); `volume_id` names a path's volume for a drop to tell a move from a copy. Its `Cargo.toml` uses literal fields because cargokit parses it without workspace inheritance. |
 
 Rules:
 
@@ -153,8 +153,9 @@ that `ferryx_backend` loads, as part of the Flutter build.
 | `preferences_service` | Installation preferences (theme, locale, text scale, shortcut overrides, window frame, the panels' state, layouts, sorting defaults, quick search, favorites, editors, tools, confirmations, copy defaults, viewer) + `PreferencesScope` and `PreferenceBuilder`; beside the blob, under keys of their own (`SideStorage`), `FolderFrecency` (the folders visited) and `RecentItems` (the commands run lately). |
 | `file_repository` | `FileRepository`: listings (open, refresh, resort, close, peek), items (stat, byte ranges, extract to temp, make, rename, links, resolve), the system (volumes, standard folders, free space, open, open with, reveal, eject, applications), attributes; `directoryChanges` names listings whose folders changed. |
 | `operations_service` | `OperationsService` (start, pause, resume, cancel, answer, forget; `progress` stream and the latest report per operation; `run` waits for one), `FindService` (start, cancel, `updates`), `RenameService` (preview, apply). |
+| `platform_services` | What only some desktops offer, behind one injected `PlatformServices` (capabilities; Quick Look; the share picker; file drags out of the window): `ChannelPlatformServices` on macOS (the runner's `ferryx/platform` channel), `DesktopPlatformServices` elsewhere (drags only), `FakePlatformServices` for tests (`testing.dart`); `PlatformDropArea`, the window's one drop region (super_drag_and_drop). |
 | `ferryx_localizations` | ARB-generated `FerryxLocalizations`, command and scope labels, formatting helpers (sizes, dates, durations, error titles, operation titles, answers, columns). |
-| `component_library` | Tokens, the platform-adaptive theme and the desktop widgets (see Native look). |
+| `component_library` | Tokens, the platform-adaptive theme and the desktop widgets (see Native look); for drags, `FileDragSource` (past `metrics.dragThreshold`), `FileDropTarget` (found by hit-testing) and `AppDropOutline`. |
 | `features/panels` | The main window (`WorkspaceScreen`): two `PanelView`s with a `PanelCubit` each, the edge between them, the operations cards, every file command (`workspace_actions.dart`), the row and panel menus, and the dialogs: copy / move / copy as / move as, new folder, delete, compress, select by mask, go to folder, links, favorites, the Go To pop-up and the quick lists, batch rename, file attributes, and the questions of operations. |
 | `features/viewer` | The built-in viewer (`ViewerScreen`): text, hex and preview over a `ViewerSource` (a file on disk or an archive member), windows of large files, find and go to. |
 | `features/find` | Find Files (`showFindDialog`, `FindCubit`): the form, the streaming results, go to a hit or view it. |
@@ -378,6 +379,83 @@ had errors. A question opens `showQuestionDialog` once (by its id) and
 the answer goes back through the service; the panels refresh from the
 core's directory events, never from the operation's end.
 
+### The desktop's own services
+
+Quick Look, the share picker and dragging files to and from other
+applications are what some desktops have and others lack, so they reach
+the window only through `PlatformServices`, created in
+`composeDependencies` for the platform and handed to `WorkspaceScreen`
+by `routing.dart`. Features read `capabilities`, never the platform; the
+composition root turns a missing capability into unavailable commands
+(`unavailableCommandsFor`), which `ShortcutMap.forUser(unavailable:)`
+unbinds and `isAvailable` leaves out of the row menu, the cheat sheet,
+the hotkeys and the palette. The panels' side is `native_actions.dart`
+(a part of the workspace) over the pure `quick_look_pick.dart` and
+`drop_plan.dart`.
+
+- **Quick Look** (⌘Y; `preview` moved to ⇧⌘Y, Space keeps it):
+  `NativeServices.swift` in the runner owns a `QLPreviewPanel` (the window
+  is its controller in the responder chain) fed with file paths and an
+  index. The panel is ordered front without taking the keys, so the
+  panel's cursor keeps them: while it is open the workspace follows the
+  active panel's cubit, sends `quickLook.select` when only the cursor
+  moved (an index computed from the cursor, nothing per row) and the whole
+  list again when the rows, the selection, the tab or the side changed.
+  Several selected rows are shown as the list, else the folder's items
+  without `..`. Inside an archive the focused file (or the selected
+  files) is taken out first through `extractToTemp`, up to 64 MB a member,
+  with a counter so a slow extraction never overtakes a later move. Space,
+  Esc and ⌘Y close it (`PanelHooks.onEscape` before the panel's own Esc);
+  when the user clicks the panel and it takes the keys, the runner sends ↑
+  and ↓ back as `quickLook.step` and closes on Space, Esc and ⌘Y. Closing
+  puts the focus back on the active panel.
+- **Share** (⇧⌘S, the row menu's Share…, `:share`): the targets' URLs to
+  `NSSharingServicePicker`, pointing at the cursor's row (keys) or where
+  the menu opened (pointer), sent in Flutter's logical coordinates and
+  turned into the view's own in Swift. Archive members are taken out
+  first. Windows (`IDataTransferManagerInterop`) and Linux have none, so
+  the command is hidden there.
+- **Drag and drop.** Rows are `FileDragSource`s: a drag starts once the
+  primary button has moved past the desktop's threshold (4 on macOS and
+  Windows, 8 on GNOME), so clicks, ⇧-clicks and ⌘-clicks stay clicks; it
+  takes the selection when the row is in it, else the row alone with the
+  cursor moved there. The workspace builds a `FileDragRequest` (the paths,
+  a `PanelDragPayload` map for drops in this window, a `FileDragImage`
+  painted off screen: the icon with a count badge) and
+  `SystemFileDrags` starts the desktop's session: one item per file for
+  other applications, the picture on the first item only and a clear
+  pixel on the others, the items registered together (1 000 files: about
+  30 ms to register and 180 ms to start in a profile build, frames
+  keep coming). Archive members travel as in-window data only (copy out).
+  Drops land on `PlatformDropArea`, one `DropRegion` over the whole
+  window, which hit-tests for the `FileDropTarget` under the pointer (a
+  folder row or `..` over its panel) and asks it per move; another
+  application's first file is read once per drag, every file on the drop.
+  `planDrop` decides: into an archive or a folder into itself refused
+  (the desktop's "not allowed"), the folder the items are in nothing, out
+  of an archive an extraction, a key that forces an operation wins (the
+  desktop leaves ⌥'s copy alone in the allowed set, and none for macOS's
+  ⌘, a move), else one volume (`FileRepository.volumeOf`, the Rust
+  `volume_id`, cached for the drag) moves and another copies. The spot
+  lights up with the emphasized selection (`RowLook.dropTarget`) or the
+  panel's `AppDropOutline`, and the drop starts an ordinary copy, move or
+  extraction with its questions and progress card.
+
+**Why super_drag_and_drop.** It is the one package that both drags files
+out and takes them in, with the operation's feedback, on macOS, Windows
+and Linux, and that tells a drag of this window from another
+application's (local data); `desktop_drop` only takes drops in, with no
+feedback, so drags out would need three native implementations of our own
+(an `NSDraggingSource`, OLE `DoDragDrop` with `CF_HDROP`, a GTK source).
+It builds Rust through its own copy of cargokit; `cargokit_options.yaml`
+at the root opts into its signed precompiled binaries, so no developer or
+CI machine compiles it (and no Homebrew `rustc` links it against the
+host's macOS), while our crate, which publishes none, is still built by
+`rust_builder/`. Under `flutter test` it runs on a mock context, so the
+widget tests need no native library. The plugin stays inside
+`platform_services`: features see `FileDragSource`, `FileDropTarget` and
+the service.
+
 ## Start-up
 
 `main.dart` → `starter()` (error zone, bloc observer; `configureWindow()`
@@ -395,6 +473,11 @@ partially created resources.
 - Dart: cubit tests (`bloc_test`, `mocktail`) in the panels, viewer and
   find features; widget tests in the settings feature and the component
   library; unit tests in shortcuts, preferences_service and monitoring.
+  `workspace_native_test` drives the window against `FakePlatformServices`
+  (Quick Look following the cursor, Share's anchor, drags past the
+  threshold, drops planned and started); `drop_plan_test` and
+  `quick_look_pick_test` cover the pure rules; `platform_services_test`
+  the channel both ways.
   The panels' `panel_view_vim_test` drives a panel with simulated keys
   through the real shortcut map (`5j`, `v`, `/`, `:`, `f`, marks, the
   register hooks), `vim_keys_test` the count and pending-key parser.
@@ -413,12 +496,15 @@ partially created resources.
 
 - No integrated terminal yet, no SFTP/FTP/WebDAV, no extended-attributes
   or process-list virtual file systems; archives are read-only (zip, jar,
-  tar, tar.gz); no Quick Look (the viewer's preview shows images).
+  tar, tar.gz).
 - Finder tags are not read; the tag palette is in place for them.
 - Scroll-only keys (⌥Home, ⌥End, ⌥PgUp, ⌥PgDn) move the cursor as the plain
   keys do.
-- Drag and drop between the panels and with other applications is not
-  wired; the clipboard carries paths as text (⌘C / ⌘V / ⌥⌘V).
+- The clipboard carries paths as text (⌘C / ⌘V / ⌥⌘V). An archive's
+  members drag only within the window (no file promises to other
+  applications yet). On Windows a drop follows the volumes, not Ctrl and
+  Shift, which super_drag_and_drop does not report; Quick Look and Share
+  are macOS's alone.
 - External editors and tools run through the desktop (`open -a`), not
   in a terminal.
 - Windows and Linux are built and tested in CI, not used on a desktop day

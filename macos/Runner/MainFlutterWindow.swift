@@ -1,5 +1,6 @@
 import Cocoa
 import FlutterMacOS
+import Quartz
 import window_manager
 
 class MainFlutterWindow: NSWindow {
@@ -16,6 +17,9 @@ class MainFlutterWindow: NSWindow {
     self.setFrame(windowFrame, display: true)
 
     RegisterGeneratedPlugins(registry: flutterViewController)
+    nativeServices = NativeServices(
+      messenger: flutterViewController.engine.binaryMessenger,
+      view: flutterViewController.view)
 
     super.awakeFromNib()
 
@@ -33,6 +37,23 @@ class MainFlutterWindow: NSWindow {
       NotificationCenter.default.addObserver(
         self, selector: #selector(windowButtonsMoved), name: name, object: self)
     }
+  }
+
+  /// Quick Look and the share picker for Dart.
+  private var nativeServices: NativeServices?
+
+  // The window is Quick Look's controller in the responder chain while
+  // Dart has the panel open (NativeServices).
+  override func acceptsPreviewPanelControl(_ panel: QLPreviewPanel!) -> Bool {
+    nativeServices?.acceptsQuickLook ?? false
+  }
+
+  override func beginPreviewPanelControl(_ panel: QLPreviewPanel!) {
+    nativeServices?.begin(panel)
+  }
+
+  override func endPreviewPanelControl(_ panel: QLPreviewPanel!) {
+    nativeServices?.end(panel)
   }
 
   // A new title (every page the app opens) relayouts the title bar too.

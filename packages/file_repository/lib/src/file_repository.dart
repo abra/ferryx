@@ -171,6 +171,11 @@ class FileRepository {
   Future<int?> freeSpace(String path) =>
       rust.FerryxBackend.guard(() => rust.freeSpace(path: path));
 
+  /// The volume [path] is on, one number for every path of that volume;
+  /// `null` when it cannot be read. One `stat`, so a drag asks it of each
+  /// folder it hovers to tell a move from a copy.
+  int? volumeOf(String path) => rust.volumeId(path: path);
+
   /// Opens the item as a double click in the desktop's file manager would.
   Future<void> openDefault(String path) =>
       rust.FerryxBackend.guard(() => rust.openDefault(path: path));

@@ -159,8 +159,9 @@ class _HotkeysPageState extends State<HotkeysPage> {
     for (final scope in CommandScope.values) {
       final commands = [
         for (final command in AppCommand.inScope(scope))
-          if (needle.isEmpty ||
-              l10n.commandLabel(command).toLowerCase().contains(needle))
+          if (widget.shortcutMap.isAvailable(command) &&
+              (needle.isEmpty ||
+                  l10n.commandLabel(command).toLowerCase().contains(needle)))
             command,
       ];
       if (commands.isEmpty) continue;

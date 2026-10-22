@@ -88,7 +88,8 @@ class _CheatSheetDialogState extends State<CheatSheetDialog> {
           title: l10n.scopeLabel(scope),
           commands: [
             for (final command in AppCommand.inScope(scope))
-              if (widget.shortcutMap.chordsFor(command).isNotEmpty &&
+              if (widget.shortcutMap.isAvailable(command) &&
+                  widget.shortcutMap.chordsFor(command).isNotEmpty &&
                   shown(command))
                 command,
           ],

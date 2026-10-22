@@ -119,6 +119,35 @@ void main() {
     expect(find.text(en.hotkeysUnbound), findsOneWidget);
   });
 
+  testWidgets('a command this desktop cannot run is not listed', (
+    tester,
+  ) async {
+    final service = await testPreferences();
+    Future<void> show(Set<AppCommand> unavailable) => pumpScreen(
+      tester,
+      SettingsScreen(
+        preferencesService: service,
+        platform: TargetPlatform.linux,
+        version: '0.1.0',
+        initialSection: SettingsSection.hotkeys,
+        unavailableCommands: unavailable,
+        onClose: () {},
+      ),
+    );
+    await show(const {});
+    await tester.enterText(find.byType(AppSearchField).last, 'quick look');
+    await tester.pumpAndSettle();
+    expect(find.text(en.cmdQuickLook), findsOneWidget);
+
+    await show(const {AppCommand.quickLook, AppCommand.share});
+    await tester.enterText(find.byType(AppSearchField).last, 'quick look');
+    await tester.pumpAndSettle();
+    expect(find.text(en.cmdQuickLook), findsNothing);
+    await tester.enterText(find.byType(AppSearchField).last, 'share');
+    await tester.pumpAndSettle();
+    expect(find.text(en.cmdShare), findsNothing);
+  });
+
   test('chordOfEvent reads the modifiers of the platform', () {
     expect(
       chordOfEvent(
