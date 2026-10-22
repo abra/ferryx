@@ -48,6 +48,13 @@ files is Rust.
 - **Find files** (⌘F): by mask or regular expression, by contents (phrase
   or words, case, not containing), by size; results stream in; go to a
   hit or view it.
+- **The desktop's own services**: Quick Look (⌘Y, as in Finder; the
+  built-in preview moved to ⇧⌘Y and Space keeps it) follows the cursor and
+  steps through a selection; Share (⇧⌘S, or Share… on a row) opens the
+  system's picker (macOS). Drag rows between the panels, onto a folder row,
+  out to Finder or Mail, and drop files from other applications onto a
+  panel or a folder (macOS, Windows, Linux): one volume moves, another
+  copies, ⌥ copies and ⌘ moves, and the copy runs as any other operation.
 - **Keyboard first, no mouse needed**: every command has a shortcut you can
   rebind (Settings → Hotkeys), click hints (⌘J) label everything clickable,
   the menu key (⌃↩, ⇧F10) opens what a right click opens, a cheat sheet

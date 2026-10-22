@@ -130,6 +130,12 @@ See `ARCHITECTURE.md`. The rules that matter most:
   `make l10n`. File names and paths are never translated. A Russian plural
   takes `one{…}`, never `=1{…}`. Sizes and dates go through
   `FerryxFormatting` (`fileSize`, `dateTime`), never `toStringAsFixed`.
+- A capability only some desktops have (Quick Look, the share picker,
+  file drags) is a `PlatformCapabilities` flag of the injected
+  `PlatformServices` (packages/platform_services), never a platform check.
+  Its commands go in `unavailableCommandsFor` (lib/app); every list of
+  commands (menus, palette, cheat sheet, hotkeys) skips those
+  `!shortcutMap.isAvailable(command)`.
 - Vim mode: a key that is a command only with Vim keys on is an
   `AppCommand` named `vim…` (no default chord; bound in `withVimMotions`),
   handled in `PanelView` or through a `PanelHooks` callback; a `:` command
