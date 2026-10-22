@@ -95,7 +95,9 @@ pub struct Session {
 }
 
 struct Inner {
-    master: Mutex<Box<dyn MasterPty + Send>>,
+    /// Released when the shell has ended: on Windows only closing the
+    /// pseudo console ends the reader.
+    master: Mutex<Option<Box<dyn MasterPty + Send>>>,
     /// Input for the writer thread; taken when the session ends.
     input: Mutex<Option<Sender<Vec<u8>>>>,
     program: PathBuf,
@@ -134,7 +136,7 @@ impl Session {
 
         let (input_tx, input_rx) = unbounded::<Vec<u8>>();
         let inner = Arc::new(Inner {
-            master: Mutex::new(pair.master),
+            master: Mutex::new(Some(pair.master)),
             input: Mutex::new(Some(input_tx)),
             program,
             shell_pid,
@@ -189,11 +191,12 @@ impl Session {
         if self.inner.exited.load(Ordering::SeqCst) {
             return Ok(());
         }
-        self.inner
-            .master
-            .lock()
-            .resize(pty_size(cols, rows))
-            .map_err(|e| TermError::io("Could not resize", e))
+        match self.inner.master.lock().as_ref() {
+            Some(master) => {
+                master.resize(pty_size(cols, rows)).map_err(|e| TermError::io("Could not resize", e))
+            }
+            None => Ok(()),
+        }
     }
 
     /// The shell's state now.
@@ -289,7 +292,7 @@ impl Inner {
     /// The terminal's foreground process group.
     #[cfg(unix)]
     fn foreground(&self) -> Option<i64> {
-        self.master.lock().process_group_leader().map(i64::from)
+        self.master.lock().as_ref().and_then(|master| master.process_group_leader()).map(i64::from)
     }
 
     #[cfg(not(unix))]
@@ -463,6 +466,12 @@ fn pump_loop(inner: &Inner, rx: Receiver<Vec<u8>>, mut child: Box<dyn Child + Se
     };
     inner.exited.store(true, Ordering::SeqCst);
     inner.input.lock().take();
+    // Closing a pseudo console may wait for its output to drain: on a
+    // thread of its own, never the pump's.
+    let master = inner.master.lock().take();
+    if let Some(master) = master {
+        let _ = std::thread::Builder::new().name("terminal closer".into()).spawn(move || drop(master));
+    }
     inner.emit(Event::Exited(code));
 }
 

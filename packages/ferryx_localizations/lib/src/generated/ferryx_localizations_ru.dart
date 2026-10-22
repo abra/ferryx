@@ -2334,4 +2334,7 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   @override
   String get terminalBusy =>
       'В терминале работает программа или набрана строка';
+
+  @override
+  String get terminalScrollbackNote => 'Столько хранит новая оболочка';
 }

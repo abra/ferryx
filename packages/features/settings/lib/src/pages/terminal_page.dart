@@ -70,6 +70,7 @@ class TerminalPage extends StatelessWidget {
             ),
             ChoiceRow<int>(
               label: l10n.terminalScrollbackLabel,
+              note: l10n.terminalScrollbackNote,
               value: terminal.scrollback,
               items: [
                 for (final lines in {

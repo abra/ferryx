@@ -309,8 +309,9 @@ class _Screen extends StatelessWidget {
     textStyle: look.styleOf(context, fontSize),
     // The terminal's font size is a setting of its own.
     textScaler: TextScaler.noScaling,
+    // The text starts under the bar's icon.
     padding: const EdgeInsets.symmetric(
-      horizontal: AppSpacing.sm,
+      horizontal: AppSpacing.md,
       vertical: AppSpacing.xs,
     ),
     keyboardAppearance: Theme.of(context).brightness,

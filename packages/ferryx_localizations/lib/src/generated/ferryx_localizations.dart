@@ -4039,6 +4039,12 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'A program runs in the terminal, or a line is half typed'**
   String get terminalBusy;
+
+  /// No description provided for @terminalScrollbackNote.
+  ///
+  /// In en, this message translates to:
+  /// **'A new shell keeps this many'**
+  String get terminalScrollbackNote;
 }
 
 class _FerryxLocalizationsDelegate

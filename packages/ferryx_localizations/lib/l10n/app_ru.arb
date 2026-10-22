@@ -683,5 +683,6 @@
   "terminalRestart": "Новая оболочка",
   "terminalRestartHint": "{key} — запустить новую оболочку",
   "terminalTitle": "Терминал",
-  "terminalBusy": "В терминале работает программа или набрана строка"
+  "terminalBusy": "В терминале работает программа или набрана строка",
+  "terminalScrollbackNote": "Столько хранит новая оболочка"
 }
