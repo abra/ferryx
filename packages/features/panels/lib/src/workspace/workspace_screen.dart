@@ -28,6 +28,7 @@ import '../panel/panel_view.dart';
 import '../panel/saved_panel.dart';
 import '../path_text.dart';
 import 'context_menu.dart';
+import 'key_hints.dart';
 import 'vim_register.dart';
 import 'workspace_cubit.dart';
 import 'workspace_state.dart';
@@ -294,68 +295,101 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             backgroundColor: context.appColors.window,
             body: CommandHandlers(
               handlers: _globalHandlers(context),
-              child: Stack(
+              child: Column(
                 children: [
-                  Positioned.fill(
-                    child: CommandShortcuts(
-                      shortcuts: widget.shortcutMap.toShortcuts(
-                        Theme.of(context).platform,
-                        scopes: const {CommandScope.panel},
-                      ),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          _panelsWidth = constraints.maxWidth;
-                          return _Panels(
-                            workspace: workspace,
-                            prefs: prefs,
-                            cubitOf: _cubitOf,
-                            decor: widget.windowDecor,
-                            shortcutMap: widget.shortcutMap,
-                            splitterFocus: _splitterFocus,
-                            leftFocus: _leftFocus,
-                            rightFocus: _rightFocus,
-                            leftCursor: _leftCursor,
-                            rightCursor: _rightCursor,
-                            hooksFor: _hooksFor,
-                            registerNote: _registerNote(
-                              l10n,
-                              workspace.register,
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: CommandShortcuts(
+                            shortcuts: widget.shortcutMap.toShortcuts(
+                              Theme.of(context).platform,
+                              scopes: const {CommandScope.panel},
                             ),
-                            splitterValue: l10n.textSizePercent(
-                              (workspace.splitFraction * 100).round(),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                _panelsWidth = constraints.maxWidth;
+                                return _Panels(
+                                  workspace: workspace,
+                                  prefs: prefs,
+                                  cubitOf: _cubitOf,
+                                  decor: widget.windowDecor,
+                                  shortcutMap: widget.shortcutMap,
+                                  splitterFocus: _splitterFocus,
+                                  leftFocus: _leftFocus,
+                                  rightFocus: _rightFocus,
+                                  leftCursor: _leftCursor,
+                                  rightCursor: _rightCursor,
+                                  hooksFor: _hooksFor,
+                                  registerNote: _registerNote(
+                                    l10n,
+                                    workspace.register,
+                                  ),
+                                  splitterValue: l10n.textSizePercent(
+                                    (workspace.splitFraction * 100).round(),
+                                  ),
+                                  splitterHints: _splitterHints(context),
+                                  onSplitterAction: _onSplitterAction,
+                                  onSplitterDrag: (delta) {
+                                    if (_panelsWidth > 0) {
+                                      _workspace.moveSplit(
+                                        delta / _panelsWidth,
+                                      );
+                                    }
+                                  },
+                                  onSplitterDragEnd: _scheduleSnapshot,
+                                  width: constraints.maxWidth,
+                                );
+                              },
                             ),
-                            splitterHints: _splitterHints(context),
-                            onSplitterAction: _onSplitterAction,
-                            onSplitterDrag: (delta) {
-                              if (_panelsWidth > 0) {
-                                _workspace.moveSplit(delta / _panelsWidth);
-                              }
-                            },
-                            onSplitterDragEnd: _scheduleSnapshot,
-                            width: constraints.maxWidth,
-                          );
-                        },
-                      ),
+                          ),
+                        ),
+                        if (workspace.operationsShown)
+                          Positioned(
+                            right: AppSpacing.md,
+                            bottom:
+                                AppSpacing.md + PanelFooter.heightOf(context),
+                            child: OperationsCards(
+                              operations: _operations,
+                              onPause: (id) =>
+                                  unawaited(widget.operations.pause(id)),
+                              onResume: (id) =>
+                                  unawaited(widget.operations.resume(id)),
+                              onCancel: (id) =>
+                                  unawaited(widget.operations.cancel(id)),
+                              onDismiss: _dismissOperation,
+                              onAnswer: (progress) {
+                                final question = progress.question;
+                                if (question != null) {
+                                  _askedQuestions.add(question.id);
+                                  unawaited(_ask(progress.id, question));
+                                }
+                              },
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  if (workspace.operationsShown)
-                    Positioned(
-                      right: AppSpacing.md,
-                      bottom: AppSpacing.md + PanelFooter.heightOf(context),
-                      child: OperationsCards(
-                        operations: _operations,
-                        onPause: (id) => unawaited(widget.operations.pause(id)),
-                        onResume: (id) =>
-                            unawaited(widget.operations.resume(id)),
-                        onCancel: (id) =>
-                            unawaited(widget.operations.cancel(id)),
-                        onDismiss: _dismissOperation,
-                        onAnswer: (progress) {
-                          final question = progress.question;
-                          if (question != null) {
-                            _askedQuestions.add(question.id);
-                            unawaited(_ask(progress.id, question));
-                          }
+                  // The keys for what is under the cursor or selected in the
+                  // active panel, until the user hides the line.
+                  if (prefs.showKeyHints)
+                    BlocBuilder<PanelCubit, PanelState>(
+                      bloc: _cubitOf(workspace.active),
+                      builder: (context, panel) => KeyHintStrip(
+                        hints: hintsFor(
+                          tab: panel.active,
+                          vim: prefs.vimMode,
+                          hasRegister: workspace.register != null,
+                        ),
+                        shortcutMap: widget.shortcutMap,
+                        vim: prefs.vimMode,
+                        onHide: () {
+                          unawaited(
+                            widget.preferences.update(
+                              (p) => p.copyWith(showKeyHints: false),
+                            ),
+                          );
+                          showAppNotice(context, l10n.hintsHidden);
                         },
                       ),
                     ),

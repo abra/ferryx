@@ -10,6 +10,7 @@ import 'package:shortcuts/shortcuts.dart';
 import 'inline_rename.dart';
 import 'panel_row.dart';
 import 'panel_state.dart';
+import 'rows_header.dart';
 import 'rows_list.dart';
 
 /// Brief mode: names in columns, read top to bottom and then on to the
@@ -22,6 +23,7 @@ class RowsBrief extends StatefulWidget {
     required this.callbacks,
     required this.onGeometry,
     required this.rename,
+    required this.onSort,
     this.cursorKey,
     super.key,
   });
@@ -32,6 +34,9 @@ class RowsBrief extends StatefulWidget {
   final RowCallbacks callbacks;
   final ValueChanged<PanelGeometry> onGeometry;
   final RenameSpec rename;
+
+  /// The header's tap: the sort field flips its direction.
+  final ValueChanged<SortField> onSort;
 
   /// Goes on the cursor's cell while it is built, so the window can open
   /// a menu by it.
@@ -179,48 +184,73 @@ class _RowsBriefState extends State<RowsBrief> {
   Widget build(BuildContext context) {
     final height = panelRowHeight(context);
     final active = widget.active && AppFocusArea.activeOf(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final rowsPerColumn = (constraints.maxHeight / height).floor().clamp(
-          1,
-          1 << 20,
-        );
-        final widths = _widths(context, constraints.maxWidth, rowsPerColumn);
-        _rowsPerColumn = rowsPerColumn;
-        _columnWidths = widths;
-        final visibleColumns = widths.isEmpty
-            ? RowsBrief.fixedColumns
-            : math.max(1, (constraints.maxWidth / widths.first).floor());
-        _visibleColumns = visibleColumns;
-        WidgetsBinding.instance.addPostFrameCallback((_) => _onScroll());
-        if (widget.tab.rows.isEmpty) return const EmptyRows();
-        return Scrollbar(
-          controller: _scroll,
-          child: ListView.builder(
-            controller: _scroll,
-            scrollDirection: Axis.horizontal,
-            itemCount: widths.length,
-            addRepaintBoundaries: false,
-            itemBuilder: (context, column) => SizedBox(
-              width: widths[column],
-              child: _BriefColumn(
-                tab: widget.tab,
-                active: active,
-                start: column * rowsPerColumn,
-                count: math.min(
-                  rowsPerColumn,
-                  widget.tab.rows.length - column * rowsPerColumn,
-                ),
-                height: height,
-                callbacks: widget.callbacks,
-                rename: widget.rename,
-                cursorKey: widget.cursorKey,
-                last: column == widths.length - 1,
-              ),
-            ),
+    final sort = widget.tab.sort;
+    return Column(
+      children: [
+        RowsHeader(
+          columns: const [],
+          widths: const [],
+          sort: sort,
+          onSort: widget.onSort,
+          height: height,
+          nameField: sort.field,
+          nameLabel: context.l10n.columnLabel(
+            ListColumn.values.byName(sort.field.name),
           ),
-        );
-      },
+        ),
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final rowsPerColumn =
+                  ((constraints.maxHeight - 2 * rowsInset) / height)
+                      .floor()
+                      .clamp(
+                        1,
+                        1 << 20,
+                      );
+              final widths = _widths(
+                context,
+                constraints.maxWidth,
+                rowsPerColumn,
+              );
+              _rowsPerColumn = rowsPerColumn;
+              _columnWidths = widths;
+              final visibleColumns = widths.isEmpty
+                  ? RowsBrief.fixedColumns
+                  : math.max(1, (constraints.maxWidth / widths.first).floor());
+              _visibleColumns = visibleColumns;
+              WidgetsBinding.instance.addPostFrameCallback((_) => _onScroll());
+              if (widget.tab.rows.isEmpty) return const EmptyRows();
+              return Scrollbar(
+                controller: _scroll,
+                child: ListView.builder(
+                  controller: _scroll,
+                  scrollDirection: Axis.horizontal,
+                  itemCount: widths.length,
+                  addRepaintBoundaries: false,
+                  itemBuilder: (context, column) => SizedBox(
+                    width: widths[column],
+                    child: _BriefColumn(
+                      tab: widget.tab,
+                      active: active,
+                      start: column * rowsPerColumn,
+                      count: math.min(
+                        rowsPerColumn,
+                        widget.tab.rows.length - column * rowsPerColumn,
+                      ),
+                      height: height,
+                      callbacks: widget.callbacks,
+                      rename: widget.rename,
+                      cursorKey: widget.cursorKey,
+                      last: column == widths.length - 1,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -257,6 +287,7 @@ class _BriefColumn extends StatelessWidget {
           : BoxDecoration(
               border: AppBorder(right: BorderSide(color: colors.line)),
             ),
+      padding: const EdgeInsets.symmetric(vertical: rowsInset),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

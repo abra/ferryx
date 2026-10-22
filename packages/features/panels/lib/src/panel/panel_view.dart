@@ -730,6 +730,8 @@ class _PanelViewState extends State<PanelView> {
                                   callbacks: callbacks,
                                   rename: rename,
                                   cursorKey: widget.cursorRowKey,
+                                  onSort: (field) =>
+                                      unawaited(_cubit.toggleSortField(field)),
                                   onGeometry: (g) => _cubit.geometry = g,
                                 ),
                         ),

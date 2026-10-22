@@ -9,6 +9,7 @@ export 'src/panel/panel_view.dart';
 export 'src/panel/saved_panel.dart';
 export 'src/dialogs/attributes_dialog.dart';
 export 'src/dialogs/batch_rename_dialog.dart';
+export 'src/workspace/key_hints.dart';
 export 'src/workspace/workspace_cubit.dart';
 export 'src/workspace/workspace_screen.dart';
 export 'src/workspace/workspace_state.dart';

@@ -51,7 +51,9 @@ files is Rust.
 - **Keyboard first, no mouse needed**: every command has a shortcut you can
   rebind (Settings → Hotkeys), click hints (⌘J) label everything clickable,
   the menu key (⌃↩, ⇧F10) opens what a right click opens, a cheat sheet
-  (⌘/) lists every key of where you are.
+  (⌘/) lists every key of where you are, and a quiet line under the panels
+  names the keys for what is under the cursor or selected (Tab for the
+  other panel, F5 to copy a selection…) until you hide it.
 - **Vim mode** (Settings → Panels): `h j k l` move and enter, counts
   (`5j`, `3G`, `2gt`), `gg` / `G`, `H M L`, `zz zt zb`, `f` / `F` / `;` /
   `,` jump by a first letter, `v` Visual selection, `x` / Space toggle,

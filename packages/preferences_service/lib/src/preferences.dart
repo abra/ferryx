@@ -36,6 +36,7 @@ class Preferences extends Equatable {
     this.viewerWrap = true,
     this.viewerFontSize = 13,
     this.showTabBarAlways = false,
+    this.showKeyHints = true,
     this.operationsVisible = true,
     this.vimMode = false,
     this.vimMarks = const {},
@@ -92,6 +93,10 @@ class Preferences extends Equatable {
   final double viewerFontSize;
   final bool showTabBarAlways;
 
+  /// A line under the panels with the keys for what is under the cursor
+  /// or selected.
+  final bool showKeyHints;
+
   /// The operations strip stays shown while operations run.
   final bool operationsVisible;
 
@@ -139,6 +144,7 @@ class Preferences extends Equatable {
     bool? viewerWrap,
     double? viewerFontSize,
     bool? showTabBarAlways,
+    bool? showKeyHints,
     bool? operationsVisible,
     bool? vimMode,
     Map<String, String>? vimMarks,
@@ -172,6 +178,7 @@ class Preferences extends Equatable {
     viewerWrap: viewerWrap ?? this.viewerWrap,
     viewerFontSize: viewerFontSize ?? this.viewerFontSize,
     showTabBarAlways: showTabBarAlways ?? this.showTabBarAlways,
+    showKeyHints: showKeyHints ?? this.showKeyHints,
     operationsVisible: operationsVisible ?? this.operationsVisible,
     vimMode: vimMode ?? this.vimMode,
     vimMarks: vimMarks ?? this.vimMarks,
@@ -207,6 +214,7 @@ class Preferences extends Equatable {
     'viewerWrap': viewerWrap,
     'viewerFontSize': viewerFontSize,
     'showTabBarAlways': showTabBarAlways,
+    'showKeyHints': showKeyHints,
     'operationsVisible': operationsVisible,
     'vimMode': vimMode,
     'vimMarks': vimMarks,
@@ -314,6 +322,7 @@ class Preferences extends Equatable {
         json['showTabBarAlways'],
         defaults.showTabBarAlways,
       ),
+      showKeyHints: _boolOr(json['showKeyHints'], defaults.showKeyHints),
       operationsVisible: _boolOr(
         json['operationsVisible'],
         defaults.operationsVisible,
@@ -373,6 +382,7 @@ class Preferences extends Equatable {
     viewerWrap,
     viewerFontSize,
     showTabBarAlways,
+    showKeyHints,
     operationsVisible,
     vimMode,
     vimMarks,

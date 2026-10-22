@@ -69,6 +69,11 @@ class RowLook {
   }
 }
 
+/// Room above the first row and below the last, so the inset highlight
+/// of a row at either end stands clear of the header's line and the
+/// footer's.
+const double rowsInset = AppSpacing.xs;
+
 /// The height of a row at the current text size: the platform's table
 /// row, grown with the text.
 double panelRowHeight(BuildContext context) {

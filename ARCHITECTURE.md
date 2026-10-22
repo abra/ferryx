@@ -233,6 +233,12 @@ match ranges, the sort options and the layout index. Rules:
   `ShortcutMap.forUser` applies the user's overrides; the app
   (`DependenciesContainer.shortcutMap`) and Settings → Hotkeys build the
   map the same way.
+- `KeyHintStrip` under the panels shows the keys for the active panel's
+  state (`hintsFor`, a pure function over `PanelTabState`: a file, a
+  folder, `..`, a selection, the quick search, the Vim prompt and Visual
+  mode, an empty folder), with chords and labels from the shortcut map
+  and the strings, so a rebound key shows as bound; `Preferences.showKeyHints`
+  turns it off (its own close button, Settings → General).
 - Hint mode (⌘J) labels every clickable thing on the topmost route; the
   menu key (⌃↩, ⇧F10, Menu) opens the focused row's menu by its row; the
   edge between the panels takes the keys with ⌥⌘\ (`AppSplitter`).

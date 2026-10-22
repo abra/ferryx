@@ -8,6 +8,7 @@ import 'package:shortcuts/shortcuts.dart';
 import 'inline_rename.dart';
 import 'panel_row.dart';
 import 'panel_state.dart';
+import 'rows_header.dart';
 
 /// What the rows need from their panel: which row is where, and what a
 /// click or a key does.
@@ -101,7 +102,9 @@ class _RowsListState extends State<RowsList> {
   /// The first row in view, for `H`, `M` and `L`.
   void _onScroll() {
     if (!_scroll.hasClients) return;
-    final first = (_scroll.offset / panelRowHeight(context)).floor();
+    final first = ((_scroll.offset - rowsInset) / panelRowHeight(context))
+        .floor()
+        .clamp(0, 1 << 20);
     if (first != _firstVisible) {
       _firstVisible = first;
       widget.onGeometry(
@@ -130,25 +133,30 @@ class _RowsListState extends State<RowsList> {
     super.dispose();
   }
 
-  /// The data columns as they fit beside the name: their wanted widths
-  /// while the name keeps [ColumnWidths.nameMin], else scaled down
-  /// together, never below half.
-  List<double> _fitColumns(
+  /// The data columns as they fit beside the name: all of them at their
+  /// wanted widths while the name keeps [ColumnWidths.nameMin]; else the
+  /// last columns go, one by one, before any is squeezed (a date cut
+  /// short says nothing; a column that is not there is just not there).
+  (List<ListColumn>, List<double>) _fitColumns(
     BuildContext context,
+    List<ListColumn> columns,
     List<double> wanted,
     double width,
   ) {
     final scale = MediaQuery.textScalerOf(context).scale(1);
-    final chrome =
+    double chrome(int count) =>
         2 * (context.metrics.rowInset + AppSpacing.sm) +
-        wanted.length * AppSpacing.sm +
+        count * AppSpacing.sm +
         AppSpacing.xs +
         checkSlotWidth;
-    final fixed = wanted.fold(0.0, (sum, w) => sum + w);
-    final room = width - chrome - ColumnWidths.nameMin * scale;
-    if (fixed <= room) return wanted;
-    final factor = (room / fixed).clamp(0.5, 1.0);
-    return [for (final w in wanted) (w * factor).roundToDouble()];
+    final nameMin = ColumnWidths.nameMin * scale;
+    var count = columns.length;
+    while (count > 0) {
+      final fixed = wanted.take(count).fold(0.0, (sum, w) => sum + w);
+      if (fixed <= width - chrome(count) - nameMin) break;
+      count--;
+    }
+    return (columns.take(count).toList(), wanted.take(count).toList());
   }
 
   /// Scrolls as little as it takes to show the cursor's row, or puts the
@@ -158,7 +166,7 @@ class _RowsListState extends State<RowsList> {
     final cursor = widget.tab.cursor;
     if (cursor < 0) return;
     final height = panelRowHeight(context);
-    final top = cursor * height;
+    final top = rowsInset + cursor * height;
     final bottom = top + height;
     final viewport = _scroll.position.viewportDimension;
     final offset = _scroll.offset;
@@ -189,16 +197,22 @@ class _RowsListState extends State<RowsList> {
   Widget build(BuildContext context) {
     final height = panelRowHeight(context);
     final active = widget.active && AppFocusArea.activeOf(context);
-    final columns = widget.layout.columns
+    final wantedColumns = widget.layout.columns
         .where((c) => c != ListColumn.name)
         .toList();
-    final wanted = [for (final c in columns) columnWidth(context, c)];
+    final wanted = [for (final c in wantedColumns) columnWidth(context, c)];
     return LayoutBuilder(
       builder: (context, constraints) {
-        final widths = _fitColumns(context, wanted, constraints.maxWidth);
-        final rowsPerPage = ((constraints.maxHeight - height) / height)
-            .floor()
-            .clamp(1, 1 << 20);
+        final (columns, widths) = _fitColumns(
+          context,
+          wantedColumns,
+          wanted,
+          constraints.maxWidth,
+        );
+        final rowsPerPage =
+            ((constraints.maxHeight - height - 2 * rowsInset) / height)
+                .floor()
+                .clamp(1, 1 << 20);
         _rowsPerPage = rowsPerPage;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           widget.onGeometry(
@@ -211,7 +225,7 @@ class _RowsListState extends State<RowsList> {
         });
         return Column(
           children: [
-            _Header(
+            RowsHeader(
               columns: columns,
               widths: widths,
               sort: widget.tab.sort,
@@ -225,6 +239,9 @@ class _RowsListState extends State<RowsList> {
                       controller: _scroll,
                       child: ListView.builder(
                         controller: _scroll,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: rowsInset,
+                        ),
                         itemExtent: height,
                         itemCount: widget.tab.rows.length,
                         addRepaintBoundaries: false,
@@ -255,177 +272,6 @@ class _RowsListState extends State<RowsList> {
 
 /// The column headers, each a button that sorts by its column; the
 /// cells sit over the rows' cells, inset as the rows are.
-class _Header extends StatelessWidget {
-  const _Header({
-    required this.columns,
-    required this.widths,
-    required this.sort,
-    required this.onSort,
-    required this.height,
-  });
-
-  final List<ListColumn> columns;
-  final List<double> widths;
-  final SortOptions sort;
-  final ValueChanged<SortField> onSort;
-  final double height;
-
-  SortField? _fieldOf(ListColumn column) => switch (column) {
-    ListColumn.name => SortField.name,
-    ListColumn.extension => SortField.extension,
-    ListColumn.size => SortField.size,
-    ListColumn.modified => SortField.modified,
-    ListColumn.created => SortField.created,
-    ListColumn.added => SortField.added,
-    ListColumn.accessed => SortField.accessed,
-    _ => null,
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        color: colors.surfaceRaised,
-        border: AppBorder(bottom: BorderSide(color: colors.line)),
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: context.metrics.rowInset + AppSpacing.sm,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _HeaderCell(
-              label: context.l10n.columnName,
-              field: SortField.name,
-              sort: sort,
-              onSort: onSort,
-              alignEnd: false,
-            ),
-          ),
-          for (var i = 0; i < columns.length; i++) ...[
-            const SizedBox(width: AppSpacing.sm),
-            SizedBox(
-              width: widths[i],
-              child: _HeaderCell(
-                label: context.l10n.columnLabel(columns[i]),
-                field: _fieldOf(columns[i]),
-                sort: sort,
-                onSort: onSort,
-                alignEnd: columnRightAligned(columns[i]),
-              ),
-            ),
-          ],
-          const SizedBox(width: AppSpacing.xs + checkSlotWidth),
-        ],
-      ),
-    );
-  }
-}
-
-/// A column's header: a push target with the platform's hover and pressed
-/// fills, the sorted column in a heavier weight with its arrow.
-class _HeaderCell extends StatefulWidget {
-  const _HeaderCell({
-    required this.label,
-    required this.field,
-    required this.sort,
-    required this.onSort,
-    required this.alignEnd,
-  });
-
-  final String label;
-  final SortField? field;
-  final SortOptions sort;
-  final ValueChanged<SortField> onSort;
-  final bool alignEnd;
-
-  @override
-  State<_HeaderCell> createState() => _HeaderCellState();
-}
-
-class _HeaderCellState extends State<_HeaderCell> {
-  bool _hovered = false;
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final field = widget.field;
-    final sorted = field != null && widget.sort.field == field;
-    final base = context.text.labelMedium!.copyWith(
-      color: sorted ? context.colors.onSurface : colors.textMuted,
-    );
-    final style = sorted ? base.weight(FontWeight.w600) : base;
-    final text = Text(
-      widget.label,
-      style: style,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-    );
-    final alignEnd = widget.alignEnd;
-    final child = Row(
-      mainAxisAlignment: alignEnd
-          ? MainAxisAlignment.end
-          : MainAxisAlignment.start,
-      children: [
-        if (alignEnd && sorted) _SortArrow(descending: widget.sort.descending),
-        Flexible(child: text),
-        if (!alignEnd && sorted) _SortArrow(descending: widget.sort.descending),
-      ],
-    );
-    if (field == null) return child;
-    void sort() => widget.onSort(field);
-    final fill = _pressed
-        ? colors.pressedFill
-        : _hovered
-        ? colors.hoverFill
-        : null;
-    return HintTarget(
-      onActivate: sort,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.basic,
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() {
-          _hovered = false;
-          _pressed = false;
-        }),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: (_) => setState(() => _pressed = true),
-          onTapUp: (_) => setState(() => _pressed = false),
-          onTapCancel: () => setState(() => _pressed = false),
-          onTap: sort,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: fill,
-              borderRadius: BorderRadius.circular(context.metrics.radius.row),
-            ),
-            child: child,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SortArrow extends StatelessWidget {
-  const _SortArrow({required this.descending});
-
-  final bool descending;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
-    child: Icon(
-      descending ? AppIcons.chevronDown : AppIcons.chevronUp,
-      size: AppIconSize.xs,
-      color: context.appColors.textMuted,
-    ),
-  );
-}
-
 class _ListRow extends StatelessWidget {
   const _ListRow({
     required this.index,

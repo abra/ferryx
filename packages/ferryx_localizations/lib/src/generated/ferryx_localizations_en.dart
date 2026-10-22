@@ -1371,6 +1371,26 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get confirmDeleteLabel => 'Ask before deleting permanently';
 
   @override
+  String get generalKeyHintsLabel => 'Key hints under the panels';
+
+  @override
+  String get generalKeyHintsNote =>
+      'One line with the keys for what is under the cursor or selected';
+
+  @override
+  String get hintsHide => 'Hide the hints';
+
+  @override
+  String get hintsHidden =>
+      'Hints are off; Settings, General turns them back on';
+
+  @override
+  String get hintBack => 'Back';
+
+  @override
+  String get hintKeepMatches => 'Keep the matches';
+
+  @override
   String get copyDefaultsLabel => 'Copying';
 
   @override

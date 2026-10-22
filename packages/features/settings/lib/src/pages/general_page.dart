@@ -54,6 +54,13 @@ class GeneralPage extends StatelessWidget {
                 (p) => p.copyWith(textScale: (value * 10).round() / 10),
               ),
             ),
+            ToggleRow(
+              label: l10n.generalKeyHintsLabel,
+              note: l10n.generalKeyHintsNote,
+              value: prefs.showKeyHints,
+              onChanged: (v) =>
+                  service.update((p) => p.copyWith(showKeyHints: v)),
+            ),
           ],
         ),
         SettingsGroup(

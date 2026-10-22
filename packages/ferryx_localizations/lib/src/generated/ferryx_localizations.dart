@@ -2264,6 +2264,42 @@ abstract class FerryxLocalizations {
   /// **'Ask before deleting permanently'**
   String get confirmDeleteLabel;
 
+  /// No description provided for @generalKeyHintsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Key hints under the panels'**
+  String get generalKeyHintsLabel;
+
+  /// No description provided for @generalKeyHintsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'One line with the keys for what is under the cursor or selected'**
+  String get generalKeyHintsNote;
+
+  /// No description provided for @hintsHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide the hints'**
+  String get hintsHide;
+
+  /// No description provided for @hintsHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hints are off; Settings, General turns them back on'**
+  String get hintsHidden;
+
+  /// No description provided for @hintBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get hintBack;
+
+  /// No description provided for @hintKeepMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the matches'**
+  String get hintKeepMatches;
+
   /// No description provided for @copyDefaultsLabel.
   ///
   /// In en, this message translates to:

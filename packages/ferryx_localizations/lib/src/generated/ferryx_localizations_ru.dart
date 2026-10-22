@@ -1407,6 +1407,26 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String get confirmDeleteLabel => 'Спрашивать перед безвозвратным удалением';
 
   @override
+  String get generalKeyHintsLabel => 'Подсказки клавиш под панелями';
+
+  @override
+  String get generalKeyHintsNote =>
+      'Одна строка с клавишами для того, что под курсором или выделено';
+
+  @override
+  String get hintsHide => 'Скрыть подсказки';
+
+  @override
+  String get hintsHidden =>
+      'Подсказки выключены; включить снова: Настройки, Основные';
+
+  @override
+  String get hintBack => 'Назад';
+
+  @override
+  String get hintKeepMatches => 'Оставить совпадения';
+
+  @override
   String get copyDefaultsLabel => 'Копирование';
 
   @override
