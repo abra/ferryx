@@ -1,159 +1,339 @@
-//! Archives browsed as read-only folders: zip, tar, and gzipped tar.
+//! Archives browsed as read-only folders: zip (jar, apk…), tar alone or
+//! compressed with gzip, bzip2, xz or zstd, 7z, rar, ISO 9660 images
+//! (with Joliet or Rock Ridge names), and one file compressed with gzip,
+//! bzip2, xz or zstd (an archive of one member, named without the
+//! compression's extension).
 //!
-//! An [`ArchiveIndex`] reads the member list once; listing a folder inside
-//! it filters that list, and reading a member goes back to the file.
+//! An [`ArchiveIndex`] reads the member list once — from the directory
+//! where the format keeps one (zip, 7z, rar, iso), in one pass over the
+//! stream where it has none (tar) — and keeps it sorted by path with each
+//! folder's children, so a folder lists in the time its own rows take and
+//! a subtree is one contiguous run. Members are read back streaming
+//! ([`ArchiveIndex::extract_members`]): a tar stream in one pass whatever
+//! the number of members, a 7z block decoded once for all it holds.
+//!
+//! [`shared`] keeps the indexes read lately and the passwords given, for
+//! the whole process: a panel, the viewer and an extraction share one
+//! index per archive, read again when the file changed.
 
-use std::collections::BTreeMap;
+mod detect;
+mod formats;
+mod iso;
+pub mod shared;
+
+use std::collections::HashMap;
 use std::fs::{self, File};
-use std::io::{self, BufReader, Read};
+use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use ferryx_core::entry::{extension_of, Entry, EntryKind};
+use ferryx_core::entry::{extension_of, split_name, Entry, EntryKind};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{IoAt, VfsError, VfsErrorKind, VfsResult};
 use crate::native::system_time_ms;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub use detect::detect;
+
+/// How a stream is compressed.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Compression {
+    None,
+    Gzip,
+    Bzip2,
+    Xz,
+    Zstd,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ArchiveFormat {
     Zip,
-    Tar,
-    TarGz,
+    /// A tar stream, compressed or not.
+    Tar(Compression),
+    SevenZip,
+    Rar,
+    Iso,
+    /// One file compressed: an archive of one member.
+    Single(Compression),
 }
 
 /// The format a file's name says it is, or `None` for files that are not
-/// archives Ferryx opens.
+/// archives Ferryx opens. [`detect`] reads the file's first bytes too.
 pub fn format_of(path: &Path) -> Option<ArchiveFormat> {
+    use ArchiveFormat::*;
+    use Compression as C;
     let name = path.file_name()?.to_string_lossy().to_lowercase();
-    if name.ends_with(".tar.gz") || name.ends_with(".tgz") {
-        Some(ArchiveFormat::TarGz)
-    } else if name.ends_with(".tar") {
-        Some(ArchiveFormat::Tar)
-    } else if name.ends_with(".zip")
-        || name.ends_with(".jar")
-        || name.ends_with(".ipa")
-        || name.ends_with(".apk")
-        || name.ends_with(".whl")
-    {
-        Some(ArchiveFormat::Zip)
+    let ends = |suffixes: &[&str]| suffixes.iter().any(|s| name.ends_with(s));
+    let format = if ends(&[".tar.gz", ".tgz", ".taz"]) {
+        Tar(C::Gzip)
+    } else if ends(&[".tar.bz2", ".tbz2", ".tbz", ".tb2"]) {
+        Tar(C::Bzip2)
+    } else if ends(&[".tar.xz", ".txz"]) {
+        Tar(C::Xz)
+    } else if ends(&[".tar.zst", ".tar.zstd", ".tzst"]) {
+        Tar(C::Zstd)
+    } else if ends(&[".tar"]) {
+        Tar(C::None)
+    } else if ends(&[".zip", ".jar", ".ipa", ".apk", ".whl"]) {
+        Zip
+    } else if ends(&[".7z"]) {
+        SevenZip
+    } else if ends(&[".rar"]) {
+        Rar
+    } else if ends(&[".iso"]) {
+        Iso
+    } else if ends(&[".gz"]) {
+        Single(C::Gzip)
+    } else if ends(&[".bz2"]) {
+        Single(C::Bzip2)
+    } else if ends(&[".xz"]) {
+        Single(C::Xz)
+    } else if ends(&[".zst", ".zstd"]) {
+        Single(C::Zstd)
     } else {
-        None
-    }
+        return None;
+    };
+    Some(format)
 }
 
-/// Whether `path` is an archive a panel enters on Return.
+/// Whether `path` is an archive a panel enters on Return. By the name
+/// only: no I/O, so it is cheap enough to ask for any row.
 pub fn is_archive(path: &Path) -> bool {
     format_of(path).is_some()
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Member {
-    /// `/`-separated, no leading or trailing slash.
+    /// `/`-separated, no leading or trailing slash, no `.` or `..`.
     pub path: String,
     pub is_dir: bool,
     pub is_symlink: bool,
+    /// Bytes when unpacked; 0 when the format does not say (a gzip of
+    /// 4 GiB or more, a bzip2 stream).
     pub size: u64,
     pub modified_ms: Option<i64>,
     pub mode: u32,
     pub encrypted: bool,
+    /// The member's number in the format's own list (zip, 7z and rar
+    /// index; the extents' slot of an iso); `None` for folders the paths
+    /// only imply.
+    pub native: Option<u64>,
+    /// Where a symbolic link points, when its header says (tar, rar);
+    /// a zip or 7z link keeps it as its data.
+    pub link: Option<String>,
+}
+
+impl Member {
+    fn folder(path: String) -> Member {
+        Member {
+            path,
+            is_dir: true,
+            is_symlink: false,
+            size: 0,
+            modified_ms: None,
+            mode: 0o40755,
+            encrypted: false,
+            native: None,
+            link: None,
+        }
+    }
+
+    /// The last component of the path.
+    pub fn name(&self) -> &str {
+        self.path.rsplit('/').next().unwrap_or(&self.path)
+    }
+}
+
+/// What the members are read back with, besides the file itself.
+pub(crate) enum Backing {
+    Plain,
+    /// The parsed 7z headers, so a member is found without reading them
+    /// again (they may be encrypted).
+    SevenZip(Box<sevenz_rust2::Archive>),
+    /// The extents of each iso member, by [`Member::native`].
+    Iso(Vec<Vec<(u64, u64)>>),
 }
 
 /// The member list of one archive.
-#[derive(Clone, Debug)]
 pub struct ArchiveIndex {
     pub archive: PathBuf,
     pub format: ArchiveFormat,
-    /// Members by path, folders implied by member paths included.
-    members: BTreeMap<String, Member>,
-    /// The archive file's modification time when read: a changed file is
-    /// read again.
+    /// Every member, folders the paths imply included, sorted by path.
+    members: Vec<Member>,
+    /// The children of each member (folders only), as indices.
+    children: Vec<Vec<u32>>,
+    /// The members at the root.
+    root: Vec<u32>,
+    /// The archive file's modification time and length when read: a
+    /// changed file is read again.
     pub file_modified: Option<SystemTime>,
+    pub file_len: u64,
+    /// Some member's data is encrypted.
+    pub encrypted: bool,
+    /// The member list itself is encrypted (7z `-mhe`, rar `-hp`): it was
+    /// read with a password.
+    pub headers_encrypted: bool,
+    backing: Backing,
+}
+
+impl std::fmt::Debug for ArchiveIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ArchiveIndex")
+            .field("archive", &self.archive)
+            .field("format", &self.format)
+            .field("members", &self.members.len())
+            .finish_non_exhaustive()
+    }
+}
+
+/// Where an extraction's bytes go, member by member; see
+/// [`ArchiveIndex::extract_members`].
+pub trait MemberSink {
+    /// Whether to read `member` (`false` passes it by); `Err(Stop)` ends
+    /// the extraction.
+    fn begin(&mut self, member: &Member) -> Result<bool, Stop>;
+
+    /// The next bytes of the member begun. An error ends the member.
+    fn write(&mut self, bytes: &[u8]) -> io::Result<()>;
+
+    /// The member begun ended: `outcome` is its byte count, or why it
+    /// could not be read or written.
+    fn end(&mut self, member: &Member, outcome: VfsResult<u64>) -> Result<(), Stop>;
+}
+
+/// A sink as a writer, for the readers that push their bytes.
+pub(crate) struct SinkWriter<'a>(pub &'a mut dyn MemberSink);
+
+impl Write for SinkWriter<'_> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.0.write(buf)?;
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+/// A sink's request to stop an extraction.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Stop;
+
+/// Why an extraction ended early.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ExtractError {
+    /// The sink asked to stop.
+    Stopped,
+    /// The archive could not be read on (a broken stream, a wrong
+    /// password for the member list).
+    Failed(VfsError),
+}
+
+impl From<VfsError> for ExtractError {
+    fn from(e: VfsError) -> Self {
+        ExtractError::Failed(e)
+    }
+}
+
+impl From<Stop> for ExtractError {
+    fn from(_: Stop) -> Self {
+        ExtractError::Stopped
+    }
 }
 
 impl ArchiveIndex {
+    /// Reads the member list of `archive`. An encrypted list answers a
+    /// [`VfsErrorKind::PasswordRequired`] error: see [`Self::open_with`].
     pub fn open(archive: &Path) -> VfsResult<ArchiveIndex> {
-        let format = format_of(archive).ok_or_else(|| {
+        ArchiveIndex::open_with(archive, None)
+    }
+
+    /// Reads the member list with `password` for an encrypted one.
+    pub fn open_with(archive: &Path, password: Option<&str>) -> VfsResult<ArchiveIndex> {
+        let format = detect(archive)?.ok_or_else(|| {
             VfsError::new(
                 VfsErrorKind::Unsupported,
                 Some(archive),
                 format!("{} is not an archive Ferryx opens", archive.display()),
             )
         })?;
-        let file_modified = fs::metadata(archive).at(archive)?.modified().ok();
-        let members = match format {
-            ArchiveFormat::Zip => read_zip(archive)?,
-            ArchiveFormat::Tar => read_tar(BufReader::new(File::open(archive).at(archive)?), archive)?,
-            ArchiveFormat::TarGz => {
-                let reader = flate2::read::GzDecoder::new(BufReader::new(File::open(archive).at(archive)?));
-                read_tar(reader, archive)?
-            }
+        let meta = fs::metadata(archive).at(archive)?;
+        let listed = match format {
+            ArchiveFormat::Zip => formats::list_zip(archive)?,
+            ArchiveFormat::Tar(compression) => formats::list_tar(archive, compression)?,
+            ArchiveFormat::SevenZip => formats::list_7z(archive, password)?,
+            ArchiveFormat::Rar => formats::list_rar(archive, password)?,
+            ArchiveFormat::Iso => iso::list(archive)?,
+            ArchiveFormat::Single(compression) => formats::list_single(archive, compression)?,
         };
-        let mut index =
-            ArchiveIndex { archive: archive.to_path_buf(), format, members: BTreeMap::new(), file_modified };
-        for member in members {
-            index.add(member);
-        }
-        Ok(index)
+        let (members, children, root) = arrange(listed.members);
+        Ok(ArchiveIndex {
+            archive: archive.to_path_buf(),
+            format,
+            encrypted: members.iter().any(|m| m.encrypted),
+            members,
+            children,
+            root,
+            file_modified: meta.modified().ok(),
+            file_len: meta.len(),
+            headers_encrypted: listed.headers_encrypted,
+            backing: listed.backing,
+        })
     }
 
     /// Whether the archive file changed since the index was read.
     pub fn is_stale(&self) -> bool {
-        let now = fs::metadata(&self.archive).ok().and_then(|m| m.modified().ok());
-        now != self.file_modified
+        match fs::metadata(&self.archive) {
+            Ok(meta) => meta.modified().ok() != self.file_modified || meta.len() != self.file_len,
+            Err(_) => true,
+        }
     }
 
-    fn add(&mut self, member: Member) {
-        // Folders the member path implies, as zips often leave them out.
-        let mut at = 0;
-        while let Some(slash) = member.path[at..].find('/') {
-            let dir = &member.path[..at + slash];
-            if !dir.is_empty() {
-                self.members.entry(dir.to_string()).or_insert_with(|| Member {
-                    path: dir.to_string(),
-                    is_dir: true,
-                    is_symlink: false,
-                    size: 0,
-                    modified_ms: None,
-                    mode: 0o755,
-                    encrypted: false,
-                });
-            }
-            at += slash + 1;
-        }
-        match self.members.get_mut(&member.path) {
-            Some(existing) if existing.is_dir && member.is_dir => {
-                // An explicit folder entry replaces the implied one's times.
-                if member.modified_ms.is_some() {
-                    existing.modified_ms = member.modified_ms;
-                    existing.mode = member.mode;
-                }
-            }
-            _ => {
-                self.members.insert(member.path.clone(), member);
-            }
-        }
+    /// The number of members, folders included.
+    pub fn len(&self) -> usize {
+        self.members.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.members.is_empty()
+    }
+
+    fn position(&self, inner: &str) -> Option<usize> {
+        self.members.binary_search_by(|m| m.path.as_str().cmp(inner)).ok()
     }
 
     pub fn member(&self, inner: &str) -> Option<&Member> {
-        self.members.get(inner)
+        self.position(inner).map(|i| &self.members[i])
     }
 
     pub fn is_dir(&self, inner: &str) -> bool {
-        inner.is_empty() || self.members.get(inner).map(|m| m.is_dir).unwrap_or(false)
+        inner.is_empty() || self.member(inner).map(|m| m.is_dir).unwrap_or(false)
+    }
+
+    /// The members at the archive's root.
+    pub fn top_level(&self) -> impl Iterator<Item = &Member> {
+        self.root.iter().map(|&i| &self.members[i as usize])
+    }
+
+    fn children_of(&self, inner: &str) -> Option<&[u32]> {
+        if inner.is_empty() {
+            return Some(&self.root);
+        }
+        let at = self.position(inner)?;
+        self.members[at].is_dir.then(|| self.children[at].as_slice())
     }
 
     /// The rows of the folder `inner` (empty for the root), with the `..`
     /// row when asked; entries' paths are member paths.
     pub fn list(&self, inner: &str, show_parent: bool, show_hidden: bool) -> VfsResult<Vec<Entry>> {
-        if !self.is_dir(inner) {
-            return Err(VfsError::new(
+        let children = self.children_of(inner).ok_or_else(|| {
+            VfsError::new(
                 VfsErrorKind::NotADirectory,
                 None,
                 format!("{inner} is not a folder in the archive"),
-            ));
-        }
-        let mut out = Vec::new();
+            )
+        })?;
+        let mut out = Vec::with_capacity(children.len() + 1);
         if show_parent {
             let parent = match inner.rfind('/') {
                 Some(at) => inner[..at].to_string(),
@@ -161,115 +341,433 @@ impl ArchiveIndex {
             };
             out.push(Entry::parent(PathBuf::from(parent)));
         }
-        let prefix = if inner.is_empty() { String::new() } else { format!("{inner}/") };
-        for (path, member) in self.members.range(prefix.clone()..) {
-            if !path.starts_with(&prefix) {
-                break;
-            }
-            let rest = &path[prefix.len()..];
-            if rest.is_empty() || rest.contains('/') {
-                continue;
-            }
-            let hidden = rest.starts_with('.');
+        for &child in children {
+            let member = &self.members[child as usize];
+            let name = member.name();
+            let hidden = name.starts_with('.');
             if hidden && !show_hidden {
                 continue;
             }
-            out.push(entry_of(member, rest, hidden));
+            out.push(entry_of(member, name, hidden));
         }
         Ok(out)
     }
 
+    /// The members under the folder `inner`, its subfolders' too: the
+    /// run of the sorted list that starts with `inner/`.
+    fn subtree(&self, inner: &str) -> &[Member] {
+        if inner.is_empty() {
+            return &self.members;
+        }
+        let prefix = format!("{inner}/");
+        let start = self.members.partition_point(|m| m.path.as_str() < prefix.as_str());
+        let len = self.members[start..].partition_point(|m| m.path.starts_with(&prefix));
+        &self.members[start..start + len]
+    }
+
+    /// Every file under the folder `inner` with its folder relative to
+    /// `inner` (empty for its own files), for a flat view; members inside
+    /// a hidden folder are hidden too.
+    pub fn files_in_subtree(&self, inner: &str, show_hidden: bool) -> Vec<(Entry, String)> {
+        let skip = if inner.is_empty() { 0 } else { inner.len() + 1 };
+        let mut out = Vec::new();
+        for member in self.subtree(inner) {
+            if member.is_dir {
+                continue;
+            }
+            let relative = &member.path[skip..];
+            let hidden = relative.split('/').any(|c| c.starts_with('.'));
+            if hidden && !show_hidden {
+                continue;
+            }
+            let (folder, name) = match relative.rfind('/') {
+                Some(at) => (&relative[..at], &relative[at + 1..]),
+                None => ("", relative),
+            };
+            out.push((entry_of(member, name, name.starts_with('.')), folder.to_string()));
+        }
+        out
+    }
+
     /// Every file member under `inner` (or the member itself), for an
-    /// extraction: `(member path, relative path)`.
+    /// extraction: `(member path, path relative to inner's folder)`.
     pub fn files_under(&self, inner: &str) -> Vec<(String, String)> {
         let base = match inner.rfind('/') {
-            Some(at) => &inner[..at + 1],
-            None => "",
+            Some(at) => at + 1,
+            None => 0,
         };
-        let prefix = format!("{inner}/");
-        self.members
+        let own =
+            self.member(inner).filter(|m| !m.is_dir).map(|m| (m.path.clone(), m.path[base..].to_string()));
+        let under = self
+            .subtree(inner)
             .iter()
-            .filter(|(path, _)| path.as_str() == inner || path.starts_with(&prefix))
-            .map(|(path, m)| (path.clone(), path[base.len()..].to_string(), m.is_dir))
-            .filter(|(_, _, is_dir)| !is_dir)
-            .map(|(p, r, _)| (p, r))
-            .collect()
+            .filter(|m| !m.is_dir)
+            .map(|m| (m.path.clone(), m.path[base..].to_string()));
+        own.into_iter().chain(under).collect()
+    }
+
+    /// The folders under `inner` (and `inner` itself when it is one), with
+    /// their paths relative to inner's folder: an extraction makes them
+    /// all, the empty ones too.
+    pub fn folders_under(&self, inner: &str) -> Vec<String> {
+        let base = match inner.rfind('/') {
+            Some(at) => at + 1,
+            None => 0,
+        };
+        let own = (!inner.is_empty() && self.is_dir(inner)).then(|| inner[base..].to_string());
+        let under = self.subtree(inner).iter().filter(|m| m.is_dir).map(|m| m.path[base..].to_string());
+        own.into_iter().chain(under).collect()
+    }
+
+    /// The bytes and the number of files under each of `inners`.
+    pub fn totals(&self, inners: &[String]) -> (u64, u64) {
+        let mut bytes = 0;
+        let mut files = 0;
+        for inner in inners {
+            for (member, _) in self.files_under(inner) {
+                files += 1;
+                bytes += self.member(&member).map(|m| m.size).unwrap_or(0);
+            }
+        }
+        (bytes, files)
+    }
+
+    /// The smallest file member whose data is encrypted: the cheapest to
+    /// try a password on.
+    fn smallest_encrypted(&self) -> Option<&Member> {
+        self.members.iter().filter(|m| m.encrypted && !m.is_dir).min_by_key(|m| m.size)
+    }
+
+    /// Whether `password` opens the archive: the member list when it is
+    /// encrypted, else the smallest encrypted member's first bytes.
+    pub fn check_password(&self, password: &str) -> VfsResult<()> {
+        if self.headers_encrypted {
+            return ArchiveIndex::open_with(&self.archive, Some(password)).map(|_| ());
+        }
+        let Some(member) = self.smallest_encrypted() else { return Ok(()) };
+        let mut probe = Probe { left: 64 * 1024 };
+        match self.read_member_to(&member.path, Some(password), &mut probe) {
+            Ok(_) => Ok(()),
+            Err(e) if e.kind == VfsErrorKind::Cancelled => Ok(()),
+            Err(e) if e.kind == VfsErrorKind::WrongPassword => Err(e),
+            // Garbage out of a wrong key breaks the decoder or the check.
+            Err(_) => Err(VfsError::wrong_password(&self.archive)),
+        }
+    }
+
+    /// Streams the files among `wanted` (member paths) to `sink`, in the
+    /// archive's own order: a tar stream is read once, a 7z block decoded
+    /// once for all its members, a rar archive in member order.
+    pub fn extract_members(
+        &self,
+        wanted: &[String],
+        password: Option<&str>,
+        sink: &mut dyn MemberSink,
+    ) -> Result<(), ExtractError> {
+        let mut picked: Vec<usize> =
+            wanted.iter().filter_map(|p| self.position(p)).filter(|&i| !self.members[i].is_dir).collect();
+        picked.sort_unstable();
+        picked.dedup();
+        if picked.is_empty() {
+            return Ok(());
+        }
+        let job = formats::Job { index: self, picked: &picked, password };
+        match self.format {
+            ArchiveFormat::Zip => formats::extract_zip(&job, sink),
+            ArchiveFormat::Tar(compression) => formats::extract_tar(&job, compression, sink),
+            ArchiveFormat::SevenZip => formats::extract_7z(&job, sink),
+            ArchiveFormat::Rar => formats::extract_rar(&job, sink),
+            ArchiveFormat::Iso => iso::extract(&job, sink),
+            ArchiveFormat::Single(compression) => formats::extract_single(&job, compression, sink),
+        }
+    }
+
+    /// Writes the file member `inner` to `out`; answers its byte count.
+    pub fn read_member_to(&self, inner: &str, password: Option<&str>, out: &mut dyn Write) -> VfsResult<u64> {
+        let member = self.member(inner).ok_or_else(|| not_in_archive(inner))?;
+        if member.is_dir {
+            return Err(VfsError::new(VfsErrorKind::IsADirectory, None, format!("{inner} is a folder")));
+        }
+        let mut sink = WriterSink { out, outcome: None };
+        let result = self.extract_members(&[inner.to_string()], password, &mut sink);
+        match (sink.outcome.take(), result) {
+            (Some(outcome), _) => outcome,
+            (None, Err(ExtractError::Failed(e))) => Err(e),
+            (None, _) => Err(not_in_archive(inner)),
+        }
     }
 
     /// The whole member as bytes.
     pub fn read(&self, inner: &str) -> VfsResult<Vec<u8>> {
-        let member = self.members.get(inner).ok_or_else(|| {
-            VfsError::new(VfsErrorKind::NotFound, None, format!("{inner} is not in the archive"))
-        })?;
-        if member.is_dir {
-            return Err(VfsError::new(VfsErrorKind::IsADirectory, None, format!("{inner} is a folder")));
-        }
-        if member.encrypted {
-            return Err(VfsError::unsupported(format!("{inner} is encrypted")));
-        }
-        match self.format {
-            ArchiveFormat::Zip => {
-                let file = File::open(&self.archive).at(&self.archive)?;
-                let mut zip = zip::ZipArchive::new(file).map_err(|e| zip_error(&self.archive, e))?;
-                let mut entry = zip.by_name(inner).map_err(|e| zip_error(&self.archive, e))?;
-                let mut out = Vec::with_capacity(entry.size() as usize);
-                entry.read_to_end(&mut out).at(&self.archive)?;
-                Ok(out)
-            }
-            ArchiveFormat::Tar => {
-                self.read_tar_member(BufReader::new(File::open(&self.archive).at(&self.archive)?), inner)
-            }
-            ArchiveFormat::TarGz => {
-                let reader = flate2::read::GzDecoder::new(BufReader::new(
-                    File::open(&self.archive).at(&self.archive)?,
-                ));
-                self.read_tar_member(reader, inner)
-            }
-        }
+        self.read_with(inner, None)
     }
 
-    /// Up to `len` bytes of the member from `offset` (the viewer reads
-    /// archives this way; the whole member is decoded each time).
-    pub fn read_range(&self, inner: &str, offset: u64, len: usize) -> VfsResult<Vec<u8>> {
-        let all = self.read(inner)?;
+    pub fn read_with(&self, inner: &str, password: Option<&str>) -> VfsResult<Vec<u8>> {
+        let mut out =
+            Vec::with_capacity(self.member(inner).map(|m| m.size.min(1 << 24) as usize).unwrap_or(0));
+        self.read_member_to(inner, password, &mut out)?;
+        Ok(out)
+    }
+
+    /// Up to `len` bytes of the member from `offset`. A small member is
+    /// decoded whole; a large one is unpacked once to the temporary
+    /// folder and read from there, so the viewer's windows do not decode
+    /// it from the start each time.
+    pub fn read_range(
+        &self,
+        inner: &str,
+        offset: u64,
+        len: usize,
+        password: Option<&str>,
+    ) -> VfsResult<Vec<u8>> {
+        const DECODE_WHOLE: u64 = 4 * 1024 * 1024;
+        let member = self.member(inner).ok_or_else(|| not_in_archive(inner))?;
+        if member.size > DECODE_WHOLE || (member.size == 0 && !member.is_dir) {
+            let unpacked = self.unpacked_copy(inner, password)?;
+            return crate::native::read_range(&unpacked, offset, len);
+        }
+        let all = self.read_with(inner, password)?;
         let start = (offset as usize).min(all.len());
         let end = (start + len).min(all.len());
         Ok(all[start..end].to_vec())
     }
 
-    /// Extracts the member (a file, or a folder with everything in it) to
-    /// `dest_dir`, under its own name; answers the path written.
-    pub fn extract(&self, inner: &str, dest_dir: &Path) -> VfsResult<PathBuf> {
-        let name = inner.rsplit('/').next().unwrap_or(inner);
-        let target = dest_dir.join(name);
-        if self.is_dir(inner) {
-            fs::create_dir_all(&target).at(&target)?;
-            for (member, relative) in self.files_under(inner) {
-                let out = dest_dir.join(&relative);
-                if let Some(parent) = out.parent() {
-                    fs::create_dir_all(parent).at(parent)?;
-                }
-                fs::write(&out, self.read(&member)?).at(&out)?;
-            }
-        } else {
-            fs::write(&target, self.read(inner)?).at(&target)?;
+    /// The member's size: the index's, or the unpacked copy's when the
+    /// format does not say.
+    pub fn member_size(&self, inner: &str, password: Option<&str>) -> VfsResult<u64> {
+        let member = self.member(inner).ok_or_else(|| not_in_archive(inner))?;
+        if member.size > 0 || member.is_dir {
+            return Ok(member.size);
         }
+        let unpacked = self.unpacked_copy(inner, password)?;
+        Ok(fs::metadata(&unpacked).at(&unpacked)?.len())
+    }
+
+    /// The member unpacked under the temporary folder, made once per
+    /// version of the archive.
+    fn unpacked_copy(&self, inner: &str, password: Option<&str>) -> VfsResult<PathBuf> {
+        let stamp = self.file_modified.and_then(system_time_ms).unwrap_or(0);
+        let dir = temp_dir_for(&self.archive).join(format!(".view-{stamp:x}-{:x}", self.file_len));
+        let target = dir.join(inner);
+        if target.is_file() {
+            return Ok(target);
+        }
+        if let Some(parent) = target.parent() {
+            fs::create_dir_all(parent).at(parent)?;
+        }
+        let partial = target.with_extension("partial");
+        let mut file = File::create(&partial).at(&partial)?;
+        let written = self.read_member_to(inner, password, &mut file);
+        drop(file);
+        if let Err(e) = written {
+            let _ = fs::remove_file(&partial);
+            return Err(e);
+        }
+        fs::rename(&partial, &target).at(&target)?;
         Ok(target)
     }
 
-    fn read_tar_member<R: Read>(&self, reader: R, inner: &str) -> VfsResult<Vec<u8>> {
-        let mut archive = tar::Archive::new(reader);
-        for entry in archive.entries().at(&self.archive)? {
-            let mut entry = entry.at(&self.archive)?;
-            let path = entry.path().map(|p| normalize(&p.to_string_lossy())).unwrap_or_default();
-            if path == inner {
-                let mut out = Vec::with_capacity(entry.size() as usize);
-                entry.read_to_end(&mut out).at(&self.archive)?;
-                return Ok(out);
+    /// Extracts the member (a file, or a folder with everything in it) to
+    /// `dest_dir`, under its own name; answers the path written.
+    pub fn extract(&self, inner: &str, dest_dir: &Path) -> VfsResult<PathBuf> {
+        self.extract_with(inner, dest_dir, None)
+    }
+
+    pub fn extract_with(&self, inner: &str, dest_dir: &Path, password: Option<&str>) -> VfsResult<PathBuf> {
+        let name = inner.rsplit('/').next().unwrap_or(inner);
+        let target = dest_dir.join(name);
+        if !self.is_dir(inner) {
+            let mut file = io::BufWriter::new(File::create(&target).at(&target)?);
+            self.read_member_to(inner, password, &mut file)?;
+            file.flush().at(&target)?;
+            return Ok(target);
+        }
+        fs::create_dir_all(&target).at(&target)?;
+        for folder in self.folders_under(inner) {
+            let path = dest_dir.join(folder);
+            fs::create_dir_all(&path).at(&path)?;
+        }
+        let files = self.files_under(inner);
+        let wanted: Vec<String> = files.iter().map(|(m, _)| m.clone()).collect();
+        let targets: HashMap<String, PathBuf> =
+            files.into_iter().map(|(m, relative)| (m, dest_dir.join(relative))).collect();
+        let mut sink = FileSink { targets, open: None, failure: None };
+        if let Err(ExtractError::Failed(e)) = self.extract_members(&wanted, password, &mut sink) {
+            return Err(e);
+        }
+        match sink.failure {
+            Some(e) => Err(e),
+            None => Ok(target),
+        }
+    }
+}
+
+fn not_in_archive(inner: &str) -> VfsError {
+    VfsError::new(VfsErrorKind::NotFound, None, format!("{inner} is not in the archive"))
+}
+
+/// Writes members to files at the paths given; the first failure stops.
+struct FileSink {
+    targets: HashMap<String, PathBuf>,
+    open: Option<io::BufWriter<File>>,
+    failure: Option<VfsError>,
+}
+
+impl MemberSink for FileSink {
+    fn begin(&mut self, member: &Member) -> Result<bool, Stop> {
+        let Some(target) = self.targets.get(&member.path) else { return Ok(false) };
+        if let Some(parent) = target.parent() {
+            if let Err(e) = fs::create_dir_all(parent) {
+                self.failure = Some(VfsError::io(&e, parent));
+                return Err(Stop);
             }
         }
-        Err(VfsError::new(VfsErrorKind::NotFound, None, format!("{inner} is not in the archive")))
+        match File::create(target) {
+            Ok(file) => {
+                self.open = Some(io::BufWriter::new(file));
+                Ok(true)
+            }
+            Err(e) => {
+                self.failure = Some(VfsError::io(&e, target));
+                Err(Stop)
+            }
+        }
     }
+
+    fn write(&mut self, bytes: &[u8]) -> io::Result<()> {
+        match self.open.as_mut() {
+            Some(file) => file.write_all(bytes),
+            None => Ok(()),
+        }
+    }
+
+    fn end(&mut self, _: &Member, outcome: VfsResult<u64>) -> Result<(), Stop> {
+        let flushed = self.open.take().map(|mut f| f.flush()).unwrap_or(Ok(()));
+        match (outcome, flushed) {
+            (Err(e), _) => {
+                self.failure = Some(e);
+                Err(Stop)
+            }
+            (Ok(_), Err(e)) => {
+                self.failure = Some(VfsError::new(VfsErrorKind::Io, None, e.to_string()));
+                Err(Stop)
+            }
+            (Ok(_), Ok(())) => Ok(()),
+        }
+    }
+}
+
+/// One member into a writer, for [`ArchiveIndex::read_member_to`].
+struct WriterSink<'a> {
+    out: &'a mut dyn Write,
+    outcome: Option<VfsResult<u64>>,
+}
+
+impl MemberSink for WriterSink<'_> {
+    fn begin(&mut self, _: &Member) -> Result<bool, Stop> {
+        Ok(true)
+    }
+
+    fn write(&mut self, bytes: &[u8]) -> io::Result<()> {
+        self.out.write_all(bytes)
+    }
+
+    fn end(&mut self, _: &Member, outcome: VfsResult<u64>) -> Result<(), Stop> {
+        self.outcome = Some(match outcome {
+            Err(e) if e.message.contains(PROBE_FULL) => {
+                Err(VfsError::new(VfsErrorKind::Cancelled, None, PROBE_FULL))
+            }
+            other => other,
+        });
+        Err(Stop)
+    }
+}
+
+/// A writer that takes a limited number of bytes and then fails: enough
+/// to try a password on.
+struct Probe {
+    left: usize,
+}
+
+impl Write for Probe {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        if self.left == 0 {
+            return Err(io::Error::other(PROBE_FULL));
+        }
+        let n = buf.len().min(self.left);
+        self.left -= n;
+        Ok(n)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+const PROBE_FULL: &str = "enough read";
+
+/// What a format's listing gives.
+pub(crate) struct Listed {
+    pub members: Vec<Member>,
+    pub headers_encrypted: bool,
+    pub backing: Backing,
+}
+
+impl Listed {
+    pub fn plain(members: Vec<Member>) -> Listed {
+        Listed { members, headers_encrypted: false, backing: Backing::Plain }
+    }
+}
+
+/// Sorts the members by path, adds the folders their paths imply, and
+/// finds each folder's children. A path met twice keeps the last member
+/// (a tar appended to); an explicit folder keeps its own time and mode.
+fn arrange(listed: Vec<Member>) -> (Vec<Member>, Vec<Vec<u32>>, Vec<u32>) {
+    let mut by_path: HashMap<String, usize> = HashMap::with_capacity(listed.len());
+    let mut members: Vec<Member> = Vec::with_capacity(listed.len());
+    for member in listed {
+        if member.path.is_empty() {
+            continue;
+        }
+        let mut at = 0;
+        while let Some(slash) = member.path[at..].find('/') {
+            let dir = &member.path[..at + slash];
+            if !by_path.contains_key(dir) {
+                by_path.insert(dir.to_string(), members.len());
+                members.push(Member::folder(dir.to_string()));
+            }
+            at += slash + 1;
+        }
+        match by_path.get(&member.path) {
+            Some(&existing) if members[existing].is_dir && member.is_dir => {
+                if member.modified_ms.is_some() {
+                    members[existing].modified_ms = member.modified_ms;
+                    members[existing].mode = member.mode;
+                }
+            }
+            Some(&existing) => members[existing] = member,
+            None => {
+                by_path.insert(member.path.clone(), members.len());
+                members.push(member);
+            }
+        }
+    }
+    drop(by_path);
+    members.sort_unstable_by(|a, b| a.path.cmp(&b.path));
+    let mut children = vec![Vec::new(); members.len()];
+    let mut root = Vec::new();
+    for (i, member) in members.iter().enumerate() {
+        match member.path.rfind('/') {
+            None => root.push(i as u32),
+            Some(at) => {
+                let parent = &member.path[..at];
+                if let Ok(p) = members.binary_search_by(|m| m.path.as_str().cmp(parent)) {
+                    children[p].push(i as u32);
+                }
+            }
+        }
+    }
+    (members, children, root)
 }
 
 fn entry_of(member: &Member, name: &str, hidden: bool) -> Entry {
@@ -303,94 +801,44 @@ fn entry_of(member: &Member, name: &str, hidden: bool) -> Entry {
     }
 }
 
-/// A member path as the index keys it: forward slashes, no `./`, no
-/// leading or trailing slash.
-fn normalize(raw: &str) -> String {
-    let mut s = raw.replace('\\', "/");
-    while let Some(rest) = s.strip_prefix("./") {
-        s = rest.to_string();
-    }
-    s.trim_matches('/').to_string()
+/// A member path as the index keys it: forward slashes, no `.` or `..`
+/// components (an archive cannot write outside the folder it is
+/// extracted to), no leading or trailing slash.
+pub(crate) fn normalize(raw: &str) -> String {
+    let unified = raw.replace('\\', "/");
+    let parts: Vec<&str> =
+        unified.split('/').filter(|part| !part.is_empty() && *part != "." && *part != "..").collect();
+    parts.join("/")
 }
 
-fn zip_error(archive: &Path, error: zip::result::ZipError) -> VfsError {
-    match error {
-        zip::result::ZipError::Io(io) => VfsError::io(&io, archive),
-        zip::result::ZipError::FileNotFound => {
-            VfsError::new(VfsErrorKind::NotFound, Some(archive), "member not found")
-        }
-        zip::result::ZipError::UnsupportedArchive(what) => VfsError::unsupported(what.to_string()),
-        other => VfsError::new(VfsErrorKind::Io, Some(archive), other.to_string()),
+/// The name of the one member of a compressed file: the file's name
+/// without the compression's extension.
+pub(crate) fn single_member_name(archive: &Path) -> String {
+    let name = archive.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    let (stem, _) = split_name(&name);
+    if stem.is_empty() || stem == name {
+        format!("{name}.out")
+    } else {
+        stem.to_string()
     }
 }
 
-fn read_zip(archive: &Path) -> VfsResult<Vec<Member>> {
-    let file = File::open(archive).at(archive)?;
-    let mut zip = zip::ZipArchive::new(file).map_err(|e| zip_error(archive, e))?;
-    let mut members = Vec::with_capacity(zip.len());
-    for i in 0..zip.len() {
-        let entry = match zip.by_index_raw(i) {
-            Ok(e) => e,
-            Err(_) => continue,
-        };
-        let path = normalize(entry.name());
-        if path.is_empty() {
-            continue;
+/// The archive's name without its archive extensions (`site.tar.gz` →
+/// `site`): the folder an extraction into a folder of its own makes.
+pub fn archive_stem(archive: &Path) -> String {
+    let name = archive.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    let lower = name.to_lowercase();
+    for suffix in [".tar.gz", ".tar.bz2", ".tar.xz", ".tar.zst", ".tar.zstd"] {
+        if lower.ends_with(suffix) && lower.len() > suffix.len() {
+            return name[..name.len() - suffix.len()].to_string();
         }
-        // Zip times are local time without a zone.
-        let modified_ms = entry.last_modified().and_then(|dt| {
-            use chrono::TimeZone;
-            chrono::Local
-                .with_ymd_and_hms(
-                    dt.year() as i32,
-                    dt.month() as u32,
-                    dt.day() as u32,
-                    dt.hour() as u32,
-                    dt.minute() as u32,
-                    dt.second() as u32,
-                )
-                .single()
-                .map(|t| t.timestamp_millis())
-        });
-        let mode = entry.unix_mode().unwrap_or(if entry.is_dir() { 0o40755 } else { 0o100644 });
-        members.push(Member {
-            is_dir: entry.is_dir(),
-            is_symlink: entry.is_symlink(),
-            size: entry.size(),
-            modified_ms,
-            mode,
-            encrypted: entry.encrypted(),
-            path,
-        });
     }
-    Ok(members)
-}
-
-fn read_tar<R: Read>(reader: R, archive: &Path) -> VfsResult<Vec<Member>> {
-    let mut tar = tar::Archive::new(reader);
-    let mut members = Vec::new();
-    for entry in tar.entries().at(archive)? {
-        let entry = match entry {
-            Ok(e) => e,
-            Err(_) => continue,
-        };
-        let path = entry.path().map(|p| normalize(&p.to_string_lossy())).unwrap_or_default();
-        if path.is_empty() {
-            continue;
-        }
-        let header = entry.header();
-        let kind = header.entry_type();
-        members.push(Member {
-            path,
-            is_dir: kind.is_dir(),
-            is_symlink: kind.is_symlink(),
-            size: entry.size(),
-            modified_ms: header.mtime().ok().map(|s| s as i64 * 1000),
-            mode: header.mode().unwrap_or(0o644),
-            encrypted: false,
-        });
+    let (stem, _) = split_name(&name);
+    if stem.is_empty() {
+        name
+    } else {
+        stem.to_string()
     }
-    Ok(members)
 }
 
 /// Where extracted members go for viewing and opening: a folder per
@@ -407,95 +855,21 @@ pub fn temp_dir_for(archive: &Path) -> PathBuf {
     std::env::temp_dir().join("Ferryx").join(format!("{stem}-{hash:x}"))
 }
 
-/// Unused helper kept for symmetry with the native layer.
-pub fn modified_ms_of(meta: &fs::Metadata) -> Option<i64> {
-    meta.modified().ok().and_then(system_time_ms)
+/// Copies `reader` into `writer` in large steps; answers the bytes.
+pub(crate) fn pump(reader: &mut dyn Read, writer: &mut dyn Write) -> io::Result<u64> {
+    let mut buffer = vec![0u8; 256 * 1024];
+    let mut total = 0u64;
+    loop {
+        let n = match reader.read(&mut buffer) {
+            Ok(0) => return Ok(total),
+            Ok(n) => n,
+            Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
+            Err(e) => return Err(e),
+        };
+        writer.write_all(&buffer[..n])?;
+        total += n as u64;
+    }
 }
-
-#[allow(dead_code)]
-fn _io_marker(_: io::Error) {}
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use std::io::Write;
-
-    fn make_zip(dir: &Path) -> PathBuf {
-        let path = dir.join("a.zip");
-        let file = File::create(&path).unwrap();
-        let mut zip = zip::ZipWriter::new(file);
-        let opts = zip::write::SimpleFileOptions::default();
-        zip.start_file("top.txt", opts).unwrap();
-        zip.write_all(b"top").unwrap();
-        zip.start_file("dir/inner.txt", opts).unwrap();
-        zip.write_all(b"inner text").unwrap();
-        zip.start_file("dir/.secret", opts).unwrap();
-        zip.write_all(b"s").unwrap();
-        zip.finish().unwrap();
-        path
-    }
-
-    #[test]
-    fn zip_lists_and_reads() {
-        let dir = tempfile::tempdir().unwrap();
-        let path = make_zip(dir.path());
-        let index = ArchiveIndex::open(&path).unwrap();
-        let root = index.list("", true, false).unwrap();
-        let names: Vec<&str> = root.iter().map(|e| e.name.as_str()).collect();
-        assert_eq!(names, ["..", "dir", "top.txt"]);
-        assert!(root[1].is_dir);
-        let inside = index.list("dir", true, false).unwrap();
-        assert_eq!(inside.iter().map(|e| e.name.as_str()).collect::<Vec<_>>(), ["..", "inner.txt"]);
-        assert_eq!(inside[0].path, PathBuf::from(""));
-        let all = index.list("dir", false, true).unwrap();
-        assert_eq!(all.len(), 2);
-        assert_eq!(index.read("dir/inner.txt").unwrap(), b"inner text");
-        assert_eq!(index.read_range("dir/inner.txt", 6, 100).unwrap(), b"text");
-        assert!(index.read("dir").is_err());
-        assert!(index.list("top.txt", true, false).is_err());
-        let out = tempfile::tempdir().unwrap();
-        let extracted = index.extract("dir", out.path()).unwrap();
-        assert!(extracted.join("inner.txt").exists());
-        assert!(extracted.join(".secret").exists());
-        let one = index.extract("top.txt", out.path()).unwrap();
-        assert_eq!(fs::read(one).unwrap(), b"top");
-        assert!(!index.is_stale());
-    }
-
-    #[test]
-    fn tar_gz_lists() {
-        let dir = tempfile::tempdir().unwrap();
-        let path = dir.join_tgz();
-        let index = ArchiveIndex::open(&path).unwrap();
-        let root = index.list("", false, false).unwrap();
-        assert_eq!(root.iter().map(|e| e.name.as_str()).collect::<Vec<_>>(), ["d", "x.txt"]);
-        assert_eq!(index.read("d/y.txt").unwrap(), b"yy");
-        assert_eq!(format_of(Path::new("a.TGZ")), Some(ArchiveFormat::TarGz));
-        assert_eq!(format_of(Path::new("a.txt")), None);
-    }
-
-    trait Tgz {
-        fn join_tgz(&self) -> PathBuf;
-    }
-
-    impl Tgz for tempfile::TempDir {
-        fn join_tgz(&self) -> PathBuf {
-            let path = self.path().join("t.tar.gz");
-            let file = File::create(&path).unwrap();
-            let gz = flate2::write::GzEncoder::new(file, flate2::Compression::fast());
-            let mut tar = tar::Builder::new(gz);
-            let mut header = tar::Header::new_gnu();
-            header.set_size(2);
-            header.set_mode(0o644);
-            header.set_cksum();
-            tar.append_data(&mut header, "./x.txt", &b"xx"[..]).unwrap();
-            let mut header = tar::Header::new_gnu();
-            header.set_size(2);
-            header.set_mode(0o644);
-            header.set_cksum();
-            tar.append_data(&mut header, "d/y.txt", &b"yy"[..]).unwrap();
-            tar.into_inner().unwrap().finish().unwrap();
-            path
-        }
-    }
-}
+mod tests;

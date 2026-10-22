@@ -1,8 +1,8 @@
 //! Process-wide state: the event sink, open listings, the operations
-//! runner and the searches under way.
+//! runner and the searches under way. Archive indexes and passwords are
+//! kept by `ferryx_vfs::archive::shared`, which the operations use too.
 
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::sync::{Arc, LazyLock};
 
@@ -27,7 +27,6 @@ pub struct OpenListing {
 #[derive(Default)]
 pub struct AppState {
     pub listings: HashMap<String, OpenListing>,
-    pub archives: HashMap<PathBuf, Arc<ArchiveIndex>>,
     pub finds: HashMap<i64, Arc<AtomicBool>>,
 }
 
@@ -78,17 +77,16 @@ pub fn emit_directory_changed(listing_id: &str) {
     emit(AppEvent::of(AppEventKind::DirectoryChanged, Some(listing_id.to_string())));
 }
 
-/// The index of `archive`, read once and again when the file changed.
+/// The index of `archive`, read once and again when the file changed;
+/// shared with the operations (see `ferryx_vfs::archive::shared`), read
+/// without holding the state's lock.
 pub fn archive_index(archive: &std::path::Path) -> Result<Arc<ArchiveIndex>, ferryx_vfs::VfsError> {
-    let mut guard = state().lock();
-    if let Some(index) = guard.archives.get(archive) {
-        if !index.is_stale() {
-            return Ok(index.clone());
-        }
-    }
-    let index = Arc::new(ArchiveIndex::open(archive)?);
-    guard.archives.insert(archive.to_path_buf(), index.clone());
-    Ok(index)
+    ferryx_vfs::archive::shared::index(archive)
+}
+
+/// The password given for `archive`, if any.
+pub fn archive_password(archive: &std::path::Path) -> Option<String> {
+    ferryx_vfs::archive::shared::password(archive)
 }
 
 /// Keeps every event from now on for [`take_events`].
@@ -104,7 +102,7 @@ pub fn take_events() -> Vec<AppEvent> {
 pub fn reset_for_tests() {
     let mut guard = state().lock();
     guard.listings.clear();
-    guard.archives.clear();
+    ferryx_vfs::archive::shared::clear();
     guard.finds.clear();
     *EVENTS.lock() = None;
     *RECORDED.lock() = None;

@@ -214,6 +214,8 @@ class ShortcutMap {
     add(AppCommand.refresh, key(LogicalKeyboardKey.keyR, shift: true));
     add(AppCommand.openItem, seq(g, LogicalKeyboardKey.keyX));
     add(AppCommand.cheatSheet, key(LogicalKeyboardKey.slash, shift: true));
+    // ─── Files core ───
+    add(AppCommand.toggleFlatView, seq(z, LogicalKeyboardKey.keyF));
     return map;
   }
 
@@ -504,6 +506,15 @@ const _defaults = <AppCommand, List<Chord>>{
     Chord(LogicalKeyboardKey.contextMenu),
   ],
 
+  // ─── Files core ───
+  AppCommand.extractTo: [Chord(LogicalKeyboardKey.f9, alt: true)],
+  AppCommand.toggleFlatView: [
+    Chord(LogicalKeyboardKey.keyB, primary: true, alt: true),
+  ],
+  AppCommand.editTags: [
+    Chord(LogicalKeyboardKey.keyT, primary: true, control: true),
+  ],
+
   // File panel keys
   AppCommand.moveUp: [Chord(LogicalKeyboardKey.arrowUp)],
   AppCommand.moveDown: [Chord(LogicalKeyboardKey.arrowDown)],
@@ -637,4 +648,9 @@ const _otherDesktops = <AppCommand, List<Chord>>{
   AppCommand.panelsMoveRight: [
     Chord(LogicalKeyboardKey.arrowRight, control: true, shift: true),
   ],
+
+  // ─── Files core ───
+  // Finder tags are macOS's alone; there Ctrl with the primary key would
+  // be Ctrl+T, New Tab.
+  AppCommand.editTags: [],
 };

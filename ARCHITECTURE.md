@@ -98,7 +98,7 @@ buttons'. The window is shown only after the preferences are read
 | Crate | Responsibility |
 |-------|----------------|
 | `ferryx_core` | Pure logic: the `Entry` of a panel row, natural / case-insensitive / case-sensitive collation (`collation`), sorting by field with folders first and extensionless folders (`sorting`), file masks and regular expressions (`mask`), quick-search matching with the ranges to underline (`quick_search`), and the batch-rename language (`batch_rename`: placeholders, substrings, dates, counters, case commands, then search and replace and a case change). No I/O. |
-| `ferryx_vfs` | The file system: a folder's rows with their metadata (size, times, the macOS added time through `getattrlist`, mode, owner and group names, BSD flags, hidden), one entry, byte ranges of a file (`native`); archives as read-only folders (`archive`: zip, jar, tar, tar.gz; an index per archive read once and again when the file changed, members extracted to a temporary folder for opening); a folder watched for changes reported once per burst (`watch`, `notify`); the volumes (`volumes`, `sysinfo`) and the free space; the standard folders, opening with the desktop or an application, revealing in the file manager, the trash, ejecting (`system`); permissions, flags, owners and times read and written (`attrs`); symbolic and hard links (`links`). Every error is a `VfsError` with a kind the interface words. |
+| `ferryx_vfs` | The file system: a folder's rows with their metadata (size, times, the macOS added time through `getattrlist`, mode, owner and group names, BSD flags, hidden), one entry, byte ranges of a file (`native`); archives as read-only folders (`archive`: zip, tar with any compression, 7z, rar, iso, single compressed files; see Archives below); a folder watched for changes reported once per burst (`watch`, `notify`); the volumes (`volumes`, `sysinfo`) and the free space; the standard folders, opening with the desktop or an application, revealing in the file manager, the trash, ejecting (`system`); permissions, flags, owners and times read and written (`attrs`); symbolic and hard links (`links`). Every error is a `VfsError` with a kind the interface words. |
 | `ferryx_ops` | Operations on threads with progress, pause, cancellation and questions: copy and move (a rename on the same volume, else a copy and a delete; folders merge; conflicts ask or follow the policy; attributes preserved; optional verification), duplicate (`name copy.ext`), extract out of an archive, delete and trash, compress to zip (deflate, optional AES-256), folder sizes, plus Find Files (`find`: name, contents in overlapping windows, size, streamed hits) and the application of a batch rename (`rename`: staged through temporary names when names swap). `Runner` holds every operation; `OpContext` is what an operation checks, reports and asks through. |
 | `ferryx_api` | `flutter_rust_bridge` surface. Holds the open listings (`app.rs`: one per panel tab, with its raw rows for resorting and its watcher), the archive indexes, the operations runner (whose listener forwards progress as events) and the searches; converts to plain DTOs (`api/types.rs`, `…View` types, enums without payloads so Dart sees enums, `i64` counts so Dart sees `int`). Its `Cargo.toml` uses literal fields because cargokit parses it without workspace inheritance. |
 
@@ -128,6 +128,73 @@ Tests: `cargo test --workspace`. `ferryx_api/tests/api_flow.rs` runs the
 bridge end to end (listings, resorting, the watcher's event, archives,
 operations with a question answered, folder sizes, batch rename, find);
 the tests take turns on the process-wide state.
+
+### Archives
+
+`ferryx_vfs::archive` reads zip (jar, apk, ipa, whl), tar alone or with
+gzip, bzip2, xz or zstd, 7z, rar, ISO 9660 images and a single file
+compressed with gzip, bzip2, xz or zstd (an archive of one member named
+without the compression's extension). `detect` reads a file's first bytes
+before its name: a `.zip` that is a 7z opens as one, a `.gz` that holds a
+tar is a tar, and ⌘↓ (`detect_archive`) opens an archive of any name;
+`is_archive` (Return) asks the name only, so it costs no I/O per row.
+
+- **One index per archive.** `ArchiveIndex` keeps the members sorted by
+  path with each folder's children (a folder lists in the time its own
+  rows take; a subtree, for a flat view or an extraction, is one
+  contiguous run). It is read from the archive's directory where the
+  format has one (zip central directory, 7z headers, rar headers, iso
+  directory records) and in one pass over the stream otherwise (tar, a
+  plain tar seeking past each member's data). `archive::shared` keeps the
+  last eight indexes for the whole process, keyed by path and checked
+  against the file's modification time and length, and reads a new one
+  outside its lock so a large archive never holds up another listing.
+  Measured (release, M-series Mac): a 50 000-member zip opens in 0.2 s, a
+  50 000-member tar.gz in 0.07 s; a folder of a thousand members lists in
+  0.06 ms, the whole tree flat in 7 ms.
+- **Streaming reads.** `extract_members` hands members to a `MemberSink`
+  (begin, write, end) in the archive's own order: a tar stream once
+  whatever the number of members, a 7z block decoded once for all the
+  members it holds (members of a solid block passed by are drained, never
+  kept), rar in member order, iso extents read straight from the image. No
+  member is held whole in memory; the viewer's ranges of a member over
+  4 MiB come from a copy unpacked once to the temporary folder.
+- **Passwords.** An encrypted member list (7z `-mhe`, rar `-hp`) answers
+  `PasswordRequired` until `set_archive_password` gives one that opens it;
+  encrypted members (zip AES and ZipCrypto, 7z AES, rar) are read with the
+  password kept for the archive. A password is tried before it is kept
+  (the member list, or the first 64 KiB of the smallest encrypted member),
+  so a wrong one is the typed `WrongPassword`, never a crash or garbage.
+  The interface asks in a dialog that stays until a password opens the
+  archive (`showArchivePasswordDialog`): when a panel enters an archive
+  whose list is encrypted (`PanelTabState.passwordLocation`, the panel's
+  `onArchivePassword` hook), before a member is opened, viewed or copied
+  out, and in Extract To's own password field.
+- **Extract** (`ferryx_ops::extract`, `OpKind::Extract`): members out of
+  an archive (F5 inside one, ⌥F9 there with a dialog), or whole archives
+  on disk (Extract To, ⌥F9, `:extract [dir]`) each into the destination or
+  into a folder named after it (`into_folders`, `archive_stem`: `site.tar.gz`
+  → `site`). The dialog turns that option on when an archive holds more
+  than one item at its root, as Archive Utility does, and the user can
+  turn it either way. Conflicts follow the policy or ask, a member that
+  fails asks to skip or stop (a stream cannot retry), a missing or wrong
+  password passes that archive by with an error, folders are made even
+  when empty, modes and times are kept, symbolic links are made as links,
+  and member paths never climb out of the destination (`..` is dropped).
+- **Crates.** All pure Rust except zstd and the zip crate's bzip2, which
+  were in already: `sevenz-rust2` 0.20 (the last release for Rust 1.85;
+  AES, LZMA/LZMA2, BZip2, Deflate, PPMd, Zstd), `unrar-rs` (a Rust port of
+  RARLAB's UnRAR, RAR 1.5–5, solid and encrypted archives; built with
+  `crypto-rust` so no C toolchain is needed — the default AWS-LC backend
+  wants CMake), `lzma-rust2` (xz, the one `sevenz-rust2` uses), `bzip2` 0.6
+  (its default backend is the pure-Rust `libbz2-rs-sys`). The official
+  `unrar` crate compiles RARLAB's C++ sources: mature, but a C++ build
+  through cargokit for every target; `unrar-rs` reads the same formats
+  with none. Both carry the UnRAR licence: free to use for extraction,
+  never to make a RAR compressor — Ferryx only extracts, and the licence
+  text ships with the crate. ISO 9660 is read by Ferryx's own small
+  reader (`archive/iso.rs`): primary and Joliet descriptors, Rock Ridge
+  `NM`/`PX`/`SL`, files of several extents.
 
 ## Bridge (`packages/ferryx_backend`)
 
@@ -331,8 +398,9 @@ partially created resources.
 ## Known gaps
 
 - No integrated terminal yet, no SFTP/FTP/WebDAV, no extended-attributes
-  or process-list virtual file systems; archives are read-only (zip, jar,
-  tar, tar.gz); no Quick Look (the viewer's preview shows images).
+  or process-list virtual file systems; archives are read-only, and a rar
+  set of several volumes lists its first volume's members only; no Quick
+  Look (the viewer's preview shows images).
 - Finder tags are not read; the tag palette is in place for them.
 - Scroll-only keys (⌥Home, ⌥End, ⌥PgUp, ⌥PgDn) move the cursor as the plain
   keys do.

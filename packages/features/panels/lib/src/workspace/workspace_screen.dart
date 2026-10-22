@@ -12,9 +12,11 @@ import 'package:operations_service/operations_service.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 
+import '../dialogs/archive_password_dialog.dart';
 import '../dialogs/attributes_dialog.dart';
 import '../dialogs/batch_rename_dialog.dart';
 import '../dialogs/copy_move_dialog.dart';
+import '../dialogs/extract_dialog.dart';
 import '../dialogs/favorites_dialog.dart';
 import '../dialogs/go_to_menus.dart';
 import '../dialogs/question_dialog.dart';
@@ -35,6 +37,7 @@ import 'workspace_state.dart';
 
 part 'vim_actions.dart';
 part 'workspace_actions.dart';
+part 'archive_actions.dart';
 
 /// Where the window sends what it does not do itself.
 class WorkspaceNavigation {
@@ -425,6 +428,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     onVimGoMark: (letter) => unawaited(_vimGoMark(letter)),
     onVimCommand: (line) => unawaited(_runVimCommand(line)),
     onVimComplete: _vimComplete,
+    onArchivePassword: (location) =>
+        unawaited(_passwordForPanel(side, location)),
   );
 
   List<AppKeyHint> _splitterHints(BuildContext context) {

@@ -190,6 +190,27 @@ class FileRepository {
   Future<List<String>> applicationsFor(String path) =>
       rust.FerryxBackend.guard(() => rust.applicationsFor(path: path));
 
+  // ─── Archives ───
+
+  /// What the archive at [path] holds; an encrypted member list says
+  /// [ArchiveInfo.needsPassword] rather than failing.
+  Future<ArchiveInfo> archiveInfo(String path) => rust.FerryxBackend.guard(
+    () async => rust.archiveInfoFromView(await rust.archiveInfo(path: path)),
+  );
+
+  /// Tries [password] on [archive] and keeps it for the archive's
+  /// listings, viewer and extractions; a wrong one throws
+  /// [FerryxErrorKind.wrongPassword].
+  Future<void> setArchivePassword(String archive, String password) =>
+      rust.FerryxBackend.guard(
+        () => rust.setArchivePassword(archive: archive, password: password),
+      );
+
+  /// Whether the file at [path] is an archive by its first bytes or its
+  /// name; [isArchive] asks the name alone.
+  Future<bool> detectArchive(String path) =>
+      rust.FerryxBackend.guard(() => rust.detectArchive(path: path));
+
   // ─── Attributes ───
 
   Future<FileAttributes> readAttributes(String path) =>

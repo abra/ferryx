@@ -1,5 +1,6 @@
 //! Everything Flutter can call. Each module maps to one Dart file.
 
+pub mod archives;
 pub mod attrs;
 pub mod events;
 pub mod files;

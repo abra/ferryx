@@ -24,11 +24,15 @@ Future<Uint8List> readFileRange({
   len: len,
 );
 
+/// The file's size; an archive member's as its archive keeps it, or as
+/// unpacked when the format does not say (a bzip2 stream).
 Future<PlatformInt64> fileSize({required LocationView location}) =>
     FerryxRustLib.instance.api.crateApiFilesFileSize(location: location);
 
 /// Extracts an archive member (a file or a folder) to a temporary folder
-/// for opening or viewing; answers the path written.
+/// for opening or viewing; answers the path written. A member of a solid
+/// archive decodes its block up to it: this runs on a worker of the
+/// bridge, never on the interface's thread.
 Future<String> extractToTemp({
   required String archivePath,
   required String inner,

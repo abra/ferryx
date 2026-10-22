@@ -654,5 +654,25 @@
   "cmdVimReselect": "Выделить прошлое выделение снова",
   "cmdMoveItemDown": "Ниже",
   "cmdConfirm": "Подтвердить",
-  "cmdDismiss": "Закрыть"
+  "cmdDismiss": "Закрыть",
+
+"cmdExtractTo": "Распаковать в…",
+  "cmdToggleFlatView": "Плоский список",
+  "cmdEditTags": "Теги…",
+  "archivePasswordRequired": "Нужен пароль",
+  "archiveWrongPassword": "Неверный пароль",
+  "archiveExtractOneTitle": "Распаковать «{name}» в",
+  "archiveExtractManyTitle": "{count, plural, one{Распаковать {count} архив в} few{Распаковать {count} архива в} many{Распаковать {count} архивов в} other{Распаковать {count} архива в}}",
+  "archiveExtractMembersTitle": "{count, plural, one{Распаковать {count} объект в} few{Распаковать {count} объекта в} many{Распаковать {count} объектов в} other{Распаковать {count} объекта в}}",
+  "archiveIntoFolders": "Каждый архив — в папку с его именем",
+  "archiveIntoFolder": "В папку «{name}»",
+  "archivePasswordLabel": "Пароль",
+  "archiveWrongPasswordFor": "Этот пароль не открывает «{name}»",
+  "archiveExtractAction": "Распаковать",
+  "archiveNoArchives": "Среди объектов нет архивов",
+  "archivePasswordTitle": "«{name}» зашифрован",
+  "archivePasswordMessage": "Введите пароль, чтобы открыть архив.",
+  "archivePasswordOpen": "Открыть",
+  "archiveEnterPassword": "Ввести пароль…",
+  "archiveDestinationHint": "{key} дополняет имя папки"
 }

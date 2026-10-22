@@ -32,6 +32,11 @@ thiserror = "2"
 trash = "5"
 walkdir = "2"
 zip = { version = "2", default-features = false, features = ["deflate", "aes-crypto", "time", "bzip2", "zstd"] }
+bzip2 = "0.6"
+lzma-rust2 = { version = "0.16", default-features = false, features = ["std", "xz", "optimization"] }
+sevenz-rust2 = { version = "0.20", default-features = false, features = ["aes256", "bzip2", "deflate", "ppmd", "zstd"] }
+unrar-rs = { version = "0.14", default-features = false, features = ["crypto-rust"] }
+zstd = "0.13"
 filetime = "0.2"
 nix = { version = "0.29", features = ["fs", "user"] }
 

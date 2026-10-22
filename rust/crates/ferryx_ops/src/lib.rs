@@ -9,6 +9,7 @@
 pub mod compress;
 pub mod copy;
 pub mod delete;
+pub mod extract;
 pub mod find;
 pub mod rename;
 pub mod runner;

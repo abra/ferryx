@@ -74,6 +74,8 @@ extension FerryxFormatting on FerryxLocalizations {
     FerryxErrorKind.invalidName => errorInvalidName,
     FerryxErrorKind.invalidPattern => errorInvalidPattern,
     FerryxErrorKind.io => errorIo,
+    FerryxErrorKind.passwordRequired => archivePasswordRequired,
+    FerryxErrorKind.wrongPassword => archiveWrongPassword,
   };
 
   /// The error's title with the core's own words after it.

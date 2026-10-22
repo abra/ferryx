@@ -34,6 +34,7 @@ class PanelTabState extends Equatable {
     this.searching = false,
     this.lastSelection = const {},
     this.renameCaret = RenameCaret.stem,
+    this.passwordLocation,
   });
 
   /// The listing id in the core, unique across both panels.
@@ -101,6 +102,10 @@ class PanelTabState extends Equatable {
   /// Where the caret goes in the rename field.
   final RenameCaret renameCaret;
 
+  /// An archive's folder that could not open without its password: the
+  /// window asks for it and opens the folder again.
+  final Location? passwordLocation;
+
   FileEntry? get focused =>
       cursor >= 0 && cursor < rows.length ? rows[cursor] : null;
 
@@ -161,6 +166,8 @@ class PanelTabState extends Equatable {
     bool? searching,
     Set<String>? lastSelection,
     RenameCaret? renameCaret,
+    Location? passwordLocation,
+    bool clearPasswordLocation = false,
   }) => PanelTabState(
     id: id,
     location: location ?? this.location,
@@ -189,6 +196,9 @@ class PanelTabState extends Equatable {
     searching: searching ?? this.searching,
     lastSelection: lastSelection ?? this.lastSelection,
     renameCaret: renameCaret ?? this.renameCaret,
+    passwordLocation: clearPasswordLocation
+        ? null
+        : (passwordLocation ?? this.passwordLocation),
   );
 
   @override
@@ -218,6 +228,7 @@ class PanelTabState extends Equatable {
     searching,
     lastSelection,
     renameCaret,
+    passwordLocation,
   ];
 }
 

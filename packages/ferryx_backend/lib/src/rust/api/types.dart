@@ -390,6 +390,12 @@ enum FerryxErrorKind {
   invalidName,
   invalidPattern,
   io,
+
+  /// An encrypted archive needs a password.
+  passwordRequired,
+
+  /// The password given does not open the archive.
+  wrongPassword,
 }
 
 class FindHitView {
@@ -646,6 +652,9 @@ class OpRequestView {
   final bool verify;
   final String? password;
 
+  /// Extract whole archives: each into a folder named after it.
+  final bool intoFolders;
+
   const OpRequestView({
     required this.kind,
     required this.sources,
@@ -656,6 +665,7 @@ class OpRequestView {
     required this.preserveAttributes,
     required this.verify,
     this.password,
+    required this.intoFolders,
   });
 
   @override
@@ -668,7 +678,8 @@ class OpRequestView {
       conflicts.hashCode ^
       preserveAttributes.hashCode ^
       verify.hashCode ^
-      password.hashCode;
+      password.hashCode ^
+      intoFolders.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -683,7 +694,8 @@ class OpRequestView {
           conflicts == other.conflicts &&
           preserveAttributes == other.preserveAttributes &&
           verify == other.verify &&
-          password == other.password;
+          password == other.password &&
+          intoFolders == other.intoFolders;
 }
 
 enum OpStateView {

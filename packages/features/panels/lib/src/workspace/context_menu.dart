@@ -13,6 +13,7 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
   required Location location,
   required bool severalSelected,
   required ShortcutMap map,
+  bool archive = false,
 }) {
   final l10n = context.l10n;
   final platform = Theme.of(context).platform;
@@ -67,6 +68,12 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
           icon: AppIcons.numberedList,
         ),
       action(AppCommand.compress, l10n.cmdCompress, icon: AppIcons.fileArchive),
+      if (archive && !entry.isDir)
+        action(
+          AppCommand.extractTo,
+          l10n.cmdExtractTo,
+          icon: AppIcons.fileArchive,
+        ),
     ] else ...[
       action(
         AppCommand.copyTo,

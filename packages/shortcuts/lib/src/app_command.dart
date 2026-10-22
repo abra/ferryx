@@ -137,6 +137,11 @@ enum AppCommand {
   cheatSheet(CommandScope.global),
   contextMenu(CommandScope.global),
 
+  // ─── Files core ───
+  extractTo(CommandScope.global),
+  toggleFlatView(CommandScope.global),
+  editTags(CommandScope.global),
+
   // ─── File panel keys ───
   moveUp(CommandScope.panel),
   moveDown(CommandScope.panel),

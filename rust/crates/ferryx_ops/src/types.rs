@@ -37,15 +37,18 @@ pub struct OpOptions {
     pub preserve_attributes: bool,
     /// Read the copy back and compare it.
     pub verify: bool,
-    /// Compress: AES-256 password.
+    /// Compress: AES-256 password. Extract: the archives' password.
     pub password: Option<String>,
+    /// Extract whole archives: each into a folder named after it.
+    pub into_folders: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OpRequest {
     pub kind: OpKind,
     /// Paths on disk; for [`OpKind::Extract`], member paths inside
-    /// [`OpRequest::archive`].
+    /// [`OpRequest::archive`], or archives on disk to extract whole when
+    /// there is none.
     pub sources: Vec<PathBuf>,
     pub archive: Option<PathBuf>,
     /// The folder written into (copy, move, extract, compress). Delete,

@@ -206,6 +206,8 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     AppCommand.cheatSheet: () =>
         unawaited(widget.navigation.openCheatSheet(context)),
     AppCommand.contextMenu: () => unawaited(_rowMenu(_rowAnchor())),
+    // ─── Files core ───
+    AppCommand.extractTo: () => unawaited(_extractTo()),
   };
 
   // ─── Opening ───
@@ -215,6 +217,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     if (location.isNative) {
       await widget.files.openDefault(request.entry.path);
     } else {
+      if (!await _ensureArchivePassword(location.archive!)) return;
       final path = await widget.files.extractToTemp(
         location.archive!,
         location.path,
@@ -313,6 +316,9 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     if (tab == null || focused == null || focused.isParent || focused.isDir) {
       return;
     }
+    final archive = tab.location.archive;
+    if (archive != null && !await _ensureArchivePassword(archive)) return;
+    if (!mounted) return;
     await widget.navigation.openViewer(
       context,
       tab.location.join(focused.name),
@@ -628,6 +634,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         location: tab.location,
         severalSelected: tab.selected.length > 1,
         map: widget.shortcutMap,
+        archive: tab.location.isNative && widget.files.isArchive(focused.path),
       ),
     );
     if (picked == null || !mounted) return;
@@ -801,6 +808,8 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         showAppNotice(context, _l10n.noticeNotInArchive);
         return;
       }
+      final archive = tab.location.archive;
+      if (archive != null && !await _ensureArchivePassword(archive)) return;
       await _guarded(() async {
         await widget.operations.start(
           OperationRequest(

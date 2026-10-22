@@ -114,6 +114,10 @@ extension CommandLabels on FerryxLocalizations {
     AppCommand.hintMode => cmdHintMode,
     AppCommand.cheatSheet => cmdCheatSheet,
     AppCommand.contextMenu => cmdContextMenu,
+    // ─── Files core ───
+    AppCommand.extractTo => cmdExtractTo,
+    AppCommand.toggleFlatView => cmdToggleFlatView,
+    AppCommand.editTags => cmdEditTags,
     AppCommand.moveUp => cmdMoveUp,
     AppCommand.moveDown => cmdMoveDown,
     AppCommand.moveLeft => cmdMoveLeft,

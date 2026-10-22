@@ -3871,6 +3871,120 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Dismiss'**
   String get cmdDismiss;
+
+  /// No description provided for @cmdExtractTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract To…'**
+  String get cmdExtractTo;
+
+  /// No description provided for @cmdToggleFlatView.
+  ///
+  /// In en, this message translates to:
+  /// **'Flat View'**
+  String get cmdToggleFlatView;
+
+  /// No description provided for @cmdEditTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags…'**
+  String get cmdEditTags;
+
+  /// No description provided for @archivePasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'A password is needed'**
+  String get archivePasswordRequired;
+
+  /// No description provided for @archiveWrongPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong password'**
+  String get archiveWrongPassword;
+
+  /// No description provided for @archiveExtractOneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract “{name}” to'**
+  String archiveExtractOneTitle(String name);
+
+  /// No description provided for @archiveExtractManyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Extract {count} archive to} other{Extract {count} archives to}}'**
+  String archiveExtractManyTitle(int count);
+
+  /// No description provided for @archiveExtractMembersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Extract {count} item to} other{Extract {count} items to}}'**
+  String archiveExtractMembersTitle(int count);
+
+  /// No description provided for @archiveIntoFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Into a folder named after each archive'**
+  String get archiveIntoFolders;
+
+  /// No description provided for @archiveIntoFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Into a folder named “{name}”'**
+  String archiveIntoFolder(String name);
+
+  /// No description provided for @archivePasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get archivePasswordLabel;
+
+  /// No description provided for @archiveWrongPasswordFor.
+  ///
+  /// In en, this message translates to:
+  /// **'This password does not open “{name}”'**
+  String archiveWrongPasswordFor(String name);
+
+  /// No description provided for @archiveExtractAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract'**
+  String get archiveExtractAction;
+
+  /// No description provided for @archiveNoArchives.
+  ///
+  /// In en, this message translates to:
+  /// **'None of the items is an archive'**
+  String get archiveNoArchives;
+
+  /// No description provided for @archivePasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'“{name}” is encrypted'**
+  String archivePasswordTitle(String name);
+
+  /// No description provided for @archivePasswordMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the password to open the archive.'**
+  String get archivePasswordMessage;
+
+  /// No description provided for @archivePasswordOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get archivePasswordOpen;
+
+  /// No description provided for @archiveEnterPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Password…'**
+  String get archiveEnterPassword;
+
+  /// No description provided for @archiveDestinationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{key} completes a folder’s name'**
+  String archiveDestinationHint(String key);
 }
 
 class _FerryxLocalizationsDelegate

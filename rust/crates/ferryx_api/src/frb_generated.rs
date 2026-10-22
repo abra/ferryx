@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -596323344;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 392826019;
 
 // Section: executor
 
@@ -147,6 +147,38 @@ fn wire__crate__api__attrs__apply_attributes_impl(
                         api_changes,
                         api_recursive,
                     ))?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__archives__archive_info_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "archive_info",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_path = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::types::FerryxError>((move || {
+                    let output_ok = crate::api::archives::archive_info(api_path)?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -444,6 +476,38 @@ fn wire__crate__api__files__create_symlink_impl(
             move |context| {
                 transform_result_sse::<_, crate::api::types::FerryxError>((move || {
                     let output_ok = crate::api::files::create_symlink(api_target, api_link)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__archives__detect_archive_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "detect_archive",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_path = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::archives::detect_archive(api_path))?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -1386,6 +1450,39 @@ fn wire__crate__api__system__reveal_in_file_manager_impl(
         },
     )
 }
+fn wire__crate__api__archives__set_archive_password_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "set_archive_password",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_archive = <String>::sse_decode(&mut deserializer);
+            let api_password = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::types::FerryxError>((move || {
+                    let output_ok = crate::api::archives::set_archive_password(api_archive, api_password)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__system__standard_folders_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1633,6 +1730,30 @@ impl SseDecode for crate::api::types::AppEventKind {
     }
 }
 
+impl SseDecode for crate::api::archives::ArchiveInfoView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_format = <String>::sse_decode(deserializer);
+        let mut var_topLevelCount = <i64>::sse_decode(deserializer);
+        let mut var_singleTopLevel = <Option<String>>::sse_decode(deserializer);
+        let mut var_fileCount = <i64>::sse_decode(deserializer);
+        let mut var_unpackedBytes = <i64>::sse_decode(deserializer);
+        let mut var_encrypted = <bool>::sse_decode(deserializer);
+        let mut var_needsPassword = <bool>::sse_decode(deserializer);
+        let mut var_hasPassword = <bool>::sse_decode(deserializer);
+        return crate::api::archives::ArchiveInfoView {
+            format: var_format,
+            top_level_count: var_topLevelCount,
+            single_top_level: var_singleTopLevel,
+            file_count: var_fileCount,
+            unpacked_bytes: var_unpackedBytes,
+            encrypted: var_encrypted,
+            needs_password: var_needsPassword,
+            has_password: var_hasPassword,
+        };
+    }
+}
+
 impl SseDecode for crate::api::types::AttributeChangesView {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1842,6 +1963,8 @@ impl SseDecode for crate::api::types::FerryxErrorKind {
             8 => crate::api::types::FerryxErrorKind::InvalidName,
             9 => crate::api::types::FerryxErrorKind::InvalidPattern,
             10 => crate::api::types::FerryxErrorKind::Io,
+            11 => crate::api::types::FerryxErrorKind::PasswordRequired,
+            12 => crate::api::types::FerryxErrorKind::WrongPassword,
             _ => unreachable!("Invalid variant for FerryxErrorKind: {}", inner),
         };
     }
@@ -2192,6 +2315,7 @@ impl SseDecode for crate::api::types::OpRequestView {
         let mut var_preserveAttributes = <bool>::sse_decode(deserializer);
         let mut var_verify = <bool>::sse_decode(deserializer);
         let mut var_password = <Option<String>>::sse_decode(deserializer);
+        let mut var_intoFolders = <bool>::sse_decode(deserializer);
         return crate::api::types::OpRequestView {
             kind: var_kind,
             sources: var_sources,
@@ -2202,6 +2326,7 @@ impl SseDecode for crate::api::types::OpRequestView {
             preserve_attributes: var_preserveAttributes,
             verify: var_verify,
             password: var_password,
+            into_folders: var_intoFolders,
         };
     }
 }
@@ -2592,45 +2717,48 @@ fn pde_ffi_dispatcher_primary_impl(
         1 => wire__crate__api__ops__answer_operation_impl(port, ptr, rust_vec_len, data_len),
         2 => wire__crate__api__system__applications_for_impl(port, ptr, rust_vec_len, data_len),
         3 => wire__crate__api__attrs__apply_attributes_impl(port, ptr, rust_vec_len, data_len),
-        4 => wire__crate__api__rename__batch_rename_apply_impl(port, ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__rename__batch_rename_preview_impl(port, ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__find__cancel_find_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__ops__cancel_operation_impl(port, ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__listing__close_listing_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__files__create_directory_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__files__create_file_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__files__create_hardlink_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__files__create_symlink_impl(port, ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__files__edit_symlink_impl(port, ptr, rust_vec_len, data_len),
-        14 => wire__crate__api__system__eject_volume_impl(port, ptr, rust_vec_len, data_len),
-        15 => wire__crate__api__files__extract_to_temp_impl(port, ptr, rust_vec_len, data_len),
-        16 => wire__crate__api__files__file_size_impl(port, ptr, rust_vec_len, data_len),
-        17 => wire__crate__api__ops__forget_operation_impl(port, ptr, rust_vec_len, data_len),
-        19 => wire__crate__api__system__free_space_impl(port, ptr, rust_vec_len, data_len),
-        20 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
-        23 => wire__crate__api__ops__list_operations_impl(port, ptr, rust_vec_len, data_len),
-        24 => wire__crate__api__system__list_volumes_impl(port, ptr, rust_vec_len, data_len),
-        25 => wire__crate__api__attrs__lookup_group_impl(port, ptr, rust_vec_len, data_len),
-        26 => wire__crate__api__attrs__lookup_user_impl(port, ptr, rust_vec_len, data_len),
-        27 => wire__crate__api__system__open_default_impl(port, ptr, rust_vec_len, data_len),
-        28 => wire__crate__api__listing__open_listing_impl(port, ptr, rust_vec_len, data_len),
-        29 => wire__crate__api__system__open_with_impl(port, ptr, rust_vec_len, data_len),
-        30 => wire__crate__api__ops__operation_progress_impl(port, ptr, rust_vec_len, data_len),
-        31 => wire__crate__api__ops__pause_operation_impl(port, ptr, rust_vec_len, data_len),
-        32 => wire__crate__api__listing__peek_listing_impl(port, ptr, rust_vec_len, data_len),
-        33 => wire__crate__api__attrs__read_attributes_impl(port, ptr, rust_vec_len, data_len),
-        34 => wire__crate__api__files__read_file_range_impl(port, ptr, rust_vec_len, data_len),
-        35 => wire__crate__api__files__read_symlink_impl(port, ptr, rust_vec_len, data_len),
-        36 => wire__crate__api__listing__refresh_listing_impl(port, ptr, rust_vec_len, data_len),
-        37 => wire__crate__api__files__rename_item_impl(port, ptr, rust_vec_len, data_len),
-        38 => wire__crate__api__files__resolve_path_impl(port, ptr, rust_vec_len, data_len),
-        39 => wire__crate__api__listing__resort_listing_impl(port, ptr, rust_vec_len, data_len),
-        40 => wire__crate__api__ops__resume_operation_impl(port, ptr, rust_vec_len, data_len),
-        41 => wire__crate__api__system__reveal_in_file_manager_impl(port, ptr, rust_vec_len, data_len),
-        43 => wire__crate__api__find__start_find_impl(port, ptr, rust_vec_len, data_len),
-        44 => wire__crate__api__ops__start_operation_impl(port, ptr, rust_vec_len, data_len),
-        45 => wire__crate__api__files__stat_impl(port, ptr, rust_vec_len, data_len),
-        46 => wire__crate__api__events__subscribe_events_impl(port, ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__archives__archive_info_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__rename__batch_rename_apply_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__rename__batch_rename_preview_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__find__cancel_find_impl(port, ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__ops__cancel_operation_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__listing__close_listing_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__files__create_directory_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__files__create_file_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__files__create_hardlink_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__files__create_symlink_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__archives__detect_archive_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__files__edit_symlink_impl(port, ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__system__eject_volume_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__crate__api__files__extract_to_temp_impl(port, ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__files__file_size_impl(port, ptr, rust_vec_len, data_len),
+        19 => wire__crate__api__ops__forget_operation_impl(port, ptr, rust_vec_len, data_len),
+        21 => wire__crate__api__system__free_space_impl(port, ptr, rust_vec_len, data_len),
+        22 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
+        25 => wire__crate__api__ops__list_operations_impl(port, ptr, rust_vec_len, data_len),
+        26 => wire__crate__api__system__list_volumes_impl(port, ptr, rust_vec_len, data_len),
+        27 => wire__crate__api__attrs__lookup_group_impl(port, ptr, rust_vec_len, data_len),
+        28 => wire__crate__api__attrs__lookup_user_impl(port, ptr, rust_vec_len, data_len),
+        29 => wire__crate__api__system__open_default_impl(port, ptr, rust_vec_len, data_len),
+        30 => wire__crate__api__listing__open_listing_impl(port, ptr, rust_vec_len, data_len),
+        31 => wire__crate__api__system__open_with_impl(port, ptr, rust_vec_len, data_len),
+        32 => wire__crate__api__ops__operation_progress_impl(port, ptr, rust_vec_len, data_len),
+        33 => wire__crate__api__ops__pause_operation_impl(port, ptr, rust_vec_len, data_len),
+        34 => wire__crate__api__listing__peek_listing_impl(port, ptr, rust_vec_len, data_len),
+        35 => wire__crate__api__attrs__read_attributes_impl(port, ptr, rust_vec_len, data_len),
+        36 => wire__crate__api__files__read_file_range_impl(port, ptr, rust_vec_len, data_len),
+        37 => wire__crate__api__files__read_symlink_impl(port, ptr, rust_vec_len, data_len),
+        38 => wire__crate__api__listing__refresh_listing_impl(port, ptr, rust_vec_len, data_len),
+        39 => wire__crate__api__files__rename_item_impl(port, ptr, rust_vec_len, data_len),
+        40 => wire__crate__api__files__resolve_path_impl(port, ptr, rust_vec_len, data_len),
+        41 => wire__crate__api__listing__resort_listing_impl(port, ptr, rust_vec_len, data_len),
+        42 => wire__crate__api__ops__resume_operation_impl(port, ptr, rust_vec_len, data_len),
+        43 => wire__crate__api__system__reveal_in_file_manager_impl(port, ptr, rust_vec_len, data_len),
+        44 => wire__crate__api__archives__set_archive_password_impl(port, ptr, rust_vec_len, data_len),
+        46 => wire__crate__api__find__start_find_impl(port, ptr, rust_vec_len, data_len),
+        47 => wire__crate__api__ops__start_operation_impl(port, ptr, rust_vec_len, data_len),
+        48 => wire__crate__api__files__stat_impl(port, ptr, rust_vec_len, data_len),
+        49 => wire__crate__api__events__subscribe_events_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -2643,10 +2771,10 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        18 => wire__crate__api__files__free_name_impl(ptr, rust_vec_len, data_len),
-        21 => wire__crate__api__listing__is_archive_impl(ptr, rust_vec_len, data_len),
-        22 => wire__crate__api__listing__is_directory_impl(ptr, rust_vec_len, data_len),
-        42 => wire__crate__api__system__standard_folders_impl(ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__files__free_name_impl(ptr, rust_vec_len, data_len),
+        23 => wire__crate__api__listing__is_archive_impl(ptr, rust_vec_len, data_len),
+        24 => wire__crate__api__listing__is_directory_impl(ptr, rust_vec_len, data_len),
+        45 => wire__crate__api__system__standard_folders_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -2715,6 +2843,30 @@ impl flutter_rust_bridge::IntoDart for crate::api::types::AppEventKind {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::AppEventKind {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::types::AppEventKind> for crate::api::types::AppEventKind {
     fn into_into_dart(self) -> crate::api::types::AppEventKind {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::archives::ArchiveInfoView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.format.into_into_dart().into_dart(),
+            self.top_level_count.into_into_dart().into_dart(),
+            self.single_top_level.into_into_dart().into_dart(),
+            self.file_count.into_into_dart().into_dart(),
+            self.unpacked_bytes.into_into_dart().into_dart(),
+            self.encrypted.into_into_dart().into_dart(),
+            self.needs_password.into_into_dart().into_dart(),
+            self.has_password.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::archives::ArchiveInfoView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::archives::ArchiveInfoView>
+    for crate::api::archives::ArchiveInfoView
+{
+    fn into_into_dart(self) -> crate::api::archives::ArchiveInfoView {
         self
     }
 }
@@ -2936,6 +3088,8 @@ impl flutter_rust_bridge::IntoDart for crate::api::types::FerryxErrorKind {
             Self::InvalidName => 8.into_dart(),
             Self::InvalidPattern => 9.into_dart(),
             Self::Io => 10.into_dart(),
+            Self::PasswordRequired => 11.into_dart(),
+            Self::WrongPassword => 12.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -3143,6 +3297,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::types::OpRequestView {
             self.preserve_attributes.into_into_dart().into_dart(),
             self.verify.into_into_dart().into_dart(),
             self.password.into_into_dart().into_dart(),
+            self.into_folders.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -3543,6 +3698,20 @@ impl SseEncode for crate::api::types::AppEventKind {
     }
 }
 
+impl SseEncode for crate::api::archives::ArchiveInfoView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.format, serializer);
+        <i64>::sse_encode(self.top_level_count, serializer);
+        <Option<String>>::sse_encode(self.single_top_level, serializer);
+        <i64>::sse_encode(self.file_count, serializer);
+        <i64>::sse_encode(self.unpacked_bytes, serializer);
+        <bool>::sse_encode(self.encrypted, serializer);
+        <bool>::sse_encode(self.needs_password, serializer);
+        <bool>::sse_encode(self.has_password, serializer);
+    }
+}
+
 impl SseEncode for crate::api::types::AttributeChangesView {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -3715,6 +3884,8 @@ impl SseEncode for crate::api::types::FerryxErrorKind {
                 crate::api::types::FerryxErrorKind::InvalidName => 8,
                 crate::api::types::FerryxErrorKind::InvalidPattern => 9,
                 crate::api::types::FerryxErrorKind::Io => 10,
+                crate::api::types::FerryxErrorKind::PasswordRequired => 11,
+                crate::api::types::FerryxErrorKind::WrongPassword => 12,
                 _ => {
                     unimplemented!("");
                 }
@@ -4018,6 +4189,7 @@ impl SseEncode for crate::api::types::OpRequestView {
         <bool>::sse_encode(self.preserve_attributes, serializer);
         <bool>::sse_encode(self.verify, serializer);
         <Option<String>>::sse_encode(self.password, serializer);
+        <bool>::sse_encode(self.into_folders, serializer);
     }
 }
 

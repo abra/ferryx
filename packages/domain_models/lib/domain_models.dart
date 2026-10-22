@@ -3,6 +3,7 @@
 /// Pure Dart: no Flutter, storage or bridge types leak through here.
 library;
 
+export 'src/archives.dart';
 export 'src/attributes.dart';
 export 'src/exceptions.dart';
 export 'src/favorites.dart';

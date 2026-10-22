@@ -18,6 +18,10 @@ pub enum VfsErrorKind {
     Cancelled,
     InvalidName,
     Io,
+    /// An encrypted archive needs a password to be listed or read.
+    PasswordRequired,
+    /// The password given does not open the archive.
+    WrongPassword,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, thiserror::Error, Serialize, Deserialize)]
@@ -43,6 +47,22 @@ impl VfsError {
 
     pub fn cancelled() -> VfsError {
         VfsError::new(VfsErrorKind::Cancelled, None, "cancelled")
+    }
+
+    pub fn password_required(archive: &Path) -> VfsError {
+        VfsError::new(
+            VfsErrorKind::PasswordRequired,
+            Some(archive),
+            format!("{} is encrypted", archive.display()),
+        )
+    }
+
+    pub fn wrong_password(archive: &Path) -> VfsError {
+        VfsError::new(
+            VfsErrorKind::WrongPassword,
+            Some(archive),
+            format!("the password does not open {}", archive.display()),
+        )
     }
 
     /// An I/O error at `path`, classified by its kind.

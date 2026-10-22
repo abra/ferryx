@@ -1,11 +1,10 @@
-//! Copy, move, duplicate and extract: everything that writes items into
-//! a folder.
+//! Copy, move and duplicate: everything that writes items of the disk into
+//! a folder (`extract` writes an archive's).
 
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
-use ferryx_vfs::archive::ArchiveIndex;
 use ferryx_vfs::error::{IoAt, VfsError, VfsErrorKind};
 use ferryx_vfs::native;
 use walkdir::WalkDir;
@@ -17,7 +16,6 @@ const BUFFER: usize = 1024 * 1024;
 
 pub fn run(ctx: &OpContext, request: &OpRequest) -> Result<(), Abort> {
     match request.kind {
-        OpKind::Extract => extract(ctx, request),
         OpKind::Duplicate => duplicate(ctx, request),
         OpKind::Move => copy_or_move(ctx, request, true),
         _ => copy_or_move(ctx, request, false),
@@ -85,78 +83,6 @@ fn duplicate(ctx: &OpContext, request: &OpRequest) -> Result<(), Abort> {
         }
     }
     ctx.update(|p| p.result_path = last);
-    Ok(())
-}
-
-fn extract(ctx: &OpContext, request: &OpRequest) -> Result<(), Abort> {
-    let (Some(archive), Some(dest_dir)) = (request.archive.as_deref(), request.destination.as_deref()) else {
-        ctx.record_error(Path::new(""), "no archive or destination".to_string());
-        return Err(Abort::Stopped);
-    };
-    let index = match ArchiveIndex::open(archive) {
-        Ok(index) => index,
-        Err(e) => {
-            ctx.record_error(archive, e.message);
-            return Err(Abort::Stopped);
-        }
-    };
-    // Members as `(path in archive, path under the destination)`.
-    let mut files: Vec<(String, PathBuf)> = Vec::new();
-    let mut total = 0u64;
-    for source in &request.sources {
-        let inner = source.to_string_lossy().replace('\\', "/");
-        let inner = inner.trim_matches('/');
-        if index.is_dir(inner) {
-            for (member, relative) in index.files_under(inner) {
-                total += index.member(&member).map(|m| m.size).unwrap_or(0);
-                files.push((member, dest_dir.join(relative)));
-            }
-            let name = inner.rsplit('/').next().unwrap_or(inner);
-            if files.is_empty() || !inner.is_empty() {
-                let _ = fs::create_dir_all(dest_dir.join(name));
-            }
-        } else {
-            total += index.member(inner).map(|m| m.size).unwrap_or(0);
-            let name = inner.rsplit('/').next().unwrap_or(inner);
-            files.push((inner.to_string(), dest_dir.join(name)));
-        }
-    }
-    ctx.set_totals(total, files.len() as u64);
-    for (member, target) in files {
-        ctx.check()?;
-        ctx.set_current(&target);
-        let bytes = loop {
-            match index.read(&member) {
-                Ok(bytes) => break Some(bytes),
-                Err(e) => {
-                    if !ctx.ask_error(&target, &e)? {
-                        break None;
-                    }
-                }
-            }
-        };
-        let Some(bytes) = bytes else { continue };
-        if let Some(parent) = target.parent() {
-            let _ = fs::create_dir_all(parent);
-        }
-        let target = match resolve_conflict(ctx, &target, Some(bytes.len() as u64), None, &request.options)? {
-            Some(t) => t,
-            None => continue,
-        };
-        if let Err(e) = fs::write(&target, &bytes) {
-            let error = VfsError::io(&e, &target);
-            ctx.ask_error(&target, &error)?;
-            continue;
-        }
-        if let Some(m) = index.member(&member) {
-            set_mode(&target, m.mode);
-            if let Some(ms) = m.modified_ms {
-                set_times(&target, Some(ms), None);
-            }
-        }
-        ctx.add_bytes(bytes.len() as u64);
-        ctx.item_done();
-    }
     Ok(())
 }
 
@@ -363,7 +289,7 @@ fn remove_any(path: &Path) -> Result<(), VfsError> {
 
 /// Where a file goes when `target` is taken: the same path (overwrite),
 /// a free name (keep both), or nothing (skip).
-fn resolve_conflict(
+pub(crate) fn resolve_conflict(
     ctx: &OpContext,
     target: &Path,
     source_size: Option<u64>,

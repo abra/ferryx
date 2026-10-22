@@ -7,6 +7,7 @@ library;
 
 export 'src/backend.dart';
 export 'src/mapping.dart';
+export 'src/rust/api/archives.dart';
 export 'src/rust/api/attrs.dart';
 export 'src/rust/api/events.dart';
 export 'src/rust/api/files.dart';

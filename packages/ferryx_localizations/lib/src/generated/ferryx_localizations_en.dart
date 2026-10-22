@@ -2192,4 +2192,88 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get cmdDismiss => 'Dismiss';
+
+  @override
+  String get cmdExtractTo => 'Extract To…';
+
+  @override
+  String get cmdToggleFlatView => 'Flat View';
+
+  @override
+  String get cmdEditTags => 'Tags…';
+
+  @override
+  String get archivePasswordRequired => 'A password is needed';
+
+  @override
+  String get archiveWrongPassword => 'Wrong password';
+
+  @override
+  String archiveExtractOneTitle(String name) {
+    return 'Extract “$name” to';
+  }
+
+  @override
+  String archiveExtractManyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Extract $count archives to',
+      one: 'Extract $count archive to',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String archiveExtractMembersTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Extract $count items to',
+      one: 'Extract $count item to',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get archiveIntoFolders => 'Into a folder named after each archive';
+
+  @override
+  String archiveIntoFolder(String name) {
+    return 'Into a folder named “$name”';
+  }
+
+  @override
+  String get archivePasswordLabel => 'Password';
+
+  @override
+  String archiveWrongPasswordFor(String name) {
+    return 'This password does not open “$name”';
+  }
+
+  @override
+  String get archiveExtractAction => 'Extract';
+
+  @override
+  String get archiveNoArchives => 'None of the items is an archive';
+
+  @override
+  String archivePasswordTitle(String name) {
+    return '“$name” is encrypted';
+  }
+
+  @override
+  String get archivePasswordMessage =>
+      'Enter the password to open the archive.';
+
+  @override
+  String get archivePasswordOpen => 'Open';
+
+  @override
+  String get archiveEnterPassword => 'Enter Password…';
+
+  @override
+  String archiveDestinationHint(String key) {
+    return '$key completes a folder’s name';
+  }
 }

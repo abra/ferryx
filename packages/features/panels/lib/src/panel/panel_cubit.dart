@@ -170,6 +170,7 @@ class PanelCubit extends Cubit<PanelState> {
               clearRange: true,
               clearVisual: true,
               searching: false,
+              clearPasswordLocation: true,
             ),
             focusName: focusName ?? current.pendingFocusName,
           ).copyWith(clearPendingFocus: true),
@@ -183,6 +184,23 @@ class PanelCubit extends Cubit<PanelState> {
       );
       final current = state.tabs.elementAtOrNull(index);
       if (current == null || current.id != tab.id) return;
+      if (error.kind == FerryxErrorKind.passwordRequired &&
+          !location.isNative) {
+        // The window asks for the password and opens it again; the tab
+        // stays where it was meanwhile.
+        emit(
+          state.withTab(
+            index,
+            current.copyWith(
+              loading: false,
+              error: error,
+              clearPendingFocus: true,
+              passwordLocation: location,
+            ),
+          ),
+        );
+        if (current.listing != null) return;
+      }
       if (current.listing == null) {
         // Nothing to fall back on in the tab: try the fallback, then the
         // root, which always reads.
@@ -1016,6 +1034,17 @@ class PanelCubit extends Cubit<PanelState> {
   /// Shows [location] with the cursor on [focusName], in the active tab.
   Future<void> reveal(Location location, {required String focusName}) =>
       open(location, focusName: focusName);
+
+  // ─── Archive passwords ───
+
+  /// The password was given: the folder that asked for it opens. Until
+  /// then the tab stays where it was, its error saying why.
+  Future<void> openAfterPassword() async {
+    final tab = state.active;
+    final location = tab?.passwordLocation;
+    if (tab == null || location == null) return;
+    await open(location);
+  }
 
   @override
   Future<void> close() async {

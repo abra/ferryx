@@ -5,6 +5,7 @@ library;
 
 import 'package:domain_models/domain_models.dart' as d;
 
+import 'rust/api/archives.dart' as rust;
 import 'rust/api/types.dart' as rust;
 
 DateTime? dateTimeFromMs(int? ms) => ms == null
@@ -13,21 +14,23 @@ DateTime? dateTimeFromMs(int? ms) => ms == null
 
 int? msFromDateTime(DateTime? time) => time?.toUtc().millisecondsSinceEpoch;
 
-d.FerryxErrorKind errorKindFromView(rust.FerryxErrorKind kind) =>
-    switch (kind) {
-      rust.FerryxErrorKind.notFound => d.FerryxErrorKind.notFound,
-      rust.FerryxErrorKind.permissionDenied =>
-        d.FerryxErrorKind.permissionDenied,
-      rust.FerryxErrorKind.alreadyExists => d.FerryxErrorKind.alreadyExists,
-      rust.FerryxErrorKind.notADirectory => d.FerryxErrorKind.notADirectory,
-      rust.FerryxErrorKind.isADirectory => d.FerryxErrorKind.isADirectory,
-      rust.FerryxErrorKind.notEmpty => d.FerryxErrorKind.notEmpty,
-      rust.FerryxErrorKind.unsupported => d.FerryxErrorKind.unsupported,
-      rust.FerryxErrorKind.cancelled => d.FerryxErrorKind.cancelled,
-      rust.FerryxErrorKind.invalidName => d.FerryxErrorKind.invalidName,
-      rust.FerryxErrorKind.invalidPattern => d.FerryxErrorKind.invalidPattern,
-      rust.FerryxErrorKind.io => d.FerryxErrorKind.io,
-    };
+d.FerryxErrorKind errorKindFromView(
+  rust.FerryxErrorKind kind,
+) => switch (kind) {
+  rust.FerryxErrorKind.notFound => d.FerryxErrorKind.notFound,
+  rust.FerryxErrorKind.permissionDenied => d.FerryxErrorKind.permissionDenied,
+  rust.FerryxErrorKind.alreadyExists => d.FerryxErrorKind.alreadyExists,
+  rust.FerryxErrorKind.notADirectory => d.FerryxErrorKind.notADirectory,
+  rust.FerryxErrorKind.isADirectory => d.FerryxErrorKind.isADirectory,
+  rust.FerryxErrorKind.notEmpty => d.FerryxErrorKind.notEmpty,
+  rust.FerryxErrorKind.unsupported => d.FerryxErrorKind.unsupported,
+  rust.FerryxErrorKind.cancelled => d.FerryxErrorKind.cancelled,
+  rust.FerryxErrorKind.invalidName => d.FerryxErrorKind.invalidName,
+  rust.FerryxErrorKind.invalidPattern => d.FerryxErrorKind.invalidPattern,
+  rust.FerryxErrorKind.io => d.FerryxErrorKind.io,
+  rust.FerryxErrorKind.passwordRequired => d.FerryxErrorKind.passwordRequired,
+  rust.FerryxErrorKind.wrongPassword => d.FerryxErrorKind.wrongPassword,
+};
 
 // ─── Locations and entries ───
 
@@ -192,6 +195,7 @@ rust.OpRequestView operationRequestToView(d.OperationRequest request) =>
       preserveAttributes: request.preserveAttributes,
       verify: request.verify,
       password: request.password,
+      intoFolders: request.intoFolders,
     );
 
 d.OpState opStateFromView(rust.OpStateView state) => switch (state) {
@@ -385,3 +389,16 @@ rust.AttributeChangesView attributeChangesToView(d.AttributeChanges changes) =>
       modifiedMs: msFromDateTime(changes.modified),
       accessedMs: msFromDateTime(changes.accessed),
     );
+
+// ─── Archives ───
+
+d.ArchiveInfo archiveInfoFromView(rust.ArchiveInfoView view) => d.ArchiveInfo(
+  format: view.format,
+  topLevelCount: view.topLevelCount,
+  singleTopLevel: view.singleTopLevel,
+  fileCount: view.fileCount,
+  unpackedBytes: view.unpackedBytes,
+  encrypted: view.encrypted,
+  needsPassword: view.needsPassword,
+  hasPassword: view.hasPassword,
+);

@@ -6,6 +6,7 @@
 // Static analysis wrongly picks the IO variant, thus ignore this
 // ignore_for_file: argument_type_not_assignable
 
+import 'api/archives.dart';
 import 'api/attrs.dart';
 import 'api/events.dart';
 import 'api/files.dart';
@@ -49,6 +50,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   AppEventKind dco_decode_app_event_kind(dynamic raw);
+
+  @protected
+  ArchiveInfoView dco_decode_archive_info_view(dynamic raw);
 
   @protected
   AttributeChangesView dco_decode_attribute_changes_view(dynamic raw);
@@ -296,6 +300,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   AppEventKind sse_decode_app_event_kind(SseDeserializer deserializer);
+
+  @protected
+  ArchiveInfoView sse_decode_archive_info_view(SseDeserializer deserializer);
 
   @protected
   AttributeChangesView sse_decode_attribute_changes_view(
@@ -601,6 +608,12 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   void sse_encode_app_event_kind(AppEventKind self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_archive_info_view(
+    ArchiveInfoView self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_attribute_changes_view(

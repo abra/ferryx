@@ -27,6 +27,10 @@ pub enum FerryxErrorKind {
     InvalidName,
     InvalidPattern,
     Io,
+    /// An encrypted archive needs a password.
+    PasswordRequired,
+    /// The password given does not open the archive.
+    WrongPassword,
 }
 
 /// Every error the bridge raises; Dart sees it as an exception with a
@@ -63,6 +67,8 @@ impl From<VfsError> for FerryxError {
             VfsErrorKind::Cancelled => FerryxErrorKind::Cancelled,
             VfsErrorKind::InvalidName => FerryxErrorKind::InvalidName,
             VfsErrorKind::Io => FerryxErrorKind::Io,
+            VfsErrorKind::PasswordRequired => FerryxErrorKind::PasswordRequired,
+            VfsErrorKind::WrongPassword => FerryxErrorKind::WrongPassword,
         };
         FerryxError { kind, message: e.message, path: e.path }
     }
@@ -298,6 +304,8 @@ pub struct OpRequestView {
     pub preserve_attributes: bool,
     pub verify: bool,
     pub password: Option<String>,
+    /// Extract whole archives: each into a folder named after it.
+    pub into_folders: bool,
 }
 
 impl OpRequestView {
@@ -329,6 +337,7 @@ impl OpRequestView {
                 preserve_attributes: self.preserve_attributes,
                 verify: self.verify,
                 password: self.password.clone(),
+                into_folders: self.into_folders,
             },
         }
     }

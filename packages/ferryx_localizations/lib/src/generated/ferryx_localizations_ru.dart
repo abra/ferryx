@@ -2228,4 +2228,91 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get cmdDismiss => 'Закрыть';
+
+  @override
+  String get cmdExtractTo => 'Распаковать в…';
+
+  @override
+  String get cmdToggleFlatView => 'Плоский список';
+
+  @override
+  String get cmdEditTags => 'Теги…';
+
+  @override
+  String get archivePasswordRequired => 'Нужен пароль';
+
+  @override
+  String get archiveWrongPassword => 'Неверный пароль';
+
+  @override
+  String archiveExtractOneTitle(String name) {
+    return 'Распаковать «$name» в';
+  }
+
+  @override
+  String archiveExtractManyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Распаковать $count архива в',
+      many: 'Распаковать $count архивов в',
+      few: 'Распаковать $count архива в',
+      one: 'Распаковать $count архив в',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String archiveExtractMembersTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Распаковать $count объекта в',
+      many: 'Распаковать $count объектов в',
+      few: 'Распаковать $count объекта в',
+      one: 'Распаковать $count объект в',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get archiveIntoFolders => 'Каждый архив — в папку с его именем';
+
+  @override
+  String archiveIntoFolder(String name) {
+    return 'В папку «$name»';
+  }
+
+  @override
+  String get archivePasswordLabel => 'Пароль';
+
+  @override
+  String archiveWrongPasswordFor(String name) {
+    return 'Этот пароль не открывает «$name»';
+  }
+
+  @override
+  String get archiveExtractAction => 'Распаковать';
+
+  @override
+  String get archiveNoArchives => 'Среди объектов нет архивов';
+
+  @override
+  String archivePasswordTitle(String name) {
+    return '«$name» зашифрован';
+  }
+
+  @override
+  String get archivePasswordMessage => 'Введите пароль, чтобы открыть архив.';
+
+  @override
+  String get archivePasswordOpen => 'Открыть';
+
+  @override
+  String get archiveEnterPassword => 'Ввести пароль…';
+
+  @override
+  String archiveDestinationHint(String key) {
+    return '$key дополняет имя папки';
+  }
 }

@@ -1,8 +1,10 @@
 //! Everything Ferryx reads from and writes to the file system, behind
-//! plain functions and a few handles. No bridge types, no global state.
+//! plain functions and a few handles. No bridge types; the one piece of
+//! global state is the archive cache ([`archive::shared`]).
 //!
 //! - [`native`]: a folder's rows with their metadata, a file's bytes.
-//! - [`archive`]: the members of a zip or tar as a read-only folder.
+//! - [`archive`]: the members of an archive (zip, tar, 7z, rar, iso, a
+//!   compressed file) as a read-only folder, read back streaming.
 //! - [`location`]: where a panel is, on disk or inside an archive.
 //! - [`watch`]: a folder watched for changes.
 //! - [`volumes`], [`system`]: the disks, the standard folders, opening,

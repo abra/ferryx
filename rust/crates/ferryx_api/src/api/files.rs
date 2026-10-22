@@ -19,36 +19,39 @@ pub fn read_file_range(location: LocationView, offset: i64, len: i64) -> ApiResu
     match location.kind {
         LocationKind::Native => Ok(native::read_range(Path::new(&location.path), offset, len)?),
         LocationKind::Archive => {
-            let index = app::archive_index(Path::new(&location.archive.unwrap_or_default()))?;
-            Ok(index.read_range(location.path.trim_matches('/'), offset, len)?)
+            let archive = PathBuf::from(location.archive.unwrap_or_default());
+            let index = app::archive_index(&archive)?;
+            let password = app::archive_password(&archive);
+            Ok(index.read_range(location.path.trim_matches('/'), offset, len, password.as_deref())?)
         }
     }
 }
 
+/// The file's size; an archive member's as its archive keeps it, or as
+/// unpacked when the format does not say (a bzip2 stream).
 pub fn file_size(location: LocationView) -> ApiResult<i64> {
     match location.kind {
         LocationKind::Native => Ok(native::file_size(Path::new(&location.path))? as i64),
         LocationKind::Archive => {
-            let index = app::archive_index(Path::new(&location.archive.unwrap_or_default()))?;
-            let member = index.member(location.path.trim_matches('/')).ok_or_else(|| {
-                FerryxError::new(
-                    FerryxErrorKind::NotFound,
-                    format!("{} is not in the archive", location.path),
-                )
-            })?;
-            Ok(member.size as i64)
+            let archive = PathBuf::from(location.archive.unwrap_or_default());
+            let index = app::archive_index(&archive)?;
+            let password = app::archive_password(&archive);
+            Ok(index.member_size(location.path.trim_matches('/'), password.as_deref())? as i64)
         }
     }
 }
 
 /// Extracts an archive member (a file or a folder) to a temporary folder
-/// for opening or viewing; answers the path written.
+/// for opening or viewing; answers the path written. A member of a solid
+/// archive decodes its block up to it: this runs on a worker of the
+/// bridge, never on the interface's thread.
 pub fn extract_to_temp(archive_path: String, inner: String) -> ApiResult<String> {
     let archive_path = PathBuf::from(archive_path);
     let index = app::archive_index(&archive_path)?;
+    let password = app::archive_password(&archive_path);
     let dir = archive::temp_dir_for(&archive_path);
     std::fs::create_dir_all(&dir).map_err(|e| FerryxError::new(FerryxErrorKind::Io, e.to_string()))?;
-    let written = index.extract(inner.trim_matches('/'), &dir)?;
+    let written = index.extract_with(inner.trim_matches('/'), &dir, password.as_deref())?;
     Ok(written.to_string_lossy().into_owned())
 }
 
