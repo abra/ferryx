@@ -14,6 +14,7 @@ PACKAGES = \
 	packages/preferences_service \
 	packages/file_repository \
 	packages/operations_service \
+	packages/platform_services \
 	packages/features/panels \
 	packages/features/viewer \
 	packages/features/find \

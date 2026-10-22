@@ -84,6 +84,7 @@ GoRouter buildRouter({
             preferencesService: deps.preferencesService,
             platform: deps.platform,
             version: deps.packageInfo.version,
+            unavailableCommands: deps.unavailableCommands,
             initialSection: state.extra is SettingsSection
                 ? state.extra! as SettingsSection
                 : SettingsSection.general,
@@ -120,6 +121,7 @@ class _WorkspaceRoute extends StatelessWidget {
         files: deps.files,
         operations: deps.operations,
         rename: deps.rename,
+        platformServices: deps.platformServices,
         preferences: deps.preferencesService,
         logger: deps.logger,
         shortcutMap: deps.shortcutMap,

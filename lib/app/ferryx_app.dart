@@ -5,6 +5,7 @@ import 'package:ferryx/app/window_chrome.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:platform_services/platform_services.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 
@@ -105,8 +106,12 @@ class _FerryxAppState extends State<FerryxApp> {
           ),
         );
         // A click beside a text field keeps its caret, on every route; the
-        // selections grey while the window is not the active one.
-        return AppWindowActivity(child: TapOutsideKeepsFocus(child: app));
+        // selections grey while the window is not the active one; files
+        // dragged over the window reach the drop target under the pointer.
+        return PlatformDropArea(
+          enabled: deps.platformServices.capabilities.fileDrags,
+          child: AppWindowActivity(child: TapOutsideKeepsFocus(child: app)),
+        );
       },
     );
   }

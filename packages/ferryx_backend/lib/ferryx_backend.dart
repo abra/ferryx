@@ -16,4 +16,5 @@ export 'src/rust/api/ops.dart';
 export 'src/rust/api/rename.dart';
 export 'src/rust/api/system.dart';
 export 'src/rust/api/types.dart';
+export 'src/rust/api/volume_id.dart';
 export 'src/rust/frb_generated.dart' show FerryxRustLib;

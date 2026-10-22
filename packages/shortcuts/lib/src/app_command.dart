@@ -128,6 +128,9 @@ enum AppCommand {
   editSymlink(CommandScope.global),
   revealInFileManager(CommandScope.global),
   openWith(CommandScope.global),
+  // ─── Native ───
+  quickLook(CommandScope.global),
+  share(CommandScope.global),
 
   // ─── Window and help ───
   focusLeftPanel(CommandScope.global),

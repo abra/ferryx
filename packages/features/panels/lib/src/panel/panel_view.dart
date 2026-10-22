@@ -8,6 +8,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shortcuts/shortcuts.dart';
 
+import '../native/drop_plan.dart';
+import '../native/panel_drag_hooks.dart';
 import 'panel_cubit.dart';
 import 'panel_footer.dart';
 import 'panel_header.dart';
@@ -37,6 +39,8 @@ class PanelHooks {
     required this.onVimGoMark,
     required this.onVimCommand,
     required this.onVimComplete,
+    this.drag,
+    this.onEscape,
   });
 
   /// The panel was clicked or took the keys: it is the active one now.
@@ -68,6 +72,14 @@ class PanelHooks {
   /// Vim: a `:` line to run, and the completions of one being typed.
   final ValueChanged<String> onVimCommand;
   final Future<List<String>> Function(String line) onVimComplete;
+
+  /// Rows dragged out of the panel and files dropped on it; the panel
+  /// takes no part in drags without it.
+  final PanelDragHooks? drag;
+
+  /// Esc closes what floats over the panels (Quick Look) before anything
+  /// in the panel; answers whether it closed something.
+  final bool Function()? onEscape;
 }
 
 /// One file panel: header, tabs, rows and footer, with the panel's keys.
@@ -118,6 +130,9 @@ class PanelView extends StatefulWidget {
 }
 
 class _PanelViewState extends State<PanelView> {
+  /// The highlight of a panel without drags: never lit.
+  static final _noDrop = ValueNotifier<DropSpot?>(null);
+
   final _vim = VimKeys();
   final _commandHistory = <String>[];
   bool _commandLine = false;
@@ -295,6 +310,7 @@ class _PanelViewState extends State<PanelView> {
   /// Esc, with Vim keys on, steps back one thing at a time: what waits,
   /// the search prompt, the matches, Visual mode, the selection.
   void _escape() {
+    if (widget.hooks.onEscape?.call() ?? false) return;
     final tab = _cubit.state.active;
     if (!widget.vimMode || tab == null) {
       _cubit.clearQuickSearch();
@@ -624,6 +640,7 @@ class _PanelViewState extends State<PanelView> {
         onSecondaryTapDown: _onSecondaryTapDown,
         onRenameCommit: (name) => unawaited(_onRenameCommit(name)),
         onRenameCancel: _onRenameCancel,
+        drag: widget.hooks.drag,
       );
       final rename = RenameSpec(
         caret: tab.renameCaret,
@@ -711,29 +728,42 @@ class _PanelViewState extends State<PanelView> {
                     child: Stack(
                       children: [
                         Positioned.fill(
-                          child: layout.mode == ViewMode.list
-                              ? RowsList(
-                                  tab: tab,
-                                  layout: layout,
-                                  active: widget.active,
-                                  callbacks: callbacks,
-                                  rename: rename,
-                                  cursorKey: widget.cursorRowKey,
-                                  onSort: (field) =>
-                                      unawaited(_cubit.toggleSortField(field)),
-                                  onGeometry: (g) => _cubit.geometry = g,
-                                )
-                              : RowsBrief(
-                                  tab: tab,
-                                  layout: layout,
-                                  active: widget.active,
-                                  callbacks: callbacks,
-                                  rename: rename,
-                                  cursorKey: widget.cursorRowKey,
-                                  onSort: (field) =>
-                                      unawaited(_cubit.toggleSortField(field)),
-                                  onGeometry: (g) => _cubit.geometry = g,
-                                ),
+                          child: PanelDropZone(
+                            hooks: widget.hooks.drag,
+                            folder: tab.location,
+                            child: ValueListenableBuilder<DropSpot?>(
+                              valueListenable:
+                                  widget.hooks.drag?.highlight ?? _noDrop,
+                              builder: (context, spot, _) =>
+                                  layout.mode == ViewMode.list
+                                  ? RowsList(
+                                      tab: tab,
+                                      layout: layout,
+                                      active: widget.active,
+                                      callbacks: callbacks,
+                                      rename: rename,
+                                      cursorKey: widget.cursorRowKey,
+                                      dropRow: spot?.row,
+                                      onSort: (field) => unawaited(
+                                        _cubit.toggleSortField(field),
+                                      ),
+                                      onGeometry: (g) => _cubit.geometry = g,
+                                    )
+                                  : RowsBrief(
+                                      tab: tab,
+                                      layout: layout,
+                                      active: widget.active,
+                                      callbacks: callbacks,
+                                      rename: rename,
+                                      cursorKey: widget.cursorRowKey,
+                                      dropRow: spot?.row,
+                                      onSort: (field) => unawaited(
+                                        _cubit.toggleSortField(field),
+                                      ),
+                                      onGeometry: (g) => _cubit.geometry = g,
+                                    ),
+                            ),
+                          ),
                         ),
                         if (tab.loading && tab.listing == null)
                           const Positioned.fill(child: _LoadingVeil()),

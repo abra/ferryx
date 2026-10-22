@@ -25,6 +25,7 @@ class RowsBrief extends StatefulWidget {
     required this.rename,
     required this.onSort,
     this.cursorKey,
+    this.dropRow,
     super.key,
   });
 
@@ -41,6 +42,9 @@ class RowsBrief extends StatefulWidget {
   /// Goes on the cursor's cell while it is built, so the window can open
   /// a menu by it.
   final GlobalKey? cursorKey;
+
+  /// The folder cell files hang over, lit up.
+  final String? dropRow;
 
   /// Columns a panel shows when they are all of one width.
   static const int fixedColumns = 3;
@@ -242,6 +246,7 @@ class _RowsBriefState extends State<RowsBrief> {
                       callbacks: widget.callbacks,
                       rename: widget.rename,
                       cursorKey: widget.cursorKey,
+                      dropRow: widget.dropRow,
                       last: column == widths.length - 1,
                     ),
                   ),
@@ -265,6 +270,7 @@ class _BriefColumn extends StatelessWidget {
     required this.callbacks,
     required this.rename,
     required this.cursorKey,
+    required this.dropRow,
     required this.last,
   });
 
@@ -276,6 +282,7 @@ class _BriefColumn extends StatelessWidget {
   final RowCallbacks callbacks;
   final RenameSpec rename;
   final GlobalKey? cursorKey;
+  final String? dropRow;
   final bool last;
 
   @override
@@ -296,7 +303,8 @@ class _BriefColumn extends StatelessWidget {
               key: ValueKey(tab.rows[i].name),
               index: i,
               entry: tab.rows[i],
-              look: rowLookOf(tab, i, active: active),
+              look: rowLookOf(tab, i, active: active, dropRow: dropRow),
+              location: tab.location,
               renaming: tab.renaming == i,
               rename: rename,
               height: height,
@@ -319,11 +327,13 @@ class _BriefCell extends StatelessWidget {
     required this.height,
     required this.callbacks,
     required this.cursorKey,
+    required this.location,
     super.key,
   });
 
   final int index;
   final FileEntry entry;
+  final Location location;
   final RowLook look;
   final bool renaming;
   final RenameSpec rename;
@@ -342,59 +352,66 @@ class _BriefCell extends StatelessWidget {
         onActivate: () => callbacks.onDoubleTap(index),
         onActivateAlt: () =>
             callbacks.onTapDown(index, toggle: true, range: false),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: (_) => callbacks.onTapDown(
-            index,
-            toggle: Chord.primaryHeld(Theme.of(context).platform),
-            range: HardwareKeyboard.instance.isShiftPressed,
-          ),
-          onDoubleTap: () => callbacks.onDoubleTap(index),
-          onSecondaryTapDown: (details) =>
-              callbacks.onSecondaryTapDown(index, details.globalPosition),
-          child: KeyedSubtree(
-            key: cursorKey,
-            child: Container(
-              height: height,
-              margin: EdgeInsets.symmetric(
-                horizontal: context.metrics.rowInset,
-              ),
-              decoration: BoxDecoration(
-                color: renaming ? null : look.background(colors),
-                borderRadius: BorderRadius.circular(
-                  context.metrics.radius.row,
+        child: RowDragArea(
+          index: index,
+          entry: entry,
+          location: location,
+          renaming: renaming,
+          drag: callbacks.drag,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (_) => callbacks.onTapDown(
+              index,
+              toggle: Chord.primaryHeld(Theme.of(context).platform),
+              range: HardwareKeyboard.instance.isShiftPressed,
+            ),
+            onDoubleTap: () => callbacks.onDoubleTap(index),
+            onSecondaryTapDown: (details) =>
+                callbacks.onSecondaryTapDown(index, details.globalPosition),
+            child: KeyedSubtree(
+              key: cursorKey,
+              child: Container(
+                height: height,
+                margin: EdgeInsets.symmetric(
+                  horizontal: context.metrics.rowInset,
                 ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: RowName(
-                      entry: entry,
-                      look: look,
-                      field: renaming
-                          ? InlineRename(
-                              name: entry.name,
-                              caret: rename.caret,
-                              shortcutMap: rename.shortcutMap,
-                              onCommit: callbacks.onRenameCommit,
-                              onCancel: callbacks.onRenameCancel,
+                decoration: BoxDecoration(
+                  color: renaming ? null : look.background(colors),
+                  borderRadius: BorderRadius.circular(
+                    context.metrics.radius.row,
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: RowName(
+                        entry: entry,
+                        look: look,
+                        field: renaming
+                            ? InlineRename(
+                                name: entry.name,
+                                caret: rename.caret,
+                                shortcutMap: rename.shortcutMap,
+                                onCommit: callbacks.onRenameCommit,
+                                onCancel: callbacks.onRenameCancel,
+                              )
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    SizedBox(
+                      width: checkSlotWidth,
+                      child: look.selected && !renaming
+                          ? Icon(
+                              AppIcons.check,
+                              size: AppIconSize.xs,
+                              color: look.checkMark(colors),
                             )
                           : null,
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  SizedBox(
-                    width: checkSlotWidth,
-                    child: look.selected && !renaming
-                        ? Icon(
-                            AppIcons.check,
-                            size: AppIconSize.xs,
-                            color: look.checkMark(colors),
-                          )
-                        : null,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

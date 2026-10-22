@@ -2192,4 +2192,27 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get cmdDismiss => 'Dismiss';
+
+  @override
+  String get cmdQuickLook => 'Quick Look';
+
+  @override
+  String get cmdShare => 'Share…';
+
+  @override
+  String get nativeUnavailable => 'Not available on this desktop';
+
+  @override
+  String get quickLookNothing => 'Nothing here to look at';
+
+  @override
+  String quickLookTooLarge(String name) {
+    return '“$name” is too large to look at from an archive';
+  }
+
+  @override
+  String get dropIntoItself => 'A folder cannot go into itself';
+
+  @override
+  String get dropNoFiles => 'Only files and folders can be dropped here';
 }

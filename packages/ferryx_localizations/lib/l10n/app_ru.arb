@@ -654,5 +654,12 @@
   "cmdVimReselect": "Выделить прошлое выделение снова",
   "cmdMoveItemDown": "Ниже",
   "cmdConfirm": "Подтвердить",
-  "cmdDismiss": "Закрыть"
+  "cmdDismiss": "Закрыть",
+  "cmdQuickLook": "Быстрый просмотр",
+  "cmdShare": "Поделиться…",
+  "nativeUnavailable": "Недоступно в этой системе",
+  "quickLookNothing": "Здесь нечего смотреть",
+  "quickLookTooLarge": "«{name}» слишком велик для просмотра из архива",
+  "dropIntoItself": "Папку нельзя положить в неё саму",
+  "dropNoFiles": "Сюда можно перетащить только файлы и папки"
 }

@@ -54,6 +54,11 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
         fileManager,
         icon: AppIcons.reveal,
       ),
+    // What this desktop has of its own: hidden where it has none.
+    if (map.isAvailable(AppCommand.quickLook))
+      action(AppCommand.quickLook, l10n.cmdQuickLook, icon: AppIcons.quickLook),
+    if (map.isAvailable(AppCommand.share))
+      action(AppCommand.share, l10n.cmdShare, icon: AppIcons.share),
     const AppMenuSeparator(),
     if (native) ...[
       action(AppCommand.copyTo, l10n.cmdCopyTo, icon: AppIcons.copy),

@@ -10,7 +10,7 @@ import 'key_sequence.dart';
 /// Bindings from commands to chords; immutable, with the defaults built in.
 @immutable
 class ShortcutMap {
-  const ShortcutMap._(this._bindings);
+  const ShortcutMap._(this._bindings) : unavailable = const {};
 
   /// The built-in table for [platform]. Chords are written once for every
   /// desktop ([Chord.primary] is ⌘ or Ctrl); where Windows and Linux use
@@ -23,17 +23,26 @@ class ShortcutMap {
   /// What the keys do for one user: the [platform]'s defaults, Vim keys
   /// when [vimMotions] is on, then [overrides] as the preferences store
   /// them (see [ChordCodec.apply]).
+  ///
+  /// The [unavailable] commands (a capability this desktop lacks: Quick
+  /// Look, the share picker) lose every chord, whatever the overrides
+  /// say, and [isAvailable] answers false for them, so the menus, the
+  /// palette, the cheat sheet and the hotkeys leave them out.
   factory ShortcutMap.forUser(
     TargetPlatform platform, {
     bool vimMotions = false,
     Map<String, List<String>> overrides = const {},
+    Set<AppCommand> unavailable = const {},
   }) {
     final defaults = ShortcutMap.defaults(platform);
-    return ChordCodec.apply(
+    final map = ChordCodec.apply(
       vimMotions ? defaults.withVimMotions(platform) : defaults,
       overrides,
     );
+    return unavailable.isEmpty ? map : map.withUnavailable(unavailable);
   }
+
+  const ShortcutMap._withUnavailable(this._bindings, this.unavailable);
 
   static const _macDefaults = ShortcutMap._(_defaults);
   static final _otherDefaults = ShortcutMap._(
@@ -41,6 +50,24 @@ class ShortcutMap {
   );
 
   final Map<AppCommand, List<Chord>> _bindings;
+
+  /// Commands this desktop cannot run: unbound, and shown nowhere.
+  final Set<AppCommand> unavailable;
+
+  /// Whether [command] can run here; a menu, the palette or a list of keys
+  /// shows it only then.
+  bool isAvailable(AppCommand command) => !unavailable.contains(command);
+
+  /// A copy where [commands] are unavailable: no chords, [isAvailable]
+  /// false.
+  ShortcutMap withUnavailable(Set<AppCommand> commands) =>
+      ShortcutMap._withUnavailable(
+        Map<AppCommand, List<Chord>>.unmodifiable({
+          ..._bindings,
+          for (final command in commands) command: const <Chord>[],
+        }),
+        Set.unmodifiable({...unavailable, ...commands}),
+      );
 
   List<Chord> chordsFor(AppCommand command) => _bindings[command] ?? const [];
 
@@ -218,12 +245,14 @@ class ShortcutMap {
   }
 
   /// Returns a copy with [command] bound to [chords] (empty = unbound).
-  ShortcutMap rebind(AppCommand command, List<Chord> chords) => ShortcutMap._(
-    Map<AppCommand, List<Chord>>.unmodifiable({
-      ..._bindings,
-      command: List<Chord>.unmodifiable(chords),
-    }),
-  );
+  ShortcutMap rebind(AppCommand command, List<Chord> chords) =>
+      ShortcutMap._withUnavailable(
+        Map<AppCommand, List<Chord>>.unmodifiable({
+          ..._bindings,
+          command: List<Chord>.unmodifiable(chords),
+        }),
+        unavailable,
+      );
 
   /// The command a chord would trigger, if any (for conflict warnings).
   AppCommand? commandFor(Chord chord) {
@@ -458,7 +487,10 @@ const _defaults = <AppCommand, List<Chord>>{
   AppCommand.copyItemDirectory: [
     Chord(LogicalKeyboardKey.keyC, primary: true, alt: true, shift: true),
   ],
-  AppCommand.preview: [Chord(LogicalKeyboardKey.keyY, primary: true)],
+  // ⌘Y is Quick Look's, as in Finder (`quickLook`).
+  AppCommand.preview: [
+    Chord(LogicalKeyboardKey.keyY, primary: true, shift: true),
+  ],
   AppCommand.internalViewer: [Chord(LogicalKeyboardKey.f3)],
   AppCommand.externalEditor: [Chord(LogicalKeyboardKey.f4)],
   AppCommand.ejectVolume: [Chord(LogicalKeyboardKey.keyE, primary: true)],
@@ -485,6 +517,11 @@ const _defaults = <AppCommand, List<Chord>>{
   AppCommand.editSymlink: [],
   AppCommand.revealInFileManager: [],
   AppCommand.openWith: [],
+  // Native
+  AppCommand.quickLook: [Chord(LogicalKeyboardKey.keyY, primary: true)],
+  AppCommand.share: [
+    Chord(LogicalKeyboardKey.keyS, primary: true, shift: true),
+  ],
 
   // Window and help
   AppCommand.focusLeftPanel: [

@@ -31,6 +31,8 @@ dependencies:
     path: packages/file_repository
   operations_service:
     path: packages/operations_service
+  platform_services:
+    path: packages/platform_services
 
   # Feature packages
   panels_feature:

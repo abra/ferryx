@@ -725,5 +725,13 @@
   "cmdVimReselect": "Reselect the Last Selection",
   "cmdMoveItemDown": "Move Down",
   "cmdConfirm": "Confirm",
-  "cmdDismiss": "Dismiss"
+  "cmdDismiss": "Dismiss",
+  "cmdQuickLook": "Quick Look",
+  "cmdShare": "Share…",
+  "nativeUnavailable": "Not available on this desktop",
+  "quickLookNothing": "Nothing here to look at",
+  "quickLookTooLarge": "“{name}” is too large to look at from an archive",
+  "@quickLookTooLarge": {"placeholders": {"name": {"type": "String"}}},
+  "dropIntoItself": "A folder cannot go into itself",
+  "dropNoFiles": "Only files and folders can be dropped here"
 }

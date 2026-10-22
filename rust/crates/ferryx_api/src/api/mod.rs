@@ -9,6 +9,7 @@ pub mod ops;
 pub mod rename;
 pub mod system;
 pub mod types;
+pub mod volume_id;
 
 #[flutter_rust_bridge::frb(init)]
 pub fn init_app() {

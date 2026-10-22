@@ -12,6 +12,7 @@ import 'api/ops.dart';
 import 'api/rename.dart';
 import 'api/system.dart';
 import 'api/types.dart';
+import 'api/volume_id.dart';
 
 import 'dart:async';
 import 'dart:convert';

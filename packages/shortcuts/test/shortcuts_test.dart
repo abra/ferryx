@@ -244,6 +244,78 @@ void main() {
     });
   });
 
+  group('Native commands', () {
+    const y = LogicalKeyboardKey.keyY;
+
+    test('⌘Y is Quick Look, as in Finder; the preview moves to ⇧⌘Y', () {
+      final map = ShortcutMap.defaults(TargetPlatform.macOS);
+      expect(map.chordsFor(AppCommand.quickLook), [
+        const Chord(y, primary: true),
+      ]);
+      expect(map.chordsFor(AppCommand.preview), [
+        const Chord(y, primary: true, shift: true),
+      ]);
+      expect(map.labelOf(AppCommand.share, TargetPlatform.macOS), '⇧⌘S');
+      expect(
+        map.commandFor(const Chord(y, primary: true)),
+        AppCommand.quickLook,
+      );
+    });
+
+    test('an unavailable command loses its chords and is not available', () {
+      final map = ShortcutMap.forUser(
+        TargetPlatform.linux,
+        unavailable: const {AppCommand.quickLook, AppCommand.share},
+      );
+      expect(map.isAvailable(AppCommand.quickLook), isFalse);
+      expect(map.isAvailable(AppCommand.share), isFalse);
+      expect(map.isAvailable(AppCommand.preview), isTrue);
+      expect(map.chordsFor(AppCommand.quickLook), isEmpty);
+      expect(map.chordsFor(AppCommand.share), isEmpty);
+      // Ctrl+Y is free again, not a command that would do nothing.
+      expect(map.commandFor(const Chord(y, primary: true)), isNull);
+      final shortcuts = map.toShortcuts(
+        TargetPlatform.linux,
+        scopes: const {CommandScope.global},
+      );
+      expect(
+        shortcuts.values.whereType<CommandIntent>().map((i) => i.command),
+        isNot(contains(AppCommand.quickLook)),
+      );
+    });
+
+    test('the overrides cannot bring an unavailable command back', () {
+      final map = ShortcutMap.forUser(
+        TargetPlatform.windows,
+        overrides: {
+          AppCommand.share.name: [
+            ChordCodec.encode(
+              const Chord(LogicalKeyboardKey.keyK, primary: true),
+            ),
+          ],
+        },
+        unavailable: const {AppCommand.share},
+      );
+      expect(map.chordsFor(AppCommand.share), isEmpty);
+      expect(map.isAvailable(AppCommand.share), isFalse);
+    });
+
+    test('availability survives rebinding and Vim keys', () {
+      final map = ShortcutMap.forUser(
+        TargetPlatform.macOS,
+        vimMotions: true,
+        unavailable: const {AppCommand.quickLook},
+      ).rebind(AppCommand.refresh, const []);
+      expect(map.isAvailable(AppCommand.quickLook), isFalse);
+      expect(map.isAvailable(AppCommand.refresh), isTrue);
+    });
+
+    test('every command is available by default', () {
+      final map = ShortcutMap.forUser(TargetPlatform.macOS);
+      expect(AppCommand.values.every(map.isAvailable), isTrue);
+    });
+  });
+
   testWidgets('dispatch bubbles from inner to outer scopes', (tester) async {
     final reached = <String>[];
     final focus = FocusNode();

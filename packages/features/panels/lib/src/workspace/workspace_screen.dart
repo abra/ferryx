@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:monitoring/monitoring.dart';
 import 'package:operations_service/operations_service.dart';
+import 'package:platform_services/platform_services.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 
@@ -19,6 +20,10 @@ import '../dialogs/favorites_dialog.dart';
 import '../dialogs/go_to_menus.dart';
 import '../dialogs/question_dialog.dart';
 import '../dialogs/simple_dialogs.dart';
+import '../native/drag_image.dart';
+import '../native/drop_plan.dart';
+import '../native/panel_drag_hooks.dart';
+import '../native/quick_look_pick.dart';
 import '../operations/operations_cards.dart';
 import '../panel/panel_cubit.dart';
 import '../panel/panel_footer.dart';
@@ -33,6 +38,7 @@ import 'vim_register.dart';
 import 'workspace_cubit.dart';
 import 'workspace_state.dart';
 
+part 'native_actions.dart';
 part 'vim_actions.dart';
 part 'workspace_actions.dart';
 
@@ -99,12 +105,17 @@ class WorkspaceScreen extends StatefulWidget {
     required this.savedActive,
     required this.fallbackLocation,
     required this.onSnapshot,
+    required this.platformServices,
     super.key,
   });
 
   final FileRepository files;
   final OperationsService operations;
   final RenameService rename;
+
+  /// Quick Look, the share picker, files dragged to and from other
+  /// applications, as far as this desktop has them.
+  final PlatformServices platformServices;
   final PreferencesService preferences;
   final Logger logger;
   final ShortcutMap shortcutMap;
@@ -138,6 +149,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   final _askedQuestions = <int>{};
   double _splitBeforeKeys = 0.5;
   double _panelsWidth = 0;
+  final _native = _NativeState();
 
   @override
   void initState() {
@@ -157,6 +169,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     for (final progress in widget.operations.current.values) {
       _shownOperations.add(progress.id);
     }
+    _startNative();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _focusOf(_workspace.state.active).requestFocus();
     });
@@ -173,6 +186,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   @override
   void dispose() {
     _progress?.cancel();
+    _native.dispose();
     _snapshotTimer?.cancel();
     for (final timer in _dismissTimers.values) {
       timer.cancel();
@@ -414,7 +428,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       unawaited(_panelMenu(anchor));
     },
     onSwitchPanel: _switchPanel,
-    onShowPreview: () => unawaited(_preview()),
+    onShowPreview: () => unawaited(_spacePreview()),
     onGoHome: () => unawaited(_goStandard((f) => f.home)),
     onGoRoot: () => unawaited(_goStandard((f) => f.root)),
     onVimYank: () => _vimTake(move: false),
@@ -425,6 +439,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     onVimGoMark: (letter) => unawaited(_vimGoMark(letter)),
     onVimCommand: (line) => unawaited(_runVimCommand(line)),
     onVimComplete: _vimComplete,
+    drag: _dragHooksFor(side),
+    onEscape: _escapeQuickLook,
   );
 
   List<AppKeyHint> _splitterHints(BuildContext context) {

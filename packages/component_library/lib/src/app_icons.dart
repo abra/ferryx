@@ -196,6 +196,8 @@ abstract final class AppIcons {
   static const IconData text = LucideIcons.alignLeft;
   static const IconData preview = LucideIcons.scanEye;
   static const IconData wrap = LucideIcons.wrapText;
+  static const IconData quickLook = LucideIcons.eye;
+  static const IconData share = LucideIcons.share;
 
   // Appearance
   static const IconData sun = LucideIcons.sun;

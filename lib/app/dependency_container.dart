@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:monitoring/monitoring.dart';
 import 'package:operations_service/operations_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:platform_services/platform_services.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 
@@ -21,6 +22,7 @@ class DependenciesContainer {
     required this.operations,
     required this.find,
     required this.rename,
+    required this.platformServices,
     required this._resourceDisposer,
     TargetPlatform? platform,
     WindowFrame? windowFrame,
@@ -37,6 +39,10 @@ class DependenciesContainer {
   final OperationsService operations;
   final FindService find;
   final RenameService rename;
+
+  /// What this desktop offers beyond the core: Quick Look, the share
+  /// picker, files dragged to and from other applications.
+  final PlatformServices platformServices;
 
   /// The desktop the app runs on; the default chords follow its
   /// conventions.
@@ -62,6 +68,7 @@ class DependenciesContainer {
       platform,
       vimMotions: vim,
       overrides: overrides,
+      unavailable: unavailableCommands,
     );
     _shortcutMap = (vim, overrides, map);
     return map;
@@ -69,8 +76,21 @@ class DependenciesContainer {
 
   (bool, Map<String, List<String>>, ShortcutMap)? _shortcutMap;
 
+  /// The commands this desktop cannot run: unbound, and left out of the
+  /// menus, the palette, the cheat sheet and the hotkeys.
+  late final Set<AppCommand> unavailableCommands = unavailableCommandsFor(
+    platformServices.capabilities,
+  );
+
   Future<void> dispose() => _resourceDisposer.dispose();
 
   Future<void> disposeAfterBootstrapFailure() =>
       _resourceDisposer.dispose(rollback: true);
 }
+
+/// The commands whose capability [capabilities] lacks.
+Set<AppCommand> unavailableCommandsFor(PlatformCapabilities capabilities) =>
+    Set.unmodifiable({
+      if (!capabilities.quickLook) AppCommand.quickLook,
+      if (!capabilities.share) AppCommand.share,
+    });
