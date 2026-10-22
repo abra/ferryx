@@ -239,4 +239,49 @@ extension _InterfaceActions on _WorkspaceScreenState {
     if (!mounted) return;
     _workspace.markMissing({...gone.nonNulls});
   }
+
+  // ─── Names in an editor ───
+
+  /// ⌃⇧M: the names as text. The selection's, else every row of the
+  /// folder (the rows shown, `..` aside): editing names as lines is for
+  /// many at once, and one alone has rename in place.
+  Future<void> _renameInEditor() async {
+    final tab = _tab;
+    if (tab == null) return;
+    if (!tab.location.isNative) {
+      showAppNotice(context, _l10n.noticeNotInArchive);
+      return;
+    }
+    final items = tab.selected.isNotEmpty
+        ? tab.targets
+        : [
+            for (final row in tab.rows)
+              if (!row.isParent) row,
+          ];
+    if (items.isEmpty) {
+      showAppNotice(context, _l10n.noticeNothingSelected);
+      return;
+    }
+    // Every name of the folder, hidden ones too: a new name must not take
+    // one of them.
+    List<FileEntry> all;
+    try {
+      all = await widget.files.peek(tab.location, showHidden: true);
+    } on FerryxException {
+      all = tab.listing?.entries ?? const [];
+    }
+    if (!mounted) return;
+    final renamed = {for (final item in items) item.name};
+    final changed = await showNamesEditor(
+      context,
+      items: items,
+      existing: {
+        for (final entry in all)
+          if (!entry.isParent && !renamed.contains(entry.name)) entry.name,
+      },
+      rename: widget.rename,
+    );
+    if (changed) await _active.refresh();
+    if (mounted) _focusOf(_workspace.state.active).requestFocus();
+  }
 }

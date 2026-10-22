@@ -2360,4 +2360,117 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get shelfHintRemove => 'take off';
+
+  @override
+  String namesTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Rename $count Items',
+      one: 'Rename 1 Item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String namesHint(String apply, String newline) {
+    return 'One name per line, in the order shown. $apply renames, $newline starts a new line.';
+  }
+
+  @override
+  String namesToRename(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count to rename',
+      one: '1 to rename',
+      zero: 'Nothing renamed yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String namesErrors(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count errors',
+      one: '1 error',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String namesLineCount(int names, int lines) {
+    return 'The names need $names lines; there are $lines';
+  }
+
+  @override
+  String namesProblemEmpty(int line) {
+    return 'Line $line: the name is empty';
+  }
+
+  @override
+  String namesProblemSeparator(int line) {
+    return 'Line $line: a name cannot hold “/”';
+  }
+
+  @override
+  String namesProblemInvalid(int line) {
+    return 'Line $line: no file can have this name';
+  }
+
+  @override
+  String namesProblemDuplicate(int line, int other) {
+    return 'Line $line: the same name as line $other';
+  }
+
+  @override
+  String namesProblemExists(int line, String name) {
+    return 'Line $line: “$name” is in this folder already';
+  }
+
+  @override
+  String namesProblemExtra(int line) {
+    return 'Line $line: there is no item for this line';
+  }
+
+  @override
+  String namesProblemMissing(int line) {
+    return 'Line $line: this item has no line';
+  }
+
+  @override
+  String get namesShortEmpty => 'empty';
+
+  @override
+  String get namesShortSeparator => 'has /';
+
+  @override
+  String get namesShortInvalid => 'not a name';
+
+  @override
+  String get namesShortDuplicate => 'repeated';
+
+  @override
+  String get namesShortExists => 'taken';
+
+  @override
+  String get namesShortExtra => 'extra';
+
+  @override
+  String get namesShortMissing => 'no line';
+
+  @override
+  String get namesDiscardTitle => 'Discard the new names?';
+
+  @override
+  String get namesDiscardMessage =>
+      'The names you typed are lost; nothing is renamed.';
+
+  @override
+  String get namesDiscard => 'Discard';
+
+  @override
+  String get namesKeepEditing => 'Keep Editing';
 }

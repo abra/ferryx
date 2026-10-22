@@ -2401,4 +2401,123 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get shelfHintRemove => 'убрать';
+
+  @override
+  String namesTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Переименовать $count объекта',
+      many: 'Переименовать $count объектов',
+      few: 'Переименовать $count объекта',
+      one: 'Переименовать $count объект',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String namesHint(String apply, String newline) {
+    return 'По имени на строку, в показанном порядке. $apply переименовывает, $newline начинает новую строку.';
+  }
+
+  @override
+  String namesToRename(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count к переименованию',
+      many: '$count к переименованию',
+      few: '$count к переименованию',
+      one: '$count к переименованию',
+      zero: 'Пока ничего не меняется',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String namesErrors(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ошибки',
+      many: '$count ошибок',
+      few: '$count ошибки',
+      one: '$count ошибка',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String namesLineCount(int names, int lines) {
+    return 'Для имён нужно строк: $names, а их $lines';
+  }
+
+  @override
+  String namesProblemEmpty(int line) {
+    return 'Строка $line: пустое имя';
+  }
+
+  @override
+  String namesProblemSeparator(int line) {
+    return 'Строка $line: в имени не может быть «/»';
+  }
+
+  @override
+  String namesProblemInvalid(int line) {
+    return 'Строка $line: такого имени у файла быть не может';
+  }
+
+  @override
+  String namesProblemDuplicate(int line, int other) {
+    return 'Строка $line: то же имя, что в строке $other';
+  }
+
+  @override
+  String namesProblemExists(int line, String name) {
+    return 'Строка $line: «$name» уже есть в этой папке';
+  }
+
+  @override
+  String namesProblemExtra(int line) {
+    return 'Строка $line: для этой строки нет объекта';
+  }
+
+  @override
+  String namesProblemMissing(int line) {
+    return 'Строка $line: для этого объекта нет строки';
+  }
+
+  @override
+  String get namesShortEmpty => 'пусто';
+
+  @override
+  String get namesShortSeparator => 'есть /';
+
+  @override
+  String get namesShortInvalid => 'не имя';
+
+  @override
+  String get namesShortDuplicate => 'повтор';
+
+  @override
+  String get namesShortExists => 'занято';
+
+  @override
+  String get namesShortExtra => 'лишняя';
+
+  @override
+  String get namesShortMissing => 'нет строки';
+
+  @override
+  String get namesDiscardTitle => 'Отменить новые имена?';
+
+  @override
+  String get namesDiscardMessage =>
+      'Введённые имена пропадут, ничего не переименуется.';
+
+  @override
+  String get namesDiscard => 'Не сохранять';
+
+  @override
+  String get namesKeepEditing => 'Продолжить';
 }

@@ -100,11 +100,14 @@ class WorkspaceHarness {
     if (rows == null) {
       throw FerryxException(FerryxErrorKind.notFound, location.path);
     }
-    final sorted = [...rows]
-      ..sort((a, b) {
-        if (a.isDir != b.isDir) return a.isDir ? -1 : 1;
-        return a.name.compareTo(b.name);
-      });
+    final sorted =
+        [
+          for (final row in rows)
+            if (options.showHidden || !row.name.startsWith('.')) row,
+        ]..sort((a, b) {
+          if (a.isDir != b.isDir) return a.isDir ? -1 : 1;
+          return a.name.compareTo(b.name);
+        });
     final parent = location.parent;
     return Listing(
       location: location,
@@ -184,7 +187,11 @@ class WorkspaceHarness {
       () => files.peek(any(), showHidden: any(named: 'showHidden')),
     ).thenAnswer((call) async {
       final location = call.positionalArguments[0] as Location;
-      return [...?folders[location.path]];
+      final hidden = call.namedArguments[#showHidden] as bool? ?? false;
+      return [
+        for (final row in folders[location.path] ?? const <FileEntry>[])
+          if (hidden || !row.name.startsWith('.')) row,
+      ];
     });
     when(() => files.standardFolders()).thenReturn(
       const StandardFolders(

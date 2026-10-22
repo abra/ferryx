@@ -4153,6 +4153,144 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'take off'**
   String get shelfHintRemove;
+
+  /// No description provided for @namesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Rename 1 Item} other{Rename {count} Items}}'**
+  String namesTitle(int count);
+
+  /// No description provided for @namesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One name per line, in the order shown. {apply} renames, {newline} starts a new line.'**
+  String namesHint(String apply, String newline);
+
+  /// No description provided for @namesToRename.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing renamed yet} =1{1 to rename} other{{count} to rename}}'**
+  String namesToRename(int count);
+
+  /// No description provided for @namesErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 error} other{{count} errors}}'**
+  String namesErrors(int count);
+
+  /// No description provided for @namesLineCount.
+  ///
+  /// In en, this message translates to:
+  /// **'The names need {names} lines; there are {lines}'**
+  String namesLineCount(int names, int lines);
+
+  /// No description provided for @namesProblemEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: the name is empty'**
+  String namesProblemEmpty(int line);
+
+  /// No description provided for @namesProblemSeparator.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: a name cannot hold “/”'**
+  String namesProblemSeparator(int line);
+
+  /// No description provided for @namesProblemInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: no file can have this name'**
+  String namesProblemInvalid(int line);
+
+  /// No description provided for @namesProblemDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: the same name as line {other}'**
+  String namesProblemDuplicate(int line, int other);
+
+  /// No description provided for @namesProblemExists.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: “{name}” is in this folder already'**
+  String namesProblemExists(int line, String name);
+
+  /// No description provided for @namesProblemExtra.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: there is no item for this line'**
+  String namesProblemExtra(int line);
+
+  /// No description provided for @namesProblemMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Line {line}: this item has no line'**
+  String namesProblemMissing(int line);
+
+  /// No description provided for @namesShortEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'empty'**
+  String get namesShortEmpty;
+
+  /// No description provided for @namesShortSeparator.
+  ///
+  /// In en, this message translates to:
+  /// **'has /'**
+  String get namesShortSeparator;
+
+  /// No description provided for @namesShortInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'not a name'**
+  String get namesShortInvalid;
+
+  /// No description provided for @namesShortDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'repeated'**
+  String get namesShortDuplicate;
+
+  /// No description provided for @namesShortExists.
+  ///
+  /// In en, this message translates to:
+  /// **'taken'**
+  String get namesShortExists;
+
+  /// No description provided for @namesShortExtra.
+  ///
+  /// In en, this message translates to:
+  /// **'extra'**
+  String get namesShortExtra;
+
+  /// No description provided for @namesShortMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'no line'**
+  String get namesShortMissing;
+
+  /// No description provided for @namesDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard the new names?'**
+  String get namesDiscardTitle;
+
+  /// No description provided for @namesDiscardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The names you typed are lost; nothing is renamed.'**
+  String get namesDiscardMessage;
+
+  /// No description provided for @namesDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get namesDiscard;
+
+  /// No description provided for @namesKeepEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Editing'**
+  String get namesKeepEditing;
 }
 
 class _FerryxLocalizationsDelegate

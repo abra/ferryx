@@ -18,6 +18,7 @@ import '../dialogs/copy_move_dialog.dart';
 import '../dialogs/favorites_dialog.dart';
 import '../dialogs/go_to_menus.dart';
 import '../dialogs/jump_to_folder.dart';
+import '../dialogs/names_editor_dialog.dart';
 import '../dialogs/question_dialog.dart';
 import '../dialogs/simple_dialogs.dart';
 import '../operations/operations_cards.dart';

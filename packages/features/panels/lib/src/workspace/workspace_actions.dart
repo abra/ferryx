@@ -210,6 +210,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     AppCommand.jumpToFolder: () => unawaited(_jumpToFolder()),
     AppCommand.addToShelf: () => _shelveTargets(cut: false, replace: false),
     AppCommand.toggleShelf: _toggleShelf,
+    AppCommand.renameInEditor: () => unawaited(_renameInEditor()),
   };
 
   // ─── Opening ───

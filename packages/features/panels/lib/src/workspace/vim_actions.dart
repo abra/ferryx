@@ -153,6 +153,8 @@ extension _VimActions on _WorkspaceScreenState {
         await _vimJump(arg);
       case 'shelf':
         _toggleShelf();
+      case 'names':
+        await _renameInEditor();
       default:
         showAppNotice(context, _l10n.vimUnknownCommand(name));
     }
@@ -412,6 +414,7 @@ extension _VimActions on _WorkspaceScreenState {
     'trash',
     'view',
     // ─── Interface ───
+    'names',
     'shelf',
     'z',
   ];
