@@ -4109,7 +4109,7 @@ abstract class FerryxLocalizations {
   /// No description provided for @shelfRemove.
   ///
   /// In en, this message translates to:
-  /// **'Take off the shelf'**
+  /// **'Remove from the shelf'**
   String get shelfRemove;
 
   /// No description provided for @shelfMissing.
@@ -4151,7 +4151,7 @@ abstract class FerryxLocalizations {
   /// No description provided for @shelfHintRemove.
   ///
   /// In en, this message translates to:
-  /// **'Take off'**
+  /// **'Remove'**
   String get shelfHintRemove;
 
   /// No description provided for @namesTitle.

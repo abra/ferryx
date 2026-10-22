@@ -2335,7 +2335,7 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   }
 
   @override
-  String get shelfRemove => 'Take off the shelf';
+  String get shelfRemove => 'Remove from the shelf';
 
   @override
   String get shelfMissing => 'no longer there';
@@ -2359,7 +2359,7 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get shelfHintReveal => 'Show in the panel';
 
   @override
-  String get shelfHintRemove => 'Take off';
+  String get shelfHintRemove => 'Remove';
 
   @override
   String namesTitle(int count) {
