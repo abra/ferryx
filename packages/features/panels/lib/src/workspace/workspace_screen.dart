@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
@@ -29,10 +30,13 @@ import '../panel/saved_panel.dart';
 import '../path_text.dart';
 import 'context_menu.dart';
 import 'key_hints.dart';
+import 'terminal_dock.dart';
 import 'vim_register.dart';
 import 'workspace_cubit.dart';
 import 'workspace_state.dart';
+import 'workspace_terminal.dart';
 
+part 'terminal_actions.dart';
 part 'vim_actions.dart';
 part 'workspace_actions.dart';
 
@@ -99,6 +103,7 @@ class WorkspaceScreen extends StatefulWidget {
     required this.savedActive,
     required this.fallbackLocation,
     required this.onSnapshot,
+    this.terminal,
     super.key,
   });
 
@@ -117,6 +122,10 @@ class WorkspaceScreen extends StatefulWidget {
   /// Where a panel opens when it has nothing saved: the home folder.
   final Location fallbackLocation;
   final ValueChanged<WorkspaceSnapshot> onSnapshot;
+
+  /// The integrated terminal; none without it (the terminal's commands
+  /// then do nothing).
+  final WorkspaceTerminal? terminal;
 
   @override
   State<WorkspaceScreen> createState() => _WorkspaceScreenState();
@@ -139,6 +148,20 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   double _splitBeforeKeys = 0.5;
   double _panelsWidth = 0;
 
+  // ─── Terminal ───
+  WorkspaceTerminalController? _terminal;
+  late final TerminalDockCubit _dock;
+  final _terminalFocus = FocusNode(debugLabel: 'terminal');
+  final _terminalEdgeFocus = FocusNode(debugLabel: 'terminal edge');
+  final _terminalSubscriptions = <StreamSubscription<Object?>>[];
+  Timer? _dockTimer;
+  String? _followed;
+  int _linesBeforeKeys = TerminalDock.defaultLines;
+  double _dragLines = 0;
+
+  /// The height the panels and the terminal share.
+  double _terminalArea = 0;
+
   @override
   void initState() {
     super.initState();
@@ -151,14 +174,25 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     );
     _left = _panel(PanelSide.left);
     _right = _panel(PanelSide.right);
-    unawaited(_left.start(widget.savedLeft, widget.fallbackLocation));
-    unawaited(_right.start(widget.savedRight, widget.fallbackLocation));
+    _initTerminal();
+    unawaited(
+      Future.wait([
+        _left.start(widget.savedLeft, widget.fallbackLocation),
+        _right.start(widget.savedRight, widget.fallbackLocation),
+      ]).then((_) => _restoreTerminal()),
+    );
     _progress = widget.operations.progress.listen(_onProgress);
     for (final progress in widget.operations.current.values) {
       _shownOperations.add(progress.id);
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _focusOf(_workspace.state.active).requestFocus();
+      if (!mounted) return;
+      // A terminal left over the panels' place keeps the keys.
+      if (_terminal != null && !_dock.state.panelsShown) {
+        _terminalFocus.requestFocus();
+      } else {
+        _focusOf(_workspace.state.active).requestFocus();
+      }
     });
   }
 
@@ -178,6 +212,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       timer.cancel();
     }
     _snapshotNow();
+    _disposeTerminal();
     _left.close();
     _right.close();
     _workspace.close();
@@ -288,118 +323,191 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     return MultiBlocProvider(
       providers: [BlocProvider.value(value: _workspace)],
       child: BlocBuilder<WorkspaceCubit, WorkspaceState>(
-        builder: (context, workspace) => PreferenceBuilder<Preferences>(
-          service: widget.preferences,
-          select: (p) => p,
-          builder: (context, prefs) => Scaffold(
-            backgroundColor: context.appColors.window,
-            body: CommandHandlers(
-              handlers: _globalHandlers(context),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: CommandShortcuts(
-                            shortcuts: widget.shortcutMap.toShortcuts(
-                              Theme.of(context).platform,
-                              scopes: const {CommandScope.panel},
-                            ),
+        builder: (context, workspace) =>
+            BlocBuilder<TerminalDockCubit, TerminalDock>(
+              bloc: _dock,
+              builder: (context, dock) => PreferenceBuilder<Preferences>(
+                service: widget.preferences,
+                select: (p) => p,
+                builder: (context, prefs) {
+                  final terminal = widget.terminal;
+                  final controller = _terminal;
+                  final terminalShown =
+                      terminal != null && controller != null && dock.shown;
+                  return Scaffold(
+                    backgroundColor: context.appColors.window,
+                    body: CommandHandlers(
+                      handlers: _globalHandlers(context),
+                      child: Column(
+                        children: [
+                          Expanded(
                             child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                _panelsWidth = constraints.maxWidth;
-                                return _Panels(
-                                  workspace: workspace,
-                                  prefs: prefs,
-                                  cubitOf: _cubitOf,
-                                  decor: widget.windowDecor,
-                                  shortcutMap: widget.shortcutMap,
-                                  splitterFocus: _splitterFocus,
-                                  leftFocus: _leftFocus,
-                                  rightFocus: _rightFocus,
-                                  leftCursor: _leftCursor,
-                                  rightCursor: _rightCursor,
-                                  hooksFor: _hooksFor,
-                                  registerNote: _registerNote(
-                                    l10n,
-                                    workspace.register,
+                              builder: (context, area) {
+                                _terminalArea = area.maxHeight;
+                                return _PanelsAndTerminal(
+                                  dock: dock,
+                                  terminalHeight: terminalShown
+                                      ? _terminalHeight(
+                                          context,
+                                          area.maxHeight,
+                                        )
+                                      : 0,
+                                  panels: CommandShortcuts(
+                                    shortcuts: widget.shortcutMap.toShortcuts(
+                                      Theme.of(context).platform,
+                                      scopes: const {CommandScope.panel},
+                                    ),
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        _panelsWidth = constraints.maxWidth;
+                                        return _Panels(
+                                          workspace: workspace,
+                                          prefs: prefs,
+                                          cubitOf: _cubitOf,
+                                          decor: widget.windowDecor,
+                                          shortcutMap: widget.shortcutMap,
+                                          splitterFocus: _splitterFocus,
+                                          leftFocus: _leftFocus,
+                                          rightFocus: _rightFocus,
+                                          leftCursor: _leftCursor,
+                                          rightCursor: _rightCursor,
+                                          hooksFor: _hooksFor,
+                                          registerNote: _registerNote(
+                                            l10n,
+                                            workspace.register,
+                                          ),
+                                          splitterValue: l10n.textSizePercent(
+                                            (workspace.splitFraction * 100)
+                                                .round(),
+                                          ),
+                                          splitterHints: _splitterHints(
+                                            context,
+                                          ),
+                                          onSplitterAction: _onSplitterAction,
+                                          onSplitterDrag: (delta) {
+                                            if (_panelsWidth > 0) {
+                                              _workspace.moveSplit(
+                                                delta / _panelsWidth,
+                                              );
+                                            }
+                                          },
+                                          onSplitterDragEnd: _scheduleSnapshot,
+                                          width: constraints.maxWidth,
+                                        );
+                                      },
+                                    ),
                                   ),
-                                  splitterValue: l10n.textSizePercent(
-                                    (workspace.splitFraction * 100).round(),
-                                  ),
-                                  splitterHints: _splitterHints(context),
-                                  onSplitterAction: _onSplitterAction,
-                                  onSplitterDrag: (delta) {
-                                    if (_panelsWidth > 0) {
-                                      _workspace.moveSplit(
-                                        delta / _panelsWidth,
-                                      );
-                                    }
-                                  },
-                                  onSplitterDragEnd: _scheduleSnapshot,
-                                  width: constraints.maxWidth,
+                                  terminal: terminalShown
+                                      ? terminal.builder(
+                                          context,
+                                          controller,
+                                          WorkspaceTerminalView(
+                                            focusNode: _terminalFocus,
+                                            panelsHidden:
+                                                dock.mode ==
+                                                TerminalPlace.panelsHidden,
+                                            fullWindow:
+                                                dock.mode ==
+                                                TerminalPlace.fullWindow,
+                                            decor: widget.windowDecor,
+                                            onHide: _hideTerminal,
+                                            onTogglePanels:
+                                                _togglePanelsOverTerminal,
+                                            onToggleFullWindow:
+                                                _toggleTerminalWindow,
+                                          ),
+                                        )
+                                      : null,
+                                  edge: terminalShown
+                                      ? AppSplitter(
+                                          focusNode: _terminalEdgeFocus,
+                                          axis: Axis.vertical,
+                                          line: AppSplitterLine.center,
+                                          title: l10n.terminalHeightTitle,
+                                          value: l10n.terminalLineCount(
+                                            dock.lines,
+                                          ),
+                                          hints: _terminalEdgeHints(context),
+                                          onAction: _onTerminalEdgeAction,
+                                          onDragStart: _onTerminalEdgeDragStart,
+                                          onDragUpdate: _onTerminalEdgeDrag,
+                                          onDragEnd: _saveDockSoon,
+                                        )
+                                      : null,
+                                  cards: workspace.operationsShown
+                                      ? OperationsCards(
+                                          operations: _operations,
+                                          onPause: (id) => unawaited(
+                                            widget.operations.pause(id),
+                                          ),
+                                          onResume: (id) => unawaited(
+                                            widget.operations.resume(id),
+                                          ),
+                                          onCancel: (id) => unawaited(
+                                            widget.operations.cancel(id),
+                                          ),
+                                          onDismiss: _dismissOperation,
+                                          onAnswer: (progress) {
+                                            final question = progress.question;
+                                            if (question != null) {
+                                              _askedQuestions.add(question.id);
+                                              unawaited(
+                                                _ask(progress.id, question),
+                                              );
+                                            }
+                                          },
+                                        )
+                                      : null,
                                 );
                               },
                             ),
                           ),
-                        ),
-                        if (workspace.operationsShown)
-                          Positioned(
-                            right: AppSpacing.md,
-                            bottom:
-                                AppSpacing.md + PanelFooter.heightOf(context),
-                            child: OperationsCards(
-                              operations: _operations,
-                              onPause: (id) =>
-                                  unawaited(widget.operations.pause(id)),
-                              onResume: (id) =>
-                                  unawaited(widget.operations.resume(id)),
-                              onCancel: (id) =>
-                                  unawaited(widget.operations.cancel(id)),
-                              onDismiss: _dismissOperation,
-                              onAnswer: (progress) {
-                                final question = progress.question;
-                                if (question != null) {
-                                  _askedQuestions.add(question.id);
-                                  unawaited(_ask(progress.id, question));
-                                }
-                              },
+                          // The keys for what is under the cursor or selected
+                          // in the active panel, or the terminal's while it
+                          // has the keys, until the user hides the line.
+                          if (prefs.showKeyHints &&
+                              dock.mode != TerminalPlace.fullWindow)
+                            ListenableBuilder(
+                              listenable: _terminalFocus,
+                              builder: (context, _) =>
+                                  terminalShown && _terminalFocus.hasFocus
+                                  ? KeyHintStrip(
+                                      hints: terminalHintsFor(dock.mode),
+                                      shortcutMap: widget.shortcutMap,
+                                      vim: false,
+                                      onHide: () => _hideKeyHints(context),
+                                    )
+                                  : BlocBuilder<PanelCubit, PanelState>(
+                                      bloc: _cubitOf(workspace.active),
+                                      builder: (context, panel) => KeyHintStrip(
+                                        hints: hintsFor(
+                                          tab: panel.active,
+                                          vim: prefs.vimMode,
+                                          hasRegister:
+                                              workspace.register != null,
+                                        ),
+                                        shortcutMap: widget.shortcutMap,
+                                        vim: prefs.vimMode,
+                                        onHide: () => _hideKeyHints(context),
+                                      ),
+                                    ),
                             ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  // The keys for what is under the cursor or selected in the
-                  // active panel, until the user hides the line.
-                  if (prefs.showKeyHints)
-                    BlocBuilder<PanelCubit, PanelState>(
-                      bloc: _cubitOf(workspace.active),
-                      builder: (context, panel) => KeyHintStrip(
-                        hints: hintsFor(
-                          tab: panel.active,
-                          vim: prefs.vimMode,
-                          hasRegister: workspace.register != null,
-                        ),
-                        shortcutMap: widget.shortcutMap,
-                        vim: prefs.vimMode,
-                        onHide: () {
-                          unawaited(
-                            widget.preferences.update(
-                              (p) => p.copyWith(showKeyHints: false),
-                            ),
-                          );
-                          showAppNotice(context, l10n.hintsHidden);
-                        },
+                        ],
                       ),
                     ),
-                ],
+                  );
+                },
               ),
             ),
-          ),
-        ),
       ),
     );
+  }
+
+  void _hideKeyHints(BuildContext context) {
+    unawaited(
+      widget.preferences.update((p) => p.copyWith(showKeyHints: false)),
+    );
+    showAppNotice(context, context.l10n.hintsHidden);
   }
 
   PanelHooks _hooksFor(PanelSide side) => PanelHooks(

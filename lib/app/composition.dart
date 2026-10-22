@@ -15,6 +15,7 @@ import 'package:monitoring/monitoring.dart';
 import 'package:operations_service/operations_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:preferences_service/preferences_service.dart';
+import 'package:terminal_service/terminal_service.dart';
 
 /// The app's strings where no widget tree is yet: the language chosen in
 /// the preferences, else the system's when the app speaks it, else English.
@@ -54,6 +55,10 @@ Future<DependenciesContainer> composeDependencies({
     final find = FindService(backend: backend);
     resources.add('find.dispose', find.dispose);
 
+    // ─── Terminal ───
+    final terminal = TerminalService();
+    resources.add('terminal.dispose', terminal.dispose);
+
     stopwatch.stop();
     logger.info('Dependencies ready in ${stopwatch.elapsedMilliseconds} ms');
 
@@ -66,6 +71,7 @@ Future<DependenciesContainer> composeDependencies({
       operations: operations,
       find: find,
       rename: const RenameService(),
+      terminal: terminal,
       resourceDisposer: resources,
       windowFrame: windowFrame,
     );

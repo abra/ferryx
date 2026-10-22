@@ -9,12 +9,14 @@ import 'dart:async';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx/app/dependency_container.dart';
 import 'package:ferryx/app/dialog_page.dart';
+import 'package:ferryx/app/terminal_link.dart';
 import 'package:ferryx/app/window_chrome.dart';
 import 'package:find_feature/find_feature.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:panels_feature/panels_feature.dart';
 import 'package:settings_feature/settings_feature.dart';
+import 'package:terminal_feature/terminal_feature.dart';
 import 'package:viewer_feature/viewer_feature.dart';
 
 /// Route paths.
@@ -87,6 +89,7 @@ GoRouter buildRouter({
             initialSection: state.extra is SettingsSection
                 ? state.extra! as SettingsSection
                 : SettingsSection.general,
+            defaultShell: deps.terminal.defaultShell(),
             onClose: () => context.pop(),
           ),
         ),
@@ -130,6 +133,27 @@ class _WorkspaceRoute extends StatelessWidget {
             ? PanelSide.right
             : PanelSide.left,
         fallbackLocation: Location.native(home),
+        terminal: WorkspaceTerminal(
+          create: () => TerminalLink(
+            service: deps.terminal,
+            preferences: deps.preferencesService,
+            platform: deps.platform,
+          ),
+          builder: (context, controller, view) => TerminalPane(
+            cubit: TerminalLink.of(controller).cubit,
+            focusNode: view.focusNode,
+            shortcutMap: deps.shortcutMap,
+            fontSize: deps.preferencesService.current.terminal.fontSize,
+            placement: TerminalPlacement(
+              panelsHidden: view.panelsHidden,
+              fullWindow: view.fullWindow,
+              decor: view.decor,
+            ),
+            onHide: view.onHide,
+            onTogglePanels: view.onTogglePanels,
+            onToggleFullWindow: view.onToggleFullWindow,
+          ),
+        ),
         onSnapshot: (snapshot) {
           windowTitle.location =
               (snapshot.active == PanelSide.left

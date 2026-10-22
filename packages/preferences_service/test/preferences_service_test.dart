@@ -48,7 +48,7 @@ void main() {
           fontSize: 14,
           scrollback: 20000,
           lines: 20,
-          shown: true,
+          place: TerminalPlace.fullWindow,
         ),
       );
       expect(Preferences.fromJson(prefs.toJson()), prefs);
@@ -61,7 +61,7 @@ void main() {
           'fontSize': 200,
           'scrollback': 5,
           'lines': -3,
-          'shown': 'yes',
+          'place': 'sideways',
         }),
         const TerminalPreferences(
           shell: '/bin/zsh',

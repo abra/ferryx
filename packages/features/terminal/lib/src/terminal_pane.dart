@@ -64,10 +64,11 @@ class TerminalPane extends StatefulWidget {
 
   /// The height of one line of the terminal's text at [fontSize], for
   /// sizing the terminal by lines.
-  static double lineHeightOf(BuildContext context, double fontSize) {
-    final look = TerminalLook();
-    return look.cellOf(look.styleOf(context, fontSize)).height;
-  }
+  static double lineHeightOf(BuildContext context, double fontSize) =>
+      _measure.cellOf(_measure.styleOf(context, fontSize)).height;
+
+  /// Measures once per face and size, however often the window asks.
+  static final _measure = TerminalLook();
 
   /// The height the terminal takes besides its lines: its bar and the
   /// emulator's margins, when it sits under the panels.
@@ -376,13 +377,15 @@ class TerminalBar extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.sm),
               Flexible(
+                // The window's title where the bar is the top row; a quiet
+                // label under the panels.
                 child: AppMiddleEllipsis(
                   title,
-                  style:
-                      (topRow
-                              ? context.text.titleSmall
-                              : context.text.bodySmall)!
-                          .copyWith(color: colors.textMuted),
+                  style: topRow
+                      ? context.text.titleSmall!
+                      : context.text.bodySmall!.copyWith(
+                          color: colors.textMuted,
+                        ),
                 ),
               ),
             ],

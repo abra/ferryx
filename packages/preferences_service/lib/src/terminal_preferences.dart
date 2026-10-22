@@ -1,6 +1,20 @@
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
+/// Where the integrated terminal is in the window, as in Nimble Commander.
+enum TerminalPlace {
+  hidden,
+
+  /// Under the panels.
+  overlapped,
+
+  /// In the panels' place; they come back over it.
+  panelsHidden,
+
+  /// Over the whole window.
+  fullWindow,
+}
+
 /// The integrated terminal's settings and its place in the window.
 @immutable
 class TerminalPreferences extends Equatable {
@@ -9,7 +23,7 @@ class TerminalPreferences extends Equatable {
     this.fontSize = 12,
     this.scrollback = 10000,
     this.lines = defaultLines,
-    this.shown = false,
+    this.place = TerminalPlace.hidden,
   });
 
   static const defaultLines = 12;
@@ -31,21 +45,21 @@ class TerminalPreferences extends Equatable {
   /// The terminal's height under the panels, in lines.
   final int lines;
 
-  /// The terminal was shown under the panels when the window closed.
-  final bool shown;
+  /// Where the terminal was when the window closed.
+  final TerminalPlace place;
 
   TerminalPreferences copyWith({
     String? shell,
     double? fontSize,
     int? scrollback,
     int? lines,
-    bool? shown,
+    TerminalPlace? place,
   }) => TerminalPreferences(
     shell: shell ?? this.shell,
     fontSize: fontSize ?? this.fontSize,
     scrollback: scrollback ?? this.scrollback,
     lines: lines ?? this.lines,
-    shown: shown ?? this.shown,
+    place: place ?? this.place,
   );
 
   Map<String, Object?> toJson() => {
@@ -53,7 +67,7 @@ class TerminalPreferences extends Equatable {
     'fontSize': fontSize,
     'scrollback': scrollback,
     'lines': lines,
-    'shown': shown,
+    'place': place.name,
   };
 
   /// Tolerant: what is missing or malformed takes its default, numbers are
@@ -79,10 +93,10 @@ class TerminalPreferences extends Equatable {
         json['lines'],
         defaults.lines,
       ).round().clamp(minLines, maxLines),
-      shown: json['shown'] is bool ? json['shown']! as bool : defaults.shown,
+      place: TerminalPlace.values.asNameMap()[json['place']] ?? defaults.place,
     );
   }
 
   @override
-  List<Object?> get props => [shell, fontSize, scrollback, lines, shown];
+  List<Object?> get props => [shell, fontSize, scrollback, lines, place];
 }

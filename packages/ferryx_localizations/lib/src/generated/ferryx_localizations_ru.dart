@@ -2285,13 +2285,17 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String terminalLineCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count строки',
-      many: '$count строк',
-      few: '$count строки',
-      one: '$count строка',
+      other: '$countString строки',
+      many: '$countString строк',
+      few: '$countString строки',
+      one: '$countString строка',
     );
     return '$_temp0';
   }

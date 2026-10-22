@@ -10,11 +10,21 @@ import 'pages/editors_page.dart';
 import 'pages/general_page.dart';
 import 'pages/hotkeys_page.dart';
 import 'pages/panels_page.dart';
+import 'pages/terminal_page.dart';
 import 'pages/tools_page.dart';
 import 'pages/viewer_page.dart';
 
 /// The pages of the settings window.
-enum SettingsSection { general, panels, viewer, hotkeys, editors, tools, about }
+enum SettingsSection {
+  general,
+  panels,
+  viewer,
+  terminal,
+  hotkeys,
+  editors,
+  tools,
+  about,
+}
 
 /// The settings window: a navigation column of pages on the left, the
 /// page on the right; every change is written at once.
@@ -25,6 +35,7 @@ class SettingsScreen extends StatefulWidget {
     required this.version,
     required this.onClose,
     this.initialSection = SettingsSection.general,
+    this.defaultShell = '',
     super.key,
   });
 
@@ -33,6 +44,9 @@ class SettingsScreen extends StatefulWidget {
   final String version;
   final SettingsSection initialSection;
   final VoidCallback onClose;
+
+  /// The shell the terminal runs when none is set (for the field's hint).
+  final String defaultShell;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -50,7 +64,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   static const _groups = [
-    [SettingsSection.general, SettingsSection.panels, SettingsSection.viewer],
+    [
+      SettingsSection.general,
+      SettingsSection.panels,
+      SettingsSection.viewer,
+      SettingsSection.terminal,
+    ],
     [SettingsSection.hotkeys],
     [SettingsSection.editors, SettingsSection.tools, SettingsSection.about],
   ];
@@ -112,6 +131,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         platform: widget.platform,
                         shortcutMap: map,
                         version: widget.version,
+                        defaultShell: widget.defaultShell,
                         onClose: widget.onClose,
                       ),
                     ),
@@ -132,6 +152,7 @@ String sectionLabel(FerryxLocalizations l10n, SettingsSection section) =>
       SettingsSection.general => l10n.settingsGeneral,
       SettingsSection.panels => l10n.settingsPanels,
       SettingsSection.viewer => l10n.settingsViewer,
+      SettingsSection.terminal => l10n.settingsTerminal,
       SettingsSection.hotkeys => l10n.settingsHotkeys,
       SettingsSection.editors => l10n.settingsEditors,
       SettingsSection.tools => l10n.settingsTools,
@@ -181,6 +202,12 @@ List<String> sectionTerms(
     for (final layout in prefs.layouts) layout.name,
   ],
   SettingsSection.viewer => [l10n.viewerWrapLabel, l10n.viewerFontSizeLabel],
+  SettingsSection.terminal => [
+    l10n.terminalTitle,
+    l10n.terminalShellLabel,
+    l10n.terminalFontSizeLabel,
+    l10n.terminalScrollbackLabel,
+  ],
   SettingsSection.hotkeys => [
     l10n.hotkeysReset,
     for (final scope in CommandScope.values) l10n.scopeLabel(scope),
@@ -207,6 +234,7 @@ IconData _sectionIcon(SettingsSection section) => switch (section) {
   SettingsSection.general => AppIcons.settings,
   SettingsSection.panels => AppIcons.dualPane,
   SettingsSection.viewer => AppIcons.preview,
+  SettingsSection.terminal => AppIcons.terminal,
   SettingsSection.hotkeys => AppIcons.keyboard,
   SettingsSection.editors => AppIcons.edit,
   SettingsSection.tools => AppIcons.wrench,
@@ -321,6 +349,7 @@ class _Content extends StatelessWidget {
     required this.platform,
     required this.shortcutMap,
     required this.version,
+    required this.defaultShell,
     required this.onClose,
   });
 
@@ -330,6 +359,7 @@ class _Content extends StatelessWidget {
   final TargetPlatform platform;
   final ShortcutMap shortcutMap;
   final String version;
+  final String defaultShell;
   final VoidCallback onClose;
 
   @override
@@ -341,6 +371,11 @@ class _Content extends StatelessWidget {
       SettingsSection.general => GeneralPage(prefs: prefs, service: service),
       SettingsSection.panels => PanelsPage(prefs: prefs, service: service),
       SettingsSection.viewer => ViewerPage(prefs: prefs, service: service),
+      SettingsSection.terminal => TerminalPage(
+        prefs: prefs,
+        service: service,
+        defaultShell: defaultShell,
+      ),
       SettingsSection.hotkeys => HotkeysPage(
         prefs: prefs,
         service: service,

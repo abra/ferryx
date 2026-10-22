@@ -746,7 +746,7 @@
   "terminalFontSizeLabel": "Font size",
   "terminalScrollbackLabel": "Lines kept to scroll back",
   "terminalLineCount": "{count, plural, one{{count} line} other{{count} lines}}",
-  "@terminalLineCount": {"placeholders": {"count": {"type": "int"}}},
+  "@terminalLineCount": {"placeholders": {"count": {"type": "int", "format": "decimalPattern"}}},
   "terminalHeightTitle": "Terminal height",
   "terminalHeightHintArrows": "Line by line",
   "terminalHeightHintZero": "Default height",

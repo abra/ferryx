@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:settings_feature/settings_feature.dart';
+import 'package:settings_feature/src/pages/terminal_page.dart';
+import 'package:settings_feature/src/settings_rows.dart';
 
 import 'support.dart';
 
@@ -36,6 +38,7 @@ void main() {
         SettingsSection.general => en.settingsGeneral,
         SettingsSection.panels => en.settingsPanels,
         SettingsSection.viewer => en.settingsViewer,
+        SettingsSection.terminal => en.settingsTerminal,
         SettingsSection.hotkeys => en.settingsHotkeys,
         SettingsSection.editors => en.settingsEditors,
         SettingsSection.tools => en.settingsTools,
@@ -46,6 +49,51 @@ void main() {
       expect(find.text(label), findsNWidgets(2), reason: '$section title');
     }
     expect(find.text(en.aboutVersion('0.1.0')), findsOneWidget);
+  });
+
+  testWidgets('the terminal page: the shell is written when the field is '
+      'done, the size and the scrollback at once', (tester) async {
+    final service = await testPreferences();
+    await pumpScreen(
+      tester,
+      SettingsScreen(
+        preferencesService: service,
+        platform: TargetPlatform.macOS,
+        version: '0.1.0',
+        initialSection: SettingsSection.terminal,
+        defaultShell: '/bin/zsh',
+        onClose: () {},
+      ),
+    );
+    expect(find.text(en.terminalShellDefault('/bin/zsh')), findsOneWidget);
+    final field = find.byType(ShellField);
+    await tester.enterText(
+      find.descendant(of: field, matching: find.byType(TextField)),
+      '  /opt/homebrew/bin/fish ',
+    );
+    await tester.pump();
+    // Not at every key: the preferences are saved whole.
+    expect(service.current.terminal.shell, isEmpty);
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(service.current.terminal.shell, '/opt/homebrew/bin/fish');
+
+    await tester.tap(find.text(en.terminalLineCount(10000)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.terminalLineCount(50000)).last);
+    await tester.pumpAndSettle();
+    expect(service.current.terminal.scrollback, 50000);
+
+    final slider = find.descendant(
+      of: find.ancestor(
+        of: find.text(en.terminalFontSizeLabel),
+        matching: find.byType(SliderRow),
+      ),
+      matching: find.byType(Slider),
+    );
+    await tester.tap(slider);
+    await tester.pumpAndSettle();
+    expect(service.current.terminal.fontSize, isNot(12));
   });
 
   testWidgets('a toggle writes the preference at once', (tester) async {

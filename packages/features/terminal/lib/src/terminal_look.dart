@@ -41,7 +41,7 @@ class TerminalLook {
     if (cached != null && _sameAs(_themeKey, key)) return cached;
     _themeKey = key;
     return _theme = TerminalTheme(
-      cursor: app.accent.withValues(alpha: 0.6),
+      cursor: app.accent.withValues(alpha: 0.7),
       selection: selection,
       foreground: scheme.onSurface,
       background: scheme.surface,
@@ -79,9 +79,21 @@ class TerminalLook {
       fontSize: fontSize,
       height: lineHeightFactor,
       fontFamily: type.monoFamily,
-      fontFamilyFallback: type.monoFallback,
+      fontFamilyFallback: [...type.monoFallback, ...symbolFonts],
     );
   }
+
+  /// Faces with the icons shell prompts draw (Powerline, Nerd Fonts) in
+  /// the Private Use Area, which no system face has: used when one is
+  /// installed, for those glyphs only.
+  static const symbolFonts = [
+    'MesloLGS NF',
+    'MesloLGS Nerd Font Mono',
+    'Symbols Nerd Font Mono',
+    'JetBrainsMono Nerd Font Mono',
+    'Hack Nerd Font Mono',
+    'FiraCode Nerd Font Mono',
+  ];
 
   /// One character cell of [style], measured as the view measures it (ten
   /// `m`s, unscaled: the terminal's font size is its own setting).
