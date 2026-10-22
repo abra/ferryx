@@ -7,7 +7,7 @@ import 'app_divider.dart';
 import 'app_icons.dart';
 import 'app_key_cap.dart';
 import 'app_menu.dart';
-import 'app_middle_ellipsis.dart';
+import 'app_label_and_detail.dart';
 import 'pixel_snap.dart';
 import 'popup_focus.dart';
 import 'theme/extensions/build_context_ext.dart';
@@ -644,7 +644,7 @@ class _QuickPickerRow<T> extends StatelessWidget {
                   const SizedBox(width: AppSpacing.sm),
                 ],
                 Expanded(
-                  child: _LabelAndDetail(
+                  child: AppLabelAndDetail(
                     label: item.label,
                     labelStyle: body,
                     labelHighlights: item.labelHighlights,
@@ -664,90 +664,6 @@ class _QuickPickerRow<T> extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// The label whole while it fits beside its detail, the detail after it
-/// in what is left; when both are long the label keeps three fifths. Each
-/// loses its middle, not its end.
-class _LabelAndDetail extends StatelessWidget {
-  const _LabelAndDetail({
-    required this.label,
-    required this.labelStyle,
-    required this.labelHighlights,
-    required this.labelMatched,
-    required this.detail,
-    required this.detailStyle,
-    required this.detailHighlights,
-    required this.detailMatched,
-  });
-
-  final String label;
-  final TextStyle labelStyle;
-  final List<(int, int)> labelHighlights;
-  final TextStyle labelMatched;
-  final String? detail;
-  final TextStyle detailStyle;
-  final List<(int, int)> detailHighlights;
-  final TextStyle detailMatched;
-
-  static const _gap = AppSpacing.sm;
-
-  @override
-  Widget build(BuildContext context) {
-    final labelText = AppMiddleEllipsis(
-      label,
-      style: labelStyle,
-      highlights: labelHighlights,
-      highlightStyle: labelMatched,
-    );
-    final detail = this.detail;
-    if (detail == null || detail.isEmpty) return labelText;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final scaler = MediaQuery.textScalerOf(context);
-        final direction = Directionality.of(context);
-        double widthOf(String text, TextStyle style) {
-          final painter = TextPainter(
-            text: TextSpan(text: text, style: style),
-            textDirection: direction,
-            textScaler: scaler,
-            maxLines: 1,
-          )..layout();
-          final width = painter.width;
-          painter.dispose();
-          return width;
-        }
-
-        final room = constraints.maxWidth;
-        // Bold highlights are wider: measure the label in their weight.
-        final natural =
-            widthOf(
-              label,
-              labelHighlights.isEmpty ? labelStyle : labelMatched,
-            ) +
-            1;
-        final wanted = widthOf(detail, detailStyle);
-        final labelWidth = math.min(
-          natural,
-          math.max(room * 0.6, room - wanted - _gap),
-        );
-        return Row(
-          children: [
-            SizedBox(width: labelWidth, child: labelText),
-            const SizedBox(width: _gap),
-            Expanded(
-              child: AppMiddleEllipsis(
-                detail,
-                style: detailStyle,
-                highlights: detailHighlights,
-                highlightStyle: detailMatched,
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 }

@@ -2326,4 +2326,79 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String jumpNoMatch(String query) {
     return 'Среди посещённых папок нет подходящей для «$query»';
   }
+
+  @override
+  String get shelfTitle => 'Полка';
+
+  @override
+  String shelfNote(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count на полке',
+      many: '$count на полке',
+      few: '$count на полке',
+      one: '$count на полке',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shelfAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'На полку положено $count объекта',
+      many: 'На полку положено $count объектов',
+      few: 'На полку положено $count объекта',
+      one: 'На полку положен $count объект',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shelfEmpty(String key) {
+    return 'Соберите файлы из любых папок клавишами $key, а потом скопируйте или переместите их сюда вместе';
+  }
+
+  @override
+  String get shelfClear => 'Очистить';
+
+  @override
+  String get shelfCopyHere => 'Копировать сюда';
+
+  @override
+  String get shelfMoveHere => 'Переместить сюда';
+
+  @override
+  String shelfInto(String folder) {
+    return 'В папку $folder';
+  }
+
+  @override
+  String get shelfRemove => 'Убрать с полки';
+
+  @override
+  String get shelfMissing => 'больше нет на месте';
+
+  @override
+  String shelfMissingTooltip(String path) {
+    return '$path больше нет на диске';
+  }
+
+  @override
+  String get shelfCutTooltip => 'При вставке переместится, а не скопируется';
+
+  @override
+  String get shelfAlreadyHere => 'Объекты с полки уже в этой папке';
+
+  @override
+  String get shelfNothingToPut =>
+      'Ни одного объекта с полки больше нет на диске';
+
+  @override
+  String get shelfHintReveal => 'показать в панели';
+
+  @override
+  String get shelfHintRemove => 'убрать';
 }

@@ -208,6 +208,8 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     AppCommand.contextMenu: () => unawaited(_rowMenu(_rowAnchor())),
     // ─── Interface ───
     AppCommand.jumpToFolder: () => unawaited(_jumpToFolder()),
+    AppCommand.addToShelf: () => _shelveTargets(cut: false, replace: false),
+    AppCommand.toggleShelf: _toggleShelf,
   };
 
   // ─── Opening ───

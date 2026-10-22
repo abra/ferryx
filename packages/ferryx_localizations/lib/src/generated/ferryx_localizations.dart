@@ -4057,6 +4057,102 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'No folder you visited matches “{query}”'**
   String jumpNoMatch(String query);
+
+  /// No description provided for @shelfTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shelf'**
+  String get shelfTitle;
+
+  /// No description provided for @shelfNote.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 on the shelf} other{{count} on the shelf}}'**
+  String shelfNote(int count);
+
+  /// No description provided for @shelfAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item put on the shelf} other{{count} items put on the shelf}}'**
+  String shelfAdded(int count);
+
+  /// No description provided for @shelfEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Gather files from any folder with {key}, then copy or move them here together'**
+  String shelfEmpty(String key);
+
+  /// No description provided for @shelfClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get shelfClear;
+
+  /// No description provided for @shelfCopyHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Here'**
+  String get shelfCopyHere;
+
+  /// No description provided for @shelfMoveHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Here'**
+  String get shelfMoveHere;
+
+  /// No description provided for @shelfInto.
+  ///
+  /// In en, this message translates to:
+  /// **'Into {folder}'**
+  String shelfInto(String folder);
+
+  /// No description provided for @shelfRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Take off the shelf'**
+  String get shelfRemove;
+
+  /// No description provided for @shelfMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'no longer there'**
+  String get shelfMissing;
+
+  /// No description provided for @shelfMissingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'{path} is no longer on disk'**
+  String shelfMissingTooltip(String path);
+
+  /// No description provided for @shelfCutTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved, not copied, when put'**
+  String get shelfCutTooltip;
+
+  /// No description provided for @shelfAlreadyHere.
+  ///
+  /// In en, this message translates to:
+  /// **'The shelf’s items are in this folder already'**
+  String get shelfAlreadyHere;
+
+  /// No description provided for @shelfNothingToPut.
+  ///
+  /// In en, this message translates to:
+  /// **'None of the shelf’s items is on disk any more'**
+  String get shelfNothingToPut;
+
+  /// No description provided for @shelfHintReveal.
+  ///
+  /// In en, this message translates to:
+  /// **'show in the panel'**
+  String get shelfHintReveal;
+
+  /// No description provided for @shelfHintRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'take off'**
+  String get shelfHintRemove;
 }
 
 class _FerryxLocalizationsDelegate

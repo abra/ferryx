@@ -30,7 +30,8 @@ import '../panel/saved_panel.dart';
 import '../path_text.dart';
 import 'context_menu.dart';
 import 'key_hints.dart';
-import 'vim_register.dart';
+import 'shelf.dart';
+import 'shelf_strip.dart';
 import 'workspace_cubit.dart';
 import 'workspace_state.dart';
 
@@ -138,6 +139,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   final _leftCursor = GlobalKey(debugLabel: 'left cursor row');
   final _rightCursor = GlobalKey(debugLabel: 'right cursor row');
   final _splitterFocus = FocusNode(debugLabel: 'panel splitter');
+  final _shelfFocus = FocusNode(debugLabel: 'shelf');
+  StreamSubscription<String>? _changes;
+
+  /// Asks the disk which shelf items are still there, once changes settle.
+  Timer? _shelfCheck;
   StreamSubscription<OperationProgress>? _progress;
   Timer? _snapshotTimer;
   final _dismissTimers = <int, Timer>{};
@@ -161,6 +167,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     unawaited(_left.start(widget.savedLeft, widget.fallbackLocation));
     unawaited(_right.start(widget.savedRight, widget.fallbackLocation));
     _progress = widget.operations.progress.listen(_onProgress);
+    _changes = widget.files.directoryChanges.listen(
+      (_) => _scheduleShelfCheck(),
+    );
     for (final progress in widget.operations.current.values) {
       _shownOperations.add(progress.id);
     }
@@ -181,6 +190,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   @override
   void dispose() {
     _progress?.cancel();
+    _changes?.cancel();
+    _shelfCheck?.cancel();
     _snapshotTimer?.cancel();
     for (final timer in _dismissTimers.values) {
       timer.cancel();
@@ -192,6 +203,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     _leftFocus.dispose();
     _rightFocus.dispose();
     _splitterFocus.dispose();
+    _shelfFocus.dispose();
     super.dispose();
   }
 
@@ -256,6 +268,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     if (!mounted) return;
     setState(() => _shownOperations.add(progress.id));
     if (progress.state.isFinished) {
+      // What the operation moved or deleted may have been on the shelf.
+      _scheduleShelfCheck();
       _dismissTimers[progress.id]?.cancel();
       final keep =
           progress.errors.isNotEmpty || progress.state == OpState.failed;
@@ -332,9 +346,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                   leftCursor: _leftCursor,
                                   rightCursor: _rightCursor,
                                   hooksFor: _hooksFor,
-                                  registerNote: _registerNote(
+                                  registerNote: _shelfNote(
                                     l10n,
-                                    workspace.register,
+                                    workspace.shelf,
                                   ),
                                   splitterValue: l10n.textSizePercent(
                                     (workspace.splitFraction * 100).round(),
@@ -381,27 +395,69 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       ],
                     ),
                   ),
+                  // The shelf, between the panels and the hints: the panels
+                  // give it room smoothly, at once under reduced motion.
+                  AnimatedSize(
+                    duration: context.motion(AppMotion.medium),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: workspace.shelfShown
+                        ? AppFocusArea(
+                            child: BlocBuilder<PanelCubit, PanelState>(
+                              bloc: _cubitOf(workspace.active),
+                              builder: (context, panel) => ShelfStrip(
+                                shelf: workspace.shelf,
+                                focusNode: _shelfFocus,
+                                destination: _shelfDestination(panel.active),
+                                home: widget.files.standardFolders().home,
+                                addKey: widget.shortcutMap.labelOf(
+                                  AppCommand.addToShelf,
+                                  Theme.of(context).platform,
+                                  vim: prefs.vimMode,
+                                ),
+                                onReveal: (item) =>
+                                    unawaited(_revealShelfItem(item)),
+                                onRemove: (item) => _unshelve([item.path]),
+                                onClear: _clearShelf,
+                                onCopyHere: () =>
+                                    unawaited(_putShelf(move: false)),
+                                onMoveHere: () =>
+                                    unawaited(_putShelf(move: true)),
+                                onLeave: () => _focusOf(
+                                  _workspace.state.active,
+                                ).requestFocus(),
+                              ),
+                            ),
+                          )
+                        : const SizedBox(width: double.infinity),
+                  ),
                   // The keys for what is under the cursor or selected in the
                   // active panel, until the user hides the line.
                   if (prefs.showKeyHints)
                     BlocBuilder<PanelCubit, PanelState>(
                       bloc: _cubitOf(workspace.active),
-                      builder: (context, panel) => KeyHintStrip(
-                        hints: hintsFor(
-                          tab: panel.active,
+                      builder: (context, panel) => ListenableBuilder(
+                        // The shelf's keys while it has them.
+                        listenable: _shelfFocus,
+                        builder: (context, _) => KeyHintStrip(
+                          hints: _shelfFocus.hasFocus
+                              ? shelfHints
+                              : hintsFor(
+                                  tab: panel.active,
+                                  vim: prefs.vimMode,
+                                  hasRegister: !workspace.shelf.isEmpty,
+                                ),
+                          shortcutMap: widget.shortcutMap,
                           vim: prefs.vimMode,
-                          hasRegister: workspace.register != null,
+                          onHide: () {
+                            unawaited(
+                              widget.preferences.update(
+                                (p) => p.copyWith(showKeyHints: false),
+                              ),
+                            );
+                            showAppNotice(context, l10n.hintsHidden);
+                          },
                         ),
-                        shortcutMap: widget.shortcutMap,
-                        vim: prefs.vimMode,
-                        onHide: () {
-                          unawaited(
-                            widget.preferences.update(
-                              (p) => p.copyWith(showKeyHints: false),
-                            ),
-                          );
-                          showAppNotice(context, l10n.hintsHidden);
-                        },
                       ),
                     ),
                 ],

@@ -2289,4 +2289,75 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String jumpNoMatch(String query) {
     return 'No folder you visited matches “$query”';
   }
+
+  @override
+  String get shelfTitle => 'Shelf';
+
+  @override
+  String shelfNote(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count on the shelf',
+      one: '1 on the shelf',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shelfAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items put on the shelf',
+      one: '1 item put on the shelf',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shelfEmpty(String key) {
+    return 'Gather files from any folder with $key, then copy or move them here together';
+  }
+
+  @override
+  String get shelfClear => 'Clear';
+
+  @override
+  String get shelfCopyHere => 'Copy Here';
+
+  @override
+  String get shelfMoveHere => 'Move Here';
+
+  @override
+  String shelfInto(String folder) {
+    return 'Into $folder';
+  }
+
+  @override
+  String get shelfRemove => 'Take off the shelf';
+
+  @override
+  String get shelfMissing => 'no longer there';
+
+  @override
+  String shelfMissingTooltip(String path) {
+    return '$path is no longer on disk';
+  }
+
+  @override
+  String get shelfCutTooltip => 'Moved, not copied, when put';
+
+  @override
+  String get shelfAlreadyHere => 'The shelf’s items are in this folder already';
+
+  @override
+  String get shelfNothingToPut =>
+      'None of the shelf’s items is on disk any more';
+
+  @override
+  String get shelfHintReveal => 'show in the panel';
+
+  @override
+  String get shelfHintRemove => 'take off';
 }

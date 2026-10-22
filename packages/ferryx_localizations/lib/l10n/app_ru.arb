@@ -685,5 +685,21 @@
   "jumpKeyNewTab": "в новой вкладке",
   "jumpKeyOtherPanel": "в другой панели",
   "jumpGone": "Папки {path} больше нет — она убрана из списка",
-  "jumpNoMatch": "Среди посещённых папок нет подходящей для «{query}»"
+  "jumpNoMatch": "Среди посещённых папок нет подходящей для «{query}»",
+  "shelfTitle": "Полка",
+  "shelfNote": "{count, plural, one{{count} на полке} few{{count} на полке} many{{count} на полке} other{{count} на полке}}",
+  "shelfAdded": "{count, plural, one{На полку положен {count} объект} few{На полку положено {count} объекта} many{На полку положено {count} объектов} other{На полку положено {count} объекта}}",
+  "shelfEmpty": "Соберите файлы из любых папок клавишами {key}, а потом скопируйте или переместите их сюда вместе",
+  "shelfClear": "Очистить",
+  "shelfCopyHere": "Копировать сюда",
+  "shelfMoveHere": "Переместить сюда",
+  "shelfInto": "В папку {folder}",
+  "shelfRemove": "Убрать с полки",
+  "shelfMissing": "больше нет на месте",
+  "shelfMissingTooltip": "{path} больше нет на диске",
+  "shelfCutTooltip": "При вставке переместится, а не скопируется",
+  "shelfAlreadyHere": "Объекты с полки уже в этой папке",
+  "shelfNothingToPut": "Ни одного объекта с полки больше нет на диске",
+  "shelfHintReveal": "показать в панели",
+  "shelfHintRemove": "убрать"
 }

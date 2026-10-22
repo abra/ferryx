@@ -26,7 +26,22 @@ final class KeyHint extends PanelHint {
   final HintWord word;
 }
 
-enum HintWord { done, cancel, back, keepMatches }
+enum HintWord {
+  done,
+  cancel,
+  back,
+  keepMatches,
+  // ─── Interface ───
+  reveal,
+  remove,
+}
+
+/// The keys of the shelf's strip while it has them.
+const shelfHints = [
+  KeyHint(LogicalKeyboardKey.enter, HintWord.reveal),
+  KeyHint(LogicalKeyboardKey.backspace, HintWord.remove),
+  KeyHint(LogicalKeyboardKey.escape, HintWord.back),
+];
 
 /// The keys worth knowing right now, for what is under the cursor or
 /// selected: five at most, the plainest first. Pure, so it is tested.
@@ -155,6 +170,8 @@ class KeyHintStrip extends StatelessWidget {
                 HintWord.cancel => l10n.actionCancel,
                 HintWord.back => l10n.hintBack,
                 HintWord.keepMatches => l10n.hintKeepMatches,
+                HintWord.reveal => l10n.shelfHintReveal,
+                HintWord.remove => l10n.shelfHintRemove,
               },
             ),
           );

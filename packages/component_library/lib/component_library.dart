@@ -12,6 +12,7 @@ export 'src/app_divider.dart';
 export 'src/app_empty_state.dart';
 export 'src/app_fit_or_else.dart';
 export 'src/app_focus_area.dart';
+export 'src/app_label_and_detail.dart';
 export 'src/app_label_row.dart';
 export 'src/app_icon_button.dart';
 export 'src/app_icons.dart';

@@ -7,22 +7,14 @@ import 'package:flutter/material.dart';
 import 'panel_state.dart';
 
 /// What Vim mode shows in the footer: the mode's name, the keys that
-/// wait, the rows taken, or the command line in place of the rest.
+/// wait, or the command line in place of the rest.
 class VimLine {
-  const VimLine({
-    required this.mode,
-    this.pending = '',
-    this.registerNote,
-    this.commandLine,
-  });
+  const VimLine({required this.mode, this.pending = '', this.commandLine});
 
   final VimMode mode;
 
   /// Keys typed and waiting: a count, a prefix (`g`, `d`), `f`.
   final String pending;
-
-  /// `3 cut`, `1 yanked`.
-  final String? registerNote;
 
   /// The `:` line while it is open.
   final Widget? commandLine;
@@ -31,19 +23,23 @@ class VimLine {
 enum VimMode { normal, visual, search, command }
 
 /// Under the rows: the focused item with its size and date, or the
-/// selection's count and size; the number of items and the free space.
-/// With Vim keys on, the mode leads the line.
+/// selection's count and size; what the shelf holds, the number of items
+/// and the free space. With Vim keys on, the mode leads the line.
 class PanelFooter extends StatelessWidget {
   const PanelFooter({
     required this.tab,
     required this.active,
     this.vim,
+    this.shelfNote,
     super.key,
   });
 
   final PanelTabState tab;
   final bool active;
   final VimLine? vim;
+
+  /// `3 on the shelf`, `2 cut`.
+  final String? shelfNote;
 
   /// The footer's height at the text size in [context]: a control's
   /// height and a margin, taller as the text grows.
@@ -111,7 +107,7 @@ class PanelFooter extends StatelessWidget {
     final count = tab.rows.where((r) => !r.isParent).length;
     final free = tab.listing?.freeBytes;
     final right = [
-      if (vim?.registerNote != null) vim!.registerNote!,
+      ?shelfNote,
       l10n.panelItemsCount(count),
       if (free != null) l10n.panelFreeSpace(l10n.fileSize(free)),
     ].reduce(l10n.joinedDetails);

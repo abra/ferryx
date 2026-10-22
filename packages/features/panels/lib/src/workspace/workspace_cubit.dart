@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../panel/panel_side.dart';
-import 'vim_register.dart';
+import 'shelf.dart';
 import 'workspace_state.dart';
 
 /// The window's own choices; the panels keep their own state.
@@ -49,12 +49,46 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
     }
   }
 
-  /// Vim's `yy` / `dd`: the rows taken, for `p`.
-  void takeRegister(VimRegister register) =>
-      emit(state.copyWith(register: register));
+  // ─── The shelf ───
 
-  /// `uy`, or a cut register pasted.
-  void clearRegister() {
-    if (state.register != null) emit(state.copyWith(clearRegister: true));
+  /// Puts [items] on the shelf, after what is there, or in its place with
+  /// [replace] (Vim's `yy` and `dd`). The strip shows when the shelf was
+  /// empty.
+  void shelve(List<ShelfItem> items, {bool replace = false}) {
+    if (items.isEmpty) return;
+    final shelf = (replace ? Shelf.empty : state.shelf).add(items);
+    emit(
+      state.copyWith(
+        shelf: shelf,
+        shelfShown: state.shelf.isEmpty ? true : null,
+      ),
+    );
+  }
+
+  /// Takes [paths] off the shelf; an emptied shelf hides its strip.
+  void unshelve(Iterable<String> paths) =>
+      _setShelf(state.shelf.without(paths));
+
+  /// `uy`, Clear.
+  void clearShelf() => _setShelf(Shelf.empty);
+
+  /// Marks the items gone from the disk, and the others back.
+  void markMissing(Set<String> missing) {
+    final shelf = state.shelf.withMissing(missing);
+    if (shelf != state.shelf) emit(state.copyWith(shelf: shelf));
+  }
+
+  void showShelf(bool shown) {
+    if (state.shelfShown != shown) emit(state.copyWith(shelfShown: shown));
+  }
+
+  void _setShelf(Shelf shelf) {
+    if (shelf == state.shelf) return;
+    emit(
+      state.copyWith(
+        shelf: shelf,
+        shelfShown: shelf.isEmpty ? false : null,
+      ),
+    );
   }
 }

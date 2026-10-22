@@ -1,59 +1,29 @@
 part of 'workspace_screen.dart';
 
-/// What Vim mode asks of the window: the register `yy` and `dd` fill and
-/// `p` empties, the marks `m` sets and `'` goes to, and the `:` lines.
+/// What Vim mode asks of the window: the shelf `yy` and `dd` fill and
+/// `p` puts, the marks `m` sets and `'` goes to, and the `:` lines.
 extension _VimActions on _WorkspaceScreenState {
-  // ─── The register ───
+  // ─── The shelf ───
 
-  /// The footer's note on what the register holds.
-  String? _registerNote(FerryxLocalizations l10n, VimRegister? register) {
-    if (register == null) return null;
-    return register.move
-        ? l10n.vimRegisterCut(register.paths.length)
-        : l10n.vimRegisterYank(register.paths.length);
-  }
+  /// `yy` / `dd`: the targets take the shelf's place, to be copied or
+  /// moved where `p` is pressed, as Vim's register is filled; both panels
+  /// share it. (`ys`, Add to Shelf, adds to it instead.)
+  void _vimTake({required bool move}) =>
+      _shelveTargets(cut: move, replace: true);
 
-  /// `yy` / `dd`: the targets go to the register, to be copied or moved
-  /// where `p` is pressed. Both panels share it.
-  void _vimTake({required bool move}) {
-    final targets = _targetsOrNotice();
-    if (targets.isEmpty) return;
-    final paths = _nativePaths(targets);
-    if (paths == null) return;
-    _workspace.takeRegister(VimRegister(paths: paths, move: move));
-    _active.clearSelection();
-  }
-
-  /// `p`: the register's rows come to the active folder; a cut register
-  /// empties, a yanked one stays for the next `p`. With nothing in the
-  /// register, the paths on the clipboard are pasted instead.
+  /// `p`: the shelf's items come to the active folder, the ones `dd` took
+  /// moved (they leave the shelf), the others copied (they stay). With
+  /// nothing on the shelf, the paths on the clipboard are pasted instead.
   Future<void> _vimPaste() async {
-    final register = _workspace.state.register;
-    if (register == null) {
+    if (_workspace.state.shelf.isEmpty) {
       await _pasteItems(move: false);
       return;
     }
-    final tab = _tab;
-    if (tab == null || !tab.location.isNative) {
-      showAppNotice(context, _l10n.noticeNotInArchive);
-      return;
-    }
-    await _guarded(() async {
-      await widget.operations.start(
-        OperationRequest(
-          kind: register.move ? OpKind.move : OpKind.copy,
-          sources: register.paths,
-          destination: tab.location.path,
-          preserveAttributes: _prefs.preserveAttributes,
-          verify: _prefs.verifyCopies,
-        ),
-      );
-      if (register.move) _workspace.clearRegister();
-    });
+    await _putShelf();
   }
 
-  /// `uy`: the register empties.
-  void _vimCancelRegister() => _workspace.clearRegister();
+  /// `uy`: the shelf empties.
+  void _vimCancelRegister() => _clearShelf();
 
   // ─── Marks ───
 
@@ -181,6 +151,8 @@ extension _VimActions on _WorkspaceScreenState {
       // ─── Interface ───
       case 'z':
         await _vimJump(arg);
+      case 'shelf':
+        _toggleShelf();
       default:
         showAppNotice(context, _l10n.vimUnknownCommand(name));
     }
@@ -440,6 +412,7 @@ extension _VimActions on _WorkspaceScreenState {
     'trash',
     'view',
     // ─── Interface ───
+    'shelf',
     'z',
   ];
 }
