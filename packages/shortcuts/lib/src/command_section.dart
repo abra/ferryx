@@ -58,4 +58,7 @@ const _placed = {
   AppCommand.addToShelf: CommandSection.edit,
   AppCommand.toggleShelf: CommandSection.view,
   AppCommand.renameInEditor: CommandSection.command,
+  // Where Finder has them.
+  AppCommand.quickLook: CommandSection.file,
+  AppCommand.share: CommandSection.file,
 };

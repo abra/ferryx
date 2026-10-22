@@ -365,6 +365,8 @@ void main() {
       expect(AppCommand.jumpToFolder.section, CommandSection.go);
       expect(AppCommand.addToShelf.section, CommandSection.edit);
       expect(AppCommand.renameInEditor.section, CommandSection.command);
+      expect(AppCommand.quickLook.section, CommandSection.file);
+      expect(AppCommand.share.section, CommandSection.file);
       expect(AppCommand.moveDown.section, CommandSection.panel);
       expect(AppCommand.vimReselect.section, CommandSection.vim);
       expect(AppCommand.viewerFind.section, CommandSection.viewer);
