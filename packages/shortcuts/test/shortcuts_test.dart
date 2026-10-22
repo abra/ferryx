@@ -261,6 +261,8 @@ void main() {
           containsAll([
             ...AppCommand.inScope(CommandScope.terminal),
             ...ShortcutMap.terminalPlacement,
+            // Its menu opens from the keyboard too.
+            AppCommand.contextMenu,
           ]),
         );
         // A panel's single keys never leave the terminal.

@@ -280,12 +280,13 @@ class ShortcutMap {
   };
 
   /// The keys the integrated terminal leaves to the window, for [platform]:
-  /// its own ([CommandScope.terminal]), [terminalPlacement], and the
-  /// window's chords no program in a terminal is given — those with ⌘ on
-  /// macOS, those with Ctrl+Shift elsewhere (the keys GNOME Terminal and
-  /// Windows Terminal keep for themselves). Every other key, a Ctrl+letter
-  /// above all, is the shell's. The terminal's own keys come first, so they
-  /// win over a window chord of the same keys.
+  /// its own ([CommandScope.terminal]) and its menu's
+  /// ([AppCommand.contextMenu]), [terminalPlacement], and the window's
+  /// chords no program in a terminal is given — those with ⌘ on macOS,
+  /// those with Ctrl+Shift elsewhere (the keys GNOME Terminal and Windows
+  /// Terminal keep for themselves). Every other key, a Ctrl+letter above
+  /// all, is the shell's. The terminal's own keys come first, so they win
+  /// over a window chord of the same keys.
   Map<ShortcutActivator, CommandIntent> terminalShortcuts(
     TargetPlatform platform,
   ) {
@@ -299,6 +300,7 @@ class ShortcutMap {
     }
 
     AppCommand.inScope(CommandScope.terminal).forEach(add);
+    add(AppCommand.contextMenu);
     terminalPlacement.forEach(add);
     for (final command in AppCommand.inScope(CommandScope.global)) {
       for (final chord in chordsFor(command)) {
