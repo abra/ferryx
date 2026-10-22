@@ -143,7 +143,10 @@ class RowName extends StatelessWidget {
                 message: context.l10n.tagNames(entry.tags.map((t) => t.name)),
                 child: AppTagDots(
                   colors: dots,
-                  ring: look.background(colors) ?? colors.window,
+                  // On the accent the dots take a light ring, as Finder's.
+                  ring: look.emphasized
+                      ? colors.onAccent
+                      : look.background(colors) ?? colors.window,
                   size: dotSize,
                 ),
               ),
@@ -236,8 +239,11 @@ class _NameWithFolder extends StatelessWidget {
   /// The share of the row a long name keeps against a long folder.
   static const double nameShare = 0.6;
 
-  /// The room a long folder keeps against a long name, at text scale 1.
-  static const double folderMin = 72;
+  /// The room a long folder keeps against a long name: a part of the
+  /// row, within these bounds at text scale 1.
+  static const double folderKeepsShare = 0.3;
+  static const double folderKeepsMin = 36;
+  static const double folderKeepsMax = 96;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -266,9 +272,13 @@ class _NameWithFolder extends StatelessWidget {
       } else {
         // The folder keeps a little room for its last letters; the name
         // keeps the rest, three fifths at least.
+        final scale = MediaQuery.textScalerOf(context).scale(1);
         final folderKeeps = math.min(
           folderWidth,
-          folderMin * MediaQuery.textScalerOf(context).scale(1),
+          (available * folderKeepsShare).clamp(
+            folderKeepsMin * scale,
+            folderKeepsMax * scale,
+          ),
         );
         nameRoom = math.min(
           nameWidth,

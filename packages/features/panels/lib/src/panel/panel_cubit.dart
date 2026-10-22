@@ -1126,15 +1126,19 @@ class PanelCubit extends Cubit<PanelState> {
         tab.location,
         _options(tab.sort),
       );
-      final current = state.tabs.elementAtOrNull(index);
-      if (current == null || current.id != tab.id) {
+      // Found by its id: tabs before it may have closed meanwhile.
+      final at = state.tabs.indexWhere((t) => t.id == tab.id);
+      if (at < 0) {
+        // The tab closed meanwhile: the walk and its listing go too.
         await start.batches.listen(null).cancel();
+        await _files.closeListing(tab.id);
         return;
       }
+      final current = state.tabs[at];
       if (again && current.isFlat) {
         emit(
           state.withTab(
-            index,
+            at,
             current.copyWith(
               flat: FlatView(
                 generation: start.generation,
@@ -1150,7 +1154,7 @@ class PanelCubit extends Cubit<PanelState> {
       } else {
         emit(
           state.withTab(
-            index,
+            at,
             current.copyWith(
               listing: start.listing,
               rows: const [],
@@ -1180,10 +1184,13 @@ class PanelCubit extends Cubit<PanelState> {
         error: error,
         stackTrace: stackTrace,
       );
-      final current = state.tabs.elementAtOrNull(index);
-      if (current != null && current.id == tab.id) {
+      final at = state.tabs.indexWhere((t) => t.id == tab.id);
+      if (at >= 0) {
         emit(
-          state.withTab(index, current.copyWith(loading: false, error: error)),
+          state.withTab(
+            at,
+            state.tabs[at].copyWith(loading: false, error: error),
+          ),
         );
       }
     }

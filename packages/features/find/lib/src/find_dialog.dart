@@ -430,10 +430,16 @@ class _SpotlightOption extends StatelessWidget {
           onChanged: onChanged,
         ),
         const SizedBox(height: AppSpacing.xxs),
-        Text(
-          l10n.findSpotlightNote,
-          style: context.text.bodySmall?.copyWith(
-            color: context.appColors.textMuted,
+        // Under the label, as a check box's note stands.
+        Padding(
+          padding: EdgeInsetsDirectional.only(
+            start: checkboxExtent(context) + AppSpacing.sm,
+          ),
+          child: Text(
+            l10n.findSpotlightNote,
+            style: context.text.bodySmall?.copyWith(
+              color: context.appColors.textMuted,
+            ),
           ),
         ),
       ],

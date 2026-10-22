@@ -228,18 +228,18 @@ that `ferryx_backend` loads, as part of the Flutter build.
 
 | Package | Role |
 |---------|------|
-| `domain_models` | Pure Dart contracts: `FileEntry`, `Listing`, `Location`, `SortOptions`, `ListingOptions`, `Volume`, `StandardFolders`, `OperationRequest`/`OperationProgress`/`OperationQuestion`, `FindRequest`/`FindHit`/`FindUpdate`, `RenameOptions`/`RenameOutcome`, `FileAttributes`/`AttributeChanges`, `Favorite`, `PanelLayout`, `ExternalEditor`/`ExternalTool`, `FerryxException`. |
+| `domain_models` | Pure Dart contracts: `FileEntry`, `Listing`, `Location`, `SortOptions`, `ListingOptions`, `Volume`, `StandardFolders`, `OperationRequest`/`OperationProgress`/`OperationQuestion`, `FindRequest`/`FindHit`/`FindUpdate`, `RenameOptions`/`RenameOutcome`, `FileAttributes`/`AttributeChanges`, `Favorite`, `PanelLayout`, `ExternalEditor`/`ExternalTool`, `FerryxException`, `ArchiveInfo`, `FlatStart`/`FlatBatch`, `FileTag`/`TagOutcome`, `Capabilities`. |
 | `ferryx_backend` | The generated bridge, `FerryxBackend` (init, the event stream, `guard`) and `mapping.dart`. |
 | `monitoring` | `Logger` and the console observer. |
 | `shortcuts` | `AppCommand` (scopes: global, panel, viewer, lists, dialogs), `Chord`, `ShortcutMap` (defaults per desktop, `forUser` with overrides), the `CommandHandlers` dispatch chain, `ChordCodec`. |
 | `preferences_service` | Installation preferences (theme, locale, text scale, shortcut overrides, window frame, the panels' state, layouts, sorting defaults, quick search, favorites, editors, tools, confirmations, copy defaults, viewer) + `PreferencesScope` and `PreferenceBuilder`. |
-| `file_repository` | `FileRepository`: listings (open, refresh, resort, close, peek), items (stat, byte ranges, extract to temp, make, rename, links, resolve), the system (volumes, standard folders, free space, open, open with, reveal, eject, applications), attributes; `directoryChanges` names listings whose folders changed. |
+| `file_repository` | `FileRepository`: listings (open, refresh, resort, close, peek), items (stat, byte ranges, extract to temp, make, rename, links, resolve), the system (volumes, standard folders, free space, open, open with, reveal, eject, applications), attributes; archives (what one holds, its password, detection by its bytes); flat listings (open with their stream of batches, the order of their rows); Finder tags (a listing's, edits) and the desktop's `capabilities`; `directoryChanges` names listings whose folders changed. |
 | `operations_service` | `OperationsService` (start, pause, resume, cancel, answer, forget; `progress` stream and the latest report per operation; `run` waits for one), `FindService` (start, cancel, `updates`), `RenameService` (preview, apply). |
 | `ferryx_localizations` | ARB-generated `FerryxLocalizations`, command and scope labels, formatting helpers (sizes, dates, durations, error titles, operation titles, answers, columns). |
 | `component_library` | Tokens, the platform-adaptive theme and the desktop widgets (see Native look). |
-| `features/panels` | The main window (`WorkspaceScreen`): two `PanelView`s with a `PanelCubit` each, the edge between them, the operations cards, every file command (`workspace_actions.dart`), the row and panel menus, and the dialogs: copy / move / copy as / move as, new folder, delete, compress, select by mask, go to folder, links, favorites, the Go To pop-up and the quick lists, batch rename, file attributes, and the questions of operations. |
+| `features/panels` | The main window (`WorkspaceScreen`): two `PanelView`s with a `PanelCubit` each, the edge between them, the operations cards, every file command (`workspace_actions.dart`), the row and panel menus, and the dialogs: copy / move / copy as / move as, new folder, delete, compress, select by mask, go to folder, links, favorites, the Go To pop-up and the quick lists, batch rename, file attributes, Extract To and an archive's password, the tag menu and a new tag, and the questions of operations; a tab's flat view (`FlatView`). |
 | `features/viewer` | The built-in viewer (`ViewerScreen`): text, hex and preview over a `ViewerSource` (a file on disk or an archive member), windows of large files, find and go to. |
-| `features/find` | Find Files (`showFindDialog`, `FindCubit`): the form, the streaming results, go to a hit or view it. |
+| `features/find` | Find Files (`showFindDialog`, `FindCubit`): the form (with the Spotlight option where the desktop has it), the streaming results, go to a hit or view it. |
 | `features/settings` | The settings window (`SettingsScreen`: General, Panels, Viewer, Hotkeys, Editors, Tools, About) and the cheat sheet (`showCheatSheet`). |
 
 ### Feature wiring
@@ -310,7 +310,8 @@ with all it holds. The footer's capsule says "Flat" (with the spinner
 while the tree is read) and the count says files; Esc (once no search is
 on), the command again, the capsule, or going anywhere else leaves it,
 the cursor landing on the item that holds the row it was on. Inside an
-archive the view comes from the index, in memory.
+archive the view comes from the index, in memory. A tab saved for the
+next run keeps its folder, not its flat view.
 
 - **Keys.** Rows of one name in two folders are two rows: a row's key is
   its path under the root (`FileEntry.key`, the name in a plain listing),
@@ -485,7 +486,12 @@ partially created resources.
 ## Tests
 
 - Rust: unit tests per crate; `ferryx_api/tests/api_flow.rs` runs the
-  bridge end to end.
+  bridge end to end, `archives_flow.rs`, `flat_flow.rs` and
+  `tags_flow.rs` the archives' passwords and Extract To, flat views and
+  Finder tags. The archive tests write every format they read (a stored
+  RAR5 and an ISO with Joliet names by hand); ignored tests time large
+  archives, a flat walk of a big tree (`FERRYX_FLAT_BENCH=~/Library`), tag
+  reading and a live Spotlight search.
 - Dart: cubit tests (`bloc_test`, `mocktail`) in the panels, viewer and
   find features; widget tests in the settings feature and the component
   library; unit tests in shortcuts, preferences_service and monitoring.
@@ -500,6 +506,10 @@ partially created resources.
   (`window_state_test`).
 
 ## Known gaps
+
+- Finder tags have no list column of their own yet (the dots and the
+  tip carry them); a flat view sees changes deeper than its folder made
+  by other programs only on ⌘R.
 
 - No integrated terminal yet, no SFTP/FTP/WebDAV, no extended-attributes
   or process-list virtual file systems; archives are read-only, and a rar

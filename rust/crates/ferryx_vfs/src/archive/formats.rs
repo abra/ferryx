@@ -1,6 +1,6 @@
 //! The member lists and the members' bytes of each format but ISO.
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs::{self, File};
 use std::io::{self, BufReader, Read, Seek, SeekFrom};
 use std::path::Path;
@@ -360,7 +360,7 @@ pub(crate) fn extract_7z(job: &Job, sink: &mut dyn MemberSink) -> Result<(), Ext
         }
         let mut remaining = wanted.len();
         let mut native = headers.stream_map.block_first_file_index[block];
-        let mut done: Vec<usize> = Vec::new();
+        let mut done: HashSet<usize> = HashSet::new();
         let mut stopped = false;
         let decoded =
             BlockDecoder::new(1, block, headers, &password, &mut file).for_each_entries(&mut |_, reader| {
@@ -371,7 +371,7 @@ pub(crate) fn extract_7z(job: &Job, sink: &mut dyn MemberSink) -> Result<(), Ext
                     return Ok(true);
                 };
                 let member = job.member(at);
-                done.push(at);
+                done.insert(at);
                 match sink.begin(member) {
                     Err(_) => {
                         stopped = true;
@@ -408,9 +408,6 @@ pub(crate) fn extract_7z(job: &Job, sink: &mut dyn MemberSink) -> Result<(), Ext
                     deliver(sink, job.member(at), move |_| Err(e))?;
                 }
             }
-            // The member the block broke in was begun and ended already
-            // only when its own read failed; one cut off mid-way is told
-            // here.
         }
     }
     for at in empty {

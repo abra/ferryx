@@ -295,6 +295,29 @@ void main() {
       expect(tab().flat!.refreshing, isTrue);
     });
 
+    test('a tab closed while its walk starts takes the walk along', () async {
+      await cubit.newTab();
+      final id = tab().id;
+      final opening = Completer<FlatStart>();
+      when(
+        () => files.openFlatListing(any(), any(), any()),
+      ).thenAnswer((_) => opening.future);
+      final toggled = cubit.toggleFlatView();
+      await cubit.closeTab();
+      final walk = StreamController<FlatBatch>();
+      opening.complete(
+        FlatStart(
+          listing: const Listing(location: home, entries: []),
+          generation: 9,
+          batches: walk.stream,
+        ),
+      );
+      await toggled;
+      verify(() => files.closeListing(id)).called(greaterThanOrEqualTo(2));
+      expect(cubit.state.tabs.any((t) => t.isFlat), isFalse);
+      await walk.close();
+    });
+
     test('another folder ends the flat view and its walk', () async {
       await cubit.toggleFlatView();
       await cubit.open(const Location.native('/'));

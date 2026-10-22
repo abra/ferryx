@@ -70,6 +70,10 @@ See `ARCHITECTURE.md`. The rules that matter most:
 - A panel's cursor and selection are separate (orthodox manager rules,
   `PanelCubit`): moving the cursor never changes the selection; a command
   works on the selection, else on the focused row, never on `..`.
+- A row is known by `FileEntry.key` (its name; in a flat view its path
+  under the root, as two folders may hold one name): selection, quick
+  search matches and the cursor kept across a re-read use the key, never
+  `name`; where a row is comes from `PanelTabState.locationOf(entry)`.
 
 ## Conventions
 
