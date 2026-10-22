@@ -178,6 +178,9 @@ extension _VimActions on _WorkspaceScreenState {
         await _swapPanels();
       case 'help' || 'h':
         await widget.navigation.openCheatSheet(context);
+      // ─── Interface ───
+      case 'z':
+        await _vimJump(arg);
       default:
         showAppNotice(context, _l10n.vimUnknownCommand(name));
     }
@@ -436,5 +439,7 @@ extension _VimActions on _WorkspaceScreenState {
     'touch',
     'trash',
     'view',
+    // ─── Interface ───
+    'z',
   ];
 }

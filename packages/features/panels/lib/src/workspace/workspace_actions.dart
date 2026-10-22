@@ -206,6 +206,8 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     AppCommand.cheatSheet: () =>
         unawaited(widget.navigation.openCheatSheet(context)),
     AppCommand.contextMenu: () => unawaited(_rowMenu(_rowAnchor())),
+    // ─── Interface ───
+    AppCommand.jumpToFolder: () => unawaited(_jumpToFolder()),
   };
 
   // ─── Opening ───

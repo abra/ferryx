@@ -130,6 +130,7 @@ class _WorkspaceRoute extends StatelessWidget {
             ? PanelSide.right
             : PanelSide.left,
         fallbackLocation: Location.native(home),
+        frecency: deps.frecency,
         onSnapshot: (snapshot) {
           windowTitle.location =
               (snapshot.active == PanelSide.left

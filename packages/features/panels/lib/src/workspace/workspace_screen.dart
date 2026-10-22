@@ -17,6 +17,7 @@ import '../dialogs/batch_rename_dialog.dart';
 import '../dialogs/copy_move_dialog.dart';
 import '../dialogs/favorites_dialog.dart';
 import '../dialogs/go_to_menus.dart';
+import '../dialogs/jump_to_folder.dart';
 import '../dialogs/question_dialog.dart';
 import '../dialogs/simple_dialogs.dart';
 import '../operations/operations_cards.dart';
@@ -33,6 +34,7 @@ import 'vim_register.dart';
 import 'workspace_cubit.dart';
 import 'workspace_state.dart';
 
+part 'interface_actions.dart';
 part 'vim_actions.dart';
 part 'workspace_actions.dart';
 
@@ -99,6 +101,7 @@ class WorkspaceScreen extends StatefulWidget {
     required this.savedActive,
     required this.fallbackLocation,
     required this.onSnapshot,
+    required this.frecency,
     super.key,
   });
 
@@ -117,6 +120,10 @@ class WorkspaceScreen extends StatefulWidget {
   /// Where a panel opens when it has nothing saved: the home folder.
   final Location fallbackLocation;
   final ValueChanged<WorkspaceSnapshot> onSnapshot;
+
+  /// The folders the panels showed, counted as they show them, for Jump
+  /// to Folder.
+  final FolderFrecency frecency;
 
   @override
   State<WorkspaceScreen> createState() => _WorkspaceScreenState();
@@ -168,6 +175,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     operations: widget.operations,
     preferences: widget.preferences,
     logger: widget.logger,
+    onFolderShown: widget.frecency.visit,
   );
 
   @override
@@ -305,6 +313,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                             shortcuts: widget.shortcutMap.toShortcuts(
                               Theme.of(context).platform,
                               scopes: const {CommandScope.panel},
+                              // The window's `gn`, `cd`, `gj` before the
+                              // panel's own `n`, `d`, `j`.
+                              sequencesOf: const {CommandScope.global},
                             ),
                             child: LayoutBuilder(
                               builder: (context, constraints) {

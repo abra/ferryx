@@ -243,9 +243,14 @@ class ShortcutMap {
   /// A `Shortcuts`-compatible map for [platform], limited to [scopes] so
   /// single keys never fire while typing. A plain Enter or Space yields to
   /// a focused button or row ([CommandIntent.yieldsToControls]).
+  ///
+  /// [sequencesOf] adds the two-key sequences of other scopes: an inner
+  /// map (the panel's) must try `gn` before its own `n`, or the sequence
+  /// of an outer map never completes.
   Map<ShortcutActivator, Intent> toShortcuts(
     TargetPlatform platform, {
     required Set<CommandScope> scopes,
+    Set<CommandScope> sequencesOf = const {},
   }) {
     final out = <ShortcutActivator, Intent>{};
     final prefixes = <LogicalKeyboardKey>{};
@@ -253,7 +258,11 @@ class ShortcutMap {
     // own too, and the sequence must be tried before it.
     for (final sequences in [true, false]) {
       for (final entry in _bindings.entries) {
-        if (!scopes.contains(entry.key.scope)) continue;
+        final scope = entry.key.scope;
+        if (!scopes.contains(scope) &&
+            !(sequences && sequencesOf.contains(scope))) {
+          continue;
+        }
         for (final chord in entry.value) {
           if ((chord.prefix != null) != sequences) continue;
           out[chord.toShortcutActivator(platform)] = CommandIntent(

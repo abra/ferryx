@@ -2294,4 +2294,36 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get paletteSectionDialogs => 'Диалоги';
+
+  @override
+  String get jumpTitle => 'Переход к частой папке';
+
+  @override
+  String get jumpHint => 'Введите части пути к папке';
+
+  @override
+  String get jumpEmpty =>
+      'Здесь появятся папки, которые вы открываете, — частые первыми';
+
+  @override
+  String get jumpNoResults => 'Среди посещённых папок подходящих нет';
+
+  @override
+  String get jumpKeyOpen => 'открыть';
+
+  @override
+  String get jumpKeyNewTab => 'в новой вкладке';
+
+  @override
+  String get jumpKeyOtherPanel => 'в другой панели';
+
+  @override
+  String jumpGone(String path) {
+    return 'Папки $path больше нет — она убрана из списка';
+  }
+
+  @override
+  String jumpNoMatch(String query) {
+    return 'Среди посещённых папок нет подходящей для «$query»';
+  }
 }

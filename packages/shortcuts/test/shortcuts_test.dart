@@ -401,4 +401,84 @@ void main() {
     plain.dispose();
     controller.dispose();
   });
+
+  testWidgets('a window sequence whose second key is a panel key completes '
+      'from inside the panel', (tester) async {
+    final map = ShortcutMap.forUser(TargetPlatform.macOS, vimMotions: true);
+    final ran = <AppCommand>[];
+    final focus = FocusNode();
+    void record(AppCommand command) => ran.add(command);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CommandShortcuts(
+          shortcuts: map.toShortcuts(
+            TargetPlatform.macOS,
+            scopes: const {CommandScope.global},
+          ),
+          child: CommandHandlers(
+            handlers: {
+              for (final command in [
+                AppCommand.newTab,
+                AppCommand.jumpToFolder,
+                AppCommand.goToFolder,
+                AppCommand.renameInEditor,
+              ])
+                command: () => record(command),
+            },
+            child: CommandShortcuts(
+              shortcuts: map.toShortcuts(
+                TargetPlatform.macOS,
+                scopes: const {CommandScope.panel},
+                sequencesOf: const {CommandScope.global},
+              ),
+              child: CommandHandlers(
+                handlers: {
+                  for (final command in [
+                    AppCommand.vimSearchNext,
+                    AppCommand.moveDown,
+                    AppCommand.moveFirst,
+                    AppCommand.vimCut,
+                  ])
+                    command: () => record(command),
+                },
+                child: Focus(
+                  focusNode: focus,
+                  autofocus: true,
+                  child: const SizedBox(),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    Future<void> press(List<LogicalKeyboardKey> keys) async {
+      for (final key in keys) {
+        await tester.sendKeyEvent(key, platform: 'macos');
+      }
+    }
+
+    const g = LogicalKeyboardKey.keyG;
+    const c = LogicalKeyboardKey.keyC;
+    const d = LogicalKeyboardKey.keyD;
+    await press([g, LogicalKeyboardKey.keyN]);
+    await press([g, LogicalKeyboardKey.keyJ]);
+    await press([c, d]);
+    await press([c, LogicalKeyboardKey.keyN]);
+    await press([g, g]);
+    await press([d, d]);
+    await press([LogicalKeyboardKey.keyN, LogicalKeyboardKey.keyJ]);
+    expect(ran, [
+      AppCommand.newTab,
+      AppCommand.jumpToFolder,
+      AppCommand.goToFolder,
+      AppCommand.renameInEditor,
+      AppCommand.moveFirst,
+      AppCommand.vimCut,
+      AppCommand.vimSearchNext,
+      AppCommand.moveDown,
+    ]);
+    focus.dispose();
+  });
 }

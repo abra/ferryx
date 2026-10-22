@@ -747,5 +747,16 @@
   "paletteSectionVim": "Vim",
   "paletteSectionViewer": "Viewer",
   "paletteSectionLists": "Lists",
-  "paletteSectionDialogs": "Dialogs"
+  "paletteSectionDialogs": "Dialogs",
+  "jumpTitle": "Jump to a frequent folder",
+  "jumpHint": "Type parts of the folder’s path",
+  "jumpEmpty": "The folders you open show here, the most used first",
+  "jumpNoResults": "No folder you visited matches",
+  "jumpKeyOpen": "open",
+  "jumpKeyNewTab": "in a new tab",
+  "jumpKeyOtherPanel": "in the other panel",
+  "jumpGone": "{path} is gone; it is off the list now",
+  "@jumpGone": {"placeholders": {"path": {"type": "String"}}},
+  "jumpNoMatch": "No folder you visited matches “{query}”",
+  "@jumpNoMatch": {"placeholders": {"query": {"type": "String"}}}
 }

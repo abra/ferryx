@@ -2258,4 +2258,35 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get paletteSectionDialogs => 'Dialogs';
+
+  @override
+  String get jumpTitle => 'Jump to a frequent folder';
+
+  @override
+  String get jumpHint => 'Type parts of the folder’s path';
+
+  @override
+  String get jumpEmpty => 'The folders you open show here, the most used first';
+
+  @override
+  String get jumpNoResults => 'No folder you visited matches';
+
+  @override
+  String get jumpKeyOpen => 'open';
+
+  @override
+  String get jumpKeyNewTab => 'in a new tab';
+
+  @override
+  String get jumpKeyOtherPanel => 'in the other panel';
+
+  @override
+  String jumpGone(String path) {
+    return '$path is gone; it is off the list now';
+  }
+
+  @override
+  String jumpNoMatch(String query) {
+    return 'No folder you visited matches “$query”';
+  }
 }

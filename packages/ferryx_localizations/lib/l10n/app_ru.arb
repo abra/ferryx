@@ -676,5 +676,14 @@
   "paletteSectionVim": "Vim",
   "paletteSectionViewer": "Просмотр",
   "paletteSectionLists": "Списки",
-  "paletteSectionDialogs": "Диалоги"
+  "paletteSectionDialogs": "Диалоги",
+  "jumpTitle": "Переход к частой папке",
+  "jumpHint": "Введите части пути к папке",
+  "jumpEmpty": "Здесь появятся папки, которые вы открываете, — частые первыми",
+  "jumpNoResults": "Среди посещённых папок подходящих нет",
+  "jumpKeyOpen": "открыть",
+  "jumpKeyNewTab": "в новой вкладке",
+  "jumpKeyOtherPanel": "в другой панели",
+  "jumpGone": "Папки {path} больше нет — она убрана из списка",
+  "jumpNoMatch": "Среди посещённых папок нет подходящей для «{query}»"
 }

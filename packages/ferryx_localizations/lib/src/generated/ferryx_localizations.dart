@@ -4003,6 +4003,60 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Dialogs'**
   String get paletteSectionDialogs;
+
+  /// No description provided for @jumpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Jump to a frequent folder'**
+  String get jumpTitle;
+
+  /// No description provided for @jumpHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type parts of the folder’s path'**
+  String get jumpHint;
+
+  /// No description provided for @jumpEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The folders you open show here, the most used first'**
+  String get jumpEmpty;
+
+  /// No description provided for @jumpNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No folder you visited matches'**
+  String get jumpNoResults;
+
+  /// No description provided for @jumpKeyOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'open'**
+  String get jumpKeyOpen;
+
+  /// No description provided for @jumpKeyNewTab.
+  ///
+  /// In en, this message translates to:
+  /// **'in a new tab'**
+  String get jumpKeyNewTab;
+
+  /// No description provided for @jumpKeyOtherPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'in the other panel'**
+  String get jumpKeyOtherPanel;
+
+  /// No description provided for @jumpGone.
+  ///
+  /// In en, this message translates to:
+  /// **'{path} is gone; it is off the list now'**
+  String jumpGone(String path);
+
+  /// No description provided for @jumpNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No folder you visited matches “{query}”'**
+  String jumpNoMatch(String query);
 }
 
 class _FerryxLocalizationsDelegate
