@@ -76,6 +76,19 @@ files is Rust.
   the panel along; programs (vim, top, ssh) are left alone. Copy, paste,
   clear (⌘C, ⌘V, ⌘K) as in Terminal.app; every other key is the shell's.
   `:term make` runs a command there from Vim mode.
+- **Undo and redo** (⌘Z / ⇧⌘Z) for copies, moves, the trash, renames
+  (batch ones too), new folders and files, archives and synchronizations:
+  what was made goes to the Trash, what moved moves back, what was trashed
+  comes back; anything that changed since is named before anything moves.
+- **Compare folders** (⇧F2) selects in both panels what is missing or
+  newer on the other side, optionally comparing contents; **Synchronize
+  folders** (⌥⇧F2) compares two trees and makes them alike both ways or
+  one way, with a table of actions you can change row by row.
+- **Checksums** (⌃⌘H): SHA-256, SHA-1, MD5 or BLAKE3 of files and folders,
+  a pasted hash looked up, a checksum file saved or checked.
+- **Find duplicates** (⇧⌘F): files with the same contents, grouped by the
+  space they waste, marked by hand or by rule, moved to the Trash (and
+  back with ⌘Z).
 - **Keyboard first, no mouse needed**: every command has a shortcut you can
   rebind (Settings → Hotkeys), click hints (⌘J) label everything clickable,
   the menu key (⌃↩, ⇧F10) opens what a right click opens, a cheat sheet

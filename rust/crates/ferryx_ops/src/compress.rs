@@ -76,7 +76,10 @@ pub fn run(ctx: &OpContext, request: &OpRequest) -> Result<(), Abort> {
     let outcome = write_all(ctx, &mut zip, &files, request.options.password.as_deref());
     match outcome {
         Ok(()) => match zip.finish() {
-            Ok(_) => Ok(()),
+            Ok(_) => {
+                ctx.record_created(&target);
+                Ok(())
+            }
             Err(e) => {
                 ctx.record_error(&target, e.to_string());
                 let _ = std::fs::remove_file(&target);

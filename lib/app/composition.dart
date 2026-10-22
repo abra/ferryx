@@ -64,6 +64,19 @@ Future<DependenciesContainer> composeDependencies({
     resources.add('operations.dispose', operations.dispose);
     final find = FindService(backend: backend);
     resources.add('find.dispose', find.dispose);
+    // ─── Operations stream ───
+    final folderSync = FolderSyncService(backend: backend);
+    resources.add('folderSync.dispose', folderSync.dispose);
+    final checksums = ChecksumService(backend: backend);
+    resources.add('checksums.dispose', checksums.dispose);
+    final duplicates = DuplicatesService(backend: backend);
+    resources.add('duplicates.dispose', duplicates.dispose);
+    // What undo and redo would do, before the first change reports it.
+    try {
+      await operations.refreshJournal();
+    } on Object catch (error) {
+      logger.warn('journal summary', error: error);
+    }
 
     // ─── The desktop's own services ───
     final platformServices = PlatformServices.forPlatform(
@@ -90,6 +103,9 @@ Future<DependenciesContainer> composeDependencies({
       recentCommands: recentCommands,
       platformServices: platformServices,
       terminal: terminal,
+      folderSync: folderSync,
+      checksums: checksums,
+      duplicates: duplicates,
       resourceDisposer: resources,
       windowFrame: windowFrame,
     );

@@ -21,7 +21,10 @@ PACKAGES = \
 	packages/features/find \
 	packages/features/settings \
 	packages/features/palette \
-	packages/features/terminal
+	packages/features/terminal \
+	packages/features/sync \
+	packages/features/checksums \
+	packages/features/duplicates
 
 ROOT_ANALYZE_PATHS = lib test
 

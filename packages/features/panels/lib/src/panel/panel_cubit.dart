@@ -617,6 +617,13 @@ class PanelCubit extends Cubit<PanelState> {
     );
   }
 
+  /// Selects exactly the rows named in [names] (Compare Folders). A quick
+  /// search ends first, so that no named row stays hidden by it.
+  void selectOnly(Set<String> names) {
+    if (state.active?.quickSearch.isNotEmpty ?? false) clearQuickSearch();
+    _setSelection((row) => names.contains(row.name));
+  }
+
   void selectByExtension({required bool select}) {
     final tab = state.active;
     final focused = tab?.focused;

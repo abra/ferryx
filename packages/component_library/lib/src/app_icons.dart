@@ -209,4 +209,12 @@ abstract final class AppIcons {
   static const IconData panelsHide = LucideIcons.panelTopClose;
   static const IconData panelsShow = LucideIcons.panelTopOpen;
   static const IconData clear = LucideIcons.eraser;
+  // ─── Operations stream ───
+  static const IconData redo = LucideIcons.redo2;
+  static const IconData compareFolders = LucideIcons.gitCompareArrows;
+  static const IconData synchronize = LucideIcons.folderSync;
+  static const IconData checksum = LucideIcons.fingerprint;
+  static const IconData duplicates = LucideIcons.files;
+  static const IconData equal = LucideIcons.equal;
+  static const IconData notEqual = LucideIcons.equalNot;
 }

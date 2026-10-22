@@ -97,6 +97,21 @@ class GeneralPage extends StatelessWidget {
             ),
           ],
         ),
+        // ─── Operations stream ───
+        SettingsGroup(
+          title: l10n.compareGroupLabel,
+          children: [
+            ToggleRow(
+              label: l10n.compareContentsSetting,
+              value: prefs.compareOptions.quickContents,
+              onChanged: (v) => service.update(
+                (p) => p.copyWith(
+                  compareOptions: p.compareOptions.copyWith(quickContents: v),
+                ),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }

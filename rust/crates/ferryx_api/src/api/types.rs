@@ -12,6 +12,11 @@ use ferryx_ops as ops;
 use ferryx_vfs::{Location, VfsError, VfsErrorKind};
 use flutter_rust_bridge::frb;
 
+use crate::api::checksum::ChecksumUpdateView;
+use crate::api::duplicates::DuplicatesUpdateView;
+use crate::api::journal::JournalSummaryView;
+use crate::api::sync::CompareUpdateView;
+
 // ─── Errors ───
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -276,6 +281,11 @@ pub enum OpKindView {
     Compress,
     Extract,
     CalcSizes,
+    // ─── Operations stream ───
+    Synchronize,
+    CompareContents,
+    Undo,
+    Redo,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -313,6 +323,10 @@ impl OpRequestView {
                 OpKindView::Compress => ops::OpKind::Compress,
                 OpKindView::Extract => ops::OpKind::Extract,
                 OpKindView::CalcSizes => ops::OpKind::CalcSizes,
+                OpKindView::Synchronize => ops::OpKind::Synchronize,
+                OpKindView::CompareContents => ops::OpKind::CompareContents,
+                OpKindView::Undo => ops::OpKind::Undo,
+                OpKindView::Redo => ops::OpKind::Redo,
             },
             sources: self.sources.iter().map(PathBuf::from).collect(),
             archive: self.archive.as_ref().map(PathBuf::from),
@@ -474,6 +488,10 @@ impl From<ops::Progress> for ProgressView {
                 ops::OpKind::Compress => OpKindView::Compress,
                 ops::OpKind::Extract => OpKindView::Extract,
                 ops::OpKind::CalcSizes => OpKindView::CalcSizes,
+                ops::OpKind::Synchronize => OpKindView::Synchronize,
+                ops::OpKind::CompareContents => OpKindView::CompareContents,
+                ops::OpKind::Undo => OpKindView::Undo,
+                ops::OpKind::Redo => OpKindView::Redo,
             },
             state: match p.state {
                 ops::OpState::Scanning => OpStateView::Scanning,
@@ -756,6 +774,15 @@ pub enum AppEventKind {
     FindProgress,
     /// A search ended (`find_id`).
     FindDone,
+    // ─── Operations stream ───
+    /// What undo and redo would do changed (`journal`).
+    JournalChanged,
+    /// A folder comparison found rows or ended (`compare`).
+    CompareProgress,
+    /// A checksum task hashed files or ended (`checksum`).
+    ChecksumProgress,
+    /// A duplicate search settled groups or ended (`duplicates`).
+    DuplicatesProgress,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -768,6 +795,11 @@ pub struct AppEvent {
     pub find_current: Option<String>,
     pub find_scanned: i64,
     pub find_error: Option<String>,
+    // ─── Operations stream ───
+    pub journal: Option<JournalSummaryView>,
+    pub compare: Option<CompareUpdateView>,
+    pub checksum: Option<ChecksumUpdateView>,
+    pub duplicates: Option<DuplicatesUpdateView>,
 }
 
 impl AppEvent {
@@ -782,6 +814,10 @@ impl AppEvent {
             find_current: None,
             find_scanned: 0,
             find_error: None,
+            journal: None,
+            compare: None,
+            checksum: None,
+            duplicates: None,
         }
     }
 

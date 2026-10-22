@@ -136,6 +136,14 @@ enum AppCommand {
   quickLook(CommandScope.global),
   share(CommandScope.global),
 
+  // ─── Operations ───
+  compareFolders(CommandScope.global),
+  synchronizeFolders(CommandScope.global),
+  undo(CommandScope.global),
+  redo(CommandScope.global),
+  checksums(CommandScope.global),
+  findDuplicates(CommandScope.global),
+
   // ─── Window and help ───
   focusLeftPanel(CommandScope.global),
   focusRightPanel(CommandScope.global),

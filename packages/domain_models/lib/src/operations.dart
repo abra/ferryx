@@ -14,6 +14,18 @@ enum OpKind {
 
   /// The sizes of folders, for the panel.
   calcSizes,
+
+  // ─── Operations stream ───
+
+  /// Two folders made alike: copies both ways, deletions to the trash.
+  synchronize,
+
+  /// Pairs of files compared byte for byte (Compare Folders).
+  compareContents,
+
+  /// A step of the journal undone or redone.
+  undo,
+  redo,
 }
 
 /// What to do when the destination already has the item.

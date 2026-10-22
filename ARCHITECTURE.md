@@ -104,6 +104,15 @@ buttons'. The window is shown only after the preferences are read
 | `ferryx_term` | The integrated terminal's shell: a `Session` runs the user's shell as a login shell in a pseudo-terminal (`portable-pty`: openpty, ConPTY on Windows), sends its output in batches with flow control, probes whether it waits at its prompt (`tcgetpgrp`) and its folder (`proc_pidinfo`, `/proc/<pid>/cwd`), types `cd` when asked, and hangs up and reaps it on close. No emulation: that is the interface's. |
 | `ferryx_api` | `flutter_rust_bridge` surface. Holds the open listings (`app.rs`: one per panel tab, with its raw rows for resorting and its watcher), the archive indexes, the operations runner (whose listener forwards progress as events) and the searches; converts to plain DTOs (`api/types.rs`, `…View` types, enums without payloads so Dart sees enums, `i64` counts so Dart sees `int`); `volume_id` names a path's volume for a drop to tell a move from a copy. Its `Cargo.toml` uses literal fields because cargokit parses it without workspace inheritance. |
 
+The Operations stream adds to `ferryx_ops` the undo journal (`journal`,
+`undo`), folder comparison and synchronization (`sync`), checksums
+(`checksum`, `hashing`) and duplicates (`duplicates`); to `ferryx_vfs` the
+trash with receipts (`trash`); to `ferryx_api` the files `journal.rs`,
+`sync.rs`, `checksum.rs`, `duplicates.rs` and `tasks.rs` (ids, cancel
+flags and event batching of the dialogs' work). `Runner::start_job` runs a
+module's own job as an operation, with how its changes go on record
+(`Journaling`). See "Operations stream" below.
+
 Rules:
 
 - A panel's listing lives in Rust while the panel shows it
@@ -170,6 +179,9 @@ that `ferryx_backend` loads, as part of the Flutter build.
 | `features/settings` | The settings window (`SettingsScreen`: General, Panels, Viewer, Terminal, Hotkeys, Editors, Tools, About) and the cheat sheet (`showCheatSheet`). |
 | `features/palette` | The command palette (`showCommandPalette`, `PaletteCubit`, the `fuzzyMatch` scorer). |
 | `features/terminal` | The integrated terminal: `TerminalSessionCubit` (the session, the xterm.dart emulator it writes into, `FolderSync`), `TerminalPane` (its bar, the emulator in the theme's colours, the end notice, the menu) and `TerminalKeys` (which keys are the window's). |
+| `features/sync` | Synchronize Folders (`showSyncDialog`, `SyncCubit`): two trees compared in the core, a virtual table with an action per row, the synchronization as an operation. |
+| `features/checksums` | Checksums (`showChecksumsDialog`, `ChecksumsCubit`): hashes of files or the check of a checksum file. |
+| `features/duplicates` | Find Duplicates (`showDuplicatesDialog`, `DuplicatesCubit`): groups of identical files, marks, Move to Trash. |
 
 ### Feature wiring
 
@@ -563,6 +575,122 @@ widget tests need no native library. The plugin stays inside
 `platform_services`: features see `FileDragSource`, `FileDropTarget` and
 the service.
 
+## Operations stream: undo, compare and sync, checksums, duplicates
+
+### Undo and redo (⌘Z, ⇧⌘Z; Vim `uu`, `U`; `:undo`, `:redo`)
+
+The journal (`ferryx_ops::journal`) lives in the core, so every caller is
+covered: the `Runner` owns it, and every operation records what it changed
+through its `OpContext` (`record_created`, `record_moved`,
+`record_overwritten`, `record`), whatever started it (a panel, a dialog,
+the Vim register, a feature of another stream). Bridge calls that change
+files themselves (inline and batch rename, new folder or file, links, a
+saved checksum file) record through `tasks::record`. A step is a list of
+`Change`s in the order they happened:
+
+| Change | Undone by | The other way |
+|---|---|---|
+| `Created` (a copy, a new folder, an archive, an extraction) | moving it to the trash | putting it back |
+| `Moved` (a move, a rename) | the move back (a rename, across volumes a copy and a delete) | the move again |
+| `Trashed` (with the trash's receipt) | putting it back | trashing it again |
+| `FolderRemoved` (a merge emptied it) | making it again | trashing it (empty) |
+| `Overwritten` | nothing: its contents are gone | nothing |
+
+Undoing walks the step last change first and records what it did as the
+redo step (`Journal::finish_walk`); redo is the same walk over that.
+Created items go to the trash, not away, so an undo loses nothing. A copy
+records only the topmost item it made (what is inside needs no record of
+its own); a merge records each item it made inside the folder that was
+there; an item moved across volumes turns the copy's records into moves.
+Names that swapped (a batch rename) go back through temporary names. A
+step keeps up to 200 000 changes, beyond that it is on record as too big
+to undo; the stack keeps 100 steps; a new step empties redo. Permanent
+deletion is never recorded (its dialog says it cannot be brought back).
+
+Before a walk, `undo::check` compares every change with the disk: an item
+gone (`Missing`), a place taken (`Occupied`), an item no longer in the
+trash, putting back not possible here; and as warnings an item changed
+since (by its size and time) or overwritten (`Lost`). The panels ask
+`OperationsService.checkStep`, then walk at once when nothing is in the
+way, or show `UndoDialog` with each issue by path: "Undo the rest" or, when
+nothing is left, "Forget Step". A walk is an operation (`OpKind.undo` /
+`redo`) with a card titled by the step ("Undo Move of 3 items");
+`OperationsService.journal` brings what undo and redo would do next
+(`JournalChanged` events), and the panel menu names it or greys it.
+
+The trash keeps a receipt per item (`ferryx_vfs::trash`): on macOS
+`NSFileManager trashItemAtURL:resultingItemURL:` names the item's place in
+the Trash and putting back is a rename (Finder's own Put Back does not know
+such items); on Linux (the freedesktop trash) and Windows the `trash`
+crate's listing finds the item by its original path and deletion time and
+`restore_all` puts it back. Elsewhere `put_back_supported` is false and the
+check says so.
+
+### Compare Folders (⇧F2, `:compare`, `:compare!`)
+
+Pure Dart over the listings the panels hold (`compareFolderEntries` in the
+panels feature): a file or folder on one side only is selected there; of
+two files of one name the newer (times within a second agree), both when
+the times agree and the sizes do not; folders on both sides are left
+alone; a file against a folder selects both. Names pair as the active
+panel sorts them: exactly, then ignoring case unless the collation is
+case-sensitive. With Settings → General → "Compare the contents of files
+of the same size" (or `:compare!`), those files are compared byte for byte
+in the core as an operation (`OpKind.compareContents`, a card with
+progress and Stop); when it ends `takeContentDifferences` names the pairs
+that differ and the panels add them to the selection, if they still show
+the same folders.
+
+### Synchronize Folders (⌥⇧F2, `:synchronize`; `:sync` stays Sync Panels)
+
+`sync_feature`: the two folders (prefilled from the panels), the options
+(subfolders, contents, two seconds of time tolerance for FAT, hidden
+files, a mask for files, the direction and, one way only, deleting what
+the source lacks), Compare. `ferryx_ops::sync::compare` walks both trees a
+folder at a time, pairs names (exactly, then ignoring case; Unicode forms
+are one name) and sends rows as it goes (`CompareProgress`, ≤ 500 rows or
+80 ms an event): memory holds one folder of the walk; a hundred thousand
+rows live in Dart as one append-only list with one byte of action each.
+Each row starts with a suggested action (`defaultAction`: both ways what
+is alone or newer crosses; one way the source wins, a newer file on the
+target side is left for the user, deletions only with the option). The
+table (`AppRowList`) is virtual: ↑ ↓ and ⇧ select, Space walks a row's
+actions (several rows follow the first), → ← send rows to a side,
+Backspace leaves them, a click on the action walks it, the menu offers
+every action. Filters show left-only, right-only, newer, different,
+identical rows, each with its count. Synchronize asks first (copies,
+bytes, files replaced, items to the trash; destructive when deleting) and
+runs `run_sync` as an operation: copies both ways through the copy runner
+(attributes and verification as the preferences say), then deletions to
+the trash; an item changed since the comparison is asked about, never
+overwritten blindly. The step is undoable. The options are kept in
+`Preferences.compareOptions`.
+
+### Checksums (⌃⌘H, `:checksum [sha256|sha1|md5|blake3]`)
+
+`checksums_feature`: the targets (folders walked, optionally into
+subfolders) are listed first, then hashed on a few workers
+(`hashing::parallel`, 1 MiB buffers, cancellable) as `ChecksumProgress`
+events; the table shows the hash in monospace, a pasted expected hash
+lights its row, ⌘C copies the selected hashes, "Save Checksum File…"
+writes the GNU form (`hash  name`, names relative to the folder, escaped
+when they hold a backslash or a line break) and is undoable. A single
+checksum file (`*.sha256`, `SHA256SUMS`, `*.md5`, `*.b3`…, GNU and BSD
+lines) is checked instead: OK, mismatch, missing, with a summary.
+
+### Find Duplicates (⇧⌘F, `:dupes`)
+
+`duplicates_feature`: the active folder (and the other panel's on
+request), a minimum size, a mask, hidden files. `ferryx_ops::duplicates`
+walks without following links, keeps sizes seen twice, folds hard links to
+one inode (and overlapping folders) into one file, then settles the
+candidates a chunk at a time, the largest first: the first 16 KB hashed,
+what still matches hashed whole (BLAKE3), each group sent as it is
+settled. Rows are grouped (size × copies, space to free); Space marks,
+"Mark" keeps the newest, the oldest or the shortest path of each group;
+Move to Trash goes through the operations runner, so ⌘Z puts the files
+back; a group with every copy marked is warned about.
+
 ## Start-up
 
 `main.dart` → `starter()` (error zone, bloc observer; `configureWindow()`
@@ -602,6 +730,15 @@ partially created resources.
   (`widget_helpers_test`), the window frame per platform
   (`window_frame_test`), the window's place on the screens
   (`window_state_test`).
+- Operations stream: `ferryx_api/tests/operations_flow.rs` runs move →
+  undo → redo, copy and trash undone through the trash (where the desktop
+  can put back), renames with swaps, a taken place reported before undo,
+  a comparison and a synchronization, content pairs, checksums with a
+  check, duplicates; unit tests sit with `journal`, `undo`, `sync`,
+  `checksum`, `duplicates`, `hashing` and `trash`. Dart: cubit and widget
+  tests in the sync, checksums and duplicates features (the table's keys),
+  `folder_compare_test` and `undo_dialog_test` in the panels,
+  `app_row_list_test` in the component library.
 
 ## Known gaps
 
@@ -622,3 +759,9 @@ partially created resources.
   in the integrated terminal, even those marked "in terminal".
 - Windows and Linux are built and tested in CI, not used on a desktop day
   to day; the macOS app is signed ad hoc, not notarised.
+- Undo cannot bring back what was overwritten (it is reported, and left
+  as it is) or deleted for good; the journal lives as long as the app.
+  Items Ferryx trashes on macOS have no Finder Put Back.
+- Compare Folders pairs names in Dart without Unicode normalization (a
+  composed and a decomposed name differ there; Synchronize Folders folds
+  them). Hard links are folded into one file by inode on Unix only.

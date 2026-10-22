@@ -19,7 +19,8 @@ Future<List<RenameOutcomeView>> batchRenamePreview({
   options: options,
 );
 
-/// Renames every pair; answers what failed.
+/// Renames every pair; answers what failed. What was renamed is one step
+/// of the journal.
 Future<List<RenameFailureView>> batchRenameApply({
   required List<RenamePairView> pairs,
 }) => FerryxRustLib.instance.api.crateApiRenameBatchRenameApply(pairs: pairs);

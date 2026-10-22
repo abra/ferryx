@@ -10,6 +10,7 @@ use ferryx_vfs::error::{IoAt, VfsError, VfsErrorKind};
 use ferryx_vfs::native;
 use walkdir::WalkDir;
 
+use crate::journal::Change;
 use crate::runner::{copy_name, free_name, OpContext};
 use crate::types::*;
 
@@ -113,7 +114,11 @@ fn extract(ctx: &OpContext, request: &OpRequest) -> Result<(), Abort> {
             }
             let name = inner.rsplit('/').next().unwrap_or(inner);
             if files.is_empty() || !inner.is_empty() {
-                let _ = fs::create_dir_all(dest_dir.join(name));
+                let folder = dest_dir.join(name);
+                let fresh = folder.symlink_metadata().is_err();
+                if fs::create_dir_all(&folder).is_ok() && fresh {
+                    ctx.record_created(&folder);
+                }
             }
         } else {
             total += index.member(inner).map(|m| m.size).unwrap_or(0);
@@ -154,6 +159,7 @@ fn extract(ctx: &OpContext, request: &OpRequest) -> Result<(), Abort> {
                 set_times(&target, Some(ms), None);
             }
         }
+        ctx.record_created(&target);
         ctx.add_bytes(bytes.len() as u64);
         ctx.item_done();
     }
@@ -186,6 +192,18 @@ fn file_name(path: &Path) -> String {
 /// Copies `source` to `target` (the item's own new path). Answers whether
 /// anything was written.
 fn copy_item(ctx: &OpContext, source: &Path, target: &Path, options: &OpOptions) -> Result<bool, Abort> {
+    copy_item_to(ctx, source, target, options).map(|written| written.is_some())
+}
+
+/// Copies `source` to `target` as [`copy_item`] does, answering where it
+/// went (another name when both are kept), or `None` when nothing was
+/// written. What it makes goes on the operation's record.
+pub(crate) fn copy_item_to(
+    ctx: &OpContext,
+    source: &Path,
+    target: &Path,
+    options: &OpOptions,
+) -> Result<Option<PathBuf>, Abort> {
     ctx.check()?;
     ctx.set_current(source);
     let meta = loop {
@@ -193,7 +211,7 @@ fn copy_item(ctx: &OpContext, source: &Path, target: &Path, options: &OpOptions)
             Ok(meta) => break meta,
             Err(e) => {
                 if !ctx.ask_error(source, &VfsError::io(&e, source))? {
-                    return Ok(false);
+                    return Ok(None);
                 }
             }
         }
@@ -202,19 +220,24 @@ fn copy_item(ctx: &OpContext, source: &Path, target: &Path, options: &OpOptions)
     if file_type.is_dir() {
         let target = match resolve_dir_conflict(ctx, source, target, options)? {
             Some(t) => t,
-            None => return Ok(false),
+            None => return Ok(None),
         };
+        let fresh = target.symlink_metadata().is_err();
         if let Err(e) = fs::create_dir_all(&target) {
             let error = VfsError::io(&e, &target);
             if !ctx.ask_error(&target, &error)? {
-                return Ok(false);
+                return Ok(None);
             }
+        }
+        if fresh {
+            // Before its contents, which then need no record of their own.
+            ctx.record_created(&target);
         }
         let children = match fs::read_dir(source) {
             Ok(read) => read.filter_map(Result::ok).map(|e| e.path()).collect::<Vec<_>>(),
             Err(e) => {
                 ctx.ask_error(source, &VfsError::io(&e, source))?;
-                return Ok(false);
+                return Ok(None);
             }
         };
         for child in children {
@@ -225,7 +248,7 @@ fn copy_item(ctx: &OpContext, source: &Path, target: &Path, options: &OpOptions)
             preserve(source, &target, &meta);
         }
         ctx.item_done();
-        return Ok(true);
+        return Ok(Some(target));
     }
     let target = match resolve_conflict(
         ctx,
@@ -238,7 +261,7 @@ fn copy_item(ctx: &OpContext, source: &Path, target: &Path, options: &OpOptions)
         None => {
             // Skipped: its bytes still count as handled.
             ctx.add_bytes(meta.len());
-            return Ok(false);
+            return Ok(None);
         }
     };
     if file_type.is_symlink() {
@@ -247,13 +270,14 @@ fn copy_item(ctx: &OpContext, source: &Path, target: &Path, options: &OpOptions)
                 Ok(()) => break,
                 Err(e) => {
                     if !ctx.ask_error(source, &e)? {
-                        return Ok(false);
+                        return Ok(None);
                     }
                 }
             }
         }
+        ctx.record_created(&target);
         ctx.item_done();
-        return Ok(true);
+        return Ok(Some(target));
     }
     loop {
         match copy_file(ctx, source, &target, options) {
@@ -262,7 +286,7 @@ fn copy_item(ctx: &OpContext, source: &Path, target: &Path, options: &OpOptions)
             Err(CopyFailure::Error(e)) => {
                 let _ = fs::remove_file(&target);
                 if !ctx.ask_error(source, &e)? {
-                    return Ok(false);
+                    return Ok(None);
                 }
                 ctx.update(|p| p.bytes_done = p.bytes_done.saturating_sub(0));
             }
@@ -271,8 +295,9 @@ fn copy_item(ctx: &OpContext, source: &Path, target: &Path, options: &OpOptions)
     if options.preserve_attributes {
         preserve(source, &target, &meta);
     }
+    ctx.record_created(&target);
     ctx.item_done();
-    Ok(true)
+    Ok(Some(target))
 }
 
 enum CopyFailure {
@@ -409,6 +434,7 @@ fn resolve_conflict(
                     return Ok(None);
                 }
             }
+            ctx.record_overwritten(target);
             Ok(Some(target.to_path_buf()))
         }
         Answer::OverwriteOlderAll => {
@@ -422,6 +448,7 @@ fn resolve_conflict(
                         return Ok(None);
                     }
                 }
+                ctx.record_overwritten(target);
                 Ok(Some(target.to_path_buf()))
             } else {
                 Ok(None)
@@ -539,7 +566,12 @@ pub(crate) fn set_times(path: &Path, modified_ms: Option<i64>, accessed_ms: Opti
 
 /// Moves `source` to `target`: a rename on the same volume, else a copy
 /// and a delete. Answers whether the item moved.
-fn move_item(ctx: &OpContext, source: &Path, target: &Path, options: &OpOptions) -> Result<bool, Abort> {
+pub(crate) fn move_item(
+    ctx: &OpContext,
+    source: &Path,
+    target: &Path,
+    options: &OpOptions,
+) -> Result<bool, Abort> {
     ctx.check()?;
     ctx.set_current(source);
     if source == target {
@@ -565,7 +597,9 @@ fn move_item(ctx: &OpContext, source: &Path, target: &Path, options: &OpOptions)
                     for child in children {
                         move_item(ctx, &child, &target.join(file_name(&child)), options)?;
                     }
-                    let _ = fs::remove_dir(source);
+                    if fs::remove_dir(source).is_ok() {
+                        ctx.record(Change::FolderRemoved { path: source.to_path_buf() });
+                    }
                     ctx.item_done();
                     return Ok(true);
                 }
@@ -589,6 +623,7 @@ fn move_item(ctx: &OpContext, source: &Path, target: &Path, options: &OpOptions)
         loop {
             match fs::rename(source, &target) {
                 Ok(()) => {
+                    ctx.record_moved(source, &target);
                     ctx.add_bytes(if meta.is_file() { meta.len() } else { 0 });
                     count_items(ctx, &target);
                     return Ok(true);
@@ -603,13 +638,15 @@ fn move_item(ctx: &OpContext, source: &Path, target: &Path, options: &OpOptions)
         }
     }
     // Across volumes: copy, then remove what was copied.
-    let copied = copy_item(ctx, source, target, options)?;
-    if copied {
-        if let Err(e) = remove_any(source) {
-            ctx.record_error(source, e.message);
-        }
+    let merging = source.is_dir() && target.is_dir();
+    let Some(written) = copy_item_to(ctx, source, target, options)? else { return Ok(false) };
+    match remove_any(source) {
+        Ok(()) if merging && written == target => ctx.record_merged(source, &written),
+        Ok(()) => ctx.record_moved(source, &written),
+        // Left in place: on record it is a copy.
+        Err(e) => ctx.record_error(source, e.message),
     }
-    Ok(copied)
+    Ok(true)
 }
 
 /// A rename moves a whole tree at once: count its items as done.

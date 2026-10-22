@@ -171,12 +171,21 @@ void main() {
             shortcutMap: map,
             windowDecor: WindowDecor.none,
             platformServices: desktop,
+            folderSync: _MockFolderSync(),
             navigation: WorkspaceNavigation(
               openViewer: (context, location, {preview = false}) async =>
                   viewed.add(location),
               openFind: (context, root, {required view}) async => null,
               openSettings: (context) async {},
               openCheatSheet: (context) async {},
+              openSync: (_, {required left, required right}) async {},
+              openChecksums: (
+                _, {
+                required paths,
+                required base,
+                algorithm,
+              }) async {},
+              openDuplicates: (_, {required root, other}) async => null,
             ),
             savedLeft: SavedPanel(tabs: [SavedTab(location: left)]),
             savedRight: SavedPanel(tabs: [SavedTab(location: right)]),
@@ -719,3 +728,5 @@ void main() {
     unawaited(fake.dispose());
   });
 }
+
+class _MockFolderSync extends Mock implements FolderSyncService {}

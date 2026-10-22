@@ -23,6 +23,7 @@ import '../dialogs/jump_to_folder.dart';
 import '../dialogs/names_editor_dialog.dart';
 import '../dialogs/question_dialog.dart';
 import '../dialogs/simple_dialogs.dart';
+import '../dialogs/undo_dialog.dart';
 import '../native/drag_image.dart';
 import '../native/drop_plan.dart';
 import '../native/panel_drag_hooks.dart';
@@ -36,6 +37,7 @@ import '../panel/panel_view.dart';
 import '../panel/saved_panel.dart';
 import '../path_text.dart';
 import 'context_menu.dart';
+import 'folder_compare.dart';
 import 'key_hints.dart';
 import 'shelf.dart';
 import 'shelf_strip.dart';
@@ -46,6 +48,7 @@ import 'workspace_terminal.dart';
 
 part 'interface_actions.dart';
 part 'native_actions.dart';
+part 'operations_actions.dart';
 part 'terminal_actions.dart';
 part 'vim_actions.dart';
 part 'workspace_actions.dart';
@@ -57,6 +60,9 @@ class WorkspaceNavigation {
     required this.openFind,
     required this.openSettings,
     required this.openCheatSheet,
+    required this.openSync,
+    required this.openChecksums,
+    required this.openDuplicates,
   });
 
   /// The built-in viewer on a file; [preview] opens it in Preview mode.
@@ -77,6 +83,36 @@ class WorkspaceNavigation {
   openFind;
   final Future<void> Function(BuildContext context) openSettings;
   final Future<void> Function(BuildContext context) openCheatSheet;
+
+  // ─── Operations stream ───
+
+  /// Synchronize Folders between [left] and [right] (empty where a panel
+  /// shows no folder on disk).
+  final Future<void> Function(
+    BuildContext context, {
+    required String left,
+    required String right,
+  })
+  openSync;
+
+  /// Checksums of [paths], named relative to [base]; [algorithm] picked
+  /// beforehand (`:checksum md5`).
+  final Future<void> Function(
+    BuildContext context, {
+    required List<String> paths,
+    required String base,
+    ChecksumAlgorithm? algorithm,
+  })
+  openChecksums;
+
+  /// Find Duplicates under [root], and [other] on request; answers the
+  /// path of a file to show in the panel, if any.
+  final Future<String?> Function(
+    BuildContext context, {
+    required String root,
+    String? other,
+  })
+  openDuplicates;
 }
 
 /// What the window keeps between runs.
@@ -116,6 +152,7 @@ class WorkspaceScreen extends StatefulWidget {
     required this.frecency,
     required this.platformServices,
     this.terminal,
+    required this.folderSync,
     super.key,
   });
 
@@ -126,6 +163,9 @@ class WorkspaceScreen extends StatefulWidget {
   /// Quick Look, the share picker, files dragged to and from other
   /// applications, as far as this desktop has them.
   final PlatformServices platformServices;
+
+  /// Compare Folders by contents goes through it.
+  final FolderSyncService folderSync;
   final PreferencesService preferences;
   final Logger logger;
   final ShortcutMap shortcutMap;
@@ -170,6 +210,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   final _dismissTimers = <int, Timer>{};
   final _shownOperations = <int>{};
   final _askedQuestions = <int>{};
+
+  /// Titles of the operations' cards that name more than their kind (an
+  /// undo names its step), by operation id.
+  final _operationTitles = <int, String>{};
   double _splitBeforeKeys = 0.5;
   double _panelsWidth = 0;
   final _native = _NativeState();
@@ -343,6 +387,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   void _dismissOperation(int id) {
     _dismissTimers.remove(id)?.cancel();
+    _operationTitles.remove(id);
     if (!mounted) return;
     setState(() => _shownOperations.remove(id));
     unawaited(widget.operations.forget(id));
@@ -479,6 +524,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                   cards: workspace.operationsShown
                                       ? OperationsCards(
                                           operations: _operations,
+                                          titles: _operationTitles,
                                           onPause: (id) => unawaited(
                                             widget.operations.pause(id),
                                           ),

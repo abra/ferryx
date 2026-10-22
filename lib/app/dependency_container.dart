@@ -27,6 +27,9 @@ class DependenciesContainer {
     required this.recentCommands,
     required this.platformServices,
     required this.terminal,
+    required this.folderSync,
+    required this.checksums,
+    required this.duplicates,
     required this._resourceDisposer,
     TargetPlatform? platform,
     WindowFrame? windowFrame,
@@ -54,6 +57,11 @@ class DependenciesContainer {
   /// What this desktop offers beyond the core: Quick Look, the share
   /// picker, files dragged to and from other applications.
   final PlatformServices platformServices;
+
+  // ─── Operations stream ───
+  final FolderSyncService folderSync;
+  final ChecksumService checksums;
+  final DuplicatesService duplicates;
 
   /// The desktop the app runs on; the default chords follow its
   /// conventions.

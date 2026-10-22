@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
 import 'terminal_preferences.dart';
+import 'compare_options.dart';
 
 enum AppThemeMode { system, light, dark }
 
@@ -43,6 +44,7 @@ class Preferences extends Equatable {
     this.vimMode = false,
     this.vimMarks = const {},
     this.terminal = const TerminalPreferences(),
+    this.compareOptions = const CompareOptions(),
   });
 
   static const int schemaVersion = 1;
@@ -113,6 +115,9 @@ class Preferences extends Equatable {
   /// The integrated terminal: its settings and its height under the panels.
   final TerminalPreferences terminal;
 
+  /// Compare Folders and Synchronize Folders, as last used.
+  final CompareOptions compareOptions;
+
   /// The sort options a new panel starts with.
   SortOptions get defaultSort => SortOptions(
     foldersFirst: foldersFirst,
@@ -155,6 +160,7 @@ class Preferences extends Equatable {
     bool? vimMode,
     Map<String, String>? vimMarks,
     TerminalPreferences? terminal,
+    CompareOptions? compareOptions,
   }) => Preferences(
     themeMode: themeMode ?? this.themeMode,
     localeCode: clearLocale ? null : (localeCode ?? this.localeCode),
@@ -190,6 +196,7 @@ class Preferences extends Equatable {
     vimMode: vimMode ?? this.vimMode,
     vimMarks: vimMarks ?? this.vimMarks,
     terminal: terminal ?? this.terminal,
+    compareOptions: compareOptions ?? this.compareOptions,
   );
 
   Map<String, Object?> toJson() => {
@@ -227,6 +234,7 @@ class Preferences extends Equatable {
     'vimMode': vimMode,
     'vimMarks': vimMarks,
     'terminal': terminal.toJson(),
+    'compareOptions': compareOptions.toJson(),
   };
 
   /// Tolerant decoding: unknown or malformed fields fall back to defaults so
@@ -345,6 +353,7 @@ class Preferences extends Equatable {
             })
           : defaults.vimMarks,
       terminal: TerminalPreferences.fromJson(json['terminal']),
+      compareOptions: CompareOptions.fromJson(json['compareOptions']),
     );
   }
 
@@ -397,6 +406,7 @@ class Preferences extends Equatable {
     vimMode,
     vimMarks,
     terminal,
+    compareOptions,
   ];
 }
 

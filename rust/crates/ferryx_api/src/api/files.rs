@@ -2,6 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
+use ferryx_ops::journal::{Change, Fingerprint, StepKind};
 use ferryx_vfs::{archive, links, native};
 
 use crate::api::types::{ApiResult, EntryView, FerryxError, FerryxErrorKind, LocationKind, LocationView};
@@ -52,26 +53,53 @@ pub fn extract_to_temp(archive_path: String, inner: String) -> ApiResult<String>
     Ok(written.to_string_lossy().into_owned())
 }
 
-/// Makes the folder at `path`, and every missing folder above it.
+/// Makes the folder at `path`, and every missing folder above it. On the
+/// journal: undo trashes the topmost folder made.
 pub fn create_directory(path: String) -> ApiResult<()> {
-    Ok(native::create_dir_all(Path::new(&path))?)
+    let path = PathBuf::from(path);
+    let top = crate::tasks::first_missing(&path);
+    native::create_dir_all(&path)?;
+    if let Some(top) = top {
+        record_created(StepKind::CreateFolder, &top);
+    }
+    Ok(())
 }
 
 pub fn create_file(path: String) -> ApiResult<()> {
-    Ok(native::create_file(Path::new(&path))?)
+    native::create_file(Path::new(&path))?;
+    record_created(StepKind::CreateFile, Path::new(&path));
+    Ok(())
 }
 
-/// Renames the item at `path` to `new_name`; answers its new path.
+/// Renames the item at `path` to `new_name`; answers its new path. On the
+/// journal: undo renames it back.
 pub fn rename_item(path: String, new_name: String) -> ApiResult<String> {
-    Ok(native::rename(Path::new(&path), &new_name)?.to_string_lossy().into_owned())
+    let from = PathBuf::from(&path);
+    let to = native::rename(&from, &new_name)?;
+    crate::tasks::record(
+        StepKind::Rename,
+        std::slice::from_ref(&from),
+        vec![Change::Moved { from: from.clone(), to: to.clone() }],
+    );
+    Ok(to.to_string_lossy().into_owned())
 }
 
 pub fn create_symlink(target: String, link: String) -> ApiResult<()> {
-    Ok(links::create_symlink(Path::new(&target), Path::new(&link))?)
+    links::create_symlink(Path::new(&target), Path::new(&link))?;
+    record_created(StepKind::CreateLink, Path::new(&link));
+    Ok(())
 }
 
 pub fn create_hardlink(target: String, link: String) -> ApiResult<()> {
-    Ok(links::create_hardlink(Path::new(&target), Path::new(&link))?)
+    links::create_hardlink(Path::new(&target), Path::new(&link))?;
+    record_created(StepKind::CreateLink, Path::new(&link));
+    Ok(())
+}
+
+/// Puts a new item on the journal: undo moves it to the trash.
+fn record_created(kind: StepKind, path: &Path) {
+    let change = Change::Created { path: path.to_path_buf(), fingerprint: Fingerprint::of(path) };
+    crate::tasks::record(kind, &[path.to_path_buf()], vec![change]);
 }
 
 pub fn edit_symlink(link: String, target: String) -> ApiResult<()> {

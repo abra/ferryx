@@ -489,6 +489,8 @@ void main() {
       expect(AppCommand.quickLook.section, CommandSection.file);
       expect(AppCommand.share.section, CommandSection.file);
       expect(AppCommand.toggleTerminal.section, CommandSection.terminal);
+      expect(AppCommand.undo.section, CommandSection.edit);
+      expect(AppCommand.checksums.section, CommandSection.command);
       expect(
         AppCommand.terminalScrollPageDown.section,
         CommandSection.terminal,

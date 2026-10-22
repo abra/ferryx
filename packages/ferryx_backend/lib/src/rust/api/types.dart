@@ -4,8 +4,13 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import '../frb_generated.dart';
+import 'checksum.dart';
+import 'duplicates.dart';
+import 'journal.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+
+import 'sync.dart';
 
 // These functions are ignored because they are not marked as `pub`: `from_ops`, `part`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`
@@ -34,6 +39,10 @@ class AppEvent {
   final String? findCurrent;
   final PlatformInt64 findScanned;
   final String? findError;
+  final JournalSummaryView? journal;
+  final CompareUpdateView? compare;
+  final ChecksumUpdateView? checksum;
+  final DuplicatesUpdateView? duplicates;
 
   const AppEvent({
     required this.kind,
@@ -44,6 +53,10 @@ class AppEvent {
     this.findCurrent,
     required this.findScanned,
     this.findError,
+    this.journal,
+    this.compare,
+    this.checksum,
+    this.duplicates,
   });
 
   @override
@@ -55,7 +68,11 @@ class AppEvent {
       hits.hashCode ^
       findCurrent.hashCode ^
       findScanned.hashCode ^
-      findError.hashCode;
+      findError.hashCode ^
+      journal.hashCode ^
+      compare.hashCode ^
+      checksum.hashCode ^
+      duplicates.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -69,7 +86,11 @@ class AppEvent {
           hits == other.hits &&
           findCurrent == other.findCurrent &&
           findScanned == other.findScanned &&
-          findError == other.findError;
+          findError == other.findError &&
+          journal == other.journal &&
+          compare == other.compare &&
+          checksum == other.checksum &&
+          duplicates == other.duplicates;
 }
 
 enum AppEventKind {
@@ -84,6 +105,18 @@ enum AppEventKind {
 
   /// A search ended (`find_id`).
   findDone,
+
+  /// What undo and redo would do changed (`journal`).
+  journalChanged,
+
+  /// A folder comparison found rows or ended (`compare`).
+  compareProgress,
+
+  /// A checksum task hashed files or ended (`checksum`).
+  checksumProgress,
+
+  /// A duplicate search settled groups or ended (`duplicates`).
+  duplicatesProgress,
 }
 
 class AttributeChangesView {
@@ -633,6 +666,10 @@ enum OpKindView {
   compress,
   extract,
   calcSizes,
+  synchronize,
+  compareContents,
+  undo,
+  redo,
 }
 
 class OpRequestView {

@@ -27,6 +27,10 @@ class OperationsService {
   Map<int, OperationProgress> get current => Map.unmodifiable(_current);
 
   void _onEvent(rust.AppEvent event) {
+    if (event.kind == rust.AppEventKind.journalChanged) {
+      _onJournal(event);
+      return;
+    }
     if (event.kind != rust.AppEventKind.operationProgress) return;
     final view = event.progress;
     if (view == null) return;
@@ -110,8 +114,65 @@ class OperationsService {
     await rust.FerryxBackend.guard(() => rust.forgetOperation(id: id));
   }
 
+  // ─── Undo and redo ───
+
+  final _journal = StreamController<JournalSummary>.broadcast();
+  JournalSummary _journalNow = JournalSummary.empty;
+
+  /// What undo and redo would do next, on every change: an operation
+  /// ended, a rename, a new folder, an undo.
+  Stream<JournalSummary> get journal => _journal.stream;
+
+  /// The latest of [journal].
+  JournalSummary get currentJournal => _journalNow;
+
+  void _onJournal(rust.AppEvent event) {
+    final view = event.journal;
+    if (view == null) return;
+    _journalNow = rust.journalSummaryFromView(view);
+    _journal.add(_journalNow);
+  }
+
+  /// Reads what undo and redo would do from the core (at start).
+  Future<JournalSummary> refreshJournal() => rust.FerryxBackend.guard(() async {
+    _journalNow = rust.journalSummaryFromView(await rust.journalSummary());
+    _journal.add(_journalNow);
+    return _journalNow;
+  });
+
+  /// A look at the step undo ([redo] false) or redo would take: what of
+  /// it cannot be done as it was. `null` when there is nothing to do.
+  Future<UndoCheck?> checkStep({required bool redo}) =>
+      rust.FerryxBackend.guard(() async {
+        final view = await rust.checkJournalStep(redo: redo);
+        return view == null ? null : rust.undoCheckFromView(view);
+      });
+
+  /// Undoes the step [stepId] (the one [checkStep] looked at) as an
+  /// operation; answers its id. Throws [FerryxException] with
+  /// [FerryxErrorKind.notFound] when another step came first meanwhile.
+  Future<int> undo(int stepId) => _walk(stepId, redo: false);
+
+  /// Redoes the step [stepId]; as [undo].
+  Future<int> redo(int stepId) => _walk(stepId, redo: true);
+
+  Future<int> _walk(int stepId, {required bool redo}) =>
+      rust.FerryxBackend.guard(() async {
+        final id = await rust.walkJournalStep(redo: redo, stepId: stepId);
+        logger.debug('${redo ? 'redo' : 'undo'} of step $stepId: op $id');
+        return id;
+      });
+
+  /// Drops the step [stepId], which can no longer be done, so the one
+  /// before it comes next.
+  Future<bool> forgetStep(int stepId, {required bool redo}) =>
+      rust.FerryxBackend.guard(
+        () => rust.forgetJournalStep(redo: redo, stepId: stepId),
+      );
+
   Future<void> dispose() async {
     await _subscription?.cancel();
     await _progress.close();
+    await _journal.close();
   }
 }

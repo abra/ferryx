@@ -93,6 +93,10 @@ extension FerryxFormatting on FerryxLocalizations {
       OpKind.compress => opCompressTitle(count),
       OpKind.extract => opExtractTitle(count),
       OpKind.calcSizes => opCalcSizesTitle(count),
+      OpKind.synchronize => opSynchronizeTitle(progress.itemsTotal),
+      OpKind.compareContents => opCompareContentsTitle(count),
+      OpKind.undo => opUndoTitle(progress.itemsTotal),
+      OpKind.redo => opRedoTitle(progress.itemsTotal),
     };
   }
 

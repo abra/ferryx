@@ -69,4 +69,6 @@ const _placed = {
   AppCommand.showTerminal: CommandSection.terminal,
   AppCommand.hideTerminal: CommandSection.terminal,
   AppCommand.togglePanelsOverTerminal: CommandSection.terminal,
+  AppCommand.undo: CommandSection.edit,
+  AppCommand.redo: CommandSection.edit,
 };

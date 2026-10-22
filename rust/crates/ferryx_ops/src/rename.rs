@@ -18,6 +18,18 @@ pub struct RenameFailure {
 /// another item (a swap, a shift), the items are moved through temporary
 /// names first. Answers what failed.
 pub fn apply(pairs: &[(PathBuf, String)]) -> Vec<RenameFailure> {
+    apply_recorded(pairs).0
+}
+
+/// [`apply`], answering also each rename done, as `(old path, new path)`,
+/// for the journal.
+pub fn apply_recorded(pairs: &[(PathBuf, String)]) -> (Vec<RenameFailure>, Vec<(PathBuf, PathBuf)>) {
+    let mut done = Vec::new();
+    let failures = apply_inner(pairs, &mut done);
+    (failures, done)
+}
+
+fn apply_inner(pairs: &[(PathBuf, String)], done: &mut Vec<(PathBuf, PathBuf)>) -> Vec<RenameFailure> {
     let mut failures = Vec::new();
     let active: Vec<&(PathBuf, String)> = pairs
         .iter()
@@ -28,8 +40,9 @@ pub fn apply(pairs: &[(PathBuf, String)]) -> Vec<RenameFailure> {
     let needs_staging = targets.iter().any(|t| old_paths.contains(t));
     if !needs_staging {
         for ((path, _), target) in active.iter().zip(&targets) {
-            if let Err(e) = rename_checked(path, target) {
-                failures.push(RenameFailure { path: path.clone(), message: e.message });
+            match rename_checked(path, target) {
+                Ok(()) => done.push((path.clone(), target.clone())),
+                Err(e) => failures.push(RenameFailure { path: path.clone(), message: e.message }),
             }
         }
         return failures;
@@ -44,15 +57,18 @@ pub fn apply(pairs: &[(PathBuf, String)]) -> Vec<RenameFailure> {
         }
     }
     for (original, temp, target) in staged {
-        if let Err(e) = rename_checked(&temp, &target) {
-            // Back to the old name while it is free; never over another
-            // item. Taken meanwhile, it stays under the temporary name,
-            // which the message gives.
-            let message = match rename_checked(&temp, &original) {
-                Ok(()) => e.message,
-                Err(_) => format!("{} (kept as {})", e.message, temp.display()),
-            };
-            failures.push(RenameFailure { path: original, message });
+        match rename_checked(&temp, &target) {
+            Ok(()) => done.push((original, target)),
+            Err(e) => {
+                // Back to the old name while it is free; never over another
+                // item. Taken meanwhile, it stays under the temporary name,
+                // which the message gives.
+                let message = match rename_checked(&temp, &original) {
+                    Ok(()) => e.message,
+                    Err(_) => format!("{} (kept as {})", e.message, temp.display()),
+                };
+                failures.push(RenameFailure { path: original, message });
+            }
         }
     }
     failures

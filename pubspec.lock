@@ -73,6 +73,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.1"
+  checksums_feature:
+    dependency: "direct main"
+    description:
+      path: "packages/features/checksums"
+      relative: true
+    source: path
+    version: "0.1.0"
   cli_config:
     dependency: transitive
     description:
@@ -180,6 +187,13 @@ packages:
     dependency: "direct main"
     description:
       path: "packages/domain_models"
+      relative: true
+    source: path
+    version: "0.1.0"
+  duplicates_feature:
+    dependency: "direct main"
+    description:
+      path: "packages/features/duplicates"
       relative: true
     source: path
     version: "0.1.0"
@@ -1003,6 +1017,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.9.1"
+  sync_feature:
+    dependency: "direct main"
+    description:
+      path: "packages/features/sync"
+      relative: true
+    source: path
+    version: "0.1.0"
   term_glyph:
     dependency: transitive
     description:

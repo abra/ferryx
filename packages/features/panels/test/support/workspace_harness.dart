@@ -279,11 +279,20 @@ class WorkspaceHarness {
           shortcutMap: map,
           windowDecor: WindowDecor.none,
           platformServices: desktop,
+          folderSync: _MockFolderSync(),
           navigation: WorkspaceNavigation(
             openViewer: (context, location, {preview = false}) async {},
             openFind: (context, root, {required view}) async => null,
             openSettings: (context) async {},
             openCheatSheet: (context) async {},
+            openSync: (_, {required left, required right}) async {},
+            openChecksums: (
+              _, {
+              required paths,
+              required base,
+              algorithm,
+            }) async {},
+            openDuplicates: (_, {required root, other}) async => null,
           ),
           savedLeft: saved(left),
           savedRight: saved(right),
@@ -351,3 +360,5 @@ class WorkspaceHarness {
     }
   }
 }
+
+class _MockFolderSync extends Mock implements FolderSyncService {}

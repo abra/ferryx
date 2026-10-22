@@ -8,3 +8,4 @@
 pub mod api;
 mod app;
 mod frb_generated;
+mod tasks;

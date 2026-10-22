@@ -155,11 +155,20 @@ void main() {
             windowDecor: WindowDecor.none,
             platformServices: desktop,
             frecency: frecency,
+            folderSync: _MockFolderSync(),
             navigation: WorkspaceNavigation(
               openViewer: (_, _, {preview = false}) async {},
               openFind: (_, _, {required view}) async => null,
               openSettings: (_) async {},
               openCheatSheet: (_) async {},
+              openSync: (_, {required left, required right}) async {},
+              openChecksums: (
+                _, {
+                required paths,
+                required base,
+                algorithm,
+              }) async {},
+              openDuplicates: (_, {required root, other}) async => null,
             ),
             savedLeft: null,
             savedRight: null,
@@ -411,3 +420,5 @@ void main() {
     expect(terminal.disposed, isTrue);
   });
 }
+
+class _MockFolderSync extends Mock implements FolderSyncService {}

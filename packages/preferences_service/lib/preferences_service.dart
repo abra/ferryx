@@ -4,6 +4,7 @@
 /// frecency) and the commands run lately.
 library;
 
+export 'src/compare_options.dart';
 export 'src/folder_frecency.dart';
 export 'src/preference_builder.dart';
 export 'src/preferences.dart';

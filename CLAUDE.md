@@ -67,6 +67,12 @@ See `ARCHITECTURE.md`. The rules that matter most:
   operation runs in Rust on a thread of its own and reports progress,
   questions and errors through the event stream; the interface never
   touches `dart:io` for files.
+- Every change to files goes on the undo journal: an operation of the
+  `Runner` records what it makes, moves, trashes or overwrites through its
+  `OpContext` (`record_created`, `record_moved`, `record_overwritten`,
+  `record`); a bridge call that changes files itself records through
+  `tasks::record`. Trash through `ferryx_vfs::trash` (it keeps receipts);
+  permanent deletion is never recorded.
 - A panel's cursor and selection are separate (orthodox manager rules,
   `PanelCubit`): moving the cursor never changes the selection; a command
   works on the selection, else on the focused row, never on `..`.

@@ -159,6 +159,10 @@ rust.OpKindView opKindToView(d.OpKind kind) => switch (kind) {
   d.OpKind.compress => rust.OpKindView.compress,
   d.OpKind.extract => rust.OpKindView.extract,
   d.OpKind.calcSizes => rust.OpKindView.calcSizes,
+  d.OpKind.synchronize => rust.OpKindView.synchronize,
+  d.OpKind.compareContents => rust.OpKindView.compareContents,
+  d.OpKind.undo => rust.OpKindView.undo,
+  d.OpKind.redo => rust.OpKindView.redo,
 };
 
 d.OpKind opKindFromView(rust.OpKindView kind) => switch (kind) {
@@ -170,6 +174,10 @@ d.OpKind opKindFromView(rust.OpKindView kind) => switch (kind) {
   rust.OpKindView.compress => d.OpKind.compress,
   rust.OpKindView.extract => d.OpKind.extract,
   rust.OpKindView.calcSizes => d.OpKind.calcSizes,
+  rust.OpKindView.synchronize => d.OpKind.synchronize,
+  rust.OpKindView.compareContents => d.OpKind.compareContents,
+  rust.OpKindView.undo => d.OpKind.undo,
+  rust.OpKindView.redo => d.OpKind.redo,
 };
 
 rust.ConflictPolicyView conflictPolicyToView(d.ConflictPolicy policy) =>

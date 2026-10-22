@@ -9,6 +9,7 @@
 //!   revealing, the trash.
 //! - [`attrs`], [`links`]: permissions, flags, owners, times; symbolic and
 //!   hard links.
+//! - [`trash`]: the trash with a receipt per item, to put it back.
 
 pub mod archive;
 pub mod attrs;
@@ -17,6 +18,7 @@ pub mod links;
 pub mod location;
 pub mod native;
 pub mod system;
+pub mod trash;
 pub mod volumes;
 pub mod watch;
 

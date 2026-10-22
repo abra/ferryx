@@ -38,6 +38,10 @@ class FindService {
         );
       case rust.AppEventKind.directoryChanged:
       case rust.AppEventKind.operationProgress:
+      case rust.AppEventKind.journalChanged:
+      case rust.AppEventKind.compareProgress:
+      case rust.AppEventKind.checksumProgress:
+      case rust.AppEventKind.duplicatesProgress:
         break;
     }
   }
