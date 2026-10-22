@@ -178,6 +178,27 @@ extension _VimActions on _WorkspaceScreenState {
         await _swapPanels();
       case 'help' || 'h':
         await widget.navigation.openCheatSheet(context);
+      // ─── Operations ───
+      // `:sync` stays Sync Panels; the dialog is `:synchronize`.
+      case 'compare':
+        await _compareFolders(contents: arg == 'content' ? true : null);
+      case 'compare!':
+        await _compareFolders(contents: true);
+      case 'synchronize' || 'syncdirs':
+        await _synchronizeFolders();
+      case 'undo' || 'u':
+        await _walkJournal(redo: false);
+      case 'redo' || 'red':
+        await _walkJournal(redo: true);
+      case 'checksum' || 'checksums':
+        final algorithm = ChecksumAlgorithm.parse(arg);
+        if (arg.isNotEmpty && algorithm == null) {
+          showAppNotice(context, _l10n.vimUnknownCommand('$name $arg'));
+          return;
+        }
+        await _checksums(algorithm: algorithm);
+      case 'dupes' || 'duplicates':
+        await _findDuplicates();
       default:
         showAppNotice(context, _l10n.vimUnknownCommand(name));
     }
@@ -436,5 +457,12 @@ extension _VimActions on _WorkspaceScreenState {
     'touch',
     'trash',
     'view',
+    // ─── Operations ───
+    'checksum',
+    'compare',
+    'dupes',
+    'redo',
+    'synchronize',
+    'undo',
   ];
 }

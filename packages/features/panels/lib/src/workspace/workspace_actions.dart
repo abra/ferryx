@@ -206,6 +206,8 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     AppCommand.cheatSheet: () =>
         unawaited(widget.navigation.openCheatSheet(context)),
     AppCommand.contextMenu: () => unawaited(_rowMenu(_rowAnchor())),
+    // ─── Operations ───
+    ..._operationsHandlers(),
   };
 
   // ─── Opening ───
@@ -650,6 +652,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         singlePane: _workspace.state.singlePane,
         native: tab?.location.isNative ?? false,
         map: widget.shortcutMap,
+        journal: widget.operations.currentJournal,
       ),
     );
     if (picked == null || !mounted) return;

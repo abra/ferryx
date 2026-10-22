@@ -67,6 +67,7 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
           icon: AppIcons.numberedList,
         ),
       action(AppCommand.compress, l10n.cmdCompress, icon: AppIcons.fileArchive),
+      action(AppCommand.checksums, l10n.cmdChecksums, icon: AppIcons.checksum),
     ] else ...[
       action(
         AppCommand.copyTo,
@@ -116,11 +117,50 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
   required bool singlePane,
   required bool native,
   required ShortcutMap map,
+  JournalSummary journal = JournalSummary.empty,
 }) {
   final l10n = context.l10n;
   final platform = Theme.of(context).platform;
   String? chord(AppCommand command) => map.labelOf(command, platform);
+  final undo = journal.undo;
+  final redo = journal.redo;
   return [
+    // ─── Operations ───
+    // Named by what they would do, greyed when there is nothing.
+    AppMenuAction(
+      value: AppCommand.undo,
+      label: undo == null ? l10n.cmdUndo : l10n.undoMenu(l10n.stepLabel(undo)),
+      icon: AppIcons.undo,
+      shortcut: chord(AppCommand.undo),
+      enabled: undo != null,
+    ),
+    AppMenuAction(
+      value: AppCommand.redo,
+      label: redo == null ? l10n.cmdRedo : l10n.redoMenu(l10n.stepLabel(redo)),
+      icon: AppIcons.redo,
+      shortcut: chord(AppCommand.redo),
+      enabled: redo != null,
+    ),
+    const AppMenuSeparator(),
+    AppMenuAction(
+      value: AppCommand.compareFolders,
+      label: l10n.cmdCompareFolders,
+      icon: AppIcons.compareFolders,
+      shortcut: chord(AppCommand.compareFolders),
+    ),
+    AppMenuAction(
+      value: AppCommand.synchronizeFolders,
+      label: l10n.cmdSynchronizeFolders,
+      icon: AppIcons.synchronize,
+      shortcut: chord(AppCommand.synchronizeFolders),
+    ),
+    AppMenuAction(
+      value: AppCommand.findDuplicates,
+      label: l10n.cmdFindDuplicates,
+      icon: AppIcons.duplicates,
+      shortcut: chord(AppCommand.findDuplicates),
+    ),
+    const AppMenuSeparator(),
     AppMenuAction(
       value: AppCommand.newTab,
       label: l10n.cmdNewTab,

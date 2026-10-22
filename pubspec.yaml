@@ -41,6 +41,13 @@ dependencies:
     path: packages/features/find
   settings_feature:
     path: packages/features/settings
+  # ─── Operations stream ───
+  sync_feature:
+    path: packages/features/sync
+  checksums_feature:
+    path: packages/features/checksums
+  duplicates_feature:
+    path: packages/features/duplicates
 
   # External packages
   flutter_bloc: ^9.1.1

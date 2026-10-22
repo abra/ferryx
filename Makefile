@@ -17,7 +17,10 @@ PACKAGES = \
 	packages/features/panels \
 	packages/features/viewer \
 	packages/features/find \
-	packages/features/settings
+	packages/features/settings \
+	packages/features/sync \
+	packages/features/checksums \
+	packages/features/duplicates
 
 ROOT_ANALYZE_PATHS = lib test
 

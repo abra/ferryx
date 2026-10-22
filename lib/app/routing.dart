@@ -10,11 +10,14 @@ import 'package:domain_models/domain_models.dart';
 import 'package:ferryx/app/dependency_container.dart';
 import 'package:ferryx/app/dialog_page.dart';
 import 'package:ferryx/app/window_chrome.dart';
+import 'package:checksums_feature/checksums_feature.dart';
+import 'package:duplicates_feature/duplicates_feature.dart';
 import 'package:find_feature/find_feature.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:panels_feature/panels_feature.dart';
 import 'package:settings_feature/settings_feature.dart';
+import 'package:sync_feature/sync_feature.dart';
 import 'package:viewer_feature/viewer_feature.dart';
 
 /// Route paths.
@@ -176,7 +179,45 @@ class _WorkspaceRoute extends StatelessWidget {
             platform: deps.platform,
             vim: deps.preferencesService.current.vimMode,
           ),
+          // ─── Operations stream ───
+          openSync: (context, {required left, required right}) {
+            final prefs = deps.preferencesService.current;
+            return showSyncDialog(
+              context,
+              left: left,
+              right: right,
+              service: deps.folderSync,
+              options: prefs.compareOptions,
+              onOptions: (options) => unawaited(
+                deps.preferencesService.update(
+                  (p) => p.copyWith(compareOptions: options),
+                ),
+              ),
+              preserveAttributes: prefs.preserveAttributes,
+              verify: prefs.verifyCopies,
+              shortcutMap: deps.shortcutMap,
+            );
+          },
+          openChecksums:
+              (context, {required paths, required base, algorithm}) =>
+                  showChecksumsDialog(
+                    context,
+                    paths: paths,
+                    base: base,
+                    algorithm: algorithm,
+                    service: deps.checksums,
+                  ),
+          openDuplicates: (context, {required root, other}) =>
+              showDuplicatesDialog(
+                context,
+                root: root,
+                other: other,
+                service: deps.duplicates,
+                operations: deps.operations,
+                shortcutMap: deps.shortcutMap,
+              ),
         ),
+        folderSync: deps.folderSync,
       ),
     );
   }

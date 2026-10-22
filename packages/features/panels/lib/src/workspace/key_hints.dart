@@ -1,4 +1,5 @@
 import 'package:component_library/component_library.dart';
+import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -106,6 +107,9 @@ List<PanelHint> hintsFor({
   return [
     ...paste,
     const CommandHint(AppCommand.enterItem),
+    // A checksum file is checked with the Checksums command.
+    if (ChecksumAlgorithm.ofSumsFile(focused.name) != null)
+      const CommandHint(AppCommand.checksums),
     const CommandHint(AppCommand.showPreview),
     const CommandHint(AppCommand.toggleSelectionMoveDown),
     const CommandHint(AppCommand.copyTo),

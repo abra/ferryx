@@ -21,6 +21,9 @@ class DependenciesContainer {
     required this.operations,
     required this.find,
     required this.rename,
+    required this.folderSync,
+    required this.checksums,
+    required this.duplicates,
     required this._resourceDisposer,
     TargetPlatform? platform,
     WindowFrame? windowFrame,
@@ -37,6 +40,11 @@ class DependenciesContainer {
   final OperationsService operations;
   final FindService find;
   final RenameService rename;
+
+  // ─── Operations stream ───
+  final FolderSyncService folderSync;
+  final ChecksumService checksums;
+  final DuplicatesService duplicates;
 
   /// The desktop the app runs on; the default chords follow its
   /// conventions.
