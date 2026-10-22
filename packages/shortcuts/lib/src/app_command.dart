@@ -167,6 +167,9 @@ enum AppCommand {
   extractTo(CommandScope.global),
   toggleFlatView(CommandScope.global),
   editTags(CommandScope.global),
+  // ─── Network ───
+  connectToServer(CommandScope.global),
+  disconnectServer(CommandScope.global),
 
   // ─── File panel keys ───
   moveUp(CommandScope.panel),

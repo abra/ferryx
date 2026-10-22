@@ -1,6 +1,6 @@
 [package]
 name = "ferryx_vfs"
-description = "File system access of Ferryx: listings with full metadata, folder watching, volumes, attributes, links, the trash, opening files, and read-only archives."
+description = "File system access of Ferryx: listings with full metadata, folder watching, volumes, attributes, links, the trash, opening files, read-only archives, and folders on servers over SFTP, FTP and WebDAV."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -29,6 +29,21 @@ unrar-rs.workspace = true
 zstd.workspace = true
 walkdir.workspace = true
 plist.workspace = true
+# ─── Network ───
+tokio.workspace = true
+futures-util.workspace = true
+russh.workspace = true
+russh-sftp.workspace = true
+suppaftp.workspace = true
+rustls.workspace = true
+rustls-platform-verifier.workspace = true
+reqwest.workspace = true
+quick-xml.workspace = true
+percent-encoding.workspace = true
+base64.workspace = true
+bytes.workspace = true
+hmac.workspace = true
+sha1.workspace = true
 
 [target.'cfg(unix)'.dependencies]
 nix.workspace = true
@@ -36,9 +51,24 @@ nix.workspace = true
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2.workspace = true
 objc2-foundation.workspace = true
+# ─── Network ───
+# The system's keychain for server passwords.
+keyring = { workspace = true, features = ["apple-native"] }
+
+# ─── Network ───
+# Credential Manager on Windows; the Secret Service over D-Bus (zbus, pure
+# Rust) on Linux.
+[target.'cfg(target_os = "windows")'.dependencies]
+keyring = { workspace = true, features = ["windows-native"] }
+
+[target.'cfg(all(unix, not(target_os = "macos")))'.dependencies]
+keyring = { workspace = true, features = ["async-secret-service", "tokio", "crypto-rust"] }
 
 [dev-dependencies]
 tempfile.workspace = true
 # The tests write the archives they read.
 lzma-rust2 = { workspace = true, features = ["encoder"] }
 sevenz-rust2 = { workspace = true, features = ["compress"] }
+# ─── Network ───
+# In-process SFTP, FTP(S) and WebDAV servers for the network tests.
+ferryx_test_servers.workspace = true

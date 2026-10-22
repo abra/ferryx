@@ -3566,4 +3566,294 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   @override
   String get noticeNotInFlat =>
       'This works on one folder’s items; leave the flat view first';
+
+  @override
+  String get cmdConnectToServer => 'Connect to Server…';
+
+  @override
+  String get cmdDisconnectServer => 'Disconnect';
+
+  @override
+  String get errorAuthFailed => 'The server refused the login';
+
+  @override
+  String get errorHostUnreachable => 'The server cannot be reached';
+
+  @override
+  String get errorTimedOut => 'The server did not answer in time';
+
+  @override
+  String get errorHostKeyUnknown => 'The server’s key was not trusted';
+
+  @override
+  String get errorHostKeyChanged => 'The server’s key has changed';
+
+  @override
+  String get errorConnectionLost => 'The connection to the server dropped';
+
+  @override
+  String get errorNotConnected => 'Not connected to the server';
+
+  @override
+  String get errorCertificateInvalid =>
+      'The server’s certificate is not trusted';
+
+  @override
+  String get networkConnectTitle => 'Connect to Server';
+
+  @override
+  String get networkAddressLabel => 'Address';
+
+  @override
+  String get networkAddressHint => 'sftp://user@host/folder';
+
+  @override
+  String get networkAddressNote =>
+      'SFTP, FTP, FTPS (ftps://), WebDAV (dav:// or davs://, http://, https://).';
+
+  @override
+  String get networkSavedServers => 'Saved Servers';
+
+  @override
+  String get networkNoServers =>
+      'No saved servers yet. Type an address above, or add a server.';
+
+  @override
+  String get networkAddServer => 'Add Server…';
+
+  @override
+  String get networkEditServer => 'Edit…';
+
+  @override
+  String get networkRemoveServer => 'Remove';
+
+  @override
+  String networkRemoveServerTitle(String name) {
+    return 'Remove “$name”?';
+  }
+
+  @override
+  String get networkRemoveServerMessage =>
+      'Its saved password stays in the keychain until you forget it in its settings.';
+
+  @override
+  String get networkConnect => 'Connect';
+
+  @override
+  String networkConnecting(String server) {
+    return 'Connecting to $server…';
+  }
+
+  @override
+  String get networkInsecure =>
+      'Not encrypted: names, passwords and files cross the network in the clear.';
+
+  @override
+  String get networkServerNew => 'New Server';
+
+  @override
+  String get networkServerEdit => 'Server Settings';
+
+  @override
+  String get networkFieldName => 'Name';
+
+  @override
+  String get networkFieldNameHint => 'The host when empty';
+
+  @override
+  String get networkFieldProtocol => 'Protocol';
+
+  @override
+  String get networkFieldHost => 'Host';
+
+  @override
+  String get networkFieldPort => 'Port';
+
+  @override
+  String get networkFieldUser => 'User';
+
+  @override
+  String get networkFieldUserHint => 'Anonymous when empty';
+
+  @override
+  String get networkFieldFolder => 'Folder';
+
+  @override
+  String get networkFieldFolderHint => 'The server’s start folder';
+
+  @override
+  String get networkFieldAuth => 'Log in with';
+
+  @override
+  String get networkFieldKey => 'Key file';
+
+  @override
+  String get networkFieldKeyHint => '~/.ssh/id_ed25519';
+
+  @override
+  String get networkAuthAutomatic => 'Keys or password';
+
+  @override
+  String get networkAuthPassword => 'Password';
+
+  @override
+  String get networkAuthKey => 'Key file';
+
+  @override
+  String get networkAuthAgent => 'SSH agent';
+
+  @override
+  String get networkProtocolSftp => 'SFTP (SSH)';
+
+  @override
+  String get networkProtocolFtp => 'FTP';
+
+  @override
+  String get networkProtocolFtps => 'FTPS (FTP with TLS)';
+
+  @override
+  String get networkProtocolDav => 'WebDAV (HTTP)';
+
+  @override
+  String get networkProtocolDavs => 'WebDAV (HTTPS)';
+
+  @override
+  String get networkHostRequired => 'Enter the server’s host name or address';
+
+  @override
+  String get networkPortInvalid => 'A port is a number from 1 to 65535';
+
+  @override
+  String get networkForgetPassword => 'Forget Saved Password';
+
+  @override
+  String networkPasswordForgotten(String server) {
+    return 'The saved password of $server is forgotten';
+  }
+
+  @override
+  String networkPasswordTitle(String server) {
+    return 'Log In to $server';
+  }
+
+  @override
+  String networkPasswordMessage(String user) {
+    return 'Enter the password of $user.';
+  }
+
+  @override
+  String get networkPasswordWrong =>
+      'The password was not accepted. Try again.';
+
+  @override
+  String get networkPasswordLabel => 'Password';
+
+  @override
+  String get networkRememberPassword => 'Remember in the system keychain';
+
+  @override
+  String get networkPassphraseTitle => 'Unlock the Key';
+
+  @override
+  String networkPassphraseMessage(String key) {
+    return 'The key $key is protected by a passphrase.';
+  }
+
+  @override
+  String get networkPassphraseWrong =>
+      'The passphrase did not unlock the key. Try again.';
+
+  @override
+  String get networkPassphraseLabel => 'Passphrase';
+
+  @override
+  String networkPromptsTitle(String server) {
+    return 'Log In to $server';
+  }
+
+  @override
+  String get networkContinue => 'Continue';
+
+  @override
+  String get networkHostKeyTitle => 'Unknown Server';
+
+  @override
+  String networkHostKeyMessage(String host, String algorithm) {
+    return 'Ferryx has not connected to $host before. Its $algorithm key has this fingerprint:';
+  }
+
+  @override
+  String get networkHostKeyAdvice =>
+      'Trust it only when the fingerprint is the one the server’s administrator gave you.';
+
+  @override
+  String get networkHostKeyRemember => 'Remember this key';
+
+  @override
+  String get networkHostKeyTrust => 'Trust';
+
+  @override
+  String get networkHostKeyChangedTitle =>
+      'Warning: The Server’s Key Has Changed';
+
+  @override
+  String networkHostKeyChangedMessage(String host) {
+    return 'The key $host shows is not the one on record. Someone may be intercepting the connection — or the server was reinstalled. Ferryx will not connect.';
+  }
+
+  @override
+  String get networkHostKeyChangedAdvice =>
+      'If the server’s administrator confirms the new key, remove the old one from the known_hosts file named below, then connect again.';
+
+  @override
+  String networkStateConnected(String server) {
+    return 'Connected to $server';
+  }
+
+  @override
+  String networkStateLost(String server) {
+    return 'The connection to $server dropped; the next action tries again';
+  }
+
+  @override
+  String networkStateClosed(String server) {
+    return 'Not connected to $server';
+  }
+
+  @override
+  String networkStateInsecure(String state) {
+    return '$state (not encrypted)';
+  }
+
+  @override
+  String get networkReconnect => 'Reconnect';
+
+  @override
+  String networkDisconnected(String server) {
+    return 'Disconnected from $server';
+  }
+
+  @override
+  String get networkNotOnServer =>
+      'This works with files on this computer only';
+
+  @override
+  String get networkNoTrash =>
+      'Items on a server are deleted for good: servers have no trash.';
+
+  @override
+  String networkOpenedCopy(String name) {
+    return 'Opened a copy of “$name”: changes to it are not sent back to the server';
+  }
+
+  @override
+  String networkNotAnAddress(String text) {
+    return 'Not a server address: $text';
+  }
+
+  @override
+  String get networkGoToServers => 'Servers';
+
+  @override
+  String get networkNotRemote => 'The panel is not on a server';
 }

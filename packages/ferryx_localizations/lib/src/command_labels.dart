@@ -139,6 +139,9 @@ extension CommandLabels on FerryxLocalizations {
     AppCommand.extractTo => cmdExtractTo,
     AppCommand.toggleFlatView => cmdToggleFlatView,
     AppCommand.editTags => cmdEditTags,
+    // ─── Network ───
+    AppCommand.connectToServer => cmdConnectToServer,
+    AppCommand.disconnectServer => cmdDisconnectServer,
     AppCommand.moveUp => cmdMoveUp,
     AppCommand.moveDown => cmdMoveDown,
     AppCommand.moveLeft => cmdMoveLeft,

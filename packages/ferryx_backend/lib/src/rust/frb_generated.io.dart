@@ -14,6 +14,7 @@ import 'api/find.dart';
 import 'api/flat.dart';
 import 'api/journal.dart';
 import 'api/listing.dart';
+import 'api/network.dart';
 import 'api/ops.dart';
 import 'api/rename.dart';
 import 'api/sync.dart';
@@ -78,6 +79,9 @@ abstract class FerryxRustLibApiImplPlatform
   AttributesView dco_decode_attributes_view(dynamic raw);
 
   @protected
+  AuthMethodView dco_decode_auth_method_view(dynamic raw);
+
+  @protected
   bool dco_decode_bool(dynamic raw);
 
   @protected
@@ -106,6 +110,12 @@ abstract class FerryxRustLibApiImplPlatform
   ConflictSideView dco_decode_box_autoadd_conflict_side_view(dynamic raw);
 
   @protected
+  ConnectRequestView dco_decode_box_autoadd_connect_request_view(dynamic raw);
+
+  @protected
+  ConnectionStateView dco_decode_box_autoadd_connection_state_view(dynamic raw);
+
+  @protected
   DuplicatesPhaseView dco_decode_box_autoadd_duplicates_phase_view(dynamic raw);
 
   @protected
@@ -117,6 +127,9 @@ abstract class FerryxRustLibApiImplPlatform
   DuplicatesUpdateView dco_decode_box_autoadd_duplicates_update_view(
     dynamic raw,
   );
+
+  @protected
+  EntryView dco_decode_box_autoadd_entry_view(dynamic raw);
 
   @protected
   FerryxError dco_decode_box_autoadd_ferryx_error(dynamic raw);
@@ -146,6 +159,17 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   LocationView dco_decode_box_autoadd_location_view(dynamic raw);
+
+  @protected
+  NetworkEventView dco_decode_box_autoadd_network_event_view(dynamic raw);
+
+  @protected
+  NetworkOpRequestView dco_decode_box_autoadd_network_op_request_view(
+    dynamic raw,
+  );
+
+  @protected
+  NetworkQuestionView dco_decode_box_autoadd_network_question_view(dynamic raw);
 
   @protected
   OpRequestView dco_decode_box_autoadd_op_request_view(dynamic raw);
@@ -227,6 +251,15 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   ConflictSideView dco_decode_conflict_side_view(dynamic raw);
+
+  @protected
+  ConnectRequestView dco_decode_connect_request_view(dynamic raw);
+
+  @protected
+  ConnectionStateView dco_decode_connection_state_view(dynamic raw);
+
+  @protected
+  ConnectionView dco_decode_connection_view(dynamic raw);
 
   @protected
   ContentPairView dco_decode_content_pair_view(dynamic raw);
@@ -349,6 +382,9 @@ abstract class FerryxRustLibApiImplPlatform
   List<ProgressView> dco_decode_list_progress_view(dynamic raw);
 
   @protected
+  List<PromptView> dco_decode_list_prompt_view(dynamic raw);
+
+  @protected
   List<RenameFailureView> dco_decode_list_rename_failure_view(dynamic raw);
 
   @protected
@@ -359,6 +395,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   List<RenamePairView> dco_decode_list_rename_pair_view(dynamic raw);
+
+  @protected
+  List<ServerStateView> dco_decode_list_server_state_view(dynamic raw);
 
   @protected
   List<SyncItemView> dco_decode_list_sync_item_view(dynamic raw);
@@ -389,6 +428,18 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   NamePartView dco_decode_name_part_view(dynamic raw);
+
+  @protected
+  NetworkEventView dco_decode_network_event_view(dynamic raw);
+
+  @protected
+  NetworkOpRequestView dco_decode_network_op_request_view(dynamic raw);
+
+  @protected
+  NetworkQuestionKindView dco_decode_network_question_kind_view(dynamic raw);
+
+  @protected
+  NetworkQuestionView dco_decode_network_question_view(dynamic raw);
 
   @protected
   OpErrorView dco_decode_op_error_view(dynamic raw);
@@ -427,6 +478,11 @@ abstract class FerryxRustLibApiImplPlatform
   ConflictSideView? dco_decode_opt_box_autoadd_conflict_side_view(dynamic raw);
 
   @protected
+  ConnectionStateView? dco_decode_opt_box_autoadd_connection_state_view(
+    dynamic raw,
+  );
+
+  @protected
   DuplicatesPhaseView? dco_decode_opt_box_autoadd_duplicates_phase_view(
     dynamic raw,
   );
@@ -435,6 +491,9 @@ abstract class FerryxRustLibApiImplPlatform
   DuplicatesUpdateView? dco_decode_opt_box_autoadd_duplicates_update_view(
     dynamic raw,
   );
+
+  @protected
+  EntryView? dco_decode_opt_box_autoadd_entry_view(dynamic raw);
 
   @protected
   FerryxError? dco_decode_opt_box_autoadd_ferryx_error(dynamic raw);
@@ -450,6 +509,14 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   JournalSummaryView? dco_decode_opt_box_autoadd_journal_summary_view(
+    dynamic raw,
+  );
+
+  @protected
+  NetworkEventView? dco_decode_opt_box_autoadd_network_event_view(dynamic raw);
+
+  @protected
+  NetworkQuestionView? dco_decode_opt_box_autoadd_network_question_view(
     dynamic raw,
   );
 
@@ -478,6 +545,12 @@ abstract class FerryxRustLibApiImplPlatform
   ProgressView dco_decode_progress_view(dynamic raw);
 
   @protected
+  PromptView dco_decode_prompt_view(dynamic raw);
+
+  @protected
+  ProtocolView dco_decode_protocol_view(dynamic raw);
+
+  @protected
   QuestionKindView dco_decode_question_kind_view(dynamic raw);
 
   @protected
@@ -500,6 +573,12 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   RenameProblemView dco_decode_rename_problem_view(dynamic raw);
+
+  @protected
+  ServerAddressView dco_decode_server_address_view(dynamic raw);
+
+  @protected
+  ServerStateView dco_decode_server_state_view(dynamic raw);
 
   @protected
   SideInfoView dco_decode_side_info_view(dynamic raw);
@@ -615,6 +694,9 @@ abstract class FerryxRustLibApiImplPlatform
   AttributesView sse_decode_attributes_view(SseDeserializer deserializer);
 
   @protected
+  AuthMethodView sse_decode_auth_method_view(SseDeserializer deserializer);
+
+  @protected
   bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
@@ -651,6 +733,16 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  ConnectRequestView sse_decode_box_autoadd_connect_request_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ConnectionStateView sse_decode_box_autoadd_connection_state_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   DuplicatesPhaseView sse_decode_box_autoadd_duplicates_phase_view(
     SseDeserializer deserializer,
   );
@@ -664,6 +756,9 @@ abstract class FerryxRustLibApiImplPlatform
   DuplicatesUpdateView sse_decode_box_autoadd_duplicates_update_view(
     SseDeserializer deserializer,
   );
+
+  @protected
+  EntryView sse_decode_box_autoadd_entry_view(SseDeserializer deserializer);
 
   @protected
   FerryxError sse_decode_box_autoadd_ferryx_error(SseDeserializer deserializer);
@@ -701,6 +796,21 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   LocationView sse_decode_box_autoadd_location_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  NetworkEventView sse_decode_box_autoadd_network_event_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  NetworkOpRequestView sse_decode_box_autoadd_network_op_request_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  NetworkQuestionView sse_decode_box_autoadd_network_question_view(
     SseDeserializer deserializer,
   );
 
@@ -818,6 +928,19 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   ConflictSideView sse_decode_conflict_side_view(SseDeserializer deserializer);
+
+  @protected
+  ConnectRequestView sse_decode_connect_request_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ConnectionStateView sse_decode_connection_state_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ConnectionView sse_decode_connection_view(SseDeserializer deserializer);
 
   @protected
   ContentPairView sse_decode_content_pair_view(SseDeserializer deserializer);
@@ -976,6 +1099,9 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  List<PromptView> sse_decode_list_prompt_view(SseDeserializer deserializer);
+
+  @protected
   List<RenameFailureView> sse_decode_list_rename_failure_view(
     SseDeserializer deserializer,
   );
@@ -992,6 +1118,11 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   List<RenamePairView> sse_decode_list_rename_pair_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<ServerStateView> sse_decode_list_server_state_view(
     SseDeserializer deserializer,
   );
 
@@ -1034,6 +1165,24 @@ abstract class FerryxRustLibApiImplPlatform
   NamePartView sse_decode_name_part_view(SseDeserializer deserializer);
 
   @protected
+  NetworkEventView sse_decode_network_event_view(SseDeserializer deserializer);
+
+  @protected
+  NetworkOpRequestView sse_decode_network_op_request_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  NetworkQuestionKindView sse_decode_network_question_kind_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  NetworkQuestionView sse_decode_network_question_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   OpErrorView sse_decode_op_error_view(SseDeserializer deserializer);
 
   @protected
@@ -1072,12 +1221,22 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  ConnectionStateView? sse_decode_opt_box_autoadd_connection_state_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   DuplicatesPhaseView? sse_decode_opt_box_autoadd_duplicates_phase_view(
     SseDeserializer deserializer,
   );
 
   @protected
   DuplicatesUpdateView? sse_decode_opt_box_autoadd_duplicates_update_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EntryView? sse_decode_opt_box_autoadd_entry_view(
     SseDeserializer deserializer,
   );
 
@@ -1099,6 +1258,16 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   JournalSummaryView? sse_decode_opt_box_autoadd_journal_summary_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  NetworkEventView? sse_decode_opt_box_autoadd_network_event_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  NetworkQuestionView? sse_decode_opt_box_autoadd_network_question_view(
     SseDeserializer deserializer,
   );
 
@@ -1139,6 +1308,12 @@ abstract class FerryxRustLibApiImplPlatform
   ProgressView sse_decode_progress_view(SseDeserializer deserializer);
 
   @protected
+  PromptView sse_decode_prompt_view(SseDeserializer deserializer);
+
+  @protected
+  ProtocolView sse_decode_protocol_view(SseDeserializer deserializer);
+
+  @protected
   QuestionKindView sse_decode_question_kind_view(SseDeserializer deserializer);
 
   @protected
@@ -1169,6 +1344,14 @@ abstract class FerryxRustLibApiImplPlatform
   RenameProblemView sse_decode_rename_problem_view(
     SseDeserializer deserializer,
   );
+
+  @protected
+  ServerAddressView sse_decode_server_address_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ServerStateView sse_decode_server_state_view(SseDeserializer deserializer);
 
   @protected
   SideInfoView sse_decode_side_info_view(SseDeserializer deserializer);
@@ -1307,6 +1490,12 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_auth_method_view(
+    AuthMethodView self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_bool(bool self, SseSerializer serializer);
 
   @protected
@@ -1349,6 +1538,18 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_box_autoadd_connect_request_view(
+    ConnectRequestView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_connection_state_view(
+    ConnectionStateView self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_duplicates_phase_view(
     DuplicatesPhaseView self,
     SseSerializer serializer,
@@ -1363,6 +1564,12 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_box_autoadd_duplicates_update_view(
     DuplicatesUpdateView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_entry_view(
+    EntryView self,
     SseSerializer serializer,
   );
 
@@ -1414,6 +1621,24 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_box_autoadd_location_view(
     LocationView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_network_event_view(
+    NetworkEventView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_network_op_request_view(
+    NetworkOpRequestView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_network_question_view(
+    NetworkQuestionView self,
     SseSerializer serializer,
   );
 
@@ -1570,6 +1795,24 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_conflict_side_view(
     ConflictSideView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_connect_request_view(
+    ConnectRequestView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_connection_state_view(
+    ConnectionStateView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_connection_view(
+    ConnectionView self,
     SseSerializer serializer,
   );
 
@@ -1781,6 +2024,12 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_list_prompt_view(
+    List<PromptView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_rename_failure_view(
     List<RenameFailureView> self,
     SseSerializer serializer,
@@ -1801,6 +2050,12 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_list_rename_pair_view(
     List<RenamePairView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_server_state_view(
+    List<ServerStateView> self,
     SseSerializer serializer,
   );
 
@@ -1850,6 +2105,30 @@ abstract class FerryxRustLibApiImplPlatform
   void sse_encode_name_part_view(NamePartView self, SseSerializer serializer);
 
   @protected
+  void sse_encode_network_event_view(
+    NetworkEventView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_network_op_request_view(
+    NetworkOpRequestView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_network_question_kind_view(
+    NetworkQuestionKindView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_network_question_view(
+    NetworkQuestionView self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_op_error_view(OpErrorView self, SseSerializer serializer);
 
   @protected
@@ -1892,6 +2171,12 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_connection_state_view(
+    ConnectionStateView? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_duplicates_phase_view(
     DuplicatesPhaseView? self,
     SseSerializer serializer,
@@ -1900,6 +2185,12 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_opt_box_autoadd_duplicates_update_view(
     DuplicatesUpdateView? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_entry_view(
+    EntryView? self,
     SseSerializer serializer,
   );
 
@@ -1927,6 +2218,18 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_opt_box_autoadd_journal_summary_view(
     JournalSummaryView? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_network_event_view(
+    NetworkEventView? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_network_question_view(
+    NetworkQuestionView? self,
     SseSerializer serializer,
   );
 
@@ -1973,6 +2276,12 @@ abstract class FerryxRustLibApiImplPlatform
   void sse_encode_progress_view(ProgressView self, SseSerializer serializer);
 
   @protected
+  void sse_encode_prompt_view(PromptView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_protocol_view(ProtocolView self, SseSerializer serializer);
+
+  @protected
   void sse_encode_question_kind_view(
     QuestionKindView self,
     SseSerializer serializer,
@@ -2014,6 +2323,18 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_rename_problem_view(
     RenameProblemView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_server_address_view(
+    ServerAddressView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_server_state_view(
+    ServerStateView self,
     SseSerializer serializer,
   );
 

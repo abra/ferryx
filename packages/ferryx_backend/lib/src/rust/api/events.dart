@@ -7,6 +7,7 @@ import '../frb_generated.dart';
 import 'checksum.dart';
 import 'duplicates.dart';
 import 'journal.dart';
+import 'network.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 

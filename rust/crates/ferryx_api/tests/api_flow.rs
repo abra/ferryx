@@ -114,8 +114,12 @@ fn archives_open_as_folders() {
     wait_for(|| ops::operation_progress(id).map(|p| p.state == OpStateView::Done).unwrap_or(false));
     let archive = dir.path().join("proj.zip");
     assert!(listing::is_archive(s(&archive)));
-    let location =
-        LocationView { kind: LocationKind::Archive, path: "proj/sub".into(), archive: Some(s(&archive)) };
+    let location = LocationView {
+        kind: LocationKind::Archive,
+        path: "proj/sub".into(),
+        archive: Some(s(&archive)),
+        server: None,
+    };
     let view = listing::open_listing("a".into(), location.clone(), options()).unwrap();
     assert_eq!(names(&view), ["..", "x.txt"]);
     assert_eq!(view.entries[0].path, "proj");
@@ -123,6 +127,7 @@ fn archives_open_as_folders() {
         kind: LocationKind::Archive,
         path: "proj/sub/x.txt".into(),
         archive: Some(s(&archive)),
+        server: None,
     };
     assert_eq!(files::read_file_range(member.clone(), 1, 10).unwrap(), b"yz");
     assert_eq!(files::file_size(member).unwrap(), 3);

@@ -3661,4 +3661,291 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   @override
   String get noticeNotInFlat =>
       'Это работает с содержимым одной папки: сначала выйдите из плоского списка';
+
+  @override
+  String get cmdConnectToServer => 'Подключиться к серверу…';
+
+  @override
+  String get cmdDisconnectServer => 'Отключиться';
+
+  @override
+  String get errorAuthFailed => 'Сервер не принял вход';
+
+  @override
+  String get errorHostUnreachable => 'Сервер недоступен';
+
+  @override
+  String get errorTimedOut => 'Сервер не ответил вовремя';
+
+  @override
+  String get errorHostKeyUnknown => 'Ключу сервера не доверились';
+
+  @override
+  String get errorHostKeyChanged => 'Ключ сервера изменился';
+
+  @override
+  String get errorConnectionLost => 'Связь с сервером прервалась';
+
+  @override
+  String get errorNotConnected => 'Нет подключения к серверу';
+
+  @override
+  String get errorCertificateInvalid => 'Сертификату сервера нет доверия';
+
+  @override
+  String get networkConnectTitle => 'Подключение к серверу';
+
+  @override
+  String get networkAddressLabel => 'Адрес';
+
+  @override
+  String get networkAddressHint => 'sftp://пользователь@хост/папка';
+
+  @override
+  String get networkAddressNote =>
+      'SFTP, FTP, FTPS (ftps://), WebDAV (dav:// или davs://, http://, https://).';
+
+  @override
+  String get networkSavedServers => 'Сохранённые серверы';
+
+  @override
+  String get networkNoServers =>
+      'Сохранённых серверов пока нет. Введите адрес выше или добавьте сервер.';
+
+  @override
+  String get networkAddServer => 'Добавить сервер…';
+
+  @override
+  String get networkEditServer => 'Изменить…';
+
+  @override
+  String get networkRemoveServer => 'Удалить';
+
+  @override
+  String networkRemoveServerTitle(String name) {
+    return 'Удалить «$name»?';
+  }
+
+  @override
+  String get networkRemoveServerMessage =>
+      'Сохранённый пароль останется в связке ключей, пока вы не забудете его в настройках сервера.';
+
+  @override
+  String get networkConnect => 'Подключиться';
+
+  @override
+  String networkConnecting(String server) {
+    return 'Подключение к $server…';
+  }
+
+  @override
+  String get networkInsecure =>
+      'Без шифрования: имена, пароли и файлы идут по сети открыто.';
+
+  @override
+  String get networkServerNew => 'Новый сервер';
+
+  @override
+  String get networkServerEdit => 'Настройки сервера';
+
+  @override
+  String get networkFieldName => 'Название';
+
+  @override
+  String get networkFieldNameHint => 'Если пусто — имя хоста';
+
+  @override
+  String get networkFieldProtocol => 'Протокол';
+
+  @override
+  String get networkFieldHost => 'Хост';
+
+  @override
+  String get networkFieldPort => 'Порт';
+
+  @override
+  String get networkFieldUser => 'Пользователь';
+
+  @override
+  String get networkFieldUserHint => 'Если пусто — анонимно';
+
+  @override
+  String get networkFieldFolder => 'Папка';
+
+  @override
+  String get networkFieldFolderHint => 'Начальная папка сервера';
+
+  @override
+  String get networkFieldAuth => 'Вход';
+
+  @override
+  String get networkFieldKey => 'Файл ключа';
+
+  @override
+  String get networkFieldKeyHint => '~/.ssh/id_ed25519';
+
+  @override
+  String get networkAuthAutomatic => 'Ключи или пароль';
+
+  @override
+  String get networkAuthPassword => 'Пароль';
+
+  @override
+  String get networkAuthKey => 'Файл ключа';
+
+  @override
+  String get networkAuthAgent => 'SSH-агент';
+
+  @override
+  String get networkProtocolSftp => 'SFTP (SSH)';
+
+  @override
+  String get networkProtocolFtp => 'FTP';
+
+  @override
+  String get networkProtocolFtps => 'FTPS (FTP с TLS)';
+
+  @override
+  String get networkProtocolDav => 'WebDAV (HTTP)';
+
+  @override
+  String get networkProtocolDavs => 'WebDAV (HTTPS)';
+
+  @override
+  String get networkHostRequired => 'Укажите имя или адрес сервера';
+
+  @override
+  String get networkPortInvalid => 'Порт — число от 1 до 65535';
+
+  @override
+  String get networkForgetPassword => 'Забыть сохранённый пароль';
+
+  @override
+  String networkPasswordForgotten(String server) {
+    return 'Сохранённый пароль для $server забыт';
+  }
+
+  @override
+  String networkPasswordTitle(String server) {
+    return 'Вход на $server';
+  }
+
+  @override
+  String networkPasswordMessage(String user) {
+    return 'Введите пароль пользователя $user.';
+  }
+
+  @override
+  String get networkPasswordWrong => 'Пароль не подошёл. Попробуйте ещё раз.';
+
+  @override
+  String get networkPasswordLabel => 'Пароль';
+
+  @override
+  String get networkRememberPassword => 'Запомнить в системной связке ключей';
+
+  @override
+  String get networkPassphraseTitle => 'Разблокировать ключ';
+
+  @override
+  String networkPassphraseMessage(String key) {
+    return 'Ключ $key защищён паролем.';
+  }
+
+  @override
+  String get networkPassphraseWrong =>
+      'Пароль не открыл ключ. Попробуйте ещё раз.';
+
+  @override
+  String get networkPassphraseLabel => 'Пароль ключа';
+
+  @override
+  String networkPromptsTitle(String server) {
+    return 'Вход на $server';
+  }
+
+  @override
+  String get networkContinue => 'Продолжить';
+
+  @override
+  String get networkHostKeyTitle => 'Незнакомый сервер';
+
+  @override
+  String networkHostKeyMessage(String host, String algorithm) {
+    return 'Ferryx ещё не подключался к $host. Отпечаток его ключа $algorithm:';
+  }
+
+  @override
+  String get networkHostKeyAdvice =>
+      'Доверяйте, только если отпечаток совпадает с тем, что сообщил администратор сервера.';
+
+  @override
+  String get networkHostKeyRemember => 'Запомнить ключ';
+
+  @override
+  String get networkHostKeyTrust => 'Доверять';
+
+  @override
+  String get networkHostKeyChangedTitle => 'Внимание: ключ сервера изменился';
+
+  @override
+  String networkHostKeyChangedMessage(String host) {
+    return '$host показывает не тот ключ, что записан. Возможно, соединение перехватывают — или сервер переустановили. Ferryx не будет подключаться.';
+  }
+
+  @override
+  String get networkHostKeyChangedAdvice =>
+      'Если администратор сервера подтвердит новый ключ, удалите старый из файла known_hosts, названного ниже, и подключитесь снова.';
+
+  @override
+  String networkStateConnected(String server) {
+    return 'Подключено к $server';
+  }
+
+  @override
+  String networkStateLost(String server) {
+    return 'Связь с $server прервалась; следующее действие попробует снова';
+  }
+
+  @override
+  String networkStateClosed(String server) {
+    return 'Нет подключения к $server';
+  }
+
+  @override
+  String networkStateInsecure(String state) {
+    return '$state (без шифрования)';
+  }
+
+  @override
+  String get networkReconnect => 'Подключиться снова';
+
+  @override
+  String networkDisconnected(String server) {
+    return 'Отключено от $server';
+  }
+
+  @override
+  String get networkNotOnServer =>
+      'Это работает только с файлами на этом компьютере';
+
+  @override
+  String get networkNoTrash =>
+      'С сервера объекты удаляются насовсем: корзины там нет.';
+
+  @override
+  String networkOpenedCopy(String name) {
+    return 'Открыта копия «$name»: изменения в ней не отправляются на сервер';
+  }
+
+  @override
+  String networkNotAnAddress(String text) {
+    return 'Это не адрес сервера: $text';
+  }
+
+  @override
+  String get networkGoToServers => 'Серверы';
+
+  @override
+  String get networkNotRemote => 'Панель не на сервере';
 }

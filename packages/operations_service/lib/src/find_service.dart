@@ -43,6 +43,10 @@ class FindService {
       case rust.AppEventKind.compareProgress:
       case rust.AppEventKind.checksumProgress:
       case rust.AppEventKind.duplicatesProgress:
+      // ─── Network ───
+      case rust.AppEventKind.connectionChanged:
+      case rust.AppEventKind.networkQuestion:
+      case rust.AppEventKind.networkQuestionWithdrawn:
         break;
     }
   }

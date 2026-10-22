@@ -14,6 +14,7 @@
 //! - [`attrs`], [`links`]: permissions, flags, owners, times; symbolic and
 //!   hard links.
 //! - [`trash`]: the trash with a receipt per item, to put it back.
+//! - [`remote`]: folders on servers over SFTP, FTP and WebDAV.
 
 pub mod archive;
 pub mod attrs;
@@ -27,6 +28,8 @@ pub mod tags;
 pub mod trash;
 pub mod volumes;
 pub mod watch;
+// ─── Network ───
+pub mod remote;
 
 pub use error::{VfsError, VfsErrorKind};
 pub use ferryx_core::entry::{Entry, EntryKind};

@@ -685,4 +685,41 @@ void main() {
     ]);
     focus.dispose();
   });
+
+  // ─── Network ───
+  group('Connect to Server', () {
+    for (final platform in [
+      TargetPlatform.macOS,
+      TargetPlatform.windows,
+      TargetPlatform.linux,
+    ]) {
+      test(
+        "is the window's primary K, the terminal keeps its own on $platform",
+        () {
+          final map = ShortcutMap.defaults(platform);
+          const k = Chord(LogicalKeyboardKey.keyK, primary: true);
+          expect(map.chordsFor(AppCommand.connectToServer), [k]);
+          expect(map.commandFor(k), AppCommand.connectToServer);
+          expect(map.chordsFor(AppCommand.disconnectServer), isEmpty);
+          expect(AppCommand.connectToServer.section, CommandSection.go);
+          // Inside the terminal its own keys come first, so they win over
+          // the window's of the same keys: ⌘K clears on macOS. Elsewhere
+          // Ctrl+K is the shell's (kill to the end of the line).
+          final inside = [
+            for (final entry in map.terminalShortcuts(platform).entries)
+              if (entry.key is SingleActivator &&
+                  (entry.key as SingleActivator).trigger ==
+                      LogicalKeyboardKey.keyK &&
+                  !(entry.key as SingleActivator).shift)
+                entry.value.command,
+          ];
+          if (platform == TargetPlatform.macOS) {
+            expect(inside.first, AppCommand.terminalClear);
+          } else {
+            expect(inside, isNot(contains(AppCommand.connectToServer)));
+          }
+        },
+      );
+    }
+  });
 }

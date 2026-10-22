@@ -62,8 +62,12 @@ fn an_encrypted_archive_asks_once_and_extracts() {
     locked_zip(&archive);
 
     // The member list is not encrypted: it lists, and says what it holds.
-    let location =
-        LocationView { kind: LocationKind::Archive, path: String::new(), archive: Some(s(&archive)) };
+    let location = LocationView {
+        kind: LocationKind::Archive,
+        path: String::new(),
+        archive: Some(s(&archive)),
+        server: None,
+    };
     let view = listing::open_listing("a".into(), location, options()).unwrap();
     assert_eq!(
         view.entries.iter().map(|e| e.name.as_str()).collect::<Vec<_>>(),
@@ -76,8 +80,12 @@ fn an_encrypted_archive_asks_once_and_extracts() {
     assert!(info.encrypted && !info.needs_password && !info.has_password);
 
     // Its members need the password.
-    let member =
-        LocationView { kind: LocationKind::Archive, path: "readme.txt".into(), archive: Some(s(&archive)) };
+    let member = LocationView {
+        kind: LocationKind::Archive,
+        path: "readme.txt".into(),
+        archive: Some(s(&archive)),
+        server: None,
+    };
     assert_eq!(
         files::read_file_range(member.clone(), 0, 4).unwrap_err().kind,
         FerryxErrorKind::PasswordRequired

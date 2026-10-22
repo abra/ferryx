@@ -22,6 +22,24 @@ pub enum VfsErrorKind {
     PasswordRequired,
     /// The password given does not open the archive.
     WrongPassword,
+    // ─── Network ───
+    /// The server refused the user's credentials.
+    AuthFailed,
+    /// The server could not be reached: no such host, refused, no route.
+    HostUnreachable,
+    /// The server did not answer in time.
+    TimedOut,
+    /// The server's SSH key is not known yet and the user did not accept
+    /// it.
+    HostKeyUnknown,
+    /// The server's SSH key is not the one on record: refused.
+    HostKeyChanged,
+    /// The connection to the server dropped.
+    ConnectionLost,
+    /// No connection to the server is open: connect first.
+    NotConnected,
+    /// The server's TLS certificate could not be verified.
+    CertificateInvalid,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, thiserror::Error, Serialize, Deserialize)]
@@ -47,6 +65,24 @@ impl VfsError {
 
     pub fn cancelled() -> VfsError {
         VfsError::new(VfsErrorKind::Cancelled, None, "cancelled")
+    }
+
+    /// An error of `kind` about a path on a server (`path` as the server
+    /// spells it, `/`-separated).
+    pub fn remote(kind: VfsErrorKind, path: Option<&str>, message: impl Into<String>) -> VfsError {
+        VfsError { kind, path: path.map(str::to_string), message: message.into() }
+    }
+
+    /// Whether the error says the connection is gone (so a fresh one may
+    /// do what this one could not).
+    pub fn is_connection_error(&self) -> bool {
+        matches!(
+            self.kind,
+            VfsErrorKind::ConnectionLost
+                | VfsErrorKind::TimedOut
+                | VfsErrorKind::HostUnreachable
+                | VfsErrorKind::NotConnected
+        )
     }
 
     pub fn password_required(archive: &Path) -> VfsError {

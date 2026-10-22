@@ -1,14 +1,21 @@
 //! A panel's listing: opened at a location, kept while the panel shows
 //! it (watched for changes), resorted without reading the disk again.
+//!
+//! A folder on a server is read on the calling worker with a stop: a new
+//! read of the same listing (the panel moved on before a slow server
+//! answered) stops the earlier one, which then answers `Cancelled` and
+//! leaves the listing alone. It is not watched: the panel reads it again
+//! after its own operations and on ⌘R.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use ferryx_core::entry::Entry;
 use ferryx_core::sorting::sort_entries;
 use ferryx_vfs::native::{self, ListOptions};
 use ferryx_vfs::watch::FolderWatcher;
-use ferryx_vfs::{volumes, Location};
+use ferryx_vfs::{remote, volumes, Location};
 
 use crate::api::types::{
     ApiResult, EntryView, FerryxError, FerryxErrorKind, ListingOptionsView, ListingView, LocationView,
@@ -23,16 +30,20 @@ pub fn open_listing(
     options: ListingOptionsView,
 ) -> ApiResult<ListingView> {
     let location = location.to_location();
-    let raw = read(&location, &options)?;
+    let current = app::begin_read(&listing_id);
+    let raw = read(&location, &options, &current.stop)?;
     let watcher = match &location {
         Location::Native(path) => watcher_for(&listing_id, path),
         Location::Archive { archive, .. } => watcher_for(&listing_id, archive.parent().unwrap_or(archive)),
+        Location::Remote { .. } => None,
     };
     let view = build_view(&location, &raw, &options, watcher.is_some());
-    app::state()
-        .lock()
-        .listings
-        .insert(listing_id, OpenListing { location, options, raw, watcher, flat: None });
+    let mut state = app::state().lock();
+    if state.reads.get(&listing_id).map(|r| r.generation) != Some(current.generation) {
+        // A later read of this listing took over.
+        return Err(superseded());
+    }
+    state.listings.insert(listing_id, OpenListing { location, options, raw, watcher, flat: None });
     Ok(view)
 }
 
@@ -46,9 +57,17 @@ pub fn refresh_listing(listing_id: String) -> ApiResult<ListingView> {
         }
         (open.location.clone(), open.options)
     };
-    let raw = read(&location, &options)?;
+    let current = app::current_read(&listing_id);
+    let raw = read(&location, &options, &current.stop)?;
     let mut state = app::state().lock();
+    if state.reads.get(&listing_id).map(|r| r.generation) != Some(current.generation) {
+        return Err(superseded());
+    }
     let open = state.listings.get_mut(&listing_id).ok_or_else(|| not_open(&listing_id))?;
+    if open.location != location {
+        // The listing moved elsewhere meanwhile.
+        return Err(superseded());
+    }
     let watched = open.watcher.is_some();
     open.raw = raw;
     Ok(build_view(&location, &open.raw, &options, watched))
@@ -80,9 +99,12 @@ pub fn resort_listing(listing_id: String, options: ListingOptionsView) -> ApiRes
     Ok(build_view(&open.location, &open.raw, &options, watched))
 }
 
-/// Forgets the listing and stops watching its folder.
+/// Forgets the listing and stops watching its folder (and reading it).
 pub fn close_listing(listing_id: String) {
-    app::state().lock().listings.remove(&listing_id);
+    app::begin_read(&listing_id).stop.store(true, Ordering::SeqCst);
+    let mut state = app::state().lock();
+    state.listings.remove(&listing_id);
+    state.reads.remove(&listing_id);
 }
 
 /// The rows of `location` once, unsorted and unwatched: for a dialog
@@ -100,7 +122,7 @@ pub fn peek_listing(location: LocationView, show_hidden: bool) -> ApiResult<Vec<
             collation: crate::api::types::CollationView::Natural,
         },
     };
-    let mut raw = read(&location, &options)?;
+    let mut raw = read(&location, &options, &AtomicBool::new(false))?;
     sort_entries(&mut raw, &options.sort.to_core());
     Ok(raw.iter().map(EntryView::from).collect())
 }
@@ -126,7 +148,12 @@ fn not_open(listing_id: &str) -> FerryxError {
     FerryxError::new(FerryxErrorKind::NotFound, format!("listing {listing_id} is not open"))
 }
 
-fn read(location: &Location, options: &ListingOptionsView) -> ApiResult<Vec<Entry>> {
+/// A read stopped because a later one of its listing took over.
+fn superseded() -> FerryxError {
+    FerryxError::new(FerryxErrorKind::Cancelled, "a later read of the listing took over")
+}
+
+fn read(location: &Location, options: &ListingOptionsView, stop: &AtomicBool) -> ApiResult<Vec<Entry>> {
     match location {
         Location::Native(path) => {
             if !native::is_dir(path) {
@@ -143,6 +170,19 @@ fn read(location: &Location, options: &ListingOptionsView) -> ApiResult<Vec<Entr
         Location::Archive { archive, inner } => {
             let index = app::archive_index(archive)?;
             Ok(index.list(inner, options.show_parent, options.show_hidden)?)
+        }
+        Location::Remote { server, path } => {
+            let server = remote::connection::get(server)?;
+            let mut rows = server.fs().list(path, &|| stop.load(Ordering::SeqCst))?;
+            if !options.show_hidden {
+                rows.retain(|row| !row.is_hidden);
+            }
+            if options.show_parent {
+                if let Some(parent) = remote::address::parent(path) {
+                    rows.insert(0, Entry::parent(PathBuf::from(parent)));
+                }
+            }
+            Ok(rows)
         }
     }
 }
@@ -171,6 +211,13 @@ pub(crate) fn build_view(
             )
         }
         Location::Archive { .. } => (None, None, None),
+        // The server's address names its "volume"; its free space is not
+        // asked for (only some servers answer, at a round trip a read).
+        Location::Remote { server, .. } => (
+            None,
+            None,
+            Some(remote::address::parse_key(server).map(|a| a.display_root()).unwrap_or_default()),
+        ),
     };
     ListingView {
         location: LocationView::from(location),

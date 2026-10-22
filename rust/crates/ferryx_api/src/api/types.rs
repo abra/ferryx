@@ -15,6 +15,7 @@ use flutter_rust_bridge::frb;
 use crate::api::checksum::ChecksumUpdateView;
 use crate::api::duplicates::DuplicatesUpdateView;
 use crate::api::journal::JournalSummaryView;
+use crate::api::network::NetworkEventView;
 use crate::api::sync::CompareUpdateView;
 
 // ─── Errors ───
@@ -36,6 +37,23 @@ pub enum FerryxErrorKind {
     PasswordRequired,
     /// The password given does not open the archive.
     WrongPassword,
+    // ─── Network ───
+    /// The server refused the login.
+    AuthFailed,
+    /// The server could not be reached.
+    HostUnreachable,
+    /// The server did not answer in time.
+    TimedOut,
+    /// The server's SSH key was not trusted.
+    HostKeyUnknown,
+    /// The server's SSH key is not the one on record: refused.
+    HostKeyChanged,
+    /// The connection dropped.
+    ConnectionLost,
+    /// No connection to the server is open.
+    NotConnected,
+    /// The server's certificate is not trusted.
+    CertificateInvalid,
 }
 
 /// Every error the bridge raises; Dart sees it as an exception with a
@@ -74,6 +92,14 @@ impl From<VfsError> for FerryxError {
             VfsErrorKind::Io => FerryxErrorKind::Io,
             VfsErrorKind::PasswordRequired => FerryxErrorKind::PasswordRequired,
             VfsErrorKind::WrongPassword => FerryxErrorKind::WrongPassword,
+            VfsErrorKind::AuthFailed => FerryxErrorKind::AuthFailed,
+            VfsErrorKind::HostUnreachable => FerryxErrorKind::HostUnreachable,
+            VfsErrorKind::TimedOut => FerryxErrorKind::TimedOut,
+            VfsErrorKind::HostKeyUnknown => FerryxErrorKind::HostKeyUnknown,
+            VfsErrorKind::HostKeyChanged => FerryxErrorKind::HostKeyChanged,
+            VfsErrorKind::ConnectionLost => FerryxErrorKind::ConnectionLost,
+            VfsErrorKind::NotConnected => FerryxErrorKind::NotConnected,
+            VfsErrorKind::CertificateInvalid => FerryxErrorKind::CertificateInvalid,
         };
         FerryxError { kind, message: e.message, path: e.path }
     }
@@ -95,21 +121,31 @@ pub type ApiResult<T> = Result<T, FerryxError>;
 pub enum LocationKind {
     Native,
     Archive,
+    // ─── Network ───
+    Remote,
 }
 
-/// Where a panel is: a folder on disk, or a folder inside an archive
-/// (`archive` the file, `path` the folder inside it, empty at its root).
+/// Where a panel is: a folder on disk, a folder inside an archive
+/// (`archive` the file, `path` the folder inside it, empty at its root),
+/// or a folder on a server (`server` its key, `sftp://me@host:22`, and
+/// `path` the folder there).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LocationView {
     pub kind: LocationKind,
     pub path: String,
     pub archive: Option<String>,
+    pub server: Option<String>,
 }
 
 impl LocationView {
     #[frb(ignore)]
     pub fn native(path: &Path) -> LocationView {
-        LocationView { kind: LocationKind::Native, path: path.to_string_lossy().into_owned(), archive: None }
+        LocationView {
+            kind: LocationKind::Native,
+            path: path.to_string_lossy().into_owned(),
+            archive: None,
+            server: None,
+        }
     }
 
     #[frb(ignore)]
@@ -120,6 +156,13 @@ impl LocationView {
                 archive: PathBuf::from(self.archive.clone().unwrap_or_default()),
                 inner: self.path.trim_matches('/').to_string(),
             },
+            LocationKind::Remote => {
+                let path = ferryx_vfs::remote::address::normalize(&self.path);
+                Location::Remote {
+                    server: self.server.clone().unwrap_or_default(),
+                    path: if path.is_empty() { "/".to_string() } else { path },
+                }
+            }
         }
     }
 }
@@ -132,6 +175,13 @@ impl From<&Location> for LocationView {
                 kind: LocationKind::Archive,
                 path: inner.clone(),
                 archive: Some(archive.to_string_lossy().into_owned()),
+                server: None,
+            },
+            Location::Remote { server, path } => LocationView {
+                kind: LocationKind::Remote,
+                path: path.clone(),
+                archive: None,
+                server: Some(server.clone()),
             },
         }
     }
@@ -796,6 +846,13 @@ pub enum AppEventKind {
     ChecksumProgress,
     /// A duplicate search settled groups or ended (`duplicates`).
     DuplicatesProgress,
+    // ─── Network ───
+    /// A server's connection came, dropped or closed (`network`).
+    ConnectionChanged,
+    /// A connection asks the user something (`network.question`).
+    NetworkQuestion,
+    /// A question no longer waits (`network.question_id`).
+    NetworkQuestionWithdrawn,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -816,6 +873,8 @@ pub struct AppEvent {
     /// A search that asked Spotlight walked the folders instead: Spotlight
     /// could not answer.
     pub find_spotlight_failed: bool,
+    // ─── Network ───
+    pub network: Option<NetworkEventView>,
 }
 
 impl AppEvent {
@@ -835,6 +894,7 @@ impl AppEvent {
             checksum: None,
             duplicates: None,
             find_spotlight_failed: false,
+            network: None,
         }
     }
 

@@ -81,6 +81,15 @@ pub fn open_flat_listing(
             }
             None
         }
+        // ─── Network ───
+        // A whole tree over the network, a folder a round trip: not
+        // offered.
+        Location::Remote { .. } => {
+            return Err(FerryxError::new(
+                FerryxErrorKind::Unsupported,
+                "a flat view of a folder on a server is not offered",
+            ));
+        }
     };
     let generation = app::next_generation();
     let header = build_view(&location, &[], &options, watcher.is_some());
@@ -185,6 +194,9 @@ pub fn stream_flat_listing_with(
                 batcher.flush();
                 end
             }
+            // ─── Network ───
+            // Never opened (see `open_flat_listing`).
+            Location::Remote { .. } => FlatEnd::Done,
         };
         let (count, capped) = {
             let mut rows = rows.lock();

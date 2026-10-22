@@ -19,6 +19,8 @@ pub mod tags;
 pub mod terminal;
 pub mod types;
 pub mod volume_id;
+// ─── Network ───
+pub mod network;
 
 #[flutter_rust_bridge::frb(init)]
 pub fn init_app() {
