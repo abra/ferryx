@@ -27,6 +27,7 @@ lzma-rust2.workspace = true
 sevenz-rust2.workspace = true
 unrar-rs.workspace = true
 zstd.workspace = true
+walkdir.workspace = true
 
 [target.'cfg(unix)'.dependencies]
 nix.workspace = true

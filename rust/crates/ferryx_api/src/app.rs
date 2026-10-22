@@ -22,6 +22,40 @@ pub struct OpenListing {
     pub options: ListingOptionsView,
     pub raw: Vec<Entry>,
     pub watcher: Option<FolderWatcher>,
+    /// A flat view's walk and rows (see `api::flat`); `raw` stays empty.
+    pub flat: Option<FlatListing>,
+}
+
+/// The rows of a flat view, filled by its walk while the panel shows the
+/// first ones; sorted (into an order the panel applies) once complete.
+pub struct FlatListing {
+    pub generation: i64,
+    pub cancel: Arc<AtomicBool>,
+    pub rows: Arc<Mutex<FlatRows>>,
+}
+
+#[derive(Default)]
+pub struct FlatRows {
+    pub entries: Vec<Entry>,
+    /// Each row's folder relative to the root, in step with `entries`.
+    pub folders: Vec<String>,
+    pub done: bool,
+    pub capped: bool,
+}
+
+impl Drop for FlatListing {
+    /// A flat listing replaced or closed stops its walk.
+    fn drop(&mut self) {
+        self.cancel.store(true, Ordering::SeqCst);
+    }
+}
+
+static NEXT_GENERATION: AtomicI64 = AtomicI64::new(1);
+
+/// A number no flat walk had: the panel tells a walk's rows from an older
+/// one's by it.
+pub fn next_generation() -> i64 {
+    NEXT_GENERATION.fetch_add(1, Ordering::SeqCst)
 }
 
 #[derive(Default)]

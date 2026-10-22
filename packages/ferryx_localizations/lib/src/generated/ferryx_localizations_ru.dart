@@ -2315,4 +2315,53 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String archiveDestinationHint(String key) {
     return '$key дополняет имя папки';
   }
+
+  @override
+  String get flatCapsule => 'Плоский';
+
+  @override
+  String get flatLeave => 'Вернуться к папке';
+
+  @override
+  String get flatWalking => 'Чтение дерева папки';
+
+  @override
+  String flatFileCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString файла',
+      many: '$countString файлов',
+      few: '$countString файла',
+      one: '$countString файл',
+      zero: 'нет файлов',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String flatCappedCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'первые $countString файла',
+      many: 'первые $countString файлов',
+      few: 'первые $countString файла',
+      one: 'первый $countString файл',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String flatRowLabel(String name, String folder) {
+    return '$name, в $folder';
+  }
 }

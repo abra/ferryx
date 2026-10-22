@@ -2,6 +2,7 @@
 /// the dialogs of every file command.
 library;
 
+export 'src/panel/flat_view.dart';
 export 'src/panel/panel_cubit.dart';
 export 'src/panel/panel_side.dart';
 export 'src/panel/panel_state.dart';

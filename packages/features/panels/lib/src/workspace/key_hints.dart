@@ -35,6 +35,22 @@ List<PanelHint> hintsFor({
   required bool vim,
   required bool hasRegister,
 }) {
+  final hints = _hintsFor(tab: tab, vim: vim, hasRegister: hasRegister);
+  // A flat view names its way back first.
+  if (tab != null &&
+      tab.isFlat &&
+      tab.renaming == null &&
+      !(vim && tab.searching)) {
+    return [const CommandHint(AppCommand.toggleFlatView), ...hints.take(4)];
+  }
+  return hints;
+}
+
+List<PanelHint> _hintsFor({
+  required PanelTabState? tab,
+  required bool vim,
+  required bool hasRegister,
+}) {
   if (tab == null) return const [CommandHint(AppCommand.switchPanel)];
   if (tab.renaming != null) {
     return const [

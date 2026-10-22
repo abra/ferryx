@@ -29,7 +29,10 @@ pub fn open_listing(
         Location::Archive { archive, .. } => watcher_for(&listing_id, archive.parent().unwrap_or(archive)),
     };
     let view = build_view(&location, &raw, &options, watcher.is_some());
-    app::state().lock().listings.insert(listing_id, OpenListing { location, options, raw, watcher });
+    app::state()
+        .lock()
+        .listings
+        .insert(listing_id, OpenListing { location, options, raw, watcher, flat: None });
     Ok(view)
 }
 
@@ -38,6 +41,9 @@ pub fn refresh_listing(listing_id: String) -> ApiResult<ListingView> {
     let (location, options) = {
         let state = app::state().lock();
         let open = state.listings.get(&listing_id).ok_or_else(|| not_open(&listing_id))?;
+        if open.flat.is_some() {
+            return Err(flat_elsewhere(&listing_id));
+        }
         (open.location.clone(), open.options)
     };
     let raw = read(&location, &options)?;
@@ -54,6 +60,9 @@ pub fn resort_listing(listing_id: String, options: ListingOptionsView) -> ApiRes
     let needs_read = {
         let state = app::state().lock();
         let open = state.listings.get(&listing_id).ok_or_else(|| not_open(&listing_id))?;
+        if open.flat.is_some() {
+            return Err(flat_elsewhere(&listing_id));
+        }
         open.options.show_hidden != options.show_hidden || open.options.show_parent != options.show_parent
     };
     if needs_read {
@@ -108,6 +117,11 @@ pub fn is_archive(path: String) -> bool {
     ferryx_vfs::archive::is_archive(Path::new(&path))
 }
 
+/// A flat view is walked and sorted by `api::flat`, not here.
+fn flat_elsewhere(listing_id: &str) -> FerryxError {
+    FerryxError::new(FerryxErrorKind::Unsupported, format!("listing {listing_id} is a flat view"))
+}
+
 fn not_open(listing_id: &str) -> FerryxError {
     FerryxError::new(FerryxErrorKind::NotFound, format!("listing {listing_id} is not open"))
 }
@@ -133,12 +147,12 @@ fn read(location: &Location, options: &ListingOptionsView) -> ApiResult<Vec<Entr
     }
 }
 
-fn watcher_for(listing_id: &str, path: &Path) -> Option<FolderWatcher> {
+pub(crate) fn watcher_for(listing_id: &str, path: &Path) -> Option<FolderWatcher> {
     let id = listing_id.to_string();
     FolderWatcher::new(path, Arc::new(move || app::emit_directory_changed(&id))).ok()
 }
 
-fn build_view(
+pub(crate) fn build_view(
     location: &Location,
     raw: &[Entry],
     options: &ListingOptionsView,

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
@@ -114,25 +116,34 @@ class RowName extends StatelessWidget {
         ? base.copyWith(color: colors.textFaint)
         : base;
     final match = look.match;
+    // A long name loses its middle, so the extension stays in view; with
+    // a search on, the underlined letters stay instead.
+    final name = match == null || match.isEmpty
+        ? AppMiddleEllipsis(entry.isParent ? '..' : entry.name, style: style)
+        : Text.rich(
+            _spans(entry.name, match, style, colors),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
+          );
     return Row(
       children: [
         Icon(icon, size: iconSize, color: iconColor),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
-          // A long name loses its middle, so the extension stays in view;
-          // with a search on, the underlined letters stay instead.
           child:
               field ??
-              (match == null || match.isEmpty
-                  ? AppMiddleEllipsis(
-                      entry.isParent ? '..' : entry.name,
-                      style: style,
-                    )
-                  : Text.rich(
-                      _spans(entry.name, match, style, colors),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: false,
+              (entry.folder.isEmpty
+                  ? name
+                  : _NameWithFolder(
+                      name: name,
+                      nameText: entry.name,
+                      nameStyle: style,
+                      folder: entry.folder,
+                      folderStyle: base.copyWith(
+                        color: look.secondary(colors),
+                        fontStyle: FontStyle.normal,
+                      ),
                     )),
         ),
       ],
@@ -169,6 +180,89 @@ class RowName extends StatelessWidget {
     if (at < chars.length) spans.add(TextSpan(text: chars.sublist(at).join()));
     return TextSpan(style: style, children: spans);
   }
+}
+
+/// A flat view's row: the name, then in the secondary colour the folder
+/// it is in. Both take their own width when they fit; when they do not,
+/// the folder gives way first (losing its middle, so its last folder
+/// stays) down to what the name leaves, and the name keeps at least
+/// three fifths of the room.
+class _NameWithFolder extends StatelessWidget {
+  const _NameWithFolder({
+    required this.name,
+    required this.nameText,
+    required this.nameStyle,
+    required this.folder,
+    required this.folderStyle,
+  });
+
+  final Widget name;
+  final String nameText;
+  final TextStyle nameStyle;
+  final String folder;
+  final TextStyle folderStyle;
+
+  /// The share of the row a long name keeps against a long folder.
+  static const double nameShare = 0.6;
+
+  /// The room a long folder keeps against a long name, at text scale 1.
+  static const double folderMin = 72;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final available = constraints.maxWidth - AppSpacing.md;
+      if (available <= 0) return name;
+      final scaler = MediaQuery.textScalerOf(context);
+      final direction = Directionality.of(context);
+      double measure(String text, TextStyle style) {
+        final painter = TextPainter(
+          text: TextSpan(text: text, style: style),
+          textDirection: direction,
+          textScaler: scaler,
+          maxLines: 1,
+        )..layout();
+        final width = painter.width;
+        painter.dispose();
+        return width.ceilToDouble();
+      }
+
+      final nameWidth = measure(nameText, nameStyle);
+      final folderWidth = measure(folder, folderStyle);
+      final double nameRoom;
+      if (nameWidth + folderWidth <= available) {
+        nameRoom = nameWidth;
+      } else {
+        // The folder keeps a little room for its last letters; the name
+        // keeps the rest, three fifths at least.
+        final folderKeeps = math.min(
+          folderWidth,
+          folderMin * MediaQuery.textScalerOf(context).scale(1),
+        );
+        nameRoom = math.min(
+          nameWidth,
+          math.max(available * nameShare, available - folderKeeps),
+        );
+      }
+      return Row(
+        children: [
+          SizedBox(width: nameRoom, child: name),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(child: AppMiddleEllipsis(folder, style: folderStyle)),
+        ],
+      );
+    },
+  );
+}
+
+/// What a screen reader says for a row: its name, the folder of a flat
+/// view's row.
+String rowSemanticsLabel(BuildContext context, FileEntry entry) {
+  final l10n = context.l10n;
+  if (entry.isParent) return l10n.panelParentFolder;
+  return entry.folder.isEmpty
+      ? entry.name
+      : l10n.flatRowLabel(entry.name, entry.folder);
 }
 
 /// A folder with nothing to show, in either view.
@@ -240,6 +334,9 @@ abstract final class ColumnWidths {
   /// The name column at least: the data columns give way to it together
   /// in a narrow panel, down to half their width.
   static const double nameMin = 160;
+
+  /// The name column of a flat view at least: the name and its folder.
+  static const double flatNameMin = 320;
 }
 
 /// The width a column takes at the text size in [context]: a date column

@@ -5,6 +5,7 @@ pub mod attrs;
 pub mod events;
 pub mod files;
 pub mod find;
+pub mod flat;
 pub mod listing;
 pub mod ops;
 pub mod rename;

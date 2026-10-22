@@ -46,6 +46,11 @@ files is Rust.
   questions and cancellation. Large archives open fast: the member list
   is read once (from the archive's directory where it has one, in one
   pass otherwise) and kept while the file is unchanged.
+- **Flat view** (⌥⌘B, Vim `zf`, `:flat`): every file under the folder in
+  one list, each with its folder beside its name, as Total Commander's
+  branch view; sort, select, quick search and every command across the
+  whole tree; the first rows show at once even in a huge tree; works
+  inside archives too.
 - **Go anywhere**: the Go To pop-up (F1 / F2) with favorites, volumes, the
   other panel's places and the history; quick lists for parents (⌘1),
   history (⌘2), favorites (⌘3) and volumes (⌘4, with eject); Go to Folder

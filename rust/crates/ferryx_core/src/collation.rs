@@ -48,18 +48,19 @@ pub fn case_insensitive_cmp(a: &str, b: &str) -> Ordering {
 
 /// Natural comparison: digit runs are compared by value (then by their
 /// length, so `01` sorts before `1`), everything else case-insensitively;
-/// names equal that way fall back to the exact comparison.
+/// names equal that way fall back to the exact comparison. Allocates
+/// nothing: a large listing compares names millions of times.
 pub fn natural_cmp(a: &str, b: &str) -> Ordering {
-    let mut ca = a.chars().peekable();
-    let mut cb = b.chars().peekable();
+    let (mut ia, mut ib) = (0usize, 0usize);
     loop {
-        match (ca.peek().copied(), cb.peek().copied()) {
+        match (a[ia..].chars().next(), b[ib..].chars().next()) {
             (None, None) => return a.cmp(b),
             (None, Some(_)) => return Ordering::Less,
             (Some(_), None) => return Ordering::Greater,
             (Some(x), Some(y)) if x.is_ascii_digit() && y.is_ascii_digit() => {
-                let da = take_digits(&mut ca);
-                let db = take_digits(&mut cb);
+                let ea = ia + digit_run(&a[ia..]);
+                let eb = ib + digit_run(&b[ib..]);
+                let (da, db) = (&a[ia..ea], &b[ib..eb]);
                 let na = da.trim_start_matches('0');
                 let nb = db.trim_start_matches('0');
                 let by_value = na.len().cmp(&nb.len()).then_with(|| na.cmp(nb));
@@ -68,16 +69,20 @@ pub fn natural_cmp(a: &str, b: &str) -> Ordering {
                 }
                 // Same value: more leading zeros first.
                 match db.len().cmp(&da.len()) {
-                    Ordering::Equal => continue,
+                    Ordering::Equal => {
+                        ia = ea;
+                        ib = eb;
+                    }
                     other => return other,
                 }
             }
             (Some(x), Some(y)) => {
-                ca.next();
-                cb.next();
-                let fx = fold(x);
-                let fy = fold(y);
-                match fx.cmp(&fy) {
+                ia += x.len_utf8();
+                ib += y.len_utf8();
+                if x == y {
+                    continue;
+                }
+                match fold_cmp(x, y) {
                     Ordering::Equal => continue,
                     other => return other,
                 }
@@ -86,24 +91,16 @@ pub fn natural_cmp(a: &str, b: &str) -> Ordering {
     }
 }
 
-fn take_digits(chars: &mut std::iter::Peekable<std::str::Chars<'_>>) -> String {
-    let mut out = String::new();
-    while let Some(c) = chars.peek() {
-        if c.is_ascii_digit() {
-            out.push(*c);
-            chars.next();
-        } else {
-            break;
-        }
-    }
-    out
+/// The length in bytes of the ASCII digits `text` starts with.
+fn digit_run(text: &str) -> usize {
+    text.bytes().take_while(u8::is_ascii_digit).count()
 }
 
-/// One character folded for comparison: lower case, punctuation before
-/// letters as Finder has it (`_a` before `a`).
-fn fold(c: char) -> (u8, String) {
-    let class = if c.is_alphanumeric() { 1 } else { 0 };
-    (class, c.to_lowercase().collect())
+/// Two characters compared folded: punctuation before letters as Finder
+/// has it (`_a` before `a`), then lower case.
+fn fold_cmp(x: char, y: char) -> Ordering {
+    let class = |c: char| u8::from(c.is_alphanumeric());
+    class(x).cmp(&class(y)).then_with(|| x.to_lowercase().cmp(y.to_lowercase()))
 }
 
 #[cfg(test)]

@@ -1,6 +1,5 @@
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
-import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shortcuts/shortcuts.dart';
@@ -44,12 +43,12 @@ RowLook rowLookOf(PanelTabState tab, int index, {required bool active}) {
   return RowLook(
     cursor: index == tab.cursor,
     active: active,
-    selected: tab.selected.contains(entry.name),
-    match: tab.matches[entry.name],
+    selected: tab.selected.contains(entry.key),
+    match: tab.matches[entry.key],
     dimmed:
         tab.quickSearch.isNotEmpty &&
         !entry.isParent &&
-        !tab.matches.containsKey(entry.name),
+        !tab.matches.containsKey(entry.key),
   );
 }
 
@@ -149,7 +148,11 @@ class _RowsListState extends State<RowsList> {
         count * AppSpacing.sm +
         AppSpacing.xs +
         checkSlotWidth;
-    final nameMin = ColumnWidths.nameMin * scale;
+    // A flat view's name column holds the folder too: the data columns
+    // give way to it sooner.
+    final nameMin =
+        (widget.tab.isFlat ? ColumnWidths.flatNameMin : ColumnWidths.nameMin) *
+        scale;
     var count = columns.length;
     while (count > 0) {
       final fixed = wanted.take(count).fold(0.0, (sum, w) => sum + w);
@@ -246,7 +249,7 @@ class _RowsListState extends State<RowsList> {
                         itemCount: widget.tab.rows.length,
                         addRepaintBoundaries: false,
                         itemBuilder: (context, index) => _ListRow(
-                          key: ValueKey(widget.tab.rows[index].name),
+                          key: ValueKey(widget.tab.rows[index].key),
                           index: index,
                           entry: widget.tab.rows[index],
                           columns: columns,
@@ -305,7 +308,7 @@ class _ListRow extends StatelessWidget {
     return Semantics(
       button: true,
       selected: look.selected || look.cursor,
-      label: entry.isParent ? context.l10n.panelParentFolder : entry.name,
+      label: rowSemanticsLabel(context, entry),
       child: HintTarget(
         onActivate: () => callbacks.onDoubleTap(index),
         onActivateAlt: () =>

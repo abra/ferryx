@@ -8,6 +8,7 @@ import 'api/attrs.dart';
 import 'api/events.dart';
 import 'api/files.dart';
 import 'api/find.dart';
+import 'api/flat.dart';
 import 'api/listing.dart';
 import 'api/ops.dart';
 import 'api/rename.dart';
@@ -36,6 +37,11 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   RustStreamSink<AppEvent> dco_decode_StreamSink_app_event_Sse(dynamic raw);
+
+  @protected
+  RustStreamSink<FlatBatchView> dco_decode_StreamSink_flat_batch_view_Sse(
+    dynamic raw,
+  );
 
   @protected
   String dco_decode_String(dynamic raw);
@@ -128,6 +134,12 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   FindRequestView dco_decode_find_request_view(dynamic raw);
+
+  @protected
+  FlatBatchView dco_decode_flat_batch_view(dynamic raw);
+
+  @protected
+  FlatStartView dco_decode_flat_start_view(dynamic raw);
 
   @protected
   FolderSizeView dco_decode_folder_size_view(dynamic raw);
@@ -288,6 +300,11 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  RustStreamSink<FlatBatchView> sse_decode_StreamSink_flat_batch_view_Sse(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
@@ -400,6 +417,12 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   FindRequestView sse_decode_find_request_view(SseDeserializer deserializer);
+
+  @protected
+  FlatBatchView sse_decode_flat_batch_view(SseDeserializer deserializer);
+
+  @protected
+  FlatStartView sse_decode_flat_start_view(SseDeserializer deserializer);
 
   @protected
   FolderSizeView sse_decode_folder_size_view(SseDeserializer deserializer);
@@ -596,6 +619,12 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_StreamSink_flat_batch_view_Sse(
+    RustStreamSink<FlatBatchView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
@@ -741,6 +770,12 @@ abstract class FerryxRustLibApiImplPlatform
     FindRequestView self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_flat_batch_view(FlatBatchView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_flat_start_view(FlatStartView self, SseSerializer serializer);
 
   @protected
   void sse_encode_folder_size_view(

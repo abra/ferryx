@@ -181,6 +181,8 @@ extension _VimActions on _WorkspaceScreenState {
       // ─── Files core ───
       case 'extract':
         await _extractTo(destination: arg.isEmpty ? null : _vimPath(arg));
+      case 'flat':
+        await _active.toggleFlatView();
       default:
         showAppNotice(context, _l10n.vimUnknownCommand(name));
     }
@@ -441,5 +443,6 @@ extension _VimActions on _WorkspaceScreenState {
     'view',
     // ─── Files core ───
     'extract',
+    'flat',
   ];
 }

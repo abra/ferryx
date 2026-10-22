@@ -2276,4 +2276,49 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String archiveDestinationHint(String key) {
     return '$key completes a folder’s name';
   }
+
+  @override
+  String get flatCapsule => 'Flat';
+
+  @override
+  String get flatLeave => 'Back to the folder';
+
+  @override
+  String get flatWalking => 'Reading the folder’s tree';
+
+  @override
+  String flatFileCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString files',
+      one: '$countString file',
+      zero: 'no files',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String flatCappedCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'the first $countString files',
+      one: 'the first $countString file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String flatRowLabel(String name, String folder) {
+    return '$name, in $folder';
+  }
 }

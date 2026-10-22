@@ -27,6 +27,7 @@ class FileEntry extends Equatable {
     this.isHidden = false,
     this.extension = '',
     this.tags = const [],
+    this.folder = '',
   });
 
   final String name;
@@ -68,6 +69,14 @@ class FileEntry extends Equatable {
   /// Finder tag colours (indices into the tag palette).
   final List<int> tags;
 
+  /// In a flat view, the folder the item is in relative to the view's
+  /// root (`a/b`); empty for the root's own items and in a plain listing.
+  final String folder;
+
+  /// The row's identity in its listing: the name, or in a flat view the
+  /// path relative to the root, as two folders may hold the same name.
+  String get key => folder.isEmpty ? name : '$folder/$name';
+
   bool get isSymlink => kind == EntryKind.symlink;
 
   /// The name without its extension.
@@ -96,7 +105,7 @@ class FileEntry extends Equatable {
   /// not a folder).
   bool get isExecutable => !isDir && (mode & 0x49) != 0;
 
-  FileEntry copyWith({int? size, List<int>? tags}) => FileEntry(
+  FileEntry copyWith({int? size, List<int>? tags, String? folder}) => FileEntry(
     name: name,
     path: path,
     kind: kind,
@@ -117,6 +126,7 @@ class FileEntry extends Equatable {
     isHidden: isHidden,
     extension: extension,
     tags: tags ?? this.tags,
+    folder: folder ?? this.folder,
   );
 
   @override
@@ -141,5 +151,6 @@ class FileEntry extends Equatable {
     isHidden,
     extension,
     tags,
+    folder,
   ];
 }

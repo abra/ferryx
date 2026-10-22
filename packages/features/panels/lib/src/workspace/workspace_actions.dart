@@ -208,6 +208,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     AppCommand.contextMenu: () => unawaited(_rowMenu(_rowAnchor())),
     // ─── Files core ───
     AppCommand.extractTo: () => unawaited(_extractTo()),
+    AppCommand.toggleFlatView: () => unawaited(_active.toggleFlatView()),
   };
 
   // ─── Opening ───
@@ -230,7 +231,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     final tab = _tab;
     final focused = tab?.focused;
     if (tab == null || focused == null || focused.isParent) return;
-    await _openFile(OpenFileRequest(focused, tab.location.join(focused.name)));
+    await _openFile(OpenFileRequest(focused, tab.locationOf(focused)));
   }
 
   Future<void> _goInto() async {
@@ -321,7 +322,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     if (!mounted) return;
     await widget.navigation.openViewer(
       context,
-      tab.location.join(focused.name),
+      tab.locationOf(focused),
       preview: preview,
     );
     if (mounted) _focusOf(_workspace.state.active).requestFocus();
@@ -342,9 +343,12 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     final tab = _tab;
     final focused = tab?.focused;
     if (tab == null || focused == null || focused.isParent) return;
+    // A flat view's row is shown in its own folder.
     final target = focused.isDir
-        ? tab.location.join(focused.name)
-        : tab.location;
+        ? tab.locationOf(focused)
+        : focused.folder.isEmpty
+        ? tab.location
+        : tab.location.join(focused.folder);
     final focusName = focused.isDir ? null : focused.name;
     if (newTab) {
       await _opposite.openInNewTab(target, focusName: focusName);
@@ -657,6 +661,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         singlePane: _workspace.state.singlePane,
         native: tab?.location.isNative ?? false,
         map: widget.shortcutMap,
+        flat: tab?.isFlat ?? false,
       ),
     );
     if (picked == null || !mounted) return;
@@ -1033,7 +1038,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     if (tab == null) return;
     final focused = tab.focused;
     final location = focused != null && focused.isDir && !focused.isParent
-        ? tab.location.join(focused.name)
+        ? tab.locationOf(focused)
         : tab.location;
     final favorites = _prefs.favorites;
     if (favorites.any((f) => f.location == location)) {

@@ -674,5 +674,12 @@
   "archivePasswordMessage": "Введите пароль, чтобы открыть архив.",
   "archivePasswordOpen": "Открыть",
   "archiveEnterPassword": "Ввести пароль…",
-  "archiveDestinationHint": "{key} дополняет имя папки"
+  "archiveDestinationHint": "{key} дополняет имя папки",
+
+"flatCapsule": "Плоский",
+  "flatLeave": "Вернуться к папке",
+  "flatWalking": "Чтение дерева папки",
+  "flatFileCount": "{count, plural, =0{нет файлов} one{{count} файл} few{{count} файла} many{{count} файлов} other{{count} файла}}",
+  "flatCappedCount": "{count, plural, one{первый {count} файл} few{первые {count} файла} many{первые {count} файлов} other{первые {count} файла}}",
+  "flatRowLabel": "{name}, в {folder}"
 }

@@ -3985,6 +3985,42 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'{key} completes a folder’s name'**
   String archiveDestinationHint(String key);
+
+  /// No description provided for @flatCapsule.
+  ///
+  /// In en, this message translates to:
+  /// **'Flat'**
+  String get flatCapsule;
+
+  /// No description provided for @flatLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the folder'**
+  String get flatLeave;
+
+  /// No description provided for @flatWalking.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the folder’s tree'**
+  String get flatWalking;
+
+  /// No description provided for @flatFileCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{no files} one{{count} file} other{{count} files}}'**
+  String flatFileCount(int count);
+
+  /// No description provided for @flatCappedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{the first {count} file} other{the first {count} files}}'**
+  String flatCappedCount(int count);
+
+  /// No description provided for @flatRowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, in {folder}'**
+  String flatRowLabel(String name, String folder);
 }
 
 class _FerryxLocalizationsDelegate

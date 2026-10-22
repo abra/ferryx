@@ -302,7 +302,12 @@ class _PanelViewState extends State<PanelView> {
   void _escape() {
     final tab = _cubit.state.active;
     if (!widget.vimMode || tab == null) {
-      _cubit.clearQuickSearch();
+      // A flat view goes back to its folder once no search is on.
+      if (tab != null && tab.quickSearch.isEmpty && tab.isFlat) {
+        unawaited(_cubit.leaveFlatView());
+      } else {
+        _cubit.clearQuickSearch();
+      }
       return;
     }
     if (_vim.count != null || _vim.pending != null) {
@@ -315,6 +320,8 @@ class _PanelViewState extends State<PanelView> {
       _cubit.endVisual();
     } else if (tab.selected.isNotEmpty) {
       _cubit.deselectAll();
+    } else if (tab.isFlat) {
+      unawaited(_cubit.leaveFlatView());
     }
   }
 
@@ -776,6 +783,7 @@ class _PanelViewState extends State<PanelView> {
                     tab: tab,
                     active: widget.active,
                     vim: _vimLine(tab),
+                    onLeaveFlat: () => unawaited(_cubit.leaveFlatView()),
                   ),
                 ],
               ),

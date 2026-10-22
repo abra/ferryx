@@ -72,6 +72,46 @@ class FileRepository {
     }
   }
 
+  /// Opens [location]'s whole subtree as one list of files for
+  /// [listingId], replacing what it showed; the rows come in batches on
+  /// [FlatStart.batches] (decoded as they arrive, never all at once) and
+  /// [sortFlatListing] then orders them. [location]'s folder is watched,
+  /// not its subfolders.
+  Future<FlatStart> openFlatListing(
+    String listingId,
+    Location location,
+    ListingOptions options,
+  ) => rust.FerryxBackend.guard(() async {
+    final start = await rust.openFlatListing(
+      listingId: listingId,
+      location: rust.locationToView(location),
+      options: rust.listingOptionsToView(options),
+    );
+    final batches = rust
+        .streamFlatListing(listingId: listingId, generation: start.generation)
+        .map(rust.flatBatchFromView);
+    return FlatStart(
+      listing: rust.listingFromView(start.listing),
+      generation: start.generation,
+      batches: batches,
+    );
+  });
+
+  /// The order of a flat listing's rows under [options]' sort: indices
+  /// into its rows as the batches brought them. Fails while the walk is
+  /// under way, or for a walk since replaced.
+  Future<List<int>> sortFlatListing(
+    String listingId,
+    int generation,
+    ListingOptions options,
+  ) => rust.FerryxBackend.guard(
+    () => rust.sortFlatListing(
+      listingId: listingId,
+      generation: generation,
+      options: rust.listingOptionsToView(options),
+    ),
+  );
+
   /// The rows of [location] once, unwatched: for a dialog's completion.
   Future<List<FileEntry>> peek(
     Location location, {

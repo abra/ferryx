@@ -69,6 +69,12 @@ pub fn is_dir(path: &Path) -> bool {
     fs::metadata(path).map(|m| m.is_dir()).unwrap_or(false)
 }
 
+/// The entry of `path` from metadata already read (`symlink_metadata`),
+/// as a listing would show it; for a walk that has the metadata in hand.
+pub fn entry_from_metadata(name: String, path: PathBuf, meta: &Metadata, names: &mut Names) -> Entry {
+    build_entry(name, path, meta, names)
+}
+
 fn build_entry(name: String, path: PathBuf, meta: &Metadata, names: &mut Names) -> Entry {
     let file_type = meta.file_type();
     let is_symlink = file_type.is_symlink();

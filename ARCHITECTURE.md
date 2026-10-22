@@ -280,6 +280,58 @@ match ranges, the sort options and the layout index. Rules:
   ones), and read back at start; a saved folder that is gone falls back
   to the home folder, then the root.
 
+### Flat view
+
+⌥⌘B (Vim `zf`, `:flat`) turns a tab into Total Commander's branch view:
+every file under its folder in one list, each row with its folder
+relative to the tab's in the secondary colour after the name
+(`FileEntry.folder`; in List the name column holds both and the data
+columns give way to it sooner, `ColumnWidths.flatNameMin`; a long name
+keeps three fifths of the room and its extension, a long folder its last
+letters). Folders are not rows — an empty folder shows nothing — and a
+symbolic link to a folder is a row, never followed, so a link cannot make
+the walk go round. Hidden items follow the preference, a hidden folder
+with all it holds. The footer's capsule says "Flat" (with the spinner
+while the tree is read) and the count says files; Esc (once no search is
+on), the command again, the capsule, or going anywhere else leaves it,
+the cursor landing on the item that holds the row it was on. Inside an
+archive the view comes from the index, in memory.
+
+- **Keys.** Rows of one name in two folders are two rows: a row's key is
+  its path under the root (`FileEntry.key`, the name in a plain listing),
+  and the selection, the quick search's matches, the cursor kept across a
+  re-read and the list's row keys all use it. Commands work on the
+  targets' real paths, so copy, move, delete, rename, open and the viewer
+  work unchanged; `PanelTabState.locationOf` is where a row is.
+- **Streaming.** `open_flat_listing` answers the header and a generation;
+  `stream_flat_listing` walks on a thread of its own (`ferryx_vfs::flat`,
+  walkdir, cancellable) and sends rows on a stream of their own in batches
+  — the first after 200 rows or 30 ms, then every 5 000 rows or 120 ms —
+  so the first rows show at once and each batch is decoded as it arrives.
+  The walk stops at 200 000 rows and says so (`capped`, "the first 200 000
+  files"). Rows show in walk order while they come; at the end
+  `sort_flat_listing` answers the order as indices into the rows sent, so
+  a sort never sends the rows again (by name, rows of one name keep their
+  folders' order). A sort asked meanwhile applies when the walk ends.
+- **Refresh.** The tab's folder is watched, not its subfolders: a change
+  there, ⌘R, the hidden items shown or not, or an operation that wrote
+  into or took from the tree (`PanelCubit._walkFlatViewsUnder`) walks the
+  tree again. A walk again keeps the rows shown and swaps in the new ones
+  when it ends (no flicker; cursor and selection stay by key); a change
+  during one asks for one more after it. Changes deeper in the tree by
+  other programs need ⌘R: watching a whole tree is costly (inotify keeps
+  a watch per folder) and re-reading it on every change of a busy tree
+  (`~/Library`) would never rest.
+- **Measured** (release, M-series Mac, warm cache): `~/Library`, capped at
+  200 000 files — first rows after 24 ms, all after 7–9 s, sorted by name
+  in 0.33 s; `/usr`, 22 000 files — first rows after 14 ms, all after
+  0.5–0.7 s, sorted in 14 ms. Sorting needed the natural collation to
+  stop allocating a string per character compared (it took 3.9 s for the
+  200 000 rows before; every listing's sort gains the same). The panel
+  appends each batch (only the new rows meet the quick search), Brief
+  mode sizes its columns as thirds (as it now does for any list over
+  2 000 rows), and only the rows in view are built.
+
 ### Keyboard model
 
 - A single `CommandIntent` type carries an `AppCommand`. `CommandShortcuts`

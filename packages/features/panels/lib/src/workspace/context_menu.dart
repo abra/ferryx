@@ -123,6 +123,7 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
   required bool singlePane,
   required bool native,
   required ShortcutMap map,
+  bool flat = false,
 }) {
   final l10n = context.l10n;
   final platform = Theme.of(context).platform;
@@ -168,6 +169,13 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
       label: l10n.cmdRefresh,
       icon: AppIcons.refresh,
       shortcut: chord(AppCommand.refresh),
+    ),
+    AppMenuAction(
+      value: AppCommand.toggleFlatView,
+      label: l10n.cmdToggleFlatView,
+      icon: AppIcons.layoutList,
+      shortcut: chord(AppCommand.toggleFlatView),
+      checked: flat,
     ),
     AppMenuAction(
       value: AppCommand.toggleSinglePane,

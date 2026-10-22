@@ -643,6 +643,7 @@ dependencies = [
  "thiserror",
  "trash",
  "unrar-rs",
+ "walkdir",
  "zip",
  "zstd",
 ]

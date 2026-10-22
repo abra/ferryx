@@ -48,6 +48,10 @@ class RowsBrief extends StatefulWidget {
   /// Narrowest a column sized to its names gets, at text scale 1.
   static const double minColumnWidth = 120;
 
+  /// Columns are sized to their names up to this many rows; a longer
+  /// list takes thirds of the panel.
+  static const int measuredRowsAtMost = 2000;
+
   @override
   State<RowsBrief> createState() => _RowsBriefState();
 }
@@ -141,7 +145,11 @@ class _RowsBriefState extends State<RowsBrief> {
   ) {
     final rows = widget.tab.rows;
     final columns = rows.isEmpty ? 1 : (rows.length / rowsPerColumn).ceil();
-    if (widget.layout.briefColumns == BriefColumns.fixed) {
+    // A flat view's rows carry their folders, and measuring every name of
+    // a long list on each build would cost more than it shows: thirds.
+    if (widget.layout.briefColumns == BriefColumns.fixed ||
+        widget.tab.isFlat ||
+        rows.length > RowsBrief.measuredRowsAtMost) {
       final width = (available / RowsBrief.fixedColumns).floorToDouble();
       return List.filled(columns, width);
     }
@@ -293,7 +301,7 @@ class _BriefColumn extends StatelessWidget {
         children: [
           for (var i = start; i < start + count; i++)
             _BriefCell(
-              key: ValueKey(tab.rows[i].name),
+              key: ValueKey(tab.rows[i].key),
               index: i,
               entry: tab.rows[i],
               look: rowLookOf(tab, i, active: active),
@@ -337,7 +345,7 @@ class _BriefCell extends StatelessWidget {
     return Semantics(
       button: true,
       selected: look.selected || look.cursor,
-      label: entry.isParent ? context.l10n.panelParentFolder : entry.name,
+      label: rowSemanticsLabel(context, entry),
       child: HintTarget(
         onActivate: () => callbacks.onDoubleTap(index),
         onActivateAlt: () =>

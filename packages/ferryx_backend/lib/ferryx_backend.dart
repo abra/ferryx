@@ -12,6 +12,7 @@ export 'src/rust/api/attrs.dart';
 export 'src/rust/api/events.dart';
 export 'src/rust/api/files.dart';
 export 'src/rust/api/find.dart';
+export 'src/rust/api/flat.dart';
 export 'src/rust/api/listing.dart';
 export 'src/rust/api/ops.dart';
 export 'src/rust/api/rename.dart';

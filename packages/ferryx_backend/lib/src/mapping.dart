@@ -6,6 +6,7 @@ library;
 import 'package:domain_models/domain_models.dart' as d;
 
 import 'rust/api/archives.dart' as rust;
+import 'rust/api/flat.dart' as rust;
 import 'rust/api/types.dart' as rust;
 
 DateTime? dateTimeFromMs(int? ms) => ms == null
@@ -58,28 +59,31 @@ d.EntryKind entryKindFromView(rust.EntryKindView kind) => switch (kind) {
   rust.EntryKindView.other => d.EntryKind.other,
 };
 
-d.FileEntry entryFromView(rust.EntryView view) => d.FileEntry(
-  name: view.name,
-  path: view.path,
-  kind: entryKindFromView(view.kind),
-  isDir: view.isDir,
-  isParent: view.isParent,
-  symlinkTarget: view.symlinkTarget,
-  size: view.size,
-  modified: dateTimeFromMs(view.modifiedMs),
-  created: dateTimeFromMs(view.createdMs),
-  accessed: dateTimeFromMs(view.accessedMs),
-  added: dateTimeFromMs(view.addedMs),
-  mode: view.mode,
-  uid: view.uid,
-  gid: view.gid,
-  owner: view.owner,
-  group: view.group,
-  flags: view.flags,
-  isHidden: view.isHidden,
-  extension: view.extension_,
-  tags: view.tags,
-);
+/// [folder] is a flat view's folder of the entry, relative to its root.
+d.FileEntry entryFromView(rust.EntryView view, {String folder = ''}) =>
+    d.FileEntry(
+      name: view.name,
+      path: view.path,
+      kind: entryKindFromView(view.kind),
+      isDir: view.isDir,
+      isParent: view.isParent,
+      symlinkTarget: view.symlinkTarget,
+      size: view.size,
+      modified: dateTimeFromMs(view.modifiedMs),
+      created: dateTimeFromMs(view.createdMs),
+      accessed: dateTimeFromMs(view.accessedMs),
+      added: dateTimeFromMs(view.addedMs),
+      mode: view.mode,
+      uid: view.uid,
+      gid: view.gid,
+      owner: view.owner,
+      group: view.group,
+      flags: view.flags,
+      isHidden: view.isHidden,
+      extension: view.extension_,
+      tags: view.tags,
+      folder: folder,
+    );
 
 d.Listing listingFromView(rust.ListingView view) => d.Listing(
   location: locationFromView(view.location),
@@ -401,4 +405,17 @@ d.ArchiveInfo archiveInfoFromView(rust.ArchiveInfoView view) => d.ArchiveInfo(
   encrypted: view.encrypted,
   needsPassword: view.needsPassword,
   hasPassword: view.hasPassword,
+);
+
+// ─── Flat views ───
+
+d.FlatBatch flatBatchFromView(rust.FlatBatchView view) => d.FlatBatch(
+  generation: view.generation,
+  entries: [
+    for (var i = 0; i < view.entries.length; i++)
+      entryFromView(view.entries[i], folder: view.folders[i]),
+  ],
+  done: view.done,
+  count: view.count,
+  capped: view.capped,
 );

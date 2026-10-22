@@ -8,6 +8,7 @@ import 'api/attrs.dart';
 import 'api/events.dart';
 import 'api/files.dart';
 import 'api/find.dart';
+import 'api/flat.dart';
 import 'api/listing.dart';
 import 'api/ops.dart';
 import 'api/rename.dart';
@@ -88,7 +89,7 @@ class FerryxRustLib
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 392826019;
+  int get rustContentHash => -2029200364;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -183,6 +184,12 @@ abstract class FerryxRustLibApi extends BaseApi {
 
   Future<void> crateApiSystemOpenDefault({required String path});
 
+  Future<FlatStartView> crateApiFlatOpenFlatListing({
+    required String listingId,
+    required LocationView location,
+    required ListingOptionsView options,
+  });
+
   Future<ListingView> crateApiListingOpenListing({
     required String listingId,
     required LocationView location,
@@ -240,6 +247,12 @@ abstract class FerryxRustLibApi extends BaseApi {
     required String password,
   });
 
+  Future<Int32List> crateApiFlatSortFlatListing({
+    required String listingId,
+    required PlatformInt64 generation,
+    required ListingOptionsView options,
+  });
+
   StandardFoldersView crateApiSystemStandardFolders();
 
   Future<PlatformInt64> crateApiFindStartFind({
@@ -251,6 +264,11 @@ abstract class FerryxRustLibApi extends BaseApi {
   });
 
   Future<EntryView> crateApiFilesStat({required String path});
+
+  Stream<FlatBatchView> crateApiFlatStreamFlatListing({
+    required String listingId,
+    required PlatformInt64 generation,
+  });
 
   Stream<AppEvent> crateApiEventsSubscribeEvents();
 }
@@ -1163,7 +1181,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   );
 
   @override
-  Future<ListingView> crateApiListingOpenListing({
+  Future<FlatStartView> crateApiFlatOpenFlatListing({
     required String listingId,
     required LocationView location,
     required ListingOptionsView options,
@@ -1179,6 +1197,43 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
             generalizedFrbRustBinding,
             serializer,
             funcId: 30,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_flat_start_view,
+          decodeErrorData: sse_decode_ferryx_error,
+        ),
+        constMeta: kCrateApiFlatOpenFlatListingConstMeta,
+        argValues: [listingId, location, options],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiFlatOpenFlatListingConstMeta =>
+      const TaskConstMeta(
+        debugName: "open_flat_listing",
+        argNames: ["listingId", "location", "options"],
+      );
+
+  @override
+  Future<ListingView> crateApiListingOpenListing({
+    required String listingId,
+    required LocationView location,
+    required ListingOptionsView options,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(listingId, serializer);
+          sse_encode_box_autoadd_location_view(location, serializer);
+          sse_encode_box_autoadd_listing_options_view(options, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 31,
             port: port_,
           );
         },
@@ -1212,7 +1267,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 31,
+            funcId: 32,
             port: port_,
           );
         },
@@ -1244,7 +1299,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 32,
+            funcId: 33,
             port: port_,
           );
         },
@@ -1275,7 +1330,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 33,
+            funcId: 34,
             port: port_,
           );
         },
@@ -1309,7 +1364,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 34,
+            funcId: 35,
             port: port_,
           );
         },
@@ -1339,7 +1394,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 35,
+            funcId: 36,
             port: port_,
           );
         },
@@ -1376,7 +1431,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 36,
+            funcId: 37,
             port: port_,
           );
         },
@@ -1406,7 +1461,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 37,
+            funcId: 38,
             port: port_,
           );
         },
@@ -1438,7 +1493,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 38,
+            funcId: 39,
             port: port_,
           );
         },
@@ -1473,7 +1528,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 39,
+            funcId: 40,
             port: port_,
           );
         },
@@ -1503,7 +1558,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 40,
+            funcId: 41,
             port: port_,
           );
         },
@@ -1537,7 +1592,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 41,
+            funcId: 42,
             port: port_,
           );
         },
@@ -1568,7 +1623,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 42,
+            funcId: 43,
             port: port_,
           );
         },
@@ -1598,7 +1653,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 43,
+            funcId: 44,
             port: port_,
           );
         },
@@ -1633,7 +1688,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 44,
+            funcId: 45,
             port: port_,
           );
         },
@@ -1655,12 +1710,49 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
       );
 
   @override
+  Future<Int32List> crateApiFlatSortFlatListing({
+    required String listingId,
+    required PlatformInt64 generation,
+    required ListingOptionsView options,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(listingId, serializer);
+          sse_encode_i_64(generation, serializer);
+          sse_encode_box_autoadd_listing_options_view(options, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 46,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_i_32_strict,
+          decodeErrorData: sse_decode_ferryx_error,
+        ),
+        constMeta: kCrateApiFlatSortFlatListingConstMeta,
+        argValues: [listingId, generation, options],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiFlatSortFlatListingConstMeta =>
+      const TaskConstMeta(
+        debugName: "sort_flat_listing",
+        argNames: ["listingId", "generation", "options"],
+      );
+
+  @override
   StandardFoldersView crateApiSystemStandardFolders() {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 45)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 47)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_standard_folders_view,
@@ -1691,7 +1783,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 46,
+            funcId: 48,
             port: port_,
           );
         },
@@ -1723,7 +1815,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 47,
+            funcId: 49,
             port: port_,
           );
         },
@@ -1753,7 +1845,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 48,
+            funcId: 50,
             port: port_,
           );
         },
@@ -1774,6 +1866,46 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   );
 
   @override
+  Stream<FlatBatchView> crateApiFlatStreamFlatListing({
+    required String listingId,
+    required PlatformInt64 generation,
+  }) {
+    final sink = RustStreamSink<FlatBatchView>();
+    unawaited(
+      handler.executeNormal(
+        NormalTask(
+          callFfi: (port_) {
+            final serializer = SseSerializer(generalizedFrbRustBinding);
+            sse_encode_String(listingId, serializer);
+            sse_encode_i_64(generation, serializer);
+            sse_encode_StreamSink_flat_batch_view_Sse(sink, serializer);
+            pdeCallFfi(
+              generalizedFrbRustBinding,
+              serializer,
+              funcId: 51,
+              port: port_,
+            );
+          },
+          codec: SseCodec(
+            decodeSuccessData: sse_decode_unit,
+            decodeErrorData: null,
+          ),
+          constMeta: kCrateApiFlatStreamFlatListingConstMeta,
+          argValues: [listingId, generation, sink],
+          apiImpl: this,
+        ),
+      ),
+    );
+    return sink.stream;
+  }
+
+  TaskConstMeta get kCrateApiFlatStreamFlatListingConstMeta =>
+      const TaskConstMeta(
+        debugName: "stream_flat_listing",
+        argNames: ["listingId", "generation", "sink"],
+      );
+
+  @override
   Stream<AppEvent> crateApiEventsSubscribeEvents() {
     final sink = RustStreamSink<AppEvent>();
     unawaited(
@@ -1785,7 +1917,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 49,
+              funcId: 52,
               port: port_,
             );
           },
@@ -1816,6 +1948,14 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
 
   @protected
   RustStreamSink<AppEvent> dco_decode_StreamSink_app_event_Sse(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError();
+  }
+
+  @protected
+  RustStreamSink<FlatBatchView> dco_decode_StreamSink_flat_batch_view_Sse(
+    dynamic raw,
+  ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     throw UnimplementedError();
   }
@@ -2113,6 +2253,34 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
       sizeBytes: dco_decode_i_64(arr[8]),
       includeHidden: dco_decode_bool(arr[9]),
       includeFolders: dco_decode_bool(arr[10]),
+    );
+  }
+
+  @protected
+  FlatBatchView dco_decode_flat_batch_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return FlatBatchView(
+      generation: dco_decode_i_64(arr[0]),
+      entries: dco_decode_list_entry_view(arr[1]),
+      folders: dco_decode_list_String(arr[2]),
+      done: dco_decode_bool(arr[3]),
+      count: dco_decode_i_64(arr[4]),
+      capped: dco_decode_bool(arr[5]),
+    );
+  }
+
+  @protected
+  FlatStartView dco_decode_flat_start_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return FlatStartView(
+      listing: dco_decode_listing_view(arr[0]),
+      generation: dco_decode_i_64(arr[1]),
     );
   }
 
@@ -2588,6 +2756,14 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  RustStreamSink<FlatBatchView> sse_decode_StreamSink_flat_batch_view_Sse(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    throw UnimplementedError('Unreachable ()');
+  }
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_list_prim_u_8_strict(deserializer);
@@ -2958,6 +3134,33 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
       includeHidden: var_includeHidden,
       includeFolders: var_includeFolders,
     );
+  }
+
+  @protected
+  FlatBatchView sse_decode_flat_batch_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_generation = sse_decode_i_64(deserializer);
+    var var_entries = sse_decode_list_entry_view(deserializer);
+    var var_folders = sse_decode_list_String(deserializer);
+    var var_done = sse_decode_bool(deserializer);
+    var var_count = sse_decode_i_64(deserializer);
+    var var_capped = sse_decode_bool(deserializer);
+    return FlatBatchView(
+      generation: var_generation,
+      entries: var_entries,
+      folders: var_folders,
+      done: var_done,
+      count: var_count,
+      capped: var_capped,
+    );
+  }
+
+  @protected
+  FlatStartView sse_decode_flat_start_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_listing = sse_decode_listing_view(deserializer);
+    var var_generation = sse_decode_i_64(deserializer);
+    return FlatStartView(listing: var_listing, generation: var_generation);
   }
 
   @protected
@@ -3625,6 +3828,23 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  void sse_encode_StreamSink_flat_batch_view_Sse(
+    RustStreamSink<FlatBatchView> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(
+      self.setupAndSerialize(
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_flat_batch_view,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+      ),
+      serializer,
+    );
+  }
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
@@ -3931,6 +4151,30 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
     sse_encode_i_64(self.sizeBytes, serializer);
     sse_encode_bool(self.includeHidden, serializer);
     sse_encode_bool(self.includeFolders, serializer);
+  }
+
+  @protected
+  void sse_encode_flat_batch_view(
+    FlatBatchView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_64(self.generation, serializer);
+    sse_encode_list_entry_view(self.entries, serializer);
+    sse_encode_list_String(self.folders, serializer);
+    sse_encode_bool(self.done, serializer);
+    sse_encode_i_64(self.count, serializer);
+    sse_encode_bool(self.capped, serializer);
+  }
+
+  @protected
+  void sse_encode_flat_start_view(
+    FlatStartView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_listing_view(self.listing, serializer);
+    sse_encode_i_64(self.generation, serializer);
   }
 
   @protected

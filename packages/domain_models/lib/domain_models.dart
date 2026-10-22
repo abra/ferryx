@@ -9,6 +9,7 @@ export 'src/exceptions.dart';
 export 'src/favorites.dart';
 export 'src/file_entry.dart';
 export 'src/find.dart';
+export 'src/flat.dart';
 export 'src/listing.dart';
 export 'src/location.dart';
 export 'src/operations.dart';

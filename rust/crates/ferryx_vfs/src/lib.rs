@@ -7,6 +7,7 @@
 //!   compressed file) as a read-only folder, read back streaming.
 //! - [`location`]: where a panel is, on disk or inside an archive.
 //! - [`watch`]: a folder watched for changes.
+//! - [`flat`]: a folder's whole subtree as one list of files, in batches.
 //! - [`volumes`], [`system`]: the disks, the standard folders, opening,
 //!   revealing, the trash.
 //! - [`attrs`], [`links`]: permissions, flags, owners, times; symbolic and
@@ -15,6 +16,7 @@
 pub mod archive;
 pub mod attrs;
 pub mod error;
+pub mod flat;
 pub mod links;
 pub mod location;
 pub mod native;
