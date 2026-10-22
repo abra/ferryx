@@ -87,6 +87,18 @@ extension _TerminalActions on _WorkspaceScreenState {
     _dockChanged(focusTerminal: true);
   }
 
+  /// Vim's `:term [command]`: the terminal with the keys, the command typed
+  /// at its prompt.
+  void _vimTerminal(String command) {
+    final terminal = _terminal;
+    if (terminal == null) return;
+    _dock.show();
+    _dockChanged(focusTerminal: true);
+    if (command.isNotEmpty && !terminal.run(command)) {
+      showAppNotice(context, _l10n.terminalBusy);
+    }
+  }
+
   void _hideTerminal() {
     if (!_dock.state.shown) return;
     _dock.hide();

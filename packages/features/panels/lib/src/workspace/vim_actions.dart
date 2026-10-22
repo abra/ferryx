@@ -178,6 +178,9 @@ extension _VimActions on _WorkspaceScreenState {
         await _swapPanels();
       case 'help' || 'h':
         await widget.navigation.openCheatSheet(context);
+      // ─── Terminal ───
+      case 'term' || 'terminal':
+        _vimTerminal(arg);
       default:
         showAppNotice(context, _l10n.vimUnknownCommand(name));
     }
@@ -433,6 +436,7 @@ extension _VimActions on _WorkspaceScreenState {
     'tabnew',
     'tabnext',
     'tabprevious',
+    'term',
     'touch',
     'trash',
     'view',

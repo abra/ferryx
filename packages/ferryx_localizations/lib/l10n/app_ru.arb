@@ -682,5 +682,6 @@
   "terminalStartFailed": "Не удалось запустить оболочку",
   "terminalRestart": "Новая оболочка",
   "terminalRestartHint": "{key} — запустить новую оболочку",
-  "terminalTitle": "Терминал"
+  "terminalTitle": "Терминал",
+  "terminalBusy": "В терминале работает программа или набрана строка"
 }

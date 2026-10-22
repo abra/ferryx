@@ -274,6 +274,51 @@ void main() {
     });
   });
 
+  group('commands', () {
+    test('typed at the prompt; refused while a program runs or a line is '
+        'half typed', () async {
+      final cubit = await running();
+      final session = sessions.single;
+      expect(cubit.runCommand('  make test '), isTrue);
+      expect(session.text, 'make test\r');
+      session.emit(const TerminalShellState(idle: false, folder: '/a'));
+      await settle();
+      expect(cubit.runCommand('ls'), isFalse);
+      session.emit(const TerminalShellState(idle: true, folder: '/a'));
+      await settle();
+      cubit.terminal.textInput('echo hal');
+      expect(cubit.runCommand('ls'), isFalse);
+      await cubit.close();
+    });
+
+    test('asked before the shell is up, it runs at its first prompt', () async {
+      final cubit = build();
+      cubit.show('/a');
+      expect(cubit.runCommand('htop'), isTrue);
+      cubit.terminal.resize(80, 24);
+      await settle();
+      final session = sessions.single;
+      expect(session.written, isEmpty);
+      session.emit(const TerminalShellState(idle: true, folder: '/a'));
+      await settle();
+      expect(session.text, 'htop\r');
+      await cubit.close();
+    });
+
+    test('asked after the shell ended, a new one starts and runs it', () async {
+      final cubit = await running();
+      sessions.single.emit(const TerminalExited(0));
+      await settle();
+      expect(cubit.runCommand('ls'), isTrue);
+      await settle();
+      expect(sessions, hasLength(2));
+      sessions.last.emit(const TerminalShellState(idle: true, folder: '/a'));
+      await settle();
+      expect(sessions.last.text, 'ls\r');
+      await cubit.close();
+    });
+  });
+
   group('the end', () {
     test('an exit shows the code; restart starts a new shell below the old '
         'output, in the panel\'s folder', () async {

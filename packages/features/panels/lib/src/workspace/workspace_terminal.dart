@@ -33,6 +33,10 @@ abstract interface class WorkspaceTerminalController {
   /// Folders the shell went to by itself, for the active panel to open.
   Stream<String> get shellFolders;
 
+  /// Types [command] at the shell's prompt (Vim's `:term make`); `false`
+  /// when a program runs there or a line is half typed.
+  bool run(String command);
+
   /// One line of the terminal's text, to size the terminal by lines.
   double lineHeight(BuildContext context);
 

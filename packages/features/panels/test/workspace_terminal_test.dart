@@ -36,6 +36,14 @@ class _FakeTerminal implements WorkspaceTerminalController {
   @override
   Stream<String> get shellFolders => folders.stream;
 
+  var busy = false;
+
+  @override
+  bool run(String command) {
+    calls.add('run $command');
+    return !busy;
+  }
+
   @override
   double lineHeight(BuildContext context) => 16;
 
@@ -108,7 +116,10 @@ void main() {
     tester.view.physicalSize = const Size(1200, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    final map = ShortcutMap.defaults(platform);
+    final map = ShortcutMap.forUser(
+      platform,
+      vimMotions: preferences.current.vimMode,
+    );
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(AppPlatformStyle.macos),
@@ -339,6 +350,42 @@ void main() {
     expect(terminalView, findsOneWidget);
     expect(tester.getSize(terminalView).height, 40 + 8 * 16);
     expect(terminal.calls, contains('show /home'));
+  });
+
+  testWidgets('Vim\'s :term shows the terminal and runs a command there', (
+    tester,
+  ) async {
+    unawaited(preferences.update((p) => p.copyWith(vimMode: true)));
+    await pump(tester);
+    Future<void> command(String line) async {
+      // `:` as a Mac keyboard sends it, then the line and Return.
+      await tester.sendKeyDownEvent(
+        LogicalKeyboardKey.shiftLeft,
+        platform: 'macos',
+      );
+      await tester.sendKeyEvent(
+        LogicalKeyboardKey.semicolon,
+        platform: 'macos',
+      );
+      await tester.sendKeyUpEvent(
+        LogicalKeyboardKey.shiftLeft,
+        platform: 'macos',
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), line);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+    }
+
+    await command('term make test');
+    expect(terminalView, findsOneWidget);
+    expect(terminalFocused(), isTrue);
+    expect(terminal.calls, contains('run make test'));
+    // A program runs there: the window says so rather than typing over it.
+    await chord(tester, LogicalKeyboardKey.arrowDown, control: true, alt: true);
+    terminal.busy = true;
+    await command('term ls');
+    expect(find.text(en.terminalBusy), findsOneWidget);
   });
 
   testWidgets('the window disposes its terminal', (tester) async {

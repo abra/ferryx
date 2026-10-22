@@ -2292,4 +2292,8 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get terminalTitle => 'Terminal';
+
+  @override
+  String get terminalBusy =>
+      'A program runs in the terminal, or a line is half typed';
 }

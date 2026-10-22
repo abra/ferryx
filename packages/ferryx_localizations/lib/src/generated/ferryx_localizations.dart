@@ -4033,6 +4033,12 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Terminal'**
   String get terminalTitle;
+
+  /// No description provided for @terminalBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'A program runs in the terminal, or a line is half typed'**
+  String get terminalBusy;
 }
 
 class _FerryxLocalizationsDelegate

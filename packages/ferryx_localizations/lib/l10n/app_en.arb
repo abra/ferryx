@@ -757,5 +757,6 @@
   "terminalRestart": "New Shell",
   "terminalRestartHint": "{key} starts a new shell",
   "@terminalRestartHint": {"placeholders": {"key": {"type": "String"}}},
-  "terminalTitle": "Terminal"
+  "terminalTitle": "Terminal",
+  "terminalBusy": "A program runs in the terminal, or a line is half typed"
 }

@@ -48,6 +48,9 @@ class TerminalLink implements WorkspaceTerminalController {
   Stream<String> get shellFolders => cubit.shellFolders;
 
   @override
+  bool run(String command) => cubit.runCommand(command);
+
+  @override
   double lineHeight(BuildContext context) => TerminalPane.lineHeightOf(
     context,
     _preferences.current.terminal.fontSize,

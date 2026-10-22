@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:domain_models/domain_models.dart';
 import 'package:equatable/equatable.dart';
@@ -133,6 +134,12 @@ class TerminalSessionCubit extends Cubit<TerminalSessionState> {
   bool _wantStart = false;
   bool _starting = false;
 
+  /// A command asked for before the shell's first prompt.
+  String? _queued;
+
+  /// The shell has reported its state at least once.
+  bool _sawState = false;
+
   /// The emulator the view shows; replaced on a restart that changes the
   /// scrollback ([TerminalSessionState.generation]).
   Terminal get terminal => _terminal;
@@ -258,14 +265,27 @@ class TerminalSessionCubit extends Cubit<TerminalSessionState> {
     if (isClosed) return;
     switch (update) {
       case TerminalOutput(:final bytes):
-        _decoder.add(bytes);
-        // The next batch after this turn of the event loop, so a frame can
-        // come between two: a flood never freezes the window.
-        Timer.run(() => _session?.ack());
+        if (bytes.length <= slice) {
+          _decoder.add(bytes);
+          // The next batch after this turn of the event loop, so a frame
+          // can come between two: a flood never freezes the window.
+          Timer.run(() => _session?.ack());
+        } else {
+          // Parsed a slice per turn, the events after it held back so
+          // they keep their order.
+          final updates = _updates?..pause();
+          unawaited(_writeInSlices(bytes, updates));
+        }
       case TerminalShellState():
+        _sawState = true;
         final target = _sync.onShellState(update);
         emit(state.copyWith(atPrompt: update.idle, folder: update.folder));
         if (target != null) _shellFolders.add(target);
+        final queued = _queued;
+        if (queued != null && update.idle != false) {
+          _queued = null;
+          runCommand(queued);
+        }
       case TerminalExited(:final exitCode):
         _forgetSession();
         emit(
@@ -276,6 +296,26 @@ class TerminalSessionCubit extends Cubit<TerminalSessionState> {
           ),
         );
     }
+  }
+
+  /// The most output parsed in one turn of the event loop: a few
+  /// milliseconds even in a debug build, so frames keep coming while a
+  /// command floods the terminal.
+  static const slice = 16 * 1024;
+
+  Future<void> _writeInSlices(
+    Uint8List bytes,
+    StreamSubscription<TerminalUpdate>? updates,
+  ) async {
+    for (var start = 0; start < bytes.length; start += slice) {
+      if (isClosed) return;
+      final end = math.min(start + slice, bytes.length);
+      _decoder.add(Uint8List.sublistView(bytes, start, end));
+      await Future<void>.delayed(Duration.zero);
+    }
+    if (isClosed || !identical(updates, _updates)) return;
+    _session?.ack();
+    updates?.resume();
   }
 
   void _onInput(String data) {
@@ -316,11 +356,34 @@ class TerminalSessionCubit extends Cubit<TerminalSessionState> {
       );
     }
     _sync.reset();
+    _sawState = false;
     _wantStart = true;
     await _startIfSized();
   }
 
   // ─── Commands ───
+
+  /// Types [command] and Return at the shell's prompt; whether it could. A
+  /// shell running a program, or holding a half-typed line, is left alone;
+  /// one not started yet, or ended, runs it at its first prompt.
+  bool runCommand(String command) {
+    final line = command.trim();
+    if (line.isEmpty) return true;
+    final session = _session;
+    if (session == null) {
+      _queued = line;
+      if (state.ended) unawaited(restart());
+      return true;
+    }
+    if (!_sawState) {
+      // Started, but not at its first prompt yet.
+      _queued = line;
+      return true;
+    }
+    if (state.atPrompt == false || _sync.lineDirty) return false;
+    session.write(utf8.encode('$line\r'));
+    return true;
+  }
 
   /// The selected text, `null` when nothing is selected.
   String? selectedText() {

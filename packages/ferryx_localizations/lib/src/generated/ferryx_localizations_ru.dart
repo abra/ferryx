@@ -2330,4 +2330,8 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get terminalTitle => 'Терминал';
+
+  @override
+  String get terminalBusy =>
+      'В терминале работает программа или набрана строка';
 }
