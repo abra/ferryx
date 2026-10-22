@@ -1,0 +1,32 @@
+name: sync_feature
+description: "Synchronize Folders: two folder trees compared in the core, a table of what differs with an action per row, and the synchronization as an operation."
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.1
+  meta: ^1.16.0
+  domain_models:
+    path: ../../domain_models
+  component_library:
+    path: ../../component_library
+  ferryx_localizations:
+    path: ../../ferryx_localizations
+  operations_service:
+    path: ../../operations_service
+  preferences_service:
+    path: ../../preferences_service
+  shortcuts:
+    path: ../../shortcuts
+
+dev_dependencies:
+  bloc_test: ^10.0.0
+  mocktail: ^1.0.4
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
