@@ -14,6 +14,7 @@ import 'api/listing.dart';
 import 'api/ops.dart';
 import 'api/rename.dart';
 import 'api/system.dart';
+import 'api/terminal.dart';
 import 'api/types.dart';
 
 import 'dart:async';
@@ -37,6 +38,11 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   RustStreamSink<AppEvent> dco_decode_StreamSink_app_event_Sse(dynamic raw);
+
+  @protected
+  RustStreamSink<TerminalEvent> dco_decode_StreamSink_terminal_event_Sse(
+    dynamic raw,
+  );
 
   @protected
   String dco_decode_String(dynamic raw);
@@ -65,10 +71,16 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  bool dco_decode_box_autoadd_bool(dynamic raw);
+
+  @protected
   ConflictSideView dco_decode_box_autoadd_conflict_side_view(dynamic raw);
 
   @protected
   FindRequestView dco_decode_box_autoadd_find_request_view(dynamic raw);
+
+  @protected
+  int dco_decode_box_autoadd_i_32(dynamic raw);
 
   @protected
   PlatformInt64 dco_decode_box_autoadd_i_64(dynamic raw);
@@ -93,6 +105,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   SizeOpView dco_decode_box_autoadd_size_op_view(dynamic raw);
+
+  @protected
+  TerminalStartView dco_decode_box_autoadd_terminal_start_view(dynamic raw);
 
   @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
@@ -158,6 +173,9 @@ abstract class FerryxRustLibApiImplPlatform
   Int32List dco_decode_list_prim_i_32_strict(dynamic raw);
 
   @protected
+  List<int> dco_decode_list_prim_u_8_loose(dynamic raw);
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
@@ -209,7 +227,13 @@ abstract class FerryxRustLibApiImplPlatform
   String? dco_decode_opt_String(dynamic raw);
 
   @protected
+  bool? dco_decode_opt_box_autoadd_bool(dynamic raw);
+
+  @protected
   ConflictSideView? dco_decode_opt_box_autoadd_conflict_side_view(dynamic raw);
+
+  @protected
+  int? dco_decode_opt_box_autoadd_i_32(dynamic raw);
 
   @protected
   PlatformInt64? dco_decode_opt_box_autoadd_i_64(dynamic raw);
@@ -266,6 +290,21 @@ abstract class FerryxRustLibApiImplPlatform
   StandardFoldersView dco_decode_standard_folders_view(dynamic raw);
 
   @protected
+  TerminalEvent dco_decode_terminal_event(dynamic raw);
+
+  @protected
+  TerminalEventKind dco_decode_terminal_event_kind(dynamic raw);
+
+  @protected
+  TerminalStartView dco_decode_terminal_start_view(dynamic raw);
+
+  @protected
+  TerminalStateView dco_decode_terminal_state_view(dynamic raw);
+
+  @protected
+  int dco_decode_u_16(dynamic raw);
+
+  @protected
   int dco_decode_u_32(dynamic raw);
 
   @protected
@@ -282,6 +321,11 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   RustStreamSink<AppEvent> sse_decode_StreamSink_app_event_Sse(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  RustStreamSink<TerminalEvent> sse_decode_StreamSink_terminal_event_Sse(
     SseDeserializer deserializer,
   );
 
@@ -314,6 +358,9 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  bool sse_decode_box_autoadd_bool(SseDeserializer deserializer);
+
+  @protected
   ConflictSideView sse_decode_box_autoadd_conflict_side_view(
     SseDeserializer deserializer,
   );
@@ -322,6 +369,9 @@ abstract class FerryxRustLibApiImplPlatform
   FindRequestView sse_decode_box_autoadd_find_request_view(
     SseDeserializer deserializer,
   );
+
+  @protected
+  int sse_decode_box_autoadd_i_32(SseDeserializer deserializer);
 
   @protected
   PlatformInt64 sse_decode_box_autoadd_i_64(SseDeserializer deserializer);
@@ -358,6 +408,11 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   SizeOpView sse_decode_box_autoadd_size_op_view(SseDeserializer deserializer);
+
+  @protected
+  TerminalStartView sse_decode_box_autoadd_terminal_start_view(
+    SseDeserializer deserializer,
+  );
 
   @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
@@ -429,6 +484,9 @@ abstract class FerryxRustLibApiImplPlatform
   Int32List sse_decode_list_prim_i_32_strict(SseDeserializer deserializer);
 
   @protected
+  List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer);
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
@@ -492,9 +550,15 @@ abstract class FerryxRustLibApiImplPlatform
   String? sse_decode_opt_String(SseDeserializer deserializer);
 
   @protected
+  bool? sse_decode_opt_box_autoadd_bool(SseDeserializer deserializer);
+
+  @protected
   ConflictSideView? sse_decode_opt_box_autoadd_conflict_side_view(
     SseDeserializer deserializer,
   );
+
+  @protected
+  int? sse_decode_opt_box_autoadd_i_32(SseDeserializer deserializer);
 
   @protected
   PlatformInt64? sse_decode_opt_box_autoadd_i_64(SseDeserializer deserializer);
@@ -567,6 +631,27 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  TerminalEvent sse_decode_terminal_event(SseDeserializer deserializer);
+
+  @protected
+  TerminalEventKind sse_decode_terminal_event_kind(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  TerminalStartView sse_decode_terminal_start_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  TerminalStateView sse_decode_terminal_state_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  int sse_decode_u_16(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_u_32(SseDeserializer deserializer);
 
   @protected
@@ -587,6 +672,12 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_StreamSink_app_event_Sse(
     RustStreamSink<AppEvent> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_StreamSink_terminal_event_Sse(
+    RustStreamSink<TerminalEvent> self,
     SseSerializer serializer,
   );
 
@@ -624,6 +715,9 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_box_autoadd_bool(bool self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_conflict_side_view(
     ConflictSideView self,
     SseSerializer serializer,
@@ -634,6 +728,9 @@ abstract class FerryxRustLibApiImplPlatform
     FindRequestView self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_box_autoadd_i_32(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_i_64(
@@ -680,6 +777,12 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_box_autoadd_size_op_view(
     SizeOpView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_terminal_start_view(
+    TerminalStartView self,
     SseSerializer serializer,
   );
 
@@ -783,6 +886,9 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_list_prim_u_8_loose(List<int> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
     SseSerializer serializer,
@@ -858,10 +964,16 @@ abstract class FerryxRustLibApiImplPlatform
   void sse_encode_opt_String(String? self, SseSerializer serializer);
 
   @protected
+  void sse_encode_opt_box_autoadd_bool(bool? self, SseSerializer serializer);
+
+  @protected
   void sse_encode_opt_box_autoadd_conflict_side_view(
     ConflictSideView? self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_opt_box_autoadd_i_32(int? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_i_64(
@@ -955,6 +1067,30 @@ abstract class FerryxRustLibApiImplPlatform
     StandardFoldersView self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_terminal_event(TerminalEvent self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_terminal_event_kind(
+    TerminalEventKind self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_terminal_start_view(
+    TerminalStartView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_terminal_state_view(
+    TerminalStateView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_u_16(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_32(int self, SseSerializer serializer);

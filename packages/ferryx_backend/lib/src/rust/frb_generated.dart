@@ -11,6 +11,7 @@ import 'api/listing.dart';
 import 'api/ops.dart';
 import 'api/rename.dart';
 import 'api/system.dart';
+import 'api/terminal.dart';
 import 'api/types.dart';
 
 import 'dart:async';
@@ -87,7 +88,7 @@ class FerryxRustLib
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -596323344;
+  int get rustContentHash => -1104042943;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -243,6 +244,38 @@ abstract class FerryxRustLibApi extends BaseApi {
   Future<EntryView> crateApiFilesStat({required String path});
 
   Stream<AppEvent> crateApiEventsSubscribeEvents();
+
+  void crateApiTerminalTerminalAck({required PlatformInt64 id});
+
+  Future<bool> crateApiTerminalTerminalChangeDirectory({
+    required PlatformInt64 id,
+    required String folder,
+  });
+
+  Future<void> crateApiTerminalTerminalClose({required PlatformInt64 id});
+
+  String crateApiTerminalTerminalDefaultShell();
+
+  Stream<TerminalEvent> crateApiTerminalTerminalEvents({
+    required PlatformInt64 id,
+  });
+
+  void crateApiTerminalTerminalResize({
+    required PlatformInt64 id,
+    required int cols,
+    required int rows,
+  });
+
+  Future<PlatformInt64> crateApiTerminalTerminalStart({
+    required TerminalStartView options,
+  });
+
+  TerminalStateView crateApiTerminalTerminalState({required PlatformInt64 id});
+
+  void crateApiTerminalTerminalWrite({
+    required PlatformInt64 id,
+    required List<int> data,
+  });
 }
 
 class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
@@ -1701,6 +1734,282 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
         argNames: ["sink"],
       );
 
+  @override
+  void crateApiTerminalTerminalAck({required PlatformInt64 id}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(id, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 47)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTerminalTerminalAckConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTerminalTerminalAckConstMeta =>
+      const TaskConstMeta(
+        debugName: "terminal_ack",
+        argNames: ["id"],
+      );
+
+  @override
+  Future<bool> crateApiTerminalTerminalChangeDirectory({
+    required PlatformInt64 id,
+    required String folder,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(id, serializer);
+          sse_encode_String(folder, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 48,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_ferryx_error,
+        ),
+        constMeta: kCrateApiTerminalTerminalChangeDirectoryConstMeta,
+        argValues: [id, folder],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTerminalTerminalChangeDirectoryConstMeta =>
+      const TaskConstMeta(
+        debugName: "terminal_change_directory",
+        argNames: ["id", "folder"],
+      );
+
+  @override
+  Future<void> crateApiTerminalTerminalClose({required PlatformInt64 id}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(id, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 49,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTerminalTerminalCloseConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTerminalTerminalCloseConstMeta =>
+      const TaskConstMeta(
+        debugName: "terminal_close",
+        argNames: ["id"],
+      );
+
+  @override
+  String crateApiTerminalTerminalDefaultShell() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 50)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTerminalTerminalDefaultShellConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTerminalTerminalDefaultShellConstMeta =>
+      const TaskConstMeta(
+        debugName: "terminal_default_shell",
+        argNames: [],
+      );
+
+  @override
+  Stream<TerminalEvent> crateApiTerminalTerminalEvents({
+    required PlatformInt64 id,
+  }) {
+    final sink = RustStreamSink<TerminalEvent>();
+    unawaited(
+      handler.executeNormal(
+        NormalTask(
+          callFfi: (port_) {
+            final serializer = SseSerializer(generalizedFrbRustBinding);
+            sse_encode_i_64(id, serializer);
+            sse_encode_StreamSink_terminal_event_Sse(sink, serializer);
+            pdeCallFfi(
+              generalizedFrbRustBinding,
+              serializer,
+              funcId: 51,
+              port: port_,
+            );
+          },
+          codec: SseCodec(
+            decodeSuccessData: sse_decode_unit,
+            decodeErrorData: null,
+          ),
+          constMeta: kCrateApiTerminalTerminalEventsConstMeta,
+          argValues: [id, sink],
+          apiImpl: this,
+        ),
+      ),
+    );
+    return sink.stream;
+  }
+
+  TaskConstMeta get kCrateApiTerminalTerminalEventsConstMeta =>
+      const TaskConstMeta(
+        debugName: "terminal_events",
+        argNames: ["id", "sink"],
+      );
+
+  @override
+  void crateApiTerminalTerminalResize({
+    required PlatformInt64 id,
+    required int cols,
+    required int rows,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(id, serializer);
+          sse_encode_u_16(cols, serializer);
+          sse_encode_u_16(rows, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 52)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_ferryx_error,
+        ),
+        constMeta: kCrateApiTerminalTerminalResizeConstMeta,
+        argValues: [id, cols, rows],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTerminalTerminalResizeConstMeta =>
+      const TaskConstMeta(
+        debugName: "terminal_resize",
+        argNames: ["id", "cols", "rows"],
+      );
+
+  @override
+  Future<PlatformInt64> crateApiTerminalTerminalStart({
+    required TerminalStartView options,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_terminal_start_view(options, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 53,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_i_64,
+          decodeErrorData: sse_decode_ferryx_error,
+        ),
+        constMeta: kCrateApiTerminalTerminalStartConstMeta,
+        argValues: [options],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTerminalTerminalStartConstMeta =>
+      const TaskConstMeta(
+        debugName: "terminal_start",
+        argNames: ["options"],
+      );
+
+  @override
+  TerminalStateView crateApiTerminalTerminalState({required PlatformInt64 id}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(id, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 54)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_terminal_state_view,
+          decodeErrorData: sse_decode_ferryx_error,
+        ),
+        constMeta: kCrateApiTerminalTerminalStateConstMeta,
+        argValues: [id],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTerminalTerminalStateConstMeta =>
+      const TaskConstMeta(
+        debugName: "terminal_state",
+        argNames: ["id"],
+      );
+
+  @override
+  void crateApiTerminalTerminalWrite({
+    required PlatformInt64 id,
+    required List<int> data,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_i_64(id, serializer);
+          sse_encode_list_prim_u_8_loose(data, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 55)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_ferryx_error,
+        ),
+        constMeta: kCrateApiTerminalTerminalWriteConstMeta,
+        argValues: [id, data],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTerminalTerminalWriteConstMeta =>
+      const TaskConstMeta(
+        debugName: "terminal_write",
+        argNames: ["id", "data"],
+      );
+
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -1709,6 +2018,14 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
 
   @protected
   RustStreamSink<AppEvent> dco_decode_StreamSink_app_event_Sse(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError();
+  }
+
+  @protected
+  RustStreamSink<TerminalEvent> dco_decode_StreamSink_terminal_event_Sse(
+    dynamic raw,
+  ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     throw UnimplementedError();
   }
@@ -1804,6 +2121,12 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  bool dco_decode_box_autoadd_bool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as bool;
+  }
+
+  @protected
   ConflictSideView dco_decode_box_autoadd_conflict_side_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_conflict_side_view(raw);
@@ -1813,6 +2136,12 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   FindRequestView dco_decode_box_autoadd_find_request_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_find_request_view(raw);
+  }
+
+  @protected
+  int dco_decode_box_autoadd_i_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
   }
 
   @protected
@@ -1861,6 +2190,12 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   SizeOpView dco_decode_box_autoadd_size_op_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_size_op_view(raw);
+  }
+
+  @protected
+  TerminalStartView dco_decode_box_autoadd_terminal_start_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_terminal_start_view(raw);
   }
 
   @protected
@@ -2058,6 +2393,12 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  List<int> dco_decode_list_prim_u_8_loose(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as List<int>;
+  }
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
@@ -2203,9 +2544,21 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  bool? dco_decode_opt_box_autoadd_bool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_bool(raw);
+  }
+
+  @protected
   ConflictSideView? dco_decode_opt_box_autoadd_conflict_side_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_conflict_side_view(raw);
+  }
+
+  @protected
+  int? dco_decode_opt_box_autoadd_i_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_i_32(raw);
   }
 
   @protected
@@ -2412,6 +2765,60 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  TerminalEvent dco_decode_terminal_event(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return TerminalEvent(
+      kind: dco_decode_terminal_event_kind(arr[0]),
+      output: dco_decode_list_prim_u_8_strict(arr[1]),
+      idle: dco_decode_opt_box_autoadd_bool(arr[2]),
+      folder: dco_decode_opt_String(arr[3]),
+      exitCode: dco_decode_opt_box_autoadd_i_32(arr[4]),
+    );
+  }
+
+  @protected
+  TerminalEventKind dco_decode_terminal_event_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return TerminalEventKind.values[raw as int];
+  }
+
+  @protected
+  TerminalStartView dco_decode_terminal_start_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return TerminalStartView(
+      shell: dco_decode_opt_String(arr[0]),
+      folder: dco_decode_opt_String(arr[1]),
+      cols: dco_decode_u_16(arr[2]),
+      rows: dco_decode_u_16(arr[3]),
+      locale: dco_decode_opt_String(arr[4]),
+    );
+  }
+
+  @protected
+  TerminalStateView dco_decode_terminal_state_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return TerminalStateView(
+      idle: dco_decode_opt_box_autoadd_bool(arr[0]),
+      folder: dco_decode_opt_String(arr[1]),
+    );
+  }
+
+  @protected
+  int dco_decode_u_16(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
   int dco_decode_u_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -2455,6 +2862,14 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
 
   @protected
   RustStreamSink<AppEvent> sse_decode_StreamSink_app_event_Sse(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    throw UnimplementedError('Unreachable ()');
+  }
+
+  @protected
+  RustStreamSink<TerminalEvent> sse_decode_StreamSink_terminal_event_Sse(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -2576,6 +2991,12 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  bool sse_decode_box_autoadd_bool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_bool(deserializer));
+  }
+
+  @protected
   ConflictSideView sse_decode_box_autoadd_conflict_side_view(
     SseDeserializer deserializer,
   ) {
@@ -2589,6 +3010,12 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_find_request_view(deserializer));
+  }
+
+  @protected
+  int sse_decode_box_autoadd_i_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_i_32(deserializer));
   }
 
   @protected
@@ -2649,6 +3076,14 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   SizeOpView sse_decode_box_autoadd_size_op_view(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_size_op_view(deserializer));
+  }
+
+  @protected
+  TerminalStartView sse_decode_box_autoadd_terminal_start_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_terminal_start_view(deserializer));
   }
 
   @protected
@@ -2917,6 +3352,13 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getUint8List(len_);
+  }
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -3121,6 +3563,17 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  bool? sse_decode_opt_box_autoadd_bool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_bool(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   ConflictSideView? sse_decode_opt_box_autoadd_conflict_side_view(
     SseDeserializer deserializer,
   ) {
@@ -3128,6 +3581,17 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_conflict_side_view(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  int? sse_decode_opt_box_autoadd_i_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_i_32(deserializer));
     } else {
       return null;
     }
@@ -3410,6 +3874,67 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  TerminalEvent sse_decode_terminal_event(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_kind = sse_decode_terminal_event_kind(deserializer);
+    var var_output = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_idle = sse_decode_opt_box_autoadd_bool(deserializer);
+    var var_folder = sse_decode_opt_String(deserializer);
+    var var_exitCode = sse_decode_opt_box_autoadd_i_32(deserializer);
+    return TerminalEvent(
+      kind: var_kind,
+      output: var_output,
+      idle: var_idle,
+      folder: var_folder,
+      exitCode: var_exitCode,
+    );
+  }
+
+  @protected
+  TerminalEventKind sse_decode_terminal_event_kind(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return TerminalEventKind.values[inner];
+  }
+
+  @protected
+  TerminalStartView sse_decode_terminal_start_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_shell = sse_decode_opt_String(deserializer);
+    var var_folder = sse_decode_opt_String(deserializer);
+    var var_cols = sse_decode_u_16(deserializer);
+    var var_rows = sse_decode_u_16(deserializer);
+    var var_locale = sse_decode_opt_String(deserializer);
+    return TerminalStartView(
+      shell: var_shell,
+      folder: var_folder,
+      cols: var_cols,
+      rows: var_rows,
+      locale: var_locale,
+    );
+  }
+
+  @protected
+  TerminalStateView sse_decode_terminal_state_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_idle = sse_decode_opt_box_autoadd_bool(deserializer);
+    var var_folder = sse_decode_opt_String(deserializer);
+    return TerminalStateView(idle: var_idle, folder: var_folder);
+  }
+
+  @protected
+  int sse_decode_u_16(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint16();
+  }
+
+  @protected
   int sse_decode_u_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint32();
@@ -3466,6 +3991,23 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
       self.setupAndSerialize(
         codec: SseCodec(
           decodeSuccessData: sse_decode_app_event,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+      ),
+      serializer,
+    );
+  }
+
+  @protected
+  void sse_encode_StreamSink_terminal_event_Sse(
+    RustStreamSink<TerminalEvent> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(
+      self.setupAndSerialize(
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_terminal_event,
           decodeErrorData: sse_decode_AnyhowException,
         ),
       ),
@@ -3556,6 +4098,12 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  void sse_encode_box_autoadd_bool(bool self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_conflict_side_view(
     ConflictSideView self,
     SseSerializer serializer,
@@ -3571,6 +4119,12 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_find_request_view(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_i_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self, serializer);
   }
 
   @protected
@@ -3643,6 +4197,15 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_size_op_view(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_terminal_start_view(
+    TerminalStartView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_terminal_start_view(self, serializer);
   }
 
   @protected
@@ -3868,6 +4431,18 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  void sse_encode_list_prim_u_8_loose(
+    List<int> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putUint8List(
+      self is Uint8List ? self : Uint8List.fromList(self),
+    );
+  }
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
     SseSerializer serializer,
@@ -4038,6 +4613,16 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_bool(bool? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_bool(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_conflict_side_view(
     ConflictSideView? self,
     SseSerializer serializer,
@@ -4047,6 +4632,16 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_conflict_side_view(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_i_32(int? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_i_32(self, serializer);
     }
   }
 
@@ -4268,6 +4863,54 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
     sse_encode_String(self.root, serializer);
     sse_encode_String(self.temporary, serializer);
     sse_encode_String(self.userName, serializer);
+  }
+
+  @protected
+  void sse_encode_terminal_event(TerminalEvent self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_terminal_event_kind(self.kind, serializer);
+    sse_encode_list_prim_u_8_strict(self.output, serializer);
+    sse_encode_opt_box_autoadd_bool(self.idle, serializer);
+    sse_encode_opt_String(self.folder, serializer);
+    sse_encode_opt_box_autoadd_i_32(self.exitCode, serializer);
+  }
+
+  @protected
+  void sse_encode_terminal_event_kind(
+    TerminalEventKind self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_terminal_start_view(
+    TerminalStartView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.shell, serializer);
+    sse_encode_opt_String(self.folder, serializer);
+    sse_encode_u_16(self.cols, serializer);
+    sse_encode_u_16(self.rows, serializer);
+    sse_encode_opt_String(self.locale, serializer);
+  }
+
+  @protected
+  void sse_encode_terminal_state_view(
+    TerminalStateView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_box_autoadd_bool(self.idle, serializer);
+    sse_encode_opt_String(self.folder, serializer);
+  }
+
+  @protected
+  void sse_encode_u_16(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint16(self);
   }
 
   @protected
