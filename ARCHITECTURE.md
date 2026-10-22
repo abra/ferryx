@@ -21,6 +21,7 @@ lib/app  ─► features/* Screen or show… dialog entry points
                          ─► rust/crates/ferryx_api ─► ferryx_vfs  (listings, watching, archives…)
                                                    ─► ferryx_ops  (copy, move, delete, compress, find…)
                                                    ─► ferryx_core (sorting, masks, batch rename)
+                                                   ─► ferryx_term (the terminal's shell)
 
 features/* never import sibling features.
 ```
@@ -100,6 +101,7 @@ buttons'. The window is shown only after the preferences are read
 | `ferryx_core` | Pure logic: the `Entry` of a panel row, natural / case-insensitive / case-sensitive collation (`collation`), sorting by field with folders first and extensionless folders (`sorting`), file masks and regular expressions (`mask`), quick-search matching with the ranges to underline (`quick_search`), and the batch-rename language (`batch_rename`: placeholders, substrings, dates, counters, case commands, then search and replace and a case change). No I/O. |
 | `ferryx_vfs` | The file system: a folder's rows with their metadata (size, times, the macOS added time through `getattrlist`, mode, owner and group names, BSD flags, hidden), one entry, byte ranges of a file (`native`); archives as read-only folders (`archive`: zip, jar, tar, tar.gz; an index per archive read once and again when the file changed, members extracted to a temporary folder for opening); a folder watched for changes reported once per burst (`watch`, `notify`); the volumes (`volumes`, `sysinfo`) and the free space; the standard folders, opening with the desktop or an application, revealing in the file manager, the trash, ejecting (`system`); permissions, flags, owners and times read and written (`attrs`); symbolic and hard links (`links`). Every error is a `VfsError` with a kind the interface words. |
 | `ferryx_ops` | Operations on threads with progress, pause, cancellation and questions: copy and move (a rename on the same volume, else a copy and a delete; folders merge; conflicts ask or follow the policy; attributes preserved; optional verification), duplicate (`name copy.ext`), extract out of an archive, delete and trash, compress to zip (deflate, optional AES-256), folder sizes, plus Find Files (`find`: name, contents in overlapping windows, size, streamed hits) and the application of a batch rename (`rename`: staged through temporary names when names swap). `Runner` holds every operation; `OpContext` is what an operation checks, reports and asks through. |
+| `ferryx_term` | The integrated terminal's shell: a `Session` runs the user's shell as a login shell in a pseudo-terminal (`portable-pty`: openpty, ConPTY on Windows), sends its output in batches with flow control, probes whether it waits at its prompt (`tcgetpgrp`) and its folder (`proc_pidinfo`, `/proc/<pid>/cwd`), types `cd` when asked, and hangs up and reaps it on close. No emulation: that is the interface's. |
 | `ferryx_api` | `flutter_rust_bridge` surface. Holds the open listings (`app.rs`: one per panel tab, with its raw rows for resorting and its watcher), the archive indexes, the operations runner (whose listener forwards progress as events) and the searches; converts to plain DTOs (`api/types.rs`, `…View` types, enums without payloads so Dart sees enums, `i64` counts so Dart sees `int`); `volume_id` names a path's volume for a drop to tell a move from a copy. Its `Cargo.toml` uses literal fields because cargokit parses it without workspace inheritance. |
 
 Rules:
@@ -124,10 +126,15 @@ Rules:
 - Find Files runs on a thread and sends hits in batches (`FindProgress`,
   at most every 80 ms or 200 hits) and `FindDone` at the end or on cancel.
 
+- A terminal session's output, state and end come on a stream of its own
+  (`terminal_events`), not the app's event stream: they are high-volume
+  and flow-controlled (see "The integrated terminal").
+
 Tests: `cargo test --workspace`. `ferryx_api/tests/api_flow.rs` runs the
 bridge end to end (listings, resorting, the watcher's event, archives,
 operations with a question answered, folder sizes, batch rename, find);
-the tests take turns on the process-wide state.
+the tests take turns on the process-wide state. `terminal_flow.rs` runs a
+`/bin/sh` session through the bridge.
 
 ## Bridge (`packages/ferryx_backend`)
 
@@ -149,18 +156,20 @@ that `ferryx_backend` loads, as part of the Flutter build.
 | `domain_models` | Pure Dart contracts: `FileEntry`, `Listing`, `Location`, `SortOptions`, `ListingOptions`, `Volume`, `StandardFolders`, `OperationRequest`/`OperationProgress`/`OperationQuestion`, `FindRequest`/`FindHit`/`FindUpdate`, `RenameOptions`/`RenameOutcome`, `FileAttributes`/`AttributeChanges`, `Favorite`, `PanelLayout`, `ExternalEditor`/`ExternalTool`, `FerryxException`. |
 | `ferryx_backend` | The generated bridge, `FerryxBackend` (init, the event stream, `guard`) and `mapping.dart`. |
 | `monitoring` | `Logger` and the console observer. |
-| `shortcuts` | `AppCommand` (scopes: global, panel, viewer, lists, dialogs; `CommandSection` for the palette's groups), `Chord`, `ShortcutMap` (defaults per desktop, `forUser` with overrides), the `CommandHandlers` dispatch chain (`commandsAt` answers what a place handles), `ChordCodec`. |
-| `preferences_service` | Installation preferences (theme, locale, text scale, shortcut overrides, window frame, the panels' state, layouts, sorting defaults, quick search, favorites, editors, tools, confirmations, copy defaults, viewer) + `PreferencesScope` and `PreferenceBuilder`; beside the blob, under keys of their own (`SideStorage`), `FolderFrecency` (the folders visited) and `RecentItems` (the commands run lately). |
+| `shortcuts` | `AppCommand` (scopes: global, panel, viewer, lists, dialogs, terminal; `CommandSection` for the palette's groups), `Chord`, `ShortcutMap` (defaults per desktop, `forUser` with overrides), the `CommandHandlers` dispatch chain (`commandsAt` answers what a place handles), `ChordCodec`. |
+| `preferences_service` | Installation preferences (theme, locale, text scale, shortcut overrides, window frame, the panels' state, layouts, sorting defaults, quick search, favorites, editors, tools, confirmations, copy defaults, viewer, the terminal's settings and place) + `PreferencesScope` and `PreferenceBuilder`; beside the blob, under keys of their own (`SideStorage`), `FolderFrecency` (the folders visited) and `RecentItems` (the commands run lately). |
 | `file_repository` | `FileRepository`: listings (open, refresh, resort, close, peek), items (stat, byte ranges, extract to temp, make, rename, links, resolve), the system (volumes, standard folders, free space, open, open with, reveal, eject, applications), attributes; `directoryChanges` names listings whose folders changed. |
 | `operations_service` | `OperationsService` (start, pause, resume, cancel, answer, forget; `progress` stream and the latest report per operation; `run` waits for one), `FindService` (start, cancel, `updates`), `RenameService` (preview, apply). |
 | `platform_services` | What only some desktops offer, behind one injected `PlatformServices` (capabilities; Quick Look; the share picker; file drags out of the window): `ChannelPlatformServices` on macOS (the runner's `ferryx/platform` channel), `DesktopPlatformServices` elsewhere (drags only), `FakePlatformServices` for tests (`testing.dart`); `PlatformDropArea`, the window's one drop region (super_drag_and_drop). |
+| `terminal_service` | `TerminalService.start` → a `TerminalSession` (its `updates`: `TerminalOutput`, `TerminalShellState`, `TerminalExited`; write, resize, ack, state, change directory, close) over `ferryx_api`'s terminal; the default shell's name. |
 | `ferryx_localizations` | ARB-generated `FerryxLocalizations`, command and scope labels, formatting helpers (sizes, dates, durations, error titles, operation titles, answers, columns). |
 | `component_library` | Tokens, the platform-adaptive theme and the desktop widgets (see Native look); for drags, `FileDragSource` (past `metrics.dragThreshold`), `FileDropTarget` (found by hit-testing) and `AppDropOutline`. |
-| `features/panels` | The main window (`WorkspaceScreen`): two `PanelView`s with a `PanelCubit` each, the edge between them, the operations cards, every file command (`workspace_actions.dart`), the row and panel menus, and the dialogs: copy / move / copy as / move as, new folder, delete, compress, select by mask, go to folder, links, favorites, the Go To pop-up and the quick lists, batch rename, file attributes, and the questions of operations. |
+| `features/panels` | The main window (`WorkspaceScreen`): two `PanelView`s with a `PanelCubit` each, the edge between them, the integrated terminal's place (`TerminalDock`, the view injected as a `WorkspaceTerminal`), the operations cards, every file command (`workspace_actions.dart`), the row and panel menus, and the dialogs: copy / move / copy as / move as, new folder, delete, compress, select by mask, go to folder, links, favorites, the Go To pop-up and the quick lists, batch rename, file attributes, and the questions of operations. |
 | `features/viewer` | The built-in viewer (`ViewerScreen`): text, hex and preview over a `ViewerSource` (a file on disk or an archive member), windows of large files, find and go to. |
 | `features/find` | Find Files (`showFindDialog`, `FindCubit`): the form, the streaming results, go to a hit or view it. |
-| `features/settings` | The settings window (`SettingsScreen`: General, Panels, Viewer, Hotkeys, Editors, Tools, About) and the cheat sheet (`showCheatSheet`). |
+| `features/settings` | The settings window (`SettingsScreen`: General, Panels, Viewer, Terminal, Hotkeys, Editors, Tools, About) and the cheat sheet (`showCheatSheet`). |
 | `features/palette` | The command palette (`showCommandPalette`, `PaletteCubit`, the `fuzzyMatch` scorer). |
+| `features/terminal` | The integrated terminal: `TerminalSessionCubit` (the session, the xterm.dart emulator it writes into, `FolderSync`), `TerminalPane` (its bar, the emulator in the theme's colours, the end notice, the menu) and `TerminalKeys` (which keys are the window's). |
 
 ### Feature wiring
 
@@ -168,7 +177,9 @@ that `ferryx_backend` loads, as part of the Flutter build.
 `routing.dart`; the workspace is given a `WorkspaceNavigation` whose
 callbacks open the viewer route, the find dialog, the settings route and
 the cheat sheet, so the panels feature never imports those features. The
-workspace reports its state (`WorkspaceSnapshot`: both panels' tabs, the
+integrated terminal comes the same way: a `WorkspaceTerminal` (a factory
+for its controller and a builder for its view) that `lib/app/terminal_link.dart`
+fills from the terminal feature. The workspace reports its state (`WorkspaceSnapshot`: both panels' tabs, the
 active side, the split) and the routing writes it to the preferences,
 debounced, and names the active folder in the window title.
 
@@ -249,6 +260,10 @@ match ranges, the sort options and the layout index. Rules:
 - Hint mode (⌘J) labels every clickable thing on the topmost route; the
   menu key (⌃↩, ⇧F10, Menu) opens the focused row's menu by its row; the
   edge between the panels takes the keys with ⌥⌘\ (`AppSplitter`).
+- The integrated terminal is outside the panel scope, so no panel key
+  fires there; the emulator reads a key before any `Shortcuts` above it,
+  so `TerminalPane` asks `TerminalKeys` first (see "The integrated
+  terminal").
 
 ### Vim mode
 
@@ -370,6 +385,98 @@ no dimming and gives the focus back before the caller acts.
   the core stages swaps through temporary names and puts an item that
   cannot land back under its own name. Esc asks before edits are lost.
 
+### The integrated terminal
+
+Nimble Commander's terminal: the user's shell under the panels, in their
+place, or over the whole window, in step with the active panel's folder.
+
+- **Core** (`ferryx_term`). `Session::spawn` resolves the shell (the
+  settings' path or a name on `PATH`, checked, else `$SHELL`, the passwd
+  shell, `/bin/zsh`, `/bin/bash`; `pwsh`, PowerShell, `cmd` on Windows),
+  runs it as a login shell (`-zsh` as its name) in the panel's folder with
+  `TERM=xterm-256color`, `COLORTERM=truecolor`, `TERM_PROGRAM=Ferryx`, and
+  `LANG` set from the system's language when the environment names no
+  locale (an app started from the Dock has none). Three threads: the reader
+  (our own non-blocking duplicate of the master, waited on in 100 ms
+  slices so a closing session never hangs it; portable-pty's writer is not
+  used, as dropping it types a newline and EOF), the writer (keystrokes in
+  order), and the pump: chunks gathered into batches (one per 10 ms at
+  most while bytes flow, 64 KiB each, an echo after a pause at once), sent
+  while the listener has credit (two batches; `terminal_ack` gives one
+  back). Without credit the pump stops reading, the bounded channel fills
+  and the kernel's buffer stops the program, as a real terminal does. The
+  shell's state (`idle`: the terminal's foreground process group is the
+  shell's; `folder`: `proc_pidinfo(PROC_PIDVNODEPATHINFO)` on macOS,
+  `/proc/<pid>/cwd` on Linux) is probed 40 ms after output stops and every
+  400 ms, and sent when it changes; a folder the interface asked for is
+  reported as it spelled it (`/tmp`, not `/private/tmp`). `change_directory`
+  types ` cd -- '<folder>'` and Return only when the shell is idle and
+  elsewhere (single quotes, a leading space for the history; a name with a
+  control character is never typed). `close` hangs up the shell and its
+  foreground job; the pump reaps it, SIGKILL after a second. Windows:
+  ConPTY names no foreground process and another process's folder is only
+  in its PEB, so both stay unknown and the folder is never synchronised.
+- **Bridge** (`api/terminal.rs`). `terminal_start` answers an id;
+  `terminal_events(id)` is the session's own stream; `terminal_write`,
+  `terminal_resize`, `terminal_ack` and `terminal_state` are sync, so
+  keystrokes keep their order (a write only queues them for the writer).
+- **Emulation** (`features/terminal`). `TerminalSessionCubit` owns the
+  xterm.dart `Terminal` (scrollback from the settings, 10 000 lines by
+  default) and lives as long as the window, so hiding the terminal keeps
+  the shell and its output. The shell starts the first time the terminal is
+  shown, once the view has measured itself. Output is decoded across
+  batches (a chunked UTF-8 decoder) and parsed at most 16 KiB per turn of
+  the event loop, later events held back meanwhile, so frames keep coming
+  in a flood (debug JIT: `yes | head -n 200000` in about 200 ms, the
+  longest stall about 18 ms); the batch is acknowledged after it is parsed.
+  Repaints are the render object's, once a frame. The theme's surface,
+  text and accent (the cursor, translucent so the letter shows), the
+  selection colours (emphasized where the keys are, grey elsewhere) and
+  `AppTerminalColors` (sixteen ANSI colours per brightness) make its
+  colours; the platform's monospace face its type at the settings' size
+  (the interface's text scale does not apply: the terminal's size is its
+  own setting), with Nerd Font faces as fallbacks for prompt icons. An
+  exit or a failed start shows a line under the emulator; Return or its
+  button starts a new shell below the old output, the modes a program
+  left on reset.
+- **Keys**. Every key goes to the shell but the terminal's own commands
+  (`CommandScope.terminal`: copy, paste, select all, clear, scroll a page;
+  ⌘C ⌘V ⌘A ⌘K ⇧PgUp ⇧PgDn, Ctrl+Shift+C/V/A/K elsewhere, where Ctrl+C is
+  the shell's), its menu key, its place (`ShortcutMap.terminalPlacement`),
+  and the window's chords no program in a terminal is given
+  (`Chord.reachesWindowFromTerminal`: those with ⌘ on macOS, those with
+  Ctrl+Shift elsewhere). ⌘K is "Connect to Server" in the window but
+  clears inside the terminal, as in Terminal.app: the terminal's keys are
+  matched first. ⌘ chords the window does not bind are swallowed, never
+  typed. On Windows and Linux the terminal's places are Ctrl+\` (whole
+  window), Ctrl+Shift+↑/↓ and Ctrl+Shift+\`, as Ctrl+Alt is AltGr there.
+- **Folder sync** (`FolderSync`). Panel to shell: when the active panel
+  (or which panel is active) changes and the terminal is on screen, `cd`
+  is typed if the shell waits at its prompt with nothing typed on its line
+  (the cubit watches what the user types: Return, ⌃C, ⌃U, ⌃D clear the
+  line, a program ending leaves a fresh prompt); a hidden terminal follows
+  when it is shown again; a folder inside an archive is never sent. Shell
+  to panel: when the shell comes back to its prompt in another folder than
+  at its last prompt, the active panel opens it. While a `cd` the terminal
+  typed is under way (until the shell reports it, or two seconds), the
+  shell's folders are not sent back, so a panel moving quickly is never
+  pulled back; the panel moving while a program runs is not undone when it
+  ends. Known limit: a line continued with PS2 counts as clean.
+- **In the window** (`features/panels`). `TerminalDock` keeps the place
+  (`TerminalPlace`: hidden, overlapped, panels hidden, full window) and
+  the height in lines; the workspace lays the panels and the terminal out
+  in one `Stack` (the panels are unmounted while hidden, so hint mode never
+  labels them), with a vertical `AppSplitter` between them (drag, or ↑ ↓,
+  0, Home/End, Return, Esc; the panels keep a header, four rows and the
+  footer). ⌃⌥↑ shows the terminal and gives it the keys, and when it has
+  them, makes it a line taller; ⌃⌥↓ hides it from anywhere and gives the
+  panel the keys; ⌃⌥O hides the panels over it and brings them back; ⌥⌘O
+  takes the whole window (no key hints, no operation cards) and goes back
+  where it was. The place and the height are saved (debounced) and
+  restored. The key hint strip shows the terminal's keys while it has
+  them. Vim's `:term [command]` shows it and types the command at a clean
+  prompt.
+
 ### Operations in the window
 
 `OperationsService.progress` feeds the workspace: a card per operation
@@ -470,14 +577,18 @@ partially created resources.
 
 - Rust: unit tests per crate; `ferryx_api/tests/api_flow.rs` runs the
   bridge end to end.
-- Dart: cubit tests (`bloc_test`, `mocktail`) in the panels, viewer and
-  find features; widget tests in the settings feature and the component
-  library; unit tests in shortcuts, preferences_service and monitoring.
-  `workspace_native_test` drives the window against `FakePlatformServices`
-  (Quick Look following the cursor, Share's anchor, drags past the
-  threshold, drops planned and started); `drop_plan_test` and
-  `quick_look_pick_test` cover the pure rules; `platform_services_test`
-  the channel both ways.
+- Dart: cubit tests (`bloc_test`, `mocktail`) in the panels, viewer,
+  find and terminal features; widget tests in the settings feature, the
+  component library and the terminal (its keys on macOS and Linux, the end
+  notice, the menu) and the workspace with a fake terminal (its places,
+  focus, height, folder sync, `:term`); unit tests in shortcuts,
+  preferences_service, monitoring and `FolderSync`; a flood test (200 000
+  lines through the cubit); `terminal_service` runs a real `/bin/sh`
+  through the host library (`make core`). `workspace_native_test` drives
+  the window against `FakePlatformServices` (Quick Look following the
+  cursor, Share's anchor, drags past the threshold, drops planned and
+  started); `drop_plan_test` and `quick_look_pick_test` cover the pure
+  rules; `platform_services_test` the channel both ways.
   The panels' `panel_view_vim_test` drives a panel with simulated keys
   through the real shortcut map (`5j`, `v`, `/`, `:`, `f`, marks, the
   register hooks), `vim_keys_test` the count and pending-key parser.
@@ -494,9 +605,11 @@ partially created resources.
 
 ## Known gaps
 
-- No integrated terminal yet, no SFTP/FTP/WebDAV, no extended-attributes
-  or process-list virtual file systems; archives are read-only (zip, jar,
-  tar, tar.gz).
+- No SFTP/FTP/WebDAV, no extended-attributes or process-list virtual file
+  systems; archives are read-only (zip, jar, tar, tar.gz).
+- The terminal: one session per window; no search in its scrollback;
+  NC's "paste the file name into the terminal" (⌃⌥↩) is not there yet; on
+  Windows the folder is not synchronised (see above).
 - Finder tags are not read; the tag palette is in place for them.
 - Scroll-only keys (⌥Home, ⌥End, ⌥PgUp, ⌥PgDn) move the cursor as the plain
   keys do.
@@ -506,6 +619,6 @@ partially created resources.
   Shift, which super_drag_and_drop does not report; Quick Look and Share
   are macOS's alone.
 - External editors and tools run through the desktop (`open -a`), not
-  in a terminal.
+  in the integrated terminal, even those marked "in terminal".
 - Windows and Linux are built and tested in CI, not used on a desktop day
   to day; the macOS app is signed ad hoc, not notarised.

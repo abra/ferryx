@@ -70,6 +70,11 @@ See `ARCHITECTURE.md`. The rules that matter most:
 - A panel's cursor and selection are separate (orthodox manager rules,
   `PanelCubit`): moving the cursor never changes the selection; a command
   works on the selection, else on the focused row, never on `..`.
+- The integrated terminal gives the shell every key but its own
+  (`CommandScope.terminal`), its place in the window and the window's
+  chords no program is given: with ⌘ on macOS, with Ctrl+Shift elsewhere
+  (`ShortcutMap.terminalShortcuts`). A window command that must work from
+  the terminal needs such a chord; never a plain Ctrl+letter.
 
 ## Conventions
 

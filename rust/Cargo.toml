@@ -12,6 +12,7 @@ rust-version = "1.85"
 ferryx_core = { path = "crates/ferryx_core" }
 ferryx_vfs = { path = "crates/ferryx_vfs" }
 ferryx_ops = { path = "crates/ferryx_ops" }
+ferryx_term = { path = "crates/ferryx_term" }
 
 anyhow = "1"
 chrono = "0.4"
@@ -34,6 +35,8 @@ walkdir = "2"
 zip = { version = "2", default-features = false, features = ["deflate", "aes-crypto", "time", "bzip2", "zstd"] }
 filetime = "0.2"
 nix = { version = "0.29", features = ["fs", "user"] }
+portable-pty = "0.9"
+filedescriptor = "0.8"
 
 [profile.release]
 # Desktop app: favour runtime speed and a small binary over compile time.

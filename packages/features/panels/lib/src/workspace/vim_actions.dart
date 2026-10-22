@@ -160,6 +160,9 @@ extension _VimActions on _WorkspaceScreenState {
         await _toggleQuickLook();
       case 'share':
         await _share();
+      // ─── Terminal ───
+      case 'term' || 'terminal':
+        _vimTerminal(arg);
       default:
         showAppNotice(context, _l10n.vimUnknownCommand(name));
     }
@@ -417,6 +420,7 @@ extension _VimActions on _WorkspaceScreenState {
     'tabnew',
     'tabnext',
     'tabprevious',
+    'term',
     'touch',
     'trash',
     'view',

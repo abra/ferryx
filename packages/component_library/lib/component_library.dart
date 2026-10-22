@@ -63,6 +63,7 @@ export 'src/theme/fluent_borders.dart';
 export 'src/theme/hairlines.dart';
 export 'src/theme/extensions/app_colors_ext.dart';
 export 'src/theme/extensions/app_metrics.dart';
+export 'src/theme/extensions/app_terminal_colors.dart';
 export 'src/theme/extensions/build_context_ext.dart';
 export 'src/theme/tokens/app_icon_size.dart';
 export 'src/theme/tokens/app_motion.dart';

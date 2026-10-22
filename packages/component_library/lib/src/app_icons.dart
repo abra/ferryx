@@ -203,4 +203,10 @@ abstract final class AppIcons {
   static const IconData sun = LucideIcons.sun;
   static const IconData moon = LucideIcons.moon;
   static const IconData monitor = LucideIcons.monitor;
+
+  // ─── Terminal ───
+  static const IconData terminalHide = LucideIcons.panelBottomClose;
+  static const IconData panelsHide = LucideIcons.panelTopClose;
+  static const IconData panelsShow = LucideIcons.panelTopOpen;
+  static const IconData clear = LucideIcons.eraser;
 }

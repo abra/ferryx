@@ -2,6 +2,7 @@ import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 
 import '../panel/panel_state.dart';
@@ -127,6 +128,23 @@ List<PanelHint> hintsFor({
     const CommandHint(AppCommand.switchPanel),
   ];
 }
+
+/// The keys worth knowing while the terminal has them: where it goes from
+/// here, and its own clear.
+List<PanelHint> terminalHintsFor(TerminalPlace mode) =>
+    mode == TerminalPlace.overlapped
+    ? const [
+        CommandHint(AppCommand.hideTerminal),
+        CommandHint(AppCommand.togglePanelsOverTerminal),
+        CommandHint(AppCommand.toggleTerminal),
+        CommandHint(AppCommand.terminalClear),
+      ]
+    : const [
+        CommandHint(AppCommand.togglePanelsOverTerminal),
+        CommandHint(AppCommand.toggleTerminal),
+        CommandHint(AppCommand.hideTerminal),
+        CommandHint(AppCommand.terminalClear),
+      ];
 
 /// A quiet line under the panels: the keys for what is under the cursor
 /// or selected, as caps and words in the secondary colour, the cheat

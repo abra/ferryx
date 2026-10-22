@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
@@ -38,11 +39,14 @@ import 'context_menu.dart';
 import 'key_hints.dart';
 import 'shelf.dart';
 import 'shelf_strip.dart';
+import 'terminal_dock.dart';
 import 'workspace_cubit.dart';
 import 'workspace_state.dart';
+import 'workspace_terminal.dart';
 
 part 'interface_actions.dart';
 part 'native_actions.dart';
+part 'terminal_actions.dart';
 part 'vim_actions.dart';
 part 'workspace_actions.dart';
 
@@ -111,6 +115,7 @@ class WorkspaceScreen extends StatefulWidget {
     required this.onSnapshot,
     required this.frecency,
     required this.platformServices,
+    this.terminal,
     super.key,
   });
 
@@ -137,6 +142,10 @@ class WorkspaceScreen extends StatefulWidget {
   /// The folders the panels showed, counted as they show them, for Jump
   /// to Folder.
   final FolderFrecency frecency;
+
+  /// The integrated terminal; none without it (the terminal's commands
+  /// then do nothing).
+  final WorkspaceTerminal? terminal;
 
   @override
   State<WorkspaceScreen> createState() => _WorkspaceScreenState();
@@ -165,6 +174,20 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   double _panelsWidth = 0;
   final _native = _NativeState();
 
+  // ─── Terminal ───
+  WorkspaceTerminalController? _terminal;
+  late final TerminalDockCubit _dock;
+  final _terminalFocus = FocusNode(debugLabel: 'terminal');
+  final _terminalEdgeFocus = FocusNode(debugLabel: 'terminal edge');
+  final _terminalSubscriptions = <StreamSubscription<Object?>>[];
+  Timer? _dockTimer;
+  String? _followed;
+  int _linesBeforeKeys = TerminalDock.defaultLines;
+  double _dragLines = 0;
+
+  /// The height the panels and the terminal share.
+  double _terminalArea = 0;
+
   @override
   void initState() {
     super.initState();
@@ -177,8 +200,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     );
     _left = _panel(PanelSide.left);
     _right = _panel(PanelSide.right);
-    unawaited(_left.start(widget.savedLeft, widget.fallbackLocation));
-    unawaited(_right.start(widget.savedRight, widget.fallbackLocation));
+    _initTerminal();
+    unawaited(
+      Future.wait([
+        _left.start(widget.savedLeft, widget.fallbackLocation),
+        _right.start(widget.savedRight, widget.fallbackLocation),
+      ]).then((_) => _restoreTerminal()),
+    );
     _progress = widget.operations.progress.listen(_onProgress);
     _changes = widget.files.directoryChanges.listen(
       (_) => _scheduleShelfCheck(),
@@ -188,7 +216,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     }
     _startNative();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _focusOf(_workspace.state.active).requestFocus();
+      if (!mounted) return;
+      // A terminal left over the panels' place keeps the keys.
+      if (_terminal != null && !_dock.state.panelsShown) {
+        _terminalFocus.requestFocus();
+      } else {
+        _focusOf(_workspace.state.active).requestFocus();
+      }
     });
   }
 
@@ -212,6 +246,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       timer.cancel();
     }
     _snapshotNow();
+    _disposeTerminal();
     _left.close();
     _right.close();
     _workspace.close();
@@ -325,163 +360,226 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     return MultiBlocProvider(
       providers: [BlocProvider.value(value: _workspace)],
       child: BlocBuilder<WorkspaceCubit, WorkspaceState>(
-        builder: (context, workspace) => PreferenceBuilder<Preferences>(
-          service: widget.preferences,
-          select: (p) => p,
-          builder: (context, prefs) => Scaffold(
-            backgroundColor: context.appColors.window,
-            body: CommandHandlers(
-              handlers: _globalHandlers(context),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: CommandShortcuts(
-                            shortcuts: widget.shortcutMap.toShortcuts(
-                              Theme.of(context).platform,
-                              scopes: const {CommandScope.panel},
-                              // The window's `gn`, `cd`, `gj` before the
-                              // panel's own `n`, `d`, `j`.
-                              sequencesOf: const {CommandScope.global},
-                            ),
+        builder: (context, workspace) =>
+            BlocBuilder<TerminalDockCubit, TerminalDock>(
+              bloc: _dock,
+              builder: (context, dock) => PreferenceBuilder<Preferences>(
+                service: widget.preferences,
+                select: (p) => p,
+                builder: (context, prefs) {
+                  final terminal = widget.terminal;
+                  final controller = _terminal;
+                  final terminalShown =
+                      terminal != null && controller != null && dock.shown;
+                  final fullWindow =
+                      terminalShown && dock.mode == TerminalPlace.fullWindow;
+                  return Scaffold(
+                    backgroundColor: context.appColors.window,
+                    body: CommandHandlers(
+                      handlers: _globalHandlers(context),
+                      child: Column(
+                        children: [
+                          Expanded(
                             child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                _panelsWidth = constraints.maxWidth;
-                                return _Panels(
-                                  workspace: workspace,
-                                  prefs: prefs,
-                                  cubitOf: _cubitOf,
-                                  decor: widget.windowDecor,
-                                  shortcutMap: widget.shortcutMap,
-                                  splitterFocus: _splitterFocus,
-                                  leftFocus: _leftFocus,
-                                  rightFocus: _rightFocus,
-                                  leftCursor: _leftCursor,
-                                  rightCursor: _rightCursor,
-                                  hooksFor: _hooksFor,
-                                  registerNote: _shelfNote(
-                                    l10n,
-                                    workspace.shelf,
+                              builder: (context, area) {
+                                _terminalArea = area.maxHeight;
+                                return _PanelsAndTerminal(
+                                  dock: dock,
+                                  terminalHeight: terminalShown
+                                      ? _terminalHeight(
+                                          context,
+                                          area.maxHeight,
+                                        )
+                                      : 0,
+                                  panels: CommandShortcuts(
+                                    shortcuts: widget.shortcutMap.toShortcuts(
+                                      Theme.of(context).platform,
+                                      scopes: const {CommandScope.panel},
+                                      // The window's `gn`, `cd`, `gj` before
+                                      // the panel's own `n`, `d`, `j`.
+                                      sequencesOf: const {CommandScope.global},
+                                    ),
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        _panelsWidth = constraints.maxWidth;
+                                        return _Panels(
+                                          workspace: workspace,
+                                          prefs: prefs,
+                                          cubitOf: _cubitOf,
+                                          decor: widget.windowDecor,
+                                          shortcutMap: widget.shortcutMap,
+                                          splitterFocus: _splitterFocus,
+                                          leftFocus: _leftFocus,
+                                          rightFocus: _rightFocus,
+                                          leftCursor: _leftCursor,
+                                          rightCursor: _rightCursor,
+                                          hooksFor: _hooksFor,
+                                          registerNote: _shelfNote(
+                                            l10n,
+                                            workspace.shelf,
+                                          ),
+                                          splitterValue: l10n.textSizePercent(
+                                            (workspace.splitFraction * 100)
+                                                .round(),
+                                          ),
+                                          splitterHints: _splitterHints(
+                                            context,
+                                          ),
+                                          onSplitterAction: _onSplitterAction,
+                                          onSplitterDrag: (delta) {
+                                            if (_panelsWidth > 0) {
+                                              _workspace.moveSplit(
+                                                delta / _panelsWidth,
+                                              );
+                                            }
+                                          },
+                                          onSplitterDragEnd: _scheduleSnapshot,
+                                          width: constraints.maxWidth,
+                                        );
+                                      },
+                                    ),
                                   ),
-                                  splitterValue: l10n.textSizePercent(
-                                    (workspace.splitFraction * 100).round(),
-                                  ),
-                                  splitterHints: _splitterHints(context),
-                                  onSplitterAction: _onSplitterAction,
-                                  onSplitterDrag: (delta) {
-                                    if (_panelsWidth > 0) {
-                                      _workspace.moveSplit(
-                                        delta / _panelsWidth,
-                                      );
-                                    }
-                                  },
-                                  onSplitterDragEnd: _scheduleSnapshot,
-                                  width: constraints.maxWidth,
+                                  terminal: terminalShown
+                                      ? terminal.builder(
+                                          context,
+                                          controller,
+                                          WorkspaceTerminalView(
+                                            focusNode: _terminalFocus,
+                                            panelsHidden:
+                                                dock.mode ==
+                                                TerminalPlace.panelsHidden,
+                                            fullWindow:
+                                                dock.mode ==
+                                                TerminalPlace.fullWindow,
+                                            decor: widget.windowDecor,
+                                            onHide: _hideTerminal,
+                                            onTogglePanels:
+                                                _togglePanelsOverTerminal,
+                                            onToggleFullWindow:
+                                                _toggleTerminalWindow,
+                                          ),
+                                        )
+                                      : null,
+                                  edge: terminalShown
+                                      ? AppSplitter(
+                                          focusNode: _terminalEdgeFocus,
+                                          axis: Axis.vertical,
+                                          line: AppSplitterLine.center,
+                                          title: l10n.terminalHeightTitle,
+                                          value: l10n.terminalLineCount(
+                                            dock.lines,
+                                          ),
+                                          hints: _terminalEdgeHints(context),
+                                          onAction: _onTerminalEdgeAction,
+                                          onDragStart: _onTerminalEdgeDragStart,
+                                          onDragUpdate: _onTerminalEdgeDrag,
+                                          onDragEnd: _saveDockSoon,
+                                        )
+                                      : null,
+                                  cards: workspace.operationsShown
+                                      ? OperationsCards(
+                                          operations: _operations,
+                                          onPause: (id) => unawaited(
+                                            widget.operations.pause(id),
+                                          ),
+                                          onResume: (id) => unawaited(
+                                            widget.operations.resume(id),
+                                          ),
+                                          onCancel: (id) => unawaited(
+                                            widget.operations.cancel(id),
+                                          ),
+                                          onDismiss: _dismissOperation,
+                                          onAnswer: (progress) {
+                                            final question = progress.question;
+                                            if (question != null) {
+                                              _askedQuestions.add(question.id);
+                                              unawaited(
+                                                _ask(progress.id, question),
+                                              );
+                                            }
+                                          },
+                                        )
+                                      : null,
                                 );
                               },
                             ),
                           ),
-                        ),
-                        if (workspace.operationsShown)
-                          Positioned(
-                            right: AppSpacing.md,
-                            bottom:
-                                AppSpacing.md + PanelFooter.heightOf(context),
-                            child: OperationsCards(
-                              operations: _operations,
-                              onPause: (id) =>
-                                  unawaited(widget.operations.pause(id)),
-                              onResume: (id) =>
-                                  unawaited(widget.operations.resume(id)),
-                              onCancel: (id) =>
-                                  unawaited(widget.operations.cancel(id)),
-                              onDismiss: _dismissOperation,
-                              onAnswer: (progress) {
-                                final question = progress.question;
-                                if (question != null) {
-                                  _askedQuestions.add(question.id);
-                                  unawaited(_ask(progress.id, question));
-                                }
-                              },
-                            ),
+                          // The shelf, between the panels (and the terminal
+                          // under them) and the hints: the panels give it
+                          // room smoothly, at once under reduced motion. A
+                          // terminal over the whole window covers it.
+                          AnimatedSize(
+                            duration: context.motion(AppMotion.medium),
+                            curve: Curves.easeOutCubic,
+                            alignment: Alignment.topCenter,
+                            child: workspace.shelfShown && !fullWindow
+                                ? AppFocusArea(
+                                    child: BlocBuilder<PanelCubit, PanelState>(
+                                      bloc: _cubitOf(workspace.active),
+                                      builder: (context, panel) => ShelfStrip(
+                                        shelf: workspace.shelf,
+                                        focusNode: _shelfFocus,
+                                        destination: _shelfDestination(
+                                          panel.active,
+                                        ),
+                                        home: widget.files
+                                            .standardFolders()
+                                            .home,
+                                        addKey: widget.shortcutMap.labelOf(
+                                          AppCommand.addToShelf,
+                                          Theme.of(context).platform,
+                                          vim: prefs.vimMode,
+                                        ),
+                                        onReveal: (item) =>
+                                            unawaited(_revealShelfItem(item)),
+                                        onRemove: (item) =>
+                                            _unshelve([item.path]),
+                                        onClear: _clearShelf,
+                                        onCopyHere: () =>
+                                            unawaited(_putShelf(move: false)),
+                                        onMoveHere: () =>
+                                            unawaited(_putShelf(move: true)),
+                                        onLeave: () => _focusOf(
+                                          _workspace.state.active,
+                                        ).requestFocus(),
+                                      ),
+                                    ),
+                                  )
+                                : const SizedBox(width: double.infinity),
                           ),
-                      ],
-                    ),
-                  ),
-                  // The shelf, between the panels and the hints: the panels
-                  // give it room smoothly, at once under reduced motion.
-                  AnimatedSize(
-                    duration: context.motion(AppMotion.medium),
-                    curve: Curves.easeOutCubic,
-                    alignment: Alignment.topCenter,
-                    child: workspace.shelfShown
-                        ? AppFocusArea(
-                            child: BlocBuilder<PanelCubit, PanelState>(
-                              bloc: _cubitOf(workspace.active),
-                              builder: (context, panel) => ShelfStrip(
-                                shelf: workspace.shelf,
-                                focusNode: _shelfFocus,
-                                destination: _shelfDestination(panel.active),
-                                home: widget.files.standardFolders().home,
-                                addKey: widget.shortcutMap.labelOf(
-                                  AppCommand.addToShelf,
-                                  Theme.of(context).platform,
-                                  vim: prefs.vimMode,
-                                ),
-                                onReveal: (item) =>
-                                    unawaited(_revealShelfItem(item)),
-                                onRemove: (item) => _unshelve([item.path]),
-                                onClear: _clearShelf,
-                                onCopyHere: () =>
-                                    unawaited(_putShelf(move: false)),
-                                onMoveHere: () =>
-                                    unawaited(_putShelf(move: true)),
-                                onLeave: () => _focusOf(
-                                  _workspace.state.active,
-                                ).requestFocus(),
-                              ),
+                          // The keys for what is under the cursor or selected
+                          // in the active panel, or the terminal's or the
+                          // shelf's while they have the keys, until the user
+                          // hides the line.
+                          if (prefs.showKeyHints && !fullWindow)
+                            _KeyHintsLine(
+                              terminalFocus: _terminalFocus,
+                              shelfFocus: _shelfFocus,
+                              terminalHints: terminalShown
+                                  ? terminalHintsFor(dock.mode)
+                                  : null,
+                              panel: _cubitOf(workspace.active),
+                              vim: prefs.vimMode,
+                              hasShelf: !workspace.shelf.isEmpty,
+                              shortcutMap: widget.shortcutMap,
+                              onHide: () => _hideKeyHints(context),
                             ),
-                          )
-                        : const SizedBox(width: double.infinity),
-                  ),
-                  // The keys for what is under the cursor or selected in the
-                  // active panel, until the user hides the line.
-                  if (prefs.showKeyHints)
-                    BlocBuilder<PanelCubit, PanelState>(
-                      bloc: _cubitOf(workspace.active),
-                      builder: (context, panel) => ListenableBuilder(
-                        // The shelf's keys while it has them.
-                        listenable: _shelfFocus,
-                        builder: (context, _) => KeyHintStrip(
-                          hints: _shelfFocus.hasFocus
-                              ? shelfHints
-                              : hintsFor(
-                                  tab: panel.active,
-                                  vim: prefs.vimMode,
-                                  hasRegister: !workspace.shelf.isEmpty,
-                                ),
-                          shortcutMap: widget.shortcutMap,
-                          vim: prefs.vimMode,
-                          onHide: () {
-                            unawaited(
-                              widget.preferences.update(
-                                (p) => p.copyWith(showKeyHints: false),
-                              ),
-                            );
-                            showAppNotice(context, l10n.hintsHidden);
-                          },
-                        ),
+                        ],
                       ),
                     ),
-                ],
+                  );
+                },
               ),
             ),
-          ),
-        ),
       ),
     );
+  }
+
+  void _hideKeyHints(BuildContext context) {
+    unawaited(
+      widget.preferences.update((p) => p.copyWith(showKeyHints: false)),
+    );
+    showAppNotice(context, context.l10n.hintsHidden);
   }
 
   PanelHooks _hooksFor(PanelSide side) => PanelHooks(
@@ -556,6 +654,59 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         _focusOf(_workspace.state.active).requestFocus();
     }
   }
+}
+
+/// The hint line under the panels: the terminal's keys while it has the
+/// keys, the shelf's while it has them, else those for the active panel's
+/// cursor or selection.
+class _KeyHintsLine extends StatelessWidget {
+  const _KeyHintsLine({
+    required this.terminalFocus,
+    required this.shelfFocus,
+    required this.terminalHints,
+    required this.panel,
+    required this.vim,
+    required this.hasShelf,
+    required this.shortcutMap,
+    required this.onHide,
+  });
+
+  final FocusNode terminalFocus;
+  final FocusNode shelfFocus;
+
+  /// The terminal's keys while it is shown; null without it.
+  final List<PanelHint>? terminalHints;
+  final PanelCubit panel;
+  final bool vim;
+  final bool hasShelf;
+  final ShortcutMap shortcutMap;
+  final VoidCallback onHide;
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: Listenable.merge([terminalFocus, shelfFocus]),
+    builder: (context, _) {
+      if (terminalHints case final hints? when terminalFocus.hasFocus) {
+        return KeyHintStrip(
+          hints: hints,
+          shortcutMap: shortcutMap,
+          vim: false,
+          onHide: onHide,
+        );
+      }
+      return BlocBuilder<PanelCubit, PanelState>(
+        bloc: panel,
+        builder: (context, state) => KeyHintStrip(
+          hints: shelfFocus.hasFocus
+              ? shelfHints
+              : hintsFor(tab: state.active, vim: vim, hasRegister: hasShelf),
+          shortcutMap: shortcutMap,
+          vim: vim,
+          onHide: onHide,
+        ),
+      );
+    },
+  );
 }
 
 /// The two panels side by side with the edge between them, or the active

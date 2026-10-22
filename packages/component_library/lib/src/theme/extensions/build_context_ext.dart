@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_colors_ext.dart';
 import 'app_metrics.dart';
+import 'app_terminal_colors.dart';
 
 /// Convenience accessors so widgets read roles, not values.
 ///
@@ -22,6 +23,9 @@ extension BuildContextThemeX on BuildContext {
   /// Sizes, radii, type families and control behaviour of the platform
   /// style the theme was built for.
   AppMetrics get metrics => theme.extension<AppMetrics>()!;
+
+  /// The integrated terminal's ANSI colours for the theme's brightness.
+  AppTerminalColors get terminalColors => theme.extension<AppTerminalColors>()!;
 
   /// The platform's monospace face in the body colour.
   TextStyle get mono =>

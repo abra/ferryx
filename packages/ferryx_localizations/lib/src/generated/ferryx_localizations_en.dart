@@ -2496,4 +2496,114 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get dropNoFiles => 'Only files and folders can be dropped here';
+
+  @override
+  String get cmdToggleTerminal => 'Terminal Over the Whole Window';
+
+  @override
+  String get cmdShowTerminal => 'Show Terminal';
+
+  @override
+  String get cmdHideTerminal => 'Hide Terminal';
+
+  @override
+  String get cmdTogglePanelsOverTerminal => 'Hide or Show the Panels';
+
+  @override
+  String get cmdTerminalCopy => 'Copy';
+
+  @override
+  String get cmdTerminalPaste => 'Paste';
+
+  @override
+  String get cmdTerminalSelectAll => 'Select All';
+
+  @override
+  String get cmdTerminalClear => 'Clear';
+
+  @override
+  String get cmdTerminalScrollPageUp => 'Scroll a Page Up';
+
+  @override
+  String get cmdTerminalScrollPageDown => 'Scroll a Page Down';
+
+  @override
+  String get scopeTerminal => 'Terminal';
+
+  @override
+  String get settingsTerminal => 'Terminal';
+
+  @override
+  String get terminalShellLabel => 'Shell';
+
+  @override
+  String terminalShellDefault(String shell) {
+    return 'Default: $shell';
+  }
+
+  @override
+  String get terminalShellNote =>
+      'A path or a name on PATH, run as a login shell; the next shell started takes it';
+
+  @override
+  String get terminalFontSizeLabel => 'Font size';
+
+  @override
+  String get terminalScrollbackLabel => 'Lines kept to scroll back';
+
+  @override
+  String terminalLineCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString lines',
+      one: '$countString line',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get terminalHeightTitle => 'Terminal height';
+
+  @override
+  String get terminalHeightHintArrows => 'Line by line';
+
+  @override
+  String get terminalHeightHintZero => 'Default height';
+
+  @override
+  String get terminalExited => 'The shell has ended';
+
+  @override
+  String terminalExitedWithCode(int code) {
+    return 'The shell has ended with code $code';
+  }
+
+  @override
+  String get terminalStartFailed => 'The shell could not start';
+
+  @override
+  String get terminalRestart => 'New Shell';
+
+  @override
+  String terminalRestartHint(String key) {
+    return '$key starts a new shell';
+  }
+
+  @override
+  String get terminalTitle => 'Terminal';
+
+  @override
+  String get terminalBusy =>
+      'A program runs in the terminal, or a line is half typed';
+
+  @override
+  String get terminalScrollbackNote => 'A new shell keeps this many';
+
+  @override
+  String get paletteSectionTerminal => 'Terminal';
 }

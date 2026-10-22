@@ -8,6 +8,7 @@ pub mod listing;
 pub mod ops;
 pub mod rename;
 pub mod system;
+pub mod terminal;
 pub mod types;
 pub mod volume_id;
 

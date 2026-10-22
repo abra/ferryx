@@ -17,6 +17,7 @@ import 'package:operations_service/operations_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:platform_services/platform_services.dart';
 import 'package:preferences_service/preferences_service.dart';
+import 'package:terminal_service/terminal_service.dart';
 
 /// The app's strings where no widget tree is yet: the language chosen in
 /// the preferences, else the system's when the app speaks it, else English.
@@ -69,6 +70,9 @@ Future<DependenciesContainer> composeDependencies({
       defaultTargetPlatform,
     );
     resources.add('platformServices.dispose', platformServices.dispose);
+    // ─── Terminal ───
+    final terminal = TerminalService();
+    resources.add('terminal.dispose', terminal.dispose);
 
     stopwatch.stop();
     logger.info('Dependencies ready in ${stopwatch.elapsedMilliseconds} ms');
@@ -85,6 +89,7 @@ Future<DependenciesContainer> composeDependencies({
       frecency: frecency,
       recentCommands: recentCommands,
       platformServices: platformServices,
+      terminal: terminal,
       resourceDisposer: resources,
       windowFrame: windowFrame,
     );

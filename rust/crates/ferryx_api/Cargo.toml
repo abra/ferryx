@@ -1,6 +1,6 @@
 [package]
 name = "ferryx_api"
-description = "flutter_rust_bridge surface of Ferryx: listings, file operations, volumes, attributes, batch rename, find files, archives and the event stream to Flutter."
+description = "flutter_rust_bridge surface of Ferryx: listings, file operations, volumes, attributes, batch rename, find files, archives, the integrated terminal and the event stream to Flutter."
 # Literal values: cargokit parses this manifest and does not resolve
 # `workspace = true` inheritance.
 version = "0.1.0"
@@ -15,6 +15,7 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 ferryx_core.workspace = true
 ferryx_vfs.workspace = true
 ferryx_ops.workspace = true
+ferryx_term.workspace = true
 anyhow.workspace = true
 flutter_rust_bridge.workspace = true
 parking_lot.workspace = true

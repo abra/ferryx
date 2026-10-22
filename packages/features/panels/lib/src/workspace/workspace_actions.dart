@@ -214,6 +214,8 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     // ─── Native ───
     AppCommand.quickLook: () => unawaited(_toggleQuickLook()),
     AppCommand.share: () => unawaited(_share()),
+    // ─── Terminal ───
+    ..._terminalHandlers(),
   };
 
   // ─── Opening ───

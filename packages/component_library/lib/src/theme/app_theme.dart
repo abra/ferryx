@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'app_platform_style.dart';
 import 'extensions/app_colors_ext.dart';
 import 'extensions/app_metrics.dart';
+import 'extensions/app_terminal_colors.dart';
 import 'fluent_borders.dart';
 import 'hairlines.dart';
 import 'tokens/app_palette.dart';
@@ -116,6 +117,7 @@ abstract final class AppTheme {
       extensions: [
         ext,
         metrics,
+        AppTerminalColors.forBrightness(brightness),
       ],
       iconTheme: IconThemeData(size: 16, color: ext.textMuted),
       dividerTheme: DividerThemeData(color: ext.line, thickness: 1, space: 1),

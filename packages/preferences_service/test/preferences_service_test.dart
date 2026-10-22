@@ -43,8 +43,43 @@ void main() {
         showTabBarAlways: true,
         vimMode: true,
         vimMarks: {'a': 'native:/tmp'},
+        terminal: TerminalPreferences(
+          shell: '/bin/bash',
+          fontSize: 14,
+          scrollback: 20000,
+          lines: 20,
+          place: TerminalPlace.fullWindow,
+        ),
       );
       expect(Preferences.fromJson(prefs.toJson()), prefs);
+    });
+
+    test('the terminal block keeps its numbers in range', () {
+      expect(
+        TerminalPreferences.fromJson({
+          'shell': '  /bin/zsh ',
+          'fontSize': 200,
+          'scrollback': 5,
+          'lines': -3,
+          'place': 'sideways',
+        }),
+        const TerminalPreferences(
+          shell: '/bin/zsh',
+          fontSize: TerminalPreferences.maxFontSize,
+          scrollback: TerminalPreferences.minScrollback,
+          lines: TerminalPreferences.minLines,
+        ),
+      );
+      expect(
+        TerminalPreferences.fromJson('nonsense'),
+        const TerminalPreferences(),
+      );
+      expect(
+        TerminalPreferences.fromJson({'fontSize': double.nan}).fontSize,
+        const TerminalPreferences().fontSize,
+      );
+      // An older file has no terminal block at all.
+      expect(Preferences.fromJson({}).terminal, const TerminalPreferences());
     });
 
     test('damaged values fall back to defaults', () {

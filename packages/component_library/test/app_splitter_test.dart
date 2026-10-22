@@ -133,6 +133,71 @@ void main() {
     expect(node.hasFocus, isFalse, reason: 'dragging does not take the keys');
   });
 
+  testWidgets('an edge between stacked panes moves with ↑ and ↓, keeps ← '
+      'and →, and drags up and down', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.of(AppPlatformStyle.macos, Brightness.light),
+        home: Scaffold(
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 300),
+              AppSplitter(
+                focusNode: node,
+                title: 'Terminal height',
+                value: '12 lines',
+                hints: const [],
+                axis: Axis.vertical,
+                line: AppSplitterLine.center,
+                onAction: log.add,
+                onDragStart: () => log.add('start'),
+                onDragUpdate: (delta) => log.add(delta),
+                onDragEnd: () => log.add('end'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    final edge = tester.getSize(find.byType(AppSplitter));
+    expect(edge.height, AppSizes.resizeHandleWidth);
+    expect(edge.width, 800);
+    node.requestFocus();
+    await tester.pumpAndSettle();
+    // The card sits above the line.
+    expect(
+      tester.getBottomLeft(find.text('Terminal height')).dy,
+      lessThan(tester.getTopLeft(find.byType(AppSplitter)).dy),
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft), isTrue);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight), isTrue);
+    expect(log, [
+      AppSplitterAction.left,
+      AppSplitterAction.right,
+      AppSplitterAction.farLeft,
+    ]);
+    log.clear();
+    node.unfocus();
+    await tester.pumpAndSettle();
+    final drag = await tester.startGesture(
+      tester.getCenter(find.byType(AppSplitter)),
+      kind: PointerDeviceKind.mouse,
+    );
+    await drag.moveBy(const Offset(0, -40));
+    await drag.up();
+    await tester.pumpAndSettle();
+    expect(log.first, 'start');
+    expect(log.last, 'end');
+    final moved = log.whereType<double>().fold<double>(0, (a, b) => a + b);
+    expect(moved, lessThan(0));
+  });
+
   testWidgets('hint mode labels it; the label gives it the focus', (
     tester,
   ) async {

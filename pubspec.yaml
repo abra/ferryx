@@ -33,6 +33,8 @@ dependencies:
     path: packages/operations_service
   platform_services:
     path: packages/platform_services
+  terminal_service:
+    path: packages/terminal_service
 
   # Feature packages
   panels_feature:
@@ -45,6 +47,8 @@ dependencies:
     path: packages/features/settings
   palette_feature:
     path: packages/features/palette
+  terminal_feature:
+    path: packages/features/terminal
 
   # External packages
   flutter_bloc: ^9.1.1

@@ -15,11 +15,13 @@ PACKAGES = \
 	packages/file_repository \
 	packages/operations_service \
 	packages/platform_services \
+	packages/terminal_service \
 	packages/features/panels \
 	packages/features/viewer \
 	packages/features/find \
 	packages/features/settings \
-	packages/features/palette
+	packages/features/palette \
+	packages/features/terminal
 
 ROOT_ANALYZE_PATHS = lib test
 

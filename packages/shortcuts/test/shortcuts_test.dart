@@ -63,6 +63,8 @@ void main() {
           {CommandScope.global, CommandScope.panel},
           {CommandScope.lists, CommandScope.dialogs},
           {CommandScope.viewer, CommandScope.dialogs},
+          // The terminal's own keys win over the window's inside it.
+          {CommandScope.terminal},
         ];
         for (final scopes in together) {
           final seen = <Chord, AppCommand>{};
@@ -316,6 +318,125 @@ void main() {
     });
   });
 
+  group('Terminal keys', () {
+    Set<AppCommand> commandsOf(ShortcutMap map, TargetPlatform platform) => {
+      for (final intent in map.terminalShortcuts(platform).values)
+        intent.command,
+    };
+
+    for (final platform in TargetPlatform.values) {
+      test('its own keys and its place in the window on $platform', () {
+        final map = ShortcutMap.defaults(platform);
+        final commands = commandsOf(map, platform);
+        expect(
+          commands,
+          containsAll([
+            ...AppCommand.inScope(CommandScope.terminal),
+            ...ShortcutMap.terminalPlacement,
+            // Its menu opens from the keyboard too.
+            AppCommand.contextMenu,
+          ]),
+        );
+        // A panel's single keys never leave the terminal.
+        expect(
+          commands.where((c) => c.scope == CommandScope.panel),
+          isEmpty,
+        );
+        for (final command in AppCommand.inScope(CommandScope.terminal)) {
+          expect(map.chordsFor(command), isNotEmpty, reason: '$command');
+        }
+      });
+    }
+
+    test('on macOS the window keeps its ⌘ chords, the shell its ⌃ ones', () {
+      const mac = TargetPlatform.macOS;
+      final commands = commandsOf(ShortcutMap.defaults(mac), mac);
+      expect(commands, contains(AppCommand.focusLeftPanel));
+      expect(commands, contains(AppCommand.openSettings));
+      expect(commands, contains(AppCommand.newTab));
+      // ⌃A and ⌃M are the line's start and Return to a shell.
+      expect(commands, isNot(contains(AppCommand.fileAttributes)));
+      expect(commands, isNot(contains(AppCommand.batchRename)));
+      // F5 and Tab are a program's.
+      expect(commands, isNot(contains(AppCommand.copyTo)));
+    });
+
+    for (final platform in [TargetPlatform.windows, TargetPlatform.linux]) {
+      test('on $platform Ctrl+letter is the shell\'s, Ctrl+Shift the '
+          'window\'s', () {
+        final map = ShortcutMap.defaults(platform);
+        final commands = commandsOf(map, platform);
+        // Ctrl+R, Ctrl+W, Ctrl+D, Ctrl+U: reverse search, delete a word,
+        // end of input, kill the line.
+        expect(commands, isNot(contains(AppCommand.refresh)));
+        expect(commands, isNot(contains(AppCommand.closeTab)));
+        expect(commands, isNot(contains(AppCommand.duplicate)));
+        expect(commands, isNot(contains(AppCommand.swapPanels)));
+        expect(commands, contains(AppCommand.focusLeftPanel));
+        expect(commands, contains(AppCommand.newFolder));
+        // Inside the terminal Ctrl+Shift+C copies its text, not a path.
+        final copy = map
+            .terminalShortcuts(platform)
+            .entries
+            .firstWhere((e) => e.value.command == AppCommand.terminalCopy);
+        final first = map
+            .terminalShortcuts(platform)
+            .entries
+            .firstWhere(
+              (e) =>
+                  e.key is SingleActivator &&
+                  (e.key as SingleActivator).trigger ==
+                      LogicalKeyboardKey.keyC &&
+                  (e.key as SingleActivator).shift,
+            );
+        expect(first.value.command, copy.value.command);
+      });
+    }
+
+    test('a chord reaches the window from the terminal by its modifiers', () {
+      const k = LogicalKeyboardKey.keyK;
+      expect(
+        const Chord(k, primary: true).reachesWindowFromTerminal(
+          TargetPlatform.macOS,
+        ),
+        isTrue,
+      );
+      expect(
+        const Chord(k, control: true).reachesWindowFromTerminal(
+          TargetPlatform.macOS,
+        ),
+        isFalse,
+      );
+      expect(
+        const Chord(k, primary: true).reachesWindowFromTerminal(
+          TargetPlatform.linux,
+        ),
+        isFalse,
+      );
+      expect(
+        const Chord(k, primary: true, shift: true).reachesWindowFromTerminal(
+          TargetPlatform.linux,
+        ),
+        isTrue,
+      );
+      expect(
+        const Chord(
+          k,
+          primary: true,
+          shift: true,
+          alt: true,
+        ).reachesWindowFromTerminal(TargetPlatform.windows),
+        isFalse,
+      );
+      expect(
+        const Chord(LogicalKeyboardKey.f5).reachesWindowFromTerminal(
+          TargetPlatform.macOS,
+        ),
+        isFalse,
+      );
+    });
+  });
+
   testWidgets('dispatch bubbles from inner to outer scopes', (tester) async {
     final reached = <String>[];
     final focus = FocusNode();
@@ -367,6 +488,11 @@ void main() {
       expect(AppCommand.renameInEditor.section, CommandSection.command);
       expect(AppCommand.quickLook.section, CommandSection.file);
       expect(AppCommand.share.section, CommandSection.file);
+      expect(AppCommand.toggleTerminal.section, CommandSection.terminal);
+      expect(
+        AppCommand.terminalScrollPageDown.section,
+        CommandSection.terminal,
+      );
       expect(AppCommand.moveDown.section, CommandSection.panel);
       expect(AppCommand.vimReselect.section, CommandSection.vim);
       expect(AppCommand.viewerFind.section, CommandSection.viewer);

@@ -9,6 +9,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:platform_services/platform_services.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
+import 'package:terminal_service/terminal_service.dart';
 
 /// Application-wide dependencies, built once and passed explicitly into
 /// feature entry points from `routing.dart`. No service locator.
@@ -25,6 +26,7 @@ class DependenciesContainer {
     required this.frecency,
     required this.recentCommands,
     required this.platformServices,
+    required this.terminal,
     required this._resourceDisposer,
     TargetPlatform? platform,
     WindowFrame? windowFrame,
@@ -41,6 +43,7 @@ class DependenciesContainer {
   final OperationsService operations;
   final FindService find;
   final RenameService rename;
+  final TerminalService terminal;
 
   /// The folders the panels showed, for Jump to Folder (⌘G).
   final FolderFrecency frecency;

@@ -17,6 +17,9 @@ enum CommandSection {
   /// Keys of Vim mode.
   vim,
   viewer,
+
+  /// The integrated terminal: where it is, and its own keys.
+  terminal,
   lists,
   dialogs,
 }
@@ -47,6 +50,7 @@ const _starts = [
   (AppCommand.moveUp, CommandSection.panel),
   (AppCommand.vimVisual, CommandSection.vim),
   (AppCommand.viewerText, CommandSection.viewer),
+  (AppCommand.terminalCopy, CommandSection.terminal),
   (AppCommand.renameItem, CommandSection.lists),
   (AppCommand.confirm, CommandSection.dialogs),
 ];
@@ -61,4 +65,8 @@ const _placed = {
   // Where Finder has them.
   AppCommand.quickLook: CommandSection.file,
   AppCommand.share: CommandSection.file,
+  AppCommand.toggleTerminal: CommandSection.terminal,
+  AppCommand.showTerminal: CommandSection.terminal,
+  AppCommand.hideTerminal: CommandSection.terminal,
+  AppCommand.togglePanelsOverTerminal: CommandSection.terminal,
 };

@@ -14,11 +14,12 @@ import 'theme/tokens/app_spacing.dart';
 /// What a key asks of an [AppSplitter]; the owner decides what it means for
 /// its panel (a width, a share of the panes, folding to the rail).
 enum AppSplitterAction {
-  /// ← and →: one small step of the edge.
+  /// ← and →: one small step of the edge (↑ and ↓ on an edge that moves
+  /// vertically: `left` is up, toward the start).
   left,
   right,
 
-  /// ⇧← and ⇧→: one large step.
+  /// ⇧← and ⇧→ (⇧↑ and ⇧↓): one large step.
   farLeft,
   farRight,
 
@@ -40,7 +41,8 @@ enum AppSplitterAction {
 
 /// Where the strip draws the edge's line: over the border of the panel it
 /// sits in ([start], [end]), or across a border it straddles ([center],
-/// between two panes, so neither loses its edge to the strip).
+/// between two panes, so neither loses its edge to the strip). On an edge
+/// that moves vertically, start is the top.
 enum AppSplitterLine { start, center, end }
 
 /// A panel's movable edge: a thin strip the pointer drags and the keyboard
@@ -48,9 +50,13 @@ enum AppSplitterLine { start, center, end }
 /// a card beside it with [title], [value] and the keys of [hints]; every
 /// key becomes an [AppSplitterAction] for [onAction].
 ///
-/// The strip stays out of Tab traversal (its owner gives the focus), and ↑
-/// and ↓ are kept so they never carry the focus out of the edge by
-/// accident.
+/// The strip stays out of Tab traversal (its owner gives the focus), and
+/// the arrows across the edge's movement are kept so they never carry the
+/// focus out of the edge by accident.
+///
+/// [axis] is the way the edge moves: [Axis.horizontal] between panes side
+/// by side (a vertical line, ← and →), [Axis.vertical] between panes one
+/// above the other (a horizontal line, ↑ and ↓, its card above it).
 class AppSplitter extends StatefulWidget {
   const AppSplitter({
     required this.focusNode,
@@ -62,6 +68,7 @@ class AppSplitter extends StatefulWidget {
     required this.onDragUpdate,
     required this.onDragEnd,
     this.line = AppSplitterLine.end,
+    this.axis = Axis.horizontal,
     super.key,
   });
 
@@ -76,13 +83,15 @@ class AppSplitter extends StatefulWidget {
   final ValueChanged<AppSplitterAction> onAction;
   final VoidCallback onDragStart;
 
-  /// Horizontal pointer movement since the last update, in logical pixels.
+  /// Pointer movement along [axis] since the last update, in logical
+  /// pixels.
   final ValueChanged<double> onDragUpdate;
   final VoidCallback onDragEnd;
 
   /// The card sits beside the line, over the panel that is not being
   /// sized: before a [AppSplitterLine.start] line, after the others.
   final AppSplitterLine line;
+  final Axis axis;
 
   @override
   State<AppSplitter> createState() => _AppSplitterState();
@@ -135,10 +144,20 @@ class _AppSplitterState extends State<AppSplitter> {
     if (event is KeyUpEvent) return KeyEventResult.ignored;
     final shift = HardwareKeyboard.instance.isShiftPressed;
     final key = event.logicalKey;
+    final vertical = widget.axis == Axis.vertical;
+    final back = vertical
+        ? LogicalKeyboardKey.arrowUp
+        : LogicalKeyboardKey.arrowLeft;
+    final forth = vertical
+        ? LogicalKeyboardKey.arrowDown
+        : LogicalKeyboardKey.arrowRight;
+    final across = vertical
+        ? [LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.arrowRight]
+        : [LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.arrowDown];
     final action = switch (key) {
-      LogicalKeyboardKey.arrowLeft =>
+      _ when key == back =>
         shift ? AppSplitterAction.farLeft : AppSplitterAction.left,
-      LogicalKeyboardKey.arrowRight =>
+      _ when key == forth =>
         shift ? AppSplitterAction.farRight : AppSplitterAction.right,
       LogicalKeyboardKey.home => AppSplitterAction.narrowest,
       LogicalKeyboardKey.end => AppSplitterAction.widest,
@@ -152,9 +171,9 @@ class _AppSplitterState extends State<AppSplitter> {
       _ => null,
     };
     if (action == null) {
-      // ↑/↓ would move the focus out of the edge; nothing else is ours.
-      return key == LogicalKeyboardKey.arrowUp ||
-              key == LogicalKeyboardKey.arrowDown
+      // The arrows across would move the focus out of the edge; nothing
+      // else is ours.
+      return across.contains(key)
           ? KeyEventResult.handled
           : KeyEventResult.ignored;
     }
@@ -178,6 +197,26 @@ class _AppSplitterState extends State<AppSplitter> {
         focused ||
         (_hovered && context.metrics.style != AppPlatformStyle.macos);
     final start = widget.line == AppSplitterLine.start;
+    final vertical = widget.axis == Axis.vertical;
+    // Beside a vertical line, over the pane not being sized; above a
+    // horizontal one.
+    final Alignment target;
+    final Alignment follower;
+    final Offset cardOffset;
+    if (vertical) {
+      target = Alignment.topCenter;
+      follower = Alignment.bottomCenter;
+      cardOffset = const Offset(0, -AppSpacing.md);
+    } else {
+      target = start ? Alignment.centerLeft : Alignment.centerRight;
+      follower = start ? Alignment.centerRight : Alignment.centerLeft;
+      cardOffset = Offset(start ? -AppSpacing.md : AppSpacing.md, 0);
+    }
+    void dragStart() {
+      setState(() => _dragging = true);
+      widget.onDragStart();
+    }
+
     return OverlayPortal(
       controller: _card,
       overlayChildBuilder: (context) => Align(
@@ -185,9 +224,9 @@ class _AppSplitterState extends State<AppSplitter> {
         child: CompositedTransformFollower(
           link: _link,
           showWhenUnlinked: false,
-          targetAnchor: start ? Alignment.centerLeft : Alignment.centerRight,
-          followerAnchor: start ? Alignment.centerRight : Alignment.centerLeft,
-          offset: Offset(start ? -AppSpacing.md : AppSpacing.md, 0),
+          targetAnchor: target,
+          followerAnchor: follower,
+          offset: cardOffset,
           child: _SplitterCard(
             title: widget.title,
             value: widget.value,
@@ -208,32 +247,42 @@ class _AppSplitterState extends State<AppSplitter> {
               focusNode: widget.focusNode,
               onKeyEvent: _onKey,
               child: MouseRegion(
-                cursor: SystemMouseCursors.resizeLeftRight,
+                cursor: vertical
+                    ? SystemMouseCursors.resizeUpDown
+                    : SystemMouseCursors.resizeLeftRight,
                 onEnter: (_) => setState(() => _hovered = true),
                 onExit: (_) => setState(() => _hovered = false),
                 child: GestureDetector(
                   behavior: HitTestBehavior.translucent,
-                  onHorizontalDragStart: (_) {
-                    setState(() => _dragging = true);
-                    widget.onDragStart();
-                  },
-                  onHorizontalDragUpdate: (details) =>
-                      widget.onDragUpdate(details.delta.dx),
-                  onHorizontalDragEnd: (_) => _endDrag(),
-                  onHorizontalDragCancel: _endDrag,
+                  onHorizontalDragStart: vertical ? null : (_) => dragStart(),
+                  onHorizontalDragUpdate: vertical
+                      ? null
+                      : (details) => widget.onDragUpdate(details.delta.dx),
+                  onHorizontalDragEnd: vertical ? null : (_) => _endDrag(),
+                  onHorizontalDragCancel: vertical ? null : _endDrag,
+                  onVerticalDragStart: vertical ? (_) => dragStart() : null,
+                  onVerticalDragUpdate: vertical
+                      ? (details) => widget.onDragUpdate(details.delta.dy)
+                      : null,
+                  onVerticalDragEnd: vertical ? (_) => _endDrag() : null,
+                  onVerticalDragCancel: vertical ? _endDrag : null,
                   child: SizedBox(
-                    width: AppSizes.resizeHandleWidth,
+                    width: vertical ? null : AppSizes.resizeHandleWidth,
+                    height: vertical ? AppSizes.resizeHandleWidth : null,
                     child: Align(
-                      alignment: switch (widget.line) {
-                        AppSplitterLine.start => Alignment.centerLeft,
-                        AppSplitterLine.center => Alignment.center,
-                        AppSplitterLine.end => Alignment.centerRight,
+                      alignment: switch ((widget.line, vertical)) {
+                        (AppSplitterLine.start, false) => Alignment.centerLeft,
+                        (AppSplitterLine.end, false) => Alignment.centerRight,
+                        (AppSplitterLine.start, true) => Alignment.topCenter,
+                        (AppSplitterLine.end, true) => Alignment.bottomCenter,
+                        (AppSplitterLine.center, _) => Alignment.center,
                       },
                       child: AnimatedOpacity(
                         duration: context.motion(AppMotion.quick),
                         opacity: lit ? 1 : 0,
                         child: Container(
-                          width: 2,
+                          width: vertical ? null : 2,
+                          height: vertical ? 2 : null,
                           color: context.colors.primary,
                         ),
                       ),

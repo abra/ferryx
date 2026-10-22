@@ -68,6 +68,14 @@ files is Rust.
   out to Finder or Mail, and drop files from other applications onto a
   panel or a folder (macOS, Windows, Linux): one volume moves, another
   copies, ⌥ copies and ⌘ moves, and the copy runs as any other operation.
+- **Integrated terminal**, as in Nimble Commander: your shell under the
+  panels (⌃⌥↑ shows it and gives it the keys, again for a taller one, ⌃⌥↓
+  hides it, the edge between them drags or takes the keys), the panels
+  hidden over it (⌃⌥O) or the whole window (⌥⌘O). It follows the active
+  panel's folder while waiting at its prompt, and a `cd` typed in it takes
+  the panel along; programs (vim, top, ssh) are left alone. Copy, paste,
+  clear (⌘C, ⌘V, ⌘K) as in Terminal.app; every other key is the shell's.
+  `:term make` runs a command there from Vim mode.
 - **Keyboard first, no mouse needed**: every command has a shortcut you can
   rebind (Settings → Hotkeys), click hints (⌘J) label everything clickable,
   the menu key (⌃↩, ⇧F10) opens what a right click opens, a cheat sheet
@@ -89,8 +97,8 @@ files is Rust.
   runs are on macOS; the Windows and Linux looks are covered by widget tests
   and CI.
 - **UI:** Flutter. **Core:** Rust (listings with full metadata, folder
-  watching, operations with cancellation, archives, batch rename, find),
-  connected through `flutter_rust_bridge`.
+  watching, operations with cancellation, archives, batch rename, find,
+  the terminal's pseudo-terminal), connected through `flutter_rust_bridge`.
 
 ## Toolchain
 
@@ -143,6 +151,7 @@ packages/features/*      one package per screen or flow
 rust/crates/ferryx_core  sorting, natural collation, masks, quick search, batch rename
 rust/crates/ferryx_vfs   listings, metadata, watching, volumes, attributes, links, archives
 rust/crates/ferryx_ops   copy, move, delete, trash, duplicate, compress, extract, sizes, find
+rust/crates/ferryx_term  the terminal's shell in a pseudo-terminal: batched output, its state
 rust/crates/ferryx_api   flutter_rust_bridge surface and the event stream
 rust_builder/            cargokit FFI plugin that compiles the Rust crate
 brand/                   app icon masters, one per desktop (make icons)

@@ -314,6 +314,51 @@ class ShortcutMap {
   }
 
   Map<AppCommand, List<Chord>> get bindings => _bindings;
+
+  /// The terminal's place in the window: the commands whose keys reach the
+  /// window from inside the terminal whatever they would mean to a program.
+  static const terminalPlacement = {
+    AppCommand.toggleTerminal,
+    AppCommand.showTerminal,
+    AppCommand.hideTerminal,
+    AppCommand.togglePanelsOverTerminal,
+  };
+
+  /// The keys the integrated terminal leaves to the window, for [platform]:
+  /// its own ([CommandScope.terminal]) and its menu's
+  /// ([AppCommand.contextMenu]), [terminalPlacement], and the window's
+  /// chords no program in a terminal is given — those with ⌘ on macOS,
+  /// those with Ctrl+Shift elsewhere (the keys GNOME Terminal and Windows
+  /// Terminal keep for themselves). Every other key, a Ctrl+letter above
+  /// all, is the shell's. The terminal's own keys come first, so they win
+  /// over a window chord of the same keys.
+  Map<ShortcutActivator, CommandIntent> terminalShortcuts(
+    TargetPlatform platform,
+  ) {
+    final out = <ShortcutActivator, CommandIntent>{};
+    void add(AppCommand command) {
+      for (final chord in chordsFor(command)) {
+        if (chord.prefix != null) continue;
+        final activator = chord.toShortcutActivator(platform);
+        out.putIfAbsent(activator, () => CommandIntent(command));
+      }
+    }
+
+    AppCommand.inScope(CommandScope.terminal).forEach(add);
+    add(AppCommand.contextMenu);
+    terminalPlacement.forEach(add);
+    for (final command in AppCommand.inScope(CommandScope.global)) {
+      for (final chord in chordsFor(command)) {
+        if (chord.prefix == null && chord.reachesWindowFromTerminal(platform)) {
+          out.putIfAbsent(
+            chord.toShortcutActivator(platform),
+            () => CommandIntent(command),
+          );
+        }
+      }
+    }
+    return out;
+  }
 }
 
 const _defaults = <AppCommand, List<Chord>>{
@@ -569,6 +614,21 @@ const _defaults = <AppCommand, List<Chord>>{
   AppCommand.renameInEditor: [
     Chord(LogicalKeyboardKey.keyM, control: true, shift: true),
   ],
+  // ─── Terminal ───
+  // Nimble Commander's keys: ⌥⌘O the whole window, ⌃⌥↑ ⌃⌥↓ the terminal
+  // under the panels, ⌃⌥O the panels over it.
+  AppCommand.toggleTerminal: [
+    Chord(LogicalKeyboardKey.keyO, primary: true, alt: true),
+  ],
+  AppCommand.showTerminal: [
+    Chord(LogicalKeyboardKey.arrowUp, control: true, alt: true),
+  ],
+  AppCommand.hideTerminal: [
+    Chord(LogicalKeyboardKey.arrowDown, control: true, alt: true),
+  ],
+  AppCommand.togglePanelsOverTerminal: [
+    Chord(LogicalKeyboardKey.keyO, control: true, alt: true),
+  ],
 
   // File panel keys
   AppCommand.moveUp: [Chord(LogicalKeyboardKey.arrowUp)],
@@ -672,6 +732,22 @@ const _defaults = <AppCommand, List<Chord>>{
     Chord(LogicalKeyboardKey.keyW, primary: true, alt: true),
   ],
 
+  // ─── Terminal ───
+  // Terminal.app's keys; ⌘K clears as there (inside the terminal its own
+  // keys win over the window's). Ctrl+Shift elsewhere (`_otherDesktops`).
+  AppCommand.terminalCopy: [Chord(LogicalKeyboardKey.keyC, primary: true)],
+  AppCommand.terminalPaste: [Chord(LogicalKeyboardKey.keyV, primary: true)],
+  AppCommand.terminalSelectAll: [
+    Chord(LogicalKeyboardKey.keyA, primary: true),
+  ],
+  AppCommand.terminalClear: [Chord(LogicalKeyboardKey.keyK, primary: true)],
+  AppCommand.terminalScrollPageUp: [
+    Chord(LogicalKeyboardKey.pageUp, shift: true),
+  ],
+  AppCommand.terminalScrollPageDown: [
+    Chord(LogicalKeyboardKey.pageDown, shift: true),
+  ],
+
   // Lists
   AppCommand.renameItem: [Chord(LogicalKeyboardKey.f2)],
   AppCommand.deleteItem: [Chord(LogicalKeyboardKey.backspace, primary: true)],
@@ -702,5 +778,35 @@ const _otherDesktops = <AppCommand, List<Chord>>{
   ],
   AppCommand.panelsMoveRight: [
     Chord(LogicalKeyboardKey.arrowRight, control: true, shift: true),
+  ],
+
+  // ─── Terminal ───
+  // Ctrl+Alt is AltGr, and Ctrl+letter is a control character the shell
+  // reads: the terminal's own keys take Ctrl+Shift, as in GNOME Terminal
+  // and Windows Terminal; Ctrl+` is the terminal key of those desktops'
+  // editors.
+  AppCommand.toggleTerminal: [
+    Chord(LogicalKeyboardKey.backquote, control: true),
+  ],
+  AppCommand.showTerminal: [
+    Chord(LogicalKeyboardKey.arrowUp, control: true, shift: true),
+  ],
+  AppCommand.hideTerminal: [
+    Chord(LogicalKeyboardKey.arrowDown, control: true, shift: true),
+  ],
+  AppCommand.togglePanelsOverTerminal: [
+    Chord(LogicalKeyboardKey.backquote, control: true, shift: true),
+  ],
+  AppCommand.terminalCopy: [
+    Chord(LogicalKeyboardKey.keyC, control: true, shift: true),
+  ],
+  AppCommand.terminalPaste: [
+    Chord(LogicalKeyboardKey.keyV, control: true, shift: true),
+  ],
+  AppCommand.terminalSelectAll: [
+    Chord(LogicalKeyboardKey.keyA, control: true, shift: true),
+  ],
+  AppCommand.terminalClear: [
+    Chord(LogicalKeyboardKey.keyK, control: true, shift: true),
   ],
 };

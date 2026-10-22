@@ -123,6 +123,11 @@ extension CommandLabels on FerryxLocalizations {
     AppCommand.addToShelf => cmdAddToShelf,
     AppCommand.toggleShelf => cmdToggleShelf,
     AppCommand.renameInEditor => cmdRenameInEditor,
+    // ─── Terminal ───
+    AppCommand.toggleTerminal => cmdToggleTerminal,
+    AppCommand.showTerminal => cmdShowTerminal,
+    AppCommand.hideTerminal => cmdHideTerminal,
+    AppCommand.togglePanelsOverTerminal => cmdTogglePanelsOverTerminal,
     AppCommand.moveUp => cmdMoveUp,
     AppCommand.moveDown => cmdMoveDown,
     AppCommand.moveLeft => cmdMoveLeft,
@@ -200,6 +205,13 @@ extension CommandLabels on FerryxLocalizations {
     AppCommand.viewerFindNext => cmdViewerFindNext,
     AppCommand.viewerFindPrevious => cmdViewerFindPrevious,
     AppCommand.viewerToggleWrap => cmdViewerToggleWrap,
+    // ─── Terminal ───
+    AppCommand.terminalCopy => cmdTerminalCopy,
+    AppCommand.terminalPaste => cmdTerminalPaste,
+    AppCommand.terminalSelectAll => cmdTerminalSelectAll,
+    AppCommand.terminalClear => cmdTerminalClear,
+    AppCommand.terminalScrollPageUp => cmdTerminalScrollPageUp,
+    AppCommand.terminalScrollPageDown => cmdTerminalScrollPageDown,
     AppCommand.renameItem => cmdRenameItem,
     AppCommand.deleteItem => cmdDeleteItem,
     AppCommand.filterList => cmdFilterList,
@@ -220,6 +232,7 @@ extension CommandLabels on FerryxLocalizations {
     CommandSection.panel => paletteSectionPanel,
     CommandSection.vim => paletteSectionVim,
     CommandSection.viewer => paletteSectionViewer,
+    CommandSection.terminal => paletteSectionTerminal,
     CommandSection.lists => paletteSectionLists,
     CommandSection.dialogs => paletteSectionDialogs,
   };
@@ -230,5 +243,6 @@ extension CommandLabels on FerryxLocalizations {
     CommandScope.viewer => scopeViewer,
     CommandScope.lists => scopeLists,
     CommandScope.dialogs => scopeDialogs,
+    CommandScope.terminal => scopeTerminal,
   };
 }
