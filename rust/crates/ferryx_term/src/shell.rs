@@ -46,17 +46,16 @@ pub fn resolve_shell(choice: Option<&str>) -> Result<PathBuf, TermError> {
         return Err(not_found(choice));
     }
     if resolved.is_dir() || !is_executable(&resolved) {
-        return Err(TermError::new(
-            TermErrorKind::PermissionDenied,
-            format!("{} is not an executable program", resolved.display()),
-        )
-        .with_path(resolved.to_string_lossy()));
+        let path = resolved.to_string_lossy();
+        return Err(TermError::new(TermErrorKind::PermissionDenied, path.clone()).with_path(path));
     }
     Ok(resolved)
 }
 
+/// The kind says what went wrong; the message is the shell as given, which
+/// the interface shows under its own words for the kind.
 fn not_found(choice: &str) -> TermError {
-    TermError::new(TermErrorKind::NotFound, format!("{choice} was not found")).with_path(choice)
+    TermError::new(TermErrorKind::NotFound, choice).with_path(choice)
 }
 
 fn find_on_path(name: &str) -> Option<PathBuf> {
