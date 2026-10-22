@@ -42,6 +42,9 @@ class WorkspaceHarness {
   /// Listing id → what it shows.
   final listings = <String, Location>{};
   final started = <OperationRequest>[];
+
+  /// Around the window, for pictures of it.
+  final shotKey = GlobalKey(debugLabel: 'window');
   final notices = <String>[];
   var _nextOperation = 1;
 
@@ -234,6 +237,8 @@ class WorkspaceHarness {
     Size size = const Size(1200, 800),
     Locale locale = const Locale('en'),
     double textScale = 1,
+    Brightness brightness = Brightness.light,
+    AppPlatformStyle style = AppPlatformStyle.macos,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -244,7 +249,9 @@ class WorkspaceHarness {
     );
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light(AppPlatformStyle.macos),
+        theme: brightness == Brightness.light
+            ? AppTheme.light(style)
+            : AppTheme.dark(style),
         locale: locale,
         localizationsDelegates: FerryxSupportedLocales.delegates,
         supportedLocales: FerryxSupportedLocales.locales,
@@ -257,7 +264,7 @@ class WorkspaceHarness {
               platform,
               scopes: const {CommandScope.global},
             ),
-            child: child!,
+            child: RepaintBoundary(key: shotKey, child: child),
           ),
         ),
         home: WorkspaceScreen(

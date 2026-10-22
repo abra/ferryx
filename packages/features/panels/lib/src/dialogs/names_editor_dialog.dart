@@ -338,115 +338,125 @@ class _NamesBox extends StatelessWidget {
         scaler.scale(style.fontSize!) * 0.62 * math.max(digits, 2) +
         2 * AppSpacing.sm;
     final header = context.text.labelMedium?.copyWith(color: colors.textMuted);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: AppBorder.fromBorderSide(BorderSide(color: colors.line)),
-        borderRadius: BorderRadius.circular(context.metrics.radius.card),
+    // The text's focus ring goes round the whole box, its field.
+    return ListenableBuilder(
+      listenable: focusNode,
+      builder: (context, child) => FocusRing(
+        focused: focusNode.hasFocus,
+        radius: context.metrics.radius.card,
+        child: child!,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(context.metrics.radius.card),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
-            // Narrow, the names now give way first; the problems' words
-            // fold to their marks.
-            final namesWidth = (width * 0.34).clamp(72.0, 280.0);
-            final wide = width >= 560;
-            final statusWidth = wide
-                ? scaler.scale(96).clamp(96.0, 140.0)
-                : AppIconSize.sm + 2 * AppSpacing.sm;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  height: headerHeightOf(context),
-                  decoration: BoxDecoration(
-                    color: colors.surfaceRaised,
-                    border: AppBorder(bottom: BorderSide(color: colors.line)),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: context.colors.surface,
+          border: AppBorder.fromBorderSide(BorderSide(color: colors.line)),
+          borderRadius: BorderRadius.circular(context.metrics.radius.card),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(context.metrics.radius.card),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              // Narrow, the names now give way first; the problems' words
+              // fold to their marks.
+              final namesWidth = (width * 0.34).clamp(72.0, 280.0);
+              final wide = width >= 560;
+              final statusWidth = wide
+                  ? scaler.scale(96).clamp(96.0, 140.0)
+                  : AppIconSize.sm + 2 * AppSpacing.sm;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    height: headerHeightOf(context),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceRaised,
+                      border: AppBorder(bottom: BorderSide(color: colors.line)),
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(width: numbersWidth),
+                        SizedBox(
+                          width: namesWidth,
+                          child: Text(
+                            l10n.renamePreviewOld,
+                            style: header,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            l10n.renamePreviewNew,
+                            style: header,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        SizedBox(width: statusWidth),
+                      ],
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      SizedBox(width: numbersWidth),
-                      SizedBox(
-                        width: namesWidth,
-                        child: Text(
-                          l10n.renamePreviewOld,
-                          style: header,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _Column(
+                          width: numbersWidth,
+                          controller: numbers,
+                          rows: rows,
+                          lineHeight: line,
+                          onWheel: onWheel,
+                          row: (index) => _LineNumber(
+                            number: index + 1,
+                            problem: check.problems.elementAtOrNull(index),
+                            changed: check.edited(index),
+                            style: style,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: Text(
-                          l10n.renamePreviewNew,
-                          style: header,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        _Column(
+                          width: namesWidth,
+                          controller: names,
+                          rows: rows,
+                          lineHeight: line,
+                          onWheel: onWheel,
+                          row: (index) => _NameNow(
+                            name: originals.elementAtOrNull(index),
+                            changed: check.edited(index),
+                            style: style,
+                          ),
                         ),
-                      ),
-                      SizedBox(width: statusWidth),
-                    ],
+                        AppRule(axis: Axis.vertical, color: colors.line),
+                        Expanded(
+                          child: _Editor(
+                            controller: controller,
+                            focusNode: focusNode,
+                            vertical: vertical,
+                            horizontal: horizontal,
+                            style: style,
+                            minHeight: rows * line,
+                          ),
+                        ),
+                        _Column(
+                          width: statusWidth,
+                          controller: status,
+                          rows: rows,
+                          lineHeight: line,
+                          onWheel: onWheel,
+                          row: (index) => _LineProblem(
+                            problem: check.problems.elementAtOrNull(index),
+                            message: _messageOf(l10n, check, index),
+                            wide: wide,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _Column(
-                        width: numbersWidth,
-                        controller: numbers,
-                        rows: rows,
-                        lineHeight: line,
-                        onWheel: onWheel,
-                        row: (index) => _LineNumber(
-                          number: index + 1,
-                          problem: check.problems.elementAtOrNull(index),
-                          changed: check.changes(index),
-                          style: style,
-                        ),
-                      ),
-                      _Column(
-                        width: namesWidth,
-                        controller: names,
-                        rows: rows,
-                        lineHeight: line,
-                        onWheel: onWheel,
-                        row: (index) => _NameNow(
-                          name: originals.elementAtOrNull(index),
-                          changed: check.changes(index),
-                          style: style,
-                        ),
-                      ),
-                      AppRule(axis: Axis.vertical, color: colors.line),
-                      Expanded(
-                        child: _Editor(
-                          controller: controller,
-                          focusNode: focusNode,
-                          vertical: vertical,
-                          horizontal: horizontal,
-                          style: style,
-                          minHeight: rows * line,
-                        ),
-                      ),
-                      _Column(
-                        width: statusWidth,
-                        controller: status,
-                        rows: rows,
-                        lineHeight: line,
-                        onWheel: onWheel,
-                        row: (index) => _LineProblem(
-                          problem: check.problems.elementAtOrNull(index),
-                          message: _messageOf(l10n, check, index),
-                          wide: wide,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -698,7 +708,15 @@ class _Editor extends StatelessWidget {
                     style,
                     forceStrutHeight: true,
                   ),
-                  decoration: const InputDecoration.collapsed(hintText: null),
+                  // No bezel: the box around the columns is the field.
+                  decoration: const InputDecoration(
+                    isCollapsed: true,
+                    filled: false,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
                   autocorrect: false,
                   enableSuggestions: false,
                 ),

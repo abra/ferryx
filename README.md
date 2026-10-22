@@ -48,6 +48,19 @@ files is Rust.
 - **Find files** (⌘F): by mask or regular expression, by contents (phrase
   or words, case, not containing), by size; results stream in; go to a
   hit or view it.
+- **Command palette** (⌘P): every command that can run where you are,
+  found by a fuzzy search (English names work in any language), the ones
+  used lately first, with their keys; it runs as the key would.
+- **Jump to a frequent folder** (⌘G, Vim `gj` and `:z words`): the folders
+  you visit, ranked by frecency as zoxide ranks them; type parts of a path,
+  open in the panel, a new tab (⌘↩) or the other panel (⌥↩).
+- **Shelf** (⌥⌘S to add, ⌃⌘S to show): gather files from any folders of
+  either panel, then copy or move them all into one with a button; Vim's
+  `yy` / `dd` / `p` work through it.
+- **Rename in an editor** (⌃⇧M): the names as text, one per line, to edit
+  with the whole of a text field, beside the names they replace, checked
+  as you type (empty, `/`, repeated, taken, a line too many or too few);
+  swaps work.
 - **Keyboard first, no mouse needed**: every command has a shortcut you can
   rebind (Settings → Hotkeys), click hints (⌘J) label everything clickable,
   the menu key (⌃↩, ⇧F10) opens what a right click opens, a cheat sheet
@@ -57,7 +70,7 @@ files is Rust.
 - **Vim mode** (Settings → Panels): `h j k l` move and enter, counts
   (`5j`, `3G`, `2gt`), `gg` / `G`, `H M L`, `zz zt zb`, `f` / `F` / `;` /
   `,` jump by a first letter, `v` Visual selection, `x` / Space toggle,
-  `yy` / `dd` / `p` copy or move between the panels through a register,
+  `yy` / `dd` / `p` copy or move between the panels through the shelf,
   `/` searches with `n` / `N`, marks `m` / `'` kept across runs, `cw` /
   `A` / `I` rename, `:` commands (`:cd ~/src`, `:mkdir`, `:sort size!`,
   `:set hidden`, `:tabnew`, `:marks`, `:42`…) with history and Tab
@@ -132,7 +145,10 @@ linux/packaging/         desktop entry and hicolor icons for Linux packages
 Ferryx keeps its preferences in the platform's preference store (one JSON
 value under `ferryx.preferences`): theme and language, the panels' tabs
 and their places, view modes, favorites, editors, tools and shortcut
-overrides. Nothing else is written outside the folders you work in.
+overrides. Beside it, under keys of their own, it keeps the folders you
+visit with their frecency (`ferryx.folderFrecency`, for Jump to Folder)
+and the commands you ran from the palette (`ferryx.recentCommands`).
+Nothing else is written outside the folders you work in.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the rules that keep the codebase
 navigable and [CLAUDE.md](CLAUDE.md) for the working conventions.

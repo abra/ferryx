@@ -2397,10 +2397,10 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
       'Ни одного объекта с полки больше нет на диске';
 
   @override
-  String get shelfHintReveal => 'показать в панели';
+  String get shelfHintReveal => 'Показать в панели';
 
   @override
-  String get shelfHintRemove => 'убрать';
+  String get shelfHintRemove => 'Убрать';
 
   @override
   String namesTitle(int count) {

@@ -166,7 +166,7 @@ void main() {
           .widget<ShelfStrip>(find.byType(ShelfStrip))
           .focusNode;
       expect(focus.hasFocus, isTrue);
-      expect(find.text('show in the panel'), findsOneWidget);
+      expect(find.text('Show in the panel'), findsOneWidget);
       await h.press(tester, LogicalKeyboardKey.arrowRight);
       await h.press(tester, LogicalKeyboardKey.backspace);
       expect(

@@ -86,31 +86,7 @@ class PaletteView extends StatelessWidget {
       handlers: {AppCommand.commandPalette: close},
       child: BlocBuilder<PaletteCubit, PaletteState>(
         builder: (context, state) => AppQuickPicker<AppCommand>(
-          entries: [
-            for (final row in state.rows)
-              switch (row) {
-                PaletteGroupRow(:final section) => AppQuickPickerHeader(
-                  section == null
-                      ? l10n.paletteRecent
-                      : l10n.sectionLabel(section),
-                ),
-                PaletteCommandRow(
-                  :final entry,
-                  :final labelRanges,
-                  :final englishRanges,
-                ) =>
-                  AppQuickPickerItem(
-                    value: entry.command,
-                    label: entry.label,
-                    labelHighlights: labelRanges,
-                    detail: englishRanges != null
-                        ? entry.englishLabel
-                        : l10n.sectionLabel(entry.section),
-                    detailHighlights: englishRanges ?? const [],
-                    keys: entry.keys,
-                  ),
-              },
-          ],
+          entries: _entries(l10n, state.rows),
           hintText: l10n.paletteHint,
           noResultsText: l10n.paletteNoResults,
           hints: [
@@ -128,4 +104,46 @@ class PaletteView extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The picker's rows for [rows]: a command's section beside it unless its
+/// group's caption already names it, its English name instead when that is
+/// what matched.
+List<AppQuickPickerEntry<AppCommand>> _entries(
+  FerryxLocalizations l10n,
+  List<PaletteRow> rows,
+) {
+  final out = <AppQuickPickerEntry<AppCommand>>[];
+  var underSection = false;
+  for (final row in rows) {
+    switch (row) {
+      case PaletteGroupRow(:final section):
+        underSection = section != null;
+        out.add(
+          AppQuickPickerHeader(
+            section == null ? l10n.paletteRecent : l10n.sectionLabel(section),
+          ),
+        );
+      case PaletteCommandRow(
+        :final entry,
+        :final labelRanges,
+        :final englishRanges,
+      ):
+        out.add(
+          AppQuickPickerItem(
+            value: entry.command,
+            label: entry.label,
+            labelHighlights: labelRanges,
+            detail: englishRanges != null
+                ? entry.englishLabel
+                : underSection
+                ? null
+                : l10n.sectionLabel(entry.section),
+            detailHighlights: englishRanges ?? const [],
+            keys: entry.keys,
+          ),
+        );
+    }
+  }
+  return out;
 }

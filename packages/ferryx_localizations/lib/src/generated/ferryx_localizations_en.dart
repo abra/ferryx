@@ -2356,10 +2356,10 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
       'None of the shelf’s items is on disk any more';
 
   @override
-  String get shelfHintReveal => 'show in the panel';
+  String get shelfHintReveal => 'Show in the panel';
 
   @override
-  String get shelfHintRemove => 'take off';
+  String get shelfHintRemove => 'Take off';
 
   @override
   String namesTitle(int count) {

@@ -4145,13 +4145,13 @@ abstract class FerryxLocalizations {
   /// No description provided for @shelfHintReveal.
   ///
   /// In en, this message translates to:
-  /// **'show in the panel'**
+  /// **'Show in the panel'**
   String get shelfHintReveal;
 
   /// No description provided for @shelfHintRemove.
   ///
   /// In en, this message translates to:
-  /// **'take off'**
+  /// **'Take off'**
   String get shelfHintRemove;
 
   /// No description provided for @namesTitle.

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_divider.dart';
+import 'app_focus_area.dart';
 import 'app_icons.dart';
 import 'app_key_cap.dart';
 import 'app_menu.dart';
@@ -602,22 +603,25 @@ class _QuickPickerRow<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appColors;
     final metrics = context.metrics;
-    final ink = selected
+    // Grey, as every selection, while the window is not the active one.
+    final active = AppFocusArea.activeOf(context);
+    final lit = selected && active;
+    final ink = lit
         ? colors.onAccent
         : item.dimmed
         ? colors.textFaint
         : context.colors.onSurface;
-    final secondary = selected ? colors.onAccentMuted : colors.textMuted;
+    final secondary = lit ? colors.onAccentMuted : colors.textMuted;
     final body = context.text.bodyMedium!.copyWith(color: ink);
     // What matched: heavier, and in the link colour off the accent.
-    TextStyle matched(TextStyle style) => style
-        .copyWith(color: selected ? null : colors.link)
-        .weight(FontWeight.w700);
+    TextStyle matched(TextStyle style) =>
+        style.copyWith(color: lit ? null : colors.link).weight(FontWeight.w700);
     final detailStyle = context.text.bodySmall!.copyWith(color: secondary);
     return Semantics(
       button: true,
       selected: selected,
-      label: item.detail == null ? item.label : '${item.label}, ${item.detail}',
+      label: item.label,
+      value: item.detail,
       excludeSemantics: true,
       child: MouseRegion(
         // Movement only: a list scrolled by the keys under a resting
@@ -630,7 +634,11 @@ class _QuickPickerRow<T> extends StatelessWidget {
             margin: EdgeInsets.symmetric(horizontal: metrics.rowInset),
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             decoration: BoxDecoration(
-              color: selected ? colors.selectionAccent : null,
+              color: !selected
+                  ? null
+                  : active
+                  ? colors.selectionAccent
+                  : colors.selectionMuted,
               borderRadius: BorderRadius.circular(metrics.radius.row),
             ),
             child: Row(
@@ -639,7 +647,7 @@ class _QuickPickerRow<T> extends StatelessWidget {
                   Icon(
                     item.icon,
                     size: AppIconSize.md,
-                    color: selected ? colors.onAccent : colors.textMuted,
+                    color: lit ? colors.onAccent : colors.textMuted,
                   ),
                   const SizedBox(width: AppSpacing.sm),
                 ],

@@ -73,6 +73,12 @@ class NamesCheck extends Equatable {
   /// Whether row [index] renames its item.
   bool changes(int index) => _changedRows.contains(index);
 
+  /// Whether row [index]'s line differs from its name, valid or not.
+  bool edited(int index) {
+    final name = newNames.elementAtOrNull(index);
+    return name != null && name != originals[index];
+  }
+
   bool get canApply => errors == 0 && changed.isNotEmpty;
 
   /// The first row with a problem, or -1.
