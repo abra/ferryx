@@ -65,7 +65,8 @@ files is Rust.
   of large files, find (⌘F), go to an offset (⌘L).
 - **Find files** (⌘F): by mask or regular expression, by contents (phrase
   or words, case, not containing), by size; results stream in; go to a
-  hit or view it.
+  hit or view it. On macOS it can ask the Spotlight index first (much
+  faster on large trees), checking every hit as a walk would.
 - **Keyboard first, no mouse needed**: every command has a shortcut you can
   rebind (Settings → Hotkeys), click hints (⌘J) label everything clickable,
   the menu key (⌃↩, ⇧F10) opens what a right click opens, a cheat sheet

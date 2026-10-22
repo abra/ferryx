@@ -2084,8 +2084,8 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   AppEvent dco_decode_app_event(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 8)
-      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return AppEvent(
       kind: dco_decode_app_event_kind(arr[0]),
       listingId: dco_decode_opt_String(arr[1]),
@@ -2095,6 +2095,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
       findCurrent: dco_decode_opt_String(arr[5]),
       findScanned: dco_decode_i_64(arr[6]),
       findError: dco_decode_opt_String(arr[7]),
+      findSpotlightFailed: dco_decode_bool(arr[8]),
     );
   }
 
@@ -2365,8 +2366,8 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   FindRequestView dco_decode_find_request_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 11)
-      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    if (arr.length != 12)
+      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
     return FindRequestView(
       root: dco_decode_String(arr[0]),
       name: dco_decode_String(arr[1]),
@@ -2379,6 +2380,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
       sizeBytes: dco_decode_i_64(arr[8]),
       includeHidden: dco_decode_bool(arr[9]),
       includeFolders: dco_decode_bool(arr[10]),
+      useSpotlight: dco_decode_bool(arr[11]),
     );
   }
 
@@ -2976,6 +2978,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
     var var_findCurrent = sse_decode_opt_String(deserializer);
     var var_findScanned = sse_decode_i_64(deserializer);
     var var_findError = sse_decode_opt_String(deserializer);
+    var var_findSpotlightFailed = sse_decode_bool(deserializer);
     return AppEvent(
       kind: var_kind,
       listingId: var_listingId,
@@ -2985,6 +2988,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
       findCurrent: var_findCurrent,
       findScanned: var_findScanned,
       findError: var_findError,
+      findSpotlightFailed: var_findSpotlightFailed,
     );
   }
 
@@ -3328,6 +3332,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
     var var_sizeBytes = sse_decode_i_64(deserializer);
     var var_includeHidden = sse_decode_bool(deserializer);
     var var_includeFolders = sse_decode_bool(deserializer);
+    var var_useSpotlight = sse_decode_bool(deserializer);
     return FindRequestView(
       root: var_root,
       name: var_name,
@@ -3340,6 +3345,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
       sizeBytes: var_sizeBytes,
       includeHidden: var_includeHidden,
       includeFolders: var_includeFolders,
+      useSpotlight: var_useSpotlight,
     );
   }
 
@@ -4160,6 +4166,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
     sse_encode_opt_String(self.findCurrent, serializer);
     sse_encode_i_64(self.findScanned, serializer);
     sse_encode_opt_String(self.findError, serializer);
+    sse_encode_bool(self.findSpotlightFailed, serializer);
   }
 
   @protected
@@ -4463,6 +4470,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
     sse_encode_i_64(self.sizeBytes, serializer);
     sse_encode_bool(self.includeHidden, serializer);
     sse_encode_bool(self.includeFolders, serializer);
+    sse_encode_bool(self.useSpotlight, serializer);
   }
 
   @protected

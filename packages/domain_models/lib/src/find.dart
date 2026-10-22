@@ -46,6 +46,7 @@ class FindRequest extends Equatable {
     this.size,
     this.includeHidden = false,
     this.includeFolders = true,
+    this.useSpotlight = false,
   });
 
   final String root;
@@ -59,6 +60,10 @@ class FindRequest extends Equatable {
   final bool includeHidden;
   final bool includeFolders;
 
+  /// Ask the Spotlight index first (macOS); the folders are walked when it
+  /// cannot answer.
+  final bool useSpotlight;
+
   @override
   List<Object?> get props => [
     root,
@@ -68,6 +73,7 @@ class FindRequest extends Equatable {
     size,
     includeHidden,
     includeFolders,
+    useSpotlight,
   ];
 }
 
@@ -109,6 +115,7 @@ class FindUpdate extends Equatable {
     this.scanned = 0,
     this.done = false,
     this.error,
+    this.spotlightFailed = false,
   });
 
   final int findId;
@@ -118,6 +125,18 @@ class FindUpdate extends Equatable {
   final bool done;
   final String? error;
 
+  /// The search asked Spotlight, which could not answer: the folders were
+  /// walked instead.
+  final bool spotlightFailed;
+
   @override
-  List<Object?> get props => [findId, hits, current, scanned, done, error];
+  List<Object?> get props => [
+    findId,
+    hits,
+    current,
+    scanned,
+    done,
+    error,
+    spotlightFailed,
+  ];
 }

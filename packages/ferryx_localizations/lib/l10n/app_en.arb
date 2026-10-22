@@ -783,5 +783,9 @@
   "tagsRowLabel": "{label}, tags: {tags}",
   "@tagsRowLabel": {"placeholders": {"label": {"type": "String"}, "tags": {"type": "String"}}},
   "tagsFailed": "{count, plural, one{The tags of {count} item could not be changed: {reason}} other{The tags of {count} items could not be changed: {reason}}}",
-  "@tagsFailed": {"placeholders": {"count": {"type": "int"}, "reason": {"type": "String"}}}
+  "@tagsFailed": {"placeholders": {"count": {"type": "int"}, "reason": {"type": "String"}}},
+
+"findSpotlight": "Use the Spotlight index",
+  "findSpotlightNote": "Faster, but Spotlight skips system folders, hidden folders and the folders excluded in System Settings.",
+  "findSpotlightFailed": "Spotlight could not search here: the folders were searched instead."
 }

@@ -123,6 +123,21 @@ Rules:
   sizes done so far; the panel merges them into its rows by name.
 - Find Files runs on a thread and sends hits in batches (`FindProgress`,
   at most every 80 ms or 200 hits) and `FindDone` at the end or on cancel.
+- With "Use the Spotlight index" (offered where `capabilities().spotlight`
+  says `mdfind` is there) `find::search` asks Spotlight first
+  (`ferryx_ops::spotlight`): `mdfind -0 -onlyin <root>` with a query made of
+  the mask's parts as file-name matches (`?` and `[…]` widened to `*`),
+  each word of the contents as a word prefix and the size as a bound; the
+  paths stream from a reader thread, so a cancel kills `mdfind` within a
+  tenth of a second. Every hit is then checked here as a walk would check
+  it (`find::Matcher`: the exact mask or the regular expression, hidden
+  items, folders, size, the contents read for case, a whole phrase or "not
+  containing"), so Spotlight only narrows the candidates. When `mdfind`
+  cannot run or fails without a hit, the folders are walked instead and
+  `FindDone` says so (`find_spotlight_failed`, a notice in the dialog).
+  Spotlight skips system folders, hidden folders and the folders excluded
+  in System Settings — the option's note says so. (Live: `/Applications`'
+  67 apps in 0.16 s.)
 
 Tests: `cargo test --workspace`. `ferryx_api/tests/api_flow.rs` runs the
 bridge end to end (listings, resorting, the watcher's event, archives,

@@ -314,6 +314,7 @@ rust.FindRequestView findRequestToView(d.FindRequest request) =>
       sizeBytes: request.size?.bytes ?? 0,
       includeHidden: request.includeHidden,
       includeFolders: request.includeFolders,
+      useSpotlight: request.useSpotlight,
     );
 
 d.FindHit findHitFromView(rust.FindHitView view) => d.FindHit(

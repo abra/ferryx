@@ -1914,6 +1914,7 @@ impl SseDecode for crate::api::types::AppEvent {
         let mut var_findCurrent = <Option<String>>::sse_decode(deserializer);
         let mut var_findScanned = <i64>::sse_decode(deserializer);
         let mut var_findError = <Option<String>>::sse_decode(deserializer);
+        let mut var_findSpotlightFailed = <bool>::sse_decode(deserializer);
         return crate::api::types::AppEvent {
             kind: var_kind,
             listing_id: var_listingId,
@@ -1923,6 +1924,7 @@ impl SseDecode for crate::api::types::AppEvent {
             find_current: var_findCurrent,
             find_scanned: var_findScanned,
             find_error: var_findError,
+            find_spotlight_failed: var_findSpotlightFailed,
         };
     }
 }
@@ -2223,6 +2225,7 @@ impl SseDecode for crate::api::types::FindRequestView {
         let mut var_sizeBytes = <i64>::sse_decode(deserializer);
         let mut var_includeHidden = <bool>::sse_decode(deserializer);
         let mut var_includeFolders = <bool>::sse_decode(deserializer);
+        let mut var_useSpotlight = <bool>::sse_decode(deserializer);
         return crate::api::types::FindRequestView {
             root: var_root,
             name: var_name,
@@ -2235,6 +2238,7 @@ impl SseDecode for crate::api::types::FindRequestView {
             size_bytes: var_sizeBytes,
             include_hidden: var_includeHidden,
             include_folders: var_includeFolders,
+            use_spotlight: var_useSpotlight,
         };
     }
 }
@@ -3157,6 +3161,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::types::AppEvent {
             self.find_current.into_into_dart().into_dart(),
             self.find_scanned.into_into_dart().into_dart(),
             self.find_error.into_into_dart().into_dart(),
+            self.find_spotlight_failed.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -3492,6 +3497,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::types::FindRequestView {
             self.size_bytes.into_into_dart().into_dart(),
             self.include_hidden.into_into_dart().into_dart(),
             self.include_folders.into_into_dart().into_dart(),
+            self.use_spotlight.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -4117,6 +4123,7 @@ impl SseEncode for crate::api::types::AppEvent {
         <Option<String>>::sse_encode(self.find_current, serializer);
         <i64>::sse_encode(self.find_scanned, serializer);
         <Option<String>>::sse_encode(self.find_error, serializer);
+        <bool>::sse_encode(self.find_spotlight_failed, serializer);
     }
 }
 
@@ -4367,6 +4374,7 @@ impl SseEncode for crate::api::types::FindRequestView {
         <i64>::sse_encode(self.size_bytes, serializer);
         <bool>::sse_encode(self.include_hidden, serializer);
         <bool>::sse_encode(self.include_folders, serializer);
+        <bool>::sse_encode(self.use_spotlight, serializer);
     }
 }
 

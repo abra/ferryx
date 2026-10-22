@@ -103,8 +103,9 @@ class _DotsPainter extends CustomPainter {
         radius + i * size * AppTagDots.step,
         area.height / 2,
       );
-      if (ring != null)
+      if (ring != null) {
         canvas.drawCircle(center, radius, Paint()..color = ring);
+      }
       canvas.drawCircle(
         center,
         ring == null ? radius : radius - 1,

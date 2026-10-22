@@ -226,6 +226,7 @@ fn find_streams_hits() {
         size_bytes: 0,
         include_hidden: false,
         include_folders: true,
+        use_spotlight: false,
     });
     let mut hits = Vec::new();
     wait_for(|| {

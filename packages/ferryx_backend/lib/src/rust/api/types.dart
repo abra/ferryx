@@ -37,6 +37,10 @@ class AppEvent {
   final PlatformInt64 findScanned;
   final String? findError;
 
+  /// A search that asked Spotlight walked the folders instead: Spotlight
+  /// could not answer.
+  final bool findSpotlightFailed;
+
   const AppEvent({
     required this.kind,
     this.listingId,
@@ -46,6 +50,7 @@ class AppEvent {
     this.findCurrent,
     required this.findScanned,
     this.findError,
+    required this.findSpotlightFailed,
   });
 
   @override
@@ -57,7 +62,8 @@ class AppEvent {
       hits.hashCode ^
       findCurrent.hashCode ^
       findScanned.hashCode ^
-      findError.hashCode;
+      findError.hashCode ^
+      findSpotlightFailed.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -71,7 +77,8 @@ class AppEvent {
           hits == other.hits &&
           findCurrent == other.findCurrent &&
           findScanned == other.findScanned &&
-          findError == other.findError;
+          findError == other.findError &&
+          findSpotlightFailed == other.findSpotlightFailed;
 }
 
 enum AppEventKind {
@@ -441,6 +448,10 @@ class FindRequestView {
   final bool includeHidden;
   final bool includeFolders;
 
+  /// Ask the Spotlight index first (macOS); the folders are walked when
+  /// it cannot answer.
+  final bool useSpotlight;
+
   const FindRequestView({
     required this.root,
     required this.name,
@@ -453,6 +464,7 @@ class FindRequestView {
     required this.sizeBytes,
     required this.includeHidden,
     required this.includeFolders,
+    required this.useSpotlight,
   });
 
   @override
@@ -467,7 +479,8 @@ class FindRequestView {
       sizeOp.hashCode ^
       sizeBytes.hashCode ^
       includeHidden.hashCode ^
-      includeFolders.hashCode;
+      includeFolders.hashCode ^
+      useSpotlight.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -484,7 +497,8 @@ class FindRequestView {
           sizeOp == other.sizeOp &&
           sizeBytes == other.sizeBytes &&
           includeHidden == other.includeHidden &&
-          includeFolders == other.includeFolders;
+          includeFolders == other.includeFolders &&
+          useSpotlight == other.useSpotlight;
 }
 
 class FolderSizeView {

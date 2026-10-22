@@ -551,6 +551,9 @@ pub struct FindRequestView {
     pub size_bytes: i64,
     pub include_hidden: bool,
     pub include_folders: bool,
+    /// Ask the Spotlight index first (macOS); the folders are walked when
+    /// it cannot answer.
+    pub use_spotlight: bool,
 }
 
 impl FindRequestView {
@@ -579,6 +582,7 @@ impl FindRequestView {
             include_hidden: self.include_hidden,
             include_folders: self.include_folders,
             max_depth: None,
+            use_spotlight: self.use_spotlight,
         }
     }
 }
@@ -777,6 +781,9 @@ pub struct AppEvent {
     pub find_current: Option<String>,
     pub find_scanned: i64,
     pub find_error: Option<String>,
+    /// A search that asked Spotlight walked the folders instead: Spotlight
+    /// could not answer.
+    pub find_spotlight_failed: bool,
 }
 
 impl AppEvent {
@@ -791,6 +798,7 @@ impl AppEvent {
             find_current: None,
             find_scanned: 0,
             find_error: None,
+            find_spotlight_failed: false,
         }
     }
 

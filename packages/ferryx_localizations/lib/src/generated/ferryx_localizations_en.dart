@@ -2384,4 +2384,15 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get findSpotlight => 'Use the Spotlight index';
+
+  @override
+  String get findSpotlightNote =>
+      'Faster, but Spotlight skips system folders, hidden folders and the folders excluded in System Settings.';
+
+  @override
+  String get findSpotlightFailed =>
+      'Spotlight could not search here: the folders were searched instead.';
 }

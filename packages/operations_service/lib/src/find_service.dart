@@ -34,6 +34,7 @@ class FindService {
             scanned: event.findScanned,
             done: true,
             error: event.findError,
+            spotlightFailed: event.findSpotlightFailed,
           ),
         );
       case rust.AppEventKind.directoryChanged:

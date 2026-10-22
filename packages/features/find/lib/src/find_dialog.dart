@@ -13,17 +13,20 @@ import 'find_results.dart';
 
 /// Find Files under [root]: a name mask, text the files hold, a size;
 /// the hits as they come. Answers the path of a hit to go to, or `null`.
-/// [onView] opens a hit in the viewer while the dialog stays.
+/// [onView] opens a hit in the viewer while the dialog stays. With
+/// [spotlight] (the core says the desktop has the Spotlight index) the
+/// form offers to search through it.
 Future<String?> showFindDialog(
   BuildContext context, {
   required String root,
   required FindService find,
   required Future<void> Function(Location location) onView,
+  bool spotlight = false,
 }) => showAppDialog<String>(
   context,
   (context) => BlocProvider(
     create: (_) => FindCubit(service: find),
-    child: _FindDialog(root: root, onView: onView),
+    child: _FindDialog(root: root, onView: onView, spotlight: spotlight),
   ),
 );
 
@@ -31,10 +34,15 @@ Future<String?> showFindDialog(
 const _units = [1, 1024, 1024 * 1024, 1024 * 1024 * 1024];
 
 class _FindDialog extends StatefulWidget {
-  const _FindDialog({required this.root, required this.onView});
+  const _FindDialog({
+    required this.root,
+    required this.onView,
+    required this.spotlight,
+  });
 
   final String root;
   final Future<void> Function(Location location) onView;
+  final bool spotlight;
 
   @override
   State<_FindDialog> createState() => _FindDialogState();
@@ -55,6 +63,7 @@ class _FindDialogState extends State<_FindDialog> {
   SizeOp? _sizeOp;
   int _unit = _units[1];
   bool _includeHidden = false;
+  bool _useSpotlight = false;
 
   /// The hit the keys or the pointer rest on.
   int? _selected;
@@ -91,6 +100,7 @@ class _FindDialogState extends State<_FindDialog> {
           : SizeCondition(op: _sizeOp!, bytes: size * _unit),
       includeHidden: _includeHidden,
       includeFolders: content.isEmpty && _sizeOp == null,
+      useSpotlight: widget.spotlight && _useSpotlight,
     );
   }
 
@@ -151,7 +161,11 @@ class _FindDialogState extends State<_FindDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return BlocBuilder<FindCubit, FindState>(
+    return BlocConsumer<FindCubit, FindState>(
+      listenWhen: (before, after) =>
+          after.spotlightFailed && !before.spotlightFailed,
+      listener: (context, state) =>
+          showAppNotice(context, l10n.findSpotlightFailed),
       builder: (context, state) {
         final hasSelection =
             _selected != null && _selected! < state.hits.length;
@@ -175,6 +189,9 @@ class _FindDialogState extends State<_FindDialog> {
                 sizeOp: _sizeOp,
                 unit: _unit,
                 includeHidden: _includeHidden,
+                spotlight: widget.spotlight,
+                useSpotlight: _useSpotlight,
+                onUseSpotlight: (v) => setState(() => _useSpotlight = v),
                 onRegex: (v) => setState(() => _regex = v),
                 onCaseSensitive: (v) => setState(() => _caseSensitive = v),
                 onWholePhrase: (v) => setState(() => _wholePhrase = v),
@@ -243,6 +260,9 @@ class _Form extends StatelessWidget {
     required this.sizeOp,
     required this.unit,
     required this.includeHidden,
+    required this.spotlight,
+    required this.useSpotlight,
+    required this.onUseSpotlight,
     required this.onRegex,
     required this.onCaseSensitive,
     required this.onWholePhrase,
@@ -265,6 +285,11 @@ class _Form extends StatelessWidget {
   final SizeOp? sizeOp;
   final int unit;
   final bool includeHidden;
+
+  /// The desktop has the Spotlight index: the option shows.
+  final bool spotlight;
+  final bool useSpotlight;
+  final ValueChanged<bool> onUseSpotlight;
   final ValueChanged<bool> onRegex;
   final ValueChanged<bool> onCaseSensitive;
   final ValueChanged<bool> onWholePhrase;
@@ -376,6 +401,40 @@ class _Form extends StatelessWidget {
               onChanged: onUnit,
             ),
           ],
+        ),
+        if (spotlight) ...[
+          const SizedBox(height: AppSpacing.md),
+          _SpotlightOption(value: useSpotlight, onChanged: onUseSpotlight),
+        ],
+      ],
+    );
+  }
+}
+
+/// "Use the Spotlight index", and what Spotlight does not see.
+class _SpotlightOption extends StatelessWidget {
+  const _SpotlightOption({required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppCheckbox(
+          label: l10n.findSpotlight,
+          value: value,
+          onChanged: onChanged,
+        ),
+        const SizedBox(height: AppSpacing.xxs),
+        Text(
+          l10n.findSpotlightNote,
+          style: context.text.bodySmall?.copyWith(
+            color: context.appColors.textMuted,
+          ),
         ),
       ],
     );

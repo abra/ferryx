@@ -2429,4 +2429,15 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get findSpotlight => 'Искать по индексу Spotlight';
+
+  @override
+  String get findSpotlightNote =>
+      'Быстрее, но Spotlight не видит системные и скрытые папки, а также папки, исключенные в Системных настройках.';
+
+  @override
+  String get findSpotlightFailed =>
+      'Spotlight не смог искать здесь — папки просмотрены напрямую.';
 }

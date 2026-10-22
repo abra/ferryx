@@ -4123,6 +4123,24 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, one{The tags of {count} item could not be changed: {reason}} other{The tags of {count} items could not be changed: {reason}}}'**
   String tagsFailed(int count, String reason);
+
+  /// No description provided for @findSpotlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the Spotlight index'**
+  String get findSpotlight;
+
+  /// No description provided for @findSpotlightNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Faster, but Spotlight skips system folders, hidden folders and the folders excluded in System Settings.'**
+  String get findSpotlightNote;
+
+  /// No description provided for @findSpotlightFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Spotlight could not search here: the folders were searched instead.'**
+  String get findSpotlightFailed;
 }
 
 class _FerryxLocalizationsDelegate

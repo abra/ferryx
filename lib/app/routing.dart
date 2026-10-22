@@ -173,6 +173,7 @@ class _WorkspaceRoute extends StatelessWidget {
             root: root,
             find: deps.find,
             onView: view,
+            spotlight: deps.files.capabilities().spotlight,
           ),
           openSettings: (context) => openSettings(context),
           openCheatSheet: (context) => showCheatSheet(

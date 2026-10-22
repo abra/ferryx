@@ -46,6 +46,8 @@ pub struct FindRequest {
     /// Folders too, when nothing about contents or size is asked.
     pub include_folders: bool,
     pub max_depth: Option<usize>,
+    /// Ask the Spotlight index first (macOS); see [`search`].
+    pub use_spotlight: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -155,6 +157,127 @@ pub fn run(
     Ok(scanned)
 }
 
+/// How a search went: how many items were looked at, and whether the
+/// Spotlight index was asked for and could not answer (the folders were
+/// walked instead).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct FindSummary {
+    pub scanned: u64,
+    pub spotlight_failed: bool,
+}
+
+/// Finds through the Spotlight index when the request asks for it and
+/// Spotlight answers, else by walking the folders ([`run`]).
+pub fn search(
+    request: &FindRequest,
+    cancel: &AtomicBool,
+    on_hit: &mut dyn FnMut(FindHit),
+    on_progress: &mut dyn FnMut(&Path, u64),
+) -> Result<FindSummary, String> {
+    let mut spotlight_failed = false;
+    if request.use_spotlight {
+        match crate::spotlight::run(request, cancel, on_hit, on_progress) {
+            Ok(scanned) => return Ok(FindSummary { scanned, spotlight_failed: false }),
+            Err(crate::spotlight::SpotlightError::Request(message)) => return Err(message),
+            Err(crate::spotlight::SpotlightError::Unavailable(_)) => spotlight_failed = true,
+        }
+    }
+    let scanned = run(request, cancel, on_hit, on_progress)?;
+    Ok(FindSummary { scanned, spotlight_failed })
+}
+
+/// The request's conditions over one item, for hits that come from
+/// elsewhere than a walk (Spotlight): the same answers a walk gives.
+pub struct Matcher {
+    root: PathBuf,
+    filter: Option<NameFilter>,
+    content: Option<(ContentQuery, Vec<String>)>,
+    size: Option<SizeCondition>,
+    files_only: bool,
+    include_hidden: bool,
+}
+
+impl Matcher {
+    pub fn new(request: &FindRequest) -> Result<Matcher, String> {
+        let filter = if request.name.trim().is_empty() {
+            None
+        } else if request.name_is_regex {
+            Some(NameFilter::regex(request.name.trim(), false)?)
+        } else {
+            Some(NameFilter::mask(request.name.trim())?)
+        };
+        let content = request.content.as_ref().filter(|c| !c.text.is_empty()).map(|c| {
+            let needles: Vec<String> = if c.whole_phrase {
+                vec![c.text.clone()]
+            } else {
+                c.text.split_whitespace().map(str::to_string).collect()
+            };
+            let needles = if c.case_sensitive {
+                needles
+            } else {
+                needles.into_iter().map(|n| n.to_lowercase()).collect()
+            };
+            (c.clone(), needles)
+        });
+        Ok(Matcher {
+            root: request.root.clone(),
+            files_only: content.is_some() || request.size.is_some() || !request.include_folders,
+            filter,
+            content,
+            size: request.size,
+            include_hidden: request.include_hidden,
+        })
+    }
+
+    /// The hit `path` makes, or `None` when it does not meet the request
+    /// (or is not under the root, or is gone).
+    pub fn check(&self, path: &Path) -> Option<FindHit> {
+        let relative = path.strip_prefix(&self.root).ok()?;
+        if relative.as_os_str().is_empty() {
+            return None;
+        }
+        if !self.include_hidden && relative.components().any(|c| is_hidden(&c.as_os_str().to_string_lossy()))
+        {
+            return None;
+        }
+        let meta = std::fs::symlink_metadata(path).ok()?;
+        let is_dir = meta.is_dir();
+        if is_dir && self.files_only {
+            return None;
+        }
+        let name = path.file_name()?.to_string_lossy();
+        if let Some(filter) = &self.filter {
+            if !filter.matches(&name) {
+                return None;
+            }
+        }
+        if let Some(size) = self.size {
+            let ok = match size.op {
+                SizeOp::Less => meta.len() < size.bytes,
+                SizeOp::Equal => meta.len() == size.bytes,
+                SizeOp::Greater => meta.len() > size.bytes,
+            };
+            if is_dir || !ok {
+                return None;
+            }
+        }
+        if let Some((query, needles)) = &self.content {
+            if is_dir || !meta.is_file() {
+                return None;
+            }
+            if file_contains(path, needles, query.case_sensitive) == query.not_containing {
+                return None;
+            }
+        }
+        Some(FindHit {
+            path: path.to_path_buf(),
+            is_dir,
+            size: if is_dir { 0 } else { meta.len() },
+            modified_ms: meta.modified().ok().and_then(ferryx_vfs::native::system_time_ms),
+        })
+    }
+}
+
 fn is_hidden(name: &str) -> bool {
     name.starts_with('.')
 }
@@ -227,6 +350,7 @@ mod tests {
             include_hidden: false,
             include_folders: true,
             max_depth: None,
+            use_spotlight: false,
         }
     }
 
@@ -291,6 +415,60 @@ mod tests {
         assert_eq!(hits(&regex), ["a.txt", "b.txt"]);
         regex.name = "(".to_string();
         assert!(run(&regex, &AtomicBool::new(false), &mut |_| {}, &mut |_, _| {}).is_err());
+    }
+
+    #[test]
+    fn the_matcher_answers_as_the_walk_does() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::create_dir_all(dir.path().join("sub/.hidden")).unwrap();
+        fs::write(dir.path().join("a.txt"), b"Hello World").unwrap();
+        fs::write(dir.path().join("sub/b.txt"), b"hello there").unwrap();
+        fs::write(dir.path().join("sub/.hidden/d.txt"), b"hello").unwrap();
+        let all = [
+            dir.path().join("a.txt"),
+            dir.path().join("sub"),
+            dir.path().join("sub/b.txt"),
+            dir.path().join("sub/.hidden/d.txt"),
+            dir.path().join("elsewhere.txt"),
+            PathBuf::from("/not/under/root.txt"),
+        ];
+        let names = |req: &FindRequest| {
+            let matcher = Matcher::new(req).unwrap();
+            let mut out: Vec<String> = all
+                .iter()
+                .filter_map(|p| matcher.check(p))
+                .map(|h| h.path.file_name().unwrap().to_string_lossy().into_owned())
+                .collect();
+            out.sort();
+            out
+        };
+        let mut req = base(dir.path());
+        assert_eq!(names(&req), hits(&req));
+        req.name = "*.txt".into();
+        assert_eq!(names(&req), hits(&req));
+        req.include_hidden = true;
+        assert_eq!(names(&req), hits(&req));
+        req.content = Some(ContentQuery {
+            text: "Hello".into(),
+            case_sensitive: true,
+            whole_phrase: true,
+            not_containing: false,
+        });
+        assert_eq!(names(&req), ["a.txt"]);
+        req.name = "(".into();
+        req.name_is_regex = true;
+        assert!(Matcher::new(&req).is_err());
+    }
+
+    #[test]
+    fn search_walks_unless_asked_for_spotlight() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("x.md"), b"").unwrap();
+        let mut found = 0;
+        let summary =
+            search(&base(dir.path()), &AtomicBool::new(false), &mut |_| found += 1, &mut |_, _| {}).unwrap();
+        assert_eq!(found, 1);
+        assert!(!summary.spotlight_failed);
     }
 
     #[test]

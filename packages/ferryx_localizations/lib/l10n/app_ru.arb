@@ -699,5 +699,9 @@
   "tagsAdd": "Добавить",
   "tagsList": "{first}, {second}",
   "tagsRowLabel": "{label}, теги: {tags}",
-  "tagsFailed": "{count, plural, one{Не удалось изменить теги {count} объекта: {reason}} few{Не удалось изменить теги {count} объектов: {reason}} many{Не удалось изменить теги {count} объектов: {reason}} other{Не удалось изменить теги {count} объекта: {reason}}}"
+  "tagsFailed": "{count, plural, one{Не удалось изменить теги {count} объекта: {reason}} few{Не удалось изменить теги {count} объектов: {reason}} many{Не удалось изменить теги {count} объектов: {reason}} other{Не удалось изменить теги {count} объекта: {reason}}}",
+
+"findSpotlight": "Искать по индексу Spotlight",
+  "findSpotlightNote": "Быстрее, но Spotlight не видит системные и скрытые папки, а также папки, исключенные в Системных настройках.",
+  "findSpotlightFailed": "Spotlight не смог искать здесь — папки просмотрены напрямую."
 }

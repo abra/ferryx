@@ -14,6 +14,7 @@ pub mod find;
 pub mod rename;
 pub mod runner;
 pub mod sizes;
+pub mod spotlight;
 pub mod types;
 
 pub use runner::{OpContext, Runner};
