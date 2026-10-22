@@ -5,6 +5,7 @@
 
 import 'api/archives.dart';
 import 'api/attrs.dart';
+import 'api/capabilities.dart';
 import 'api/events.dart';
 import 'api/files.dart';
 import 'api/find.dart';
@@ -13,6 +14,7 @@ import 'api/listing.dart';
 import 'api/ops.dart';
 import 'api/rename.dart';
 import 'api/system.dart';
+import 'api/tags.dart';
 import 'api/types.dart';
 
 import 'dart:async';
@@ -89,7 +91,7 @@ class FerryxRustLib
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -2029200364;
+  int get rustContentHash => -657939503;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -129,6 +131,8 @@ abstract class FerryxRustLibApi extends BaseApi {
   Future<void> crateApiFindCancelFind({required PlatformInt64 id});
 
   Future<void> crateApiOpsCancelOperation({required PlatformInt64 id});
+
+  CapabilitiesView crateApiCapabilitiesCapabilities();
 
   Future<void> crateApiListingCloseListing({required String listingId});
 
@@ -220,6 +224,10 @@ abstract class FerryxRustLibApi extends BaseApi {
     required PlatformInt64 len,
   });
 
+  Future<List<ItemTagsView>> crateApiTagsReadListingTags({
+    required String listingId,
+  });
+
   Future<String> crateApiFilesReadSymlink({required String link});
 
   Future<ListingView> crateApiListingRefreshListing({
@@ -245,6 +253,12 @@ abstract class FerryxRustLibApi extends BaseApi {
   Future<void> crateApiArchivesSetArchivePassword({
     required String archive,
     required String password,
+  });
+
+  Future<List<TagOutcomeView>> crateApiTagsSetTags({
+    required List<String> paths,
+    required List<TagView> add,
+    required List<String> remove,
   });
 
   Future<Int32List> crateApiFlatSortFlatListing({
@@ -546,6 +560,31 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   );
 
   @override
+  CapabilitiesView crateApiCapabilitiesCapabilities() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_capabilities_view,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiCapabilitiesCapabilitiesConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiCapabilitiesCapabilitiesConstMeta =>
+      const TaskConstMeta(
+        debugName: "capabilities",
+        argNames: [],
+      );
+
+  @override
   Future<void> crateApiListingCloseListing({required String listingId}) {
     return handler.executeNormal(
       NormalTask(
@@ -555,7 +594,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 10,
             port: port_,
           );
         },
@@ -586,7 +625,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 10,
+            funcId: 11,
             port: port_,
           );
         },
@@ -617,7 +656,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 12,
             port: port_,
           );
         },
@@ -651,7 +690,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 12,
+            funcId: 13,
             port: port_,
           );
         },
@@ -686,7 +725,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 13,
+            funcId: 14,
             port: port_,
           );
         },
@@ -716,7 +755,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 14,
+            funcId: 15,
             port: port_,
           );
         },
@@ -751,7 +790,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 15,
+            funcId: 16,
             port: port_,
           );
         },
@@ -781,7 +820,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 16,
+            funcId: 17,
             port: port_,
           );
         },
@@ -815,7 +854,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 17,
+            funcId: 18,
             port: port_,
           );
         },
@@ -847,7 +886,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 18,
+            funcId: 19,
             port: port_,
           );
         },
@@ -877,7 +916,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 19,
+            funcId: 20,
             port: port_,
           );
         },
@@ -905,7 +944,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(dir, serializer);
           sse_encode_String(name, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 20)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 21)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -933,7 +972,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 21,
+            funcId: 22,
             port: port_,
           );
         },
@@ -962,7 +1001,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 22,
+            funcId: 23,
             port: port_,
           );
         },
@@ -989,7 +1028,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(path, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 23)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 24)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -1014,7 +1053,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(path, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 24)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 25)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -1041,7 +1080,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 25,
+            funcId: 26,
             port: port_,
           );
         },
@@ -1070,7 +1109,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 26,
+            funcId: 27,
             port: port_,
           );
         },
@@ -1100,7 +1139,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 27,
+            funcId: 28,
             port: port_,
           );
         },
@@ -1130,7 +1169,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 28,
+            funcId: 29,
             port: port_,
           );
         },
@@ -1160,7 +1199,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 29,
+            funcId: 30,
             port: port_,
           );
         },
@@ -1196,7 +1235,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 30,
+            funcId: 31,
             port: port_,
           );
         },
@@ -1233,7 +1272,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 31,
+            funcId: 32,
             port: port_,
           );
         },
@@ -1267,7 +1306,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 32,
+            funcId: 33,
             port: port_,
           );
         },
@@ -1299,7 +1338,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 33,
+            funcId: 34,
             port: port_,
           );
         },
@@ -1330,7 +1369,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 34,
+            funcId: 35,
             port: port_,
           );
         },
@@ -1364,7 +1403,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 35,
+            funcId: 36,
             port: port_,
           );
         },
@@ -1394,7 +1433,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 36,
+            funcId: 37,
             port: port_,
           );
         },
@@ -1431,7 +1470,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 37,
+            funcId: 38,
             port: port_,
           );
         },
@@ -1452,6 +1491,39 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   );
 
   @override
+  Future<List<ItemTagsView>> crateApiTagsReadListingTags({
+    required String listingId,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(listingId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 39,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_item_tags_view,
+          decodeErrorData: sse_decode_ferryx_error,
+        ),
+        constMeta: kCrateApiTagsReadListingTagsConstMeta,
+        argValues: [listingId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTagsReadListingTagsConstMeta =>
+      const TaskConstMeta(
+        debugName: "read_listing_tags",
+        argNames: ["listingId"],
+      );
+
+  @override
   Future<String> crateApiFilesReadSymlink({required String link}) {
     return handler.executeNormal(
       NormalTask(
@@ -1461,7 +1533,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 38,
+            funcId: 40,
             port: port_,
           );
         },
@@ -1493,7 +1565,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 39,
+            funcId: 41,
             port: port_,
           );
         },
@@ -1528,7 +1600,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 40,
+            funcId: 42,
             port: port_,
           );
         },
@@ -1558,7 +1630,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 41,
+            funcId: 43,
             port: port_,
           );
         },
@@ -1592,7 +1664,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 42,
+            funcId: 44,
             port: port_,
           );
         },
@@ -1623,7 +1695,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 43,
+            funcId: 45,
             port: port_,
           );
         },
@@ -1653,7 +1725,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 44,
+            funcId: 46,
             port: port_,
           );
         },
@@ -1688,7 +1760,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 45,
+            funcId: 47,
             port: port_,
           );
         },
@@ -1710,6 +1782,42 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
       );
 
   @override
+  Future<List<TagOutcomeView>> crateApiTagsSetTags({
+    required List<String> paths,
+    required List<TagView> add,
+    required List<String> remove,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_String(paths, serializer);
+          sse_encode_list_tag_view(add, serializer);
+          sse_encode_list_String(remove, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 48,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_tag_outcome_view,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiTagsSetTagsConstMeta,
+        argValues: [paths, add, remove],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiTagsSetTagsConstMeta => const TaskConstMeta(
+    debugName: "set_tags",
+    argNames: ["paths", "add", "remove"],
+  );
+
+  @override
   Future<Int32List> crateApiFlatSortFlatListing({
     required String listingId,
     required PlatformInt64 generation,
@@ -1725,7 +1833,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 46,
+            funcId: 49,
             port: port_,
           );
         },
@@ -1752,7 +1860,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 47)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 50)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_standard_folders_view,
@@ -1783,7 +1891,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 48,
+            funcId: 51,
             port: port_,
           );
         },
@@ -1815,7 +1923,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 49,
+            funcId: 52,
             port: port_,
           );
         },
@@ -1845,7 +1953,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 50,
+            funcId: 53,
             port: port_,
           );
         },
@@ -1882,7 +1990,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 51,
+              funcId: 54,
               port: port_,
             );
           },
@@ -1917,7 +2025,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 52,
+              funcId: 55,
               port: port_,
             );
           },
@@ -2075,6 +2183,12 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  FerryxErrorKind dco_decode_box_autoadd_ferryx_error_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_ferryx_error_kind(raw);
+  }
+
+  @protected
   FindRequestView dco_decode_box_autoadd_find_request_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_find_request_view(raw);
@@ -2132,6 +2246,18 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   int dco_decode_box_autoadd_u_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
+  }
+
+  @protected
+  CapabilitiesView dco_decode_capabilities_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return CapabilitiesView(
+      finderTags: dco_decode_bool(arr[0]),
+      spotlight: dco_decode_bool(arr[1]),
+    );
   }
 
   @protected
@@ -2198,7 +2324,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
       flags: dco_decode_u_32(arr[16]),
       isHidden: dco_decode_bool(arr[17]),
       extension_: dco_decode_String(arr[18]),
-      tags: dco_decode_list_prim_i_32_strict(arr[19]),
+      tags: dco_decode_list_tag_view(arr[19]),
     );
   }
 
@@ -2309,6 +2435,18 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  ItemTagsView dco_decode_item_tags_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return ItemTagsView(
+      path: dco_decode_String(arr[0]),
+      tags: dco_decode_list_tag_view(arr[1]),
+    );
+  }
+
+  @protected
   List<String> dco_decode_list_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_String).toList();
@@ -2336,6 +2474,12 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   List<FolderSizeView> dco_decode_list_folder_size_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_folder_size_view).toList();
+  }
+
+  @protected
+  List<ItemTagsView> dco_decode_list_item_tags_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_item_tags_view).toList();
   }
 
   @protected
@@ -2384,6 +2528,18 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   List<RenamePairView> dco_decode_list_rename_pair_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_rename_pair_view).toList();
+  }
+
+  @protected
+  List<TagOutcomeView> dco_decode_list_tag_outcome_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_tag_outcome_view).toList();
+  }
+
+  @protected
+  List<TagView> dco_decode_list_tag_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_tag_view).toList();
   }
 
   @protected
@@ -2500,6 +2656,12 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   ConflictSideView? dco_decode_opt_box_autoadd_conflict_side_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_conflict_side_view(raw);
+  }
+
+  @protected
+  FerryxErrorKind? dco_decode_opt_box_autoadd_ferryx_error_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_ferryx_error_kind(raw);
   }
 
   @protected
@@ -2702,6 +2864,32 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
       root: dco_decode_String(arr[7]),
       temporary: dco_decode_String(arr[8]),
       userName: dco_decode_String(arr[9]),
+    );
+  }
+
+  @protected
+  TagOutcomeView dco_decode_tag_outcome_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return TagOutcomeView(
+      path: dco_decode_String(arr[0]),
+      tags: dco_decode_list_tag_view(arr[1]),
+      failure: dco_decode_opt_box_autoadd_ferryx_error_kind(arr[2]),
+      message: dco_decode_String(arr[3]),
+    );
+  }
+
+  @protected
+  TagView dco_decode_tag_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return TagView(
+      name: dco_decode_String(arr[0]),
+      color: dco_decode_i_32(arr[1]),
     );
   }
 
@@ -2909,6 +3097,14 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  FerryxErrorKind sse_decode_box_autoadd_ferryx_error_kind(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_ferryx_error_kind(deserializer));
+  }
+
+  @protected
   FindRequestView sse_decode_box_autoadd_find_request_view(
     SseDeserializer deserializer,
   ) {
@@ -2983,6 +3179,17 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  CapabilitiesView sse_decode_capabilities_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_finderTags = sse_decode_bool(deserializer);
+    var var_spotlight = sse_decode_bool(deserializer);
+    return CapabilitiesView(
+      finderTags: var_finderTags,
+      spotlight: var_spotlight,
+    );
+  }
+
+  @protected
   CaseTransformView sse_decode_case_transform_view(
     SseDeserializer deserializer,
   ) {
@@ -3051,7 +3258,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
     var var_flags = sse_decode_u_32(deserializer);
     var var_isHidden = sse_decode_bool(deserializer);
     var var_extension_ = sse_decode_String(deserializer);
-    var var_tags = sse_decode_list_prim_i_32_strict(deserializer);
+    var var_tags = sse_decode_list_tag_view(deserializer);
     return EntryView(
       name: var_name,
       path: var_path,
@@ -3184,6 +3391,14 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  ItemTagsView sse_decode_item_tags_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_path = sse_decode_String(deserializer);
+    var var_tags = sse_decode_list_tag_view(deserializer);
+    return ItemTagsView(path: var_path, tags: var_tags);
+  }
+
+  @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -3243,6 +3458,20 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
     var ans_ = <FolderSizeView>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_folder_size_view(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<ItemTagsView> sse_decode_list_item_tags_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <ItemTagsView>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_item_tags_view(deserializer));
     }
     return ans_;
   }
@@ -3341,6 +3570,32 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
     var ans_ = <RenamePairView>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_rename_pair_view(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<TagOutcomeView> sse_decode_list_tag_outcome_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <TagOutcomeView>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_tag_outcome_view(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<TagView> sse_decode_list_tag_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <TagView>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_tag_view(deserializer));
     }
     return ans_;
   }
@@ -3482,6 +3737,19 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_conflict_side_view(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  FerryxErrorKind? sse_decode_opt_box_autoadd_ferryx_error_kind(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_ferryx_error_kind(deserializer));
     } else {
       return null;
     }
@@ -3764,6 +4032,31 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  TagOutcomeView sse_decode_tag_outcome_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_path = sse_decode_String(deserializer);
+    var var_tags = sse_decode_list_tag_view(deserializer);
+    var var_failure = sse_decode_opt_box_autoadd_ferryx_error_kind(
+      deserializer,
+    );
+    var var_message = sse_decode_String(deserializer);
+    return TagOutcomeView(
+      path: var_path,
+      tags: var_tags,
+      failure: var_failure,
+      message: var_message,
+    );
+  }
+
+  @protected
+  TagView sse_decode_tag_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_name = sse_decode_String(deserializer);
+    var var_color = sse_decode_i_32(deserializer);
+    return TagView(name: var_name, color: var_color);
+  }
+
+  @protected
   int sse_decode_u_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint32();
@@ -3952,6 +4245,15 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  void sse_encode_box_autoadd_ferryx_error_kind(
+    FerryxErrorKind self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_ferryx_error_kind(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_find_request_view(
     FindRequestView self,
     SseSerializer serializer,
@@ -4039,6 +4341,16 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  void sse_encode_capabilities_view(
+    CapabilitiesView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self.finderTags, serializer);
+    sse_encode_bool(self.spotlight, serializer);
+  }
+
+  @protected
   void sse_encode_case_transform_view(
     CaseTransformView self,
     SseSerializer serializer,
@@ -4105,7 +4417,7 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
     sse_encode_u_32(self.flags, serializer);
     sse_encode_bool(self.isHidden, serializer);
     sse_encode_String(self.extension_, serializer);
-    sse_encode_list_prim_i_32_strict(self.tags, serializer);
+    sse_encode_list_tag_view(self.tags, serializer);
   }
 
   @protected
@@ -4200,6 +4512,13 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
   }
 
   @protected
+  void sse_encode_item_tags_view(ItemTagsView self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.path, serializer);
+    sse_encode_list_tag_view(self.tags, serializer);
+  }
+
+  @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
@@ -4253,6 +4572,18 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_folder_size_view(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_item_tags_view(
+    List<ItemTagsView> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_item_tags_view(item, serializer);
     }
   }
 
@@ -4345,6 +4676,27 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_rename_pair_view(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_tag_outcome_view(
+    List<TagOutcomeView> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_tag_outcome_view(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_tag_view(List<TagView> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_tag_view(item, serializer);
     }
   }
 
@@ -4459,6 +4811,19 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_conflict_side_view(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_ferryx_error_kind(
+    FerryxErrorKind? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_ferryx_error_kind(self, serializer);
     }
   }
 
@@ -4680,6 +5045,25 @@ class FerryxRustLibApiImpl extends FerryxRustLibApiImplPlatform
     sse_encode_String(self.root, serializer);
     sse_encode_String(self.temporary, serializer);
     sse_encode_String(self.userName, serializer);
+  }
+
+  @protected
+  void sse_encode_tag_outcome_view(
+    TagOutcomeView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.path, serializer);
+    sse_encode_list_tag_view(self.tags, serializer);
+    sse_encode_opt_box_autoadd_ferryx_error_kind(self.failure, serializer);
+    sse_encode_String(self.message, serializer);
+  }
+
+  @protected
+  void sse_encode_tag_view(TagView self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.name, serializer);
+    sse_encode_i_32(self.color, serializer);
   }
 
   @protected

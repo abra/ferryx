@@ -162,7 +162,7 @@ pub struct EntryView {
     pub flags: u32,
     pub is_hidden: bool,
     pub extension: String,
-    pub tags: Vec<i32>,
+    pub tags: Vec<crate::api::tags::TagView>,
 }
 
 impl From<&Entry> for EntryView {
@@ -192,7 +192,7 @@ impl From<&Entry> for EntryView {
             flags: e.flags,
             is_hidden: e.is_hidden,
             extension: e.extension.clone(),
-            tags: e.tags.iter().map(|t| *t as i32).collect(),
+            tags: e.tags.iter().map(crate::api::tags::TagView::from).collect(),
         }
     }
 }

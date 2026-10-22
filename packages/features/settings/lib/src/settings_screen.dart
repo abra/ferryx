@@ -25,6 +25,7 @@ class SettingsScreen extends StatefulWidget {
     required this.version,
     required this.onClose,
     this.initialSection = SettingsSection.general,
+    this.unavailable = const {},
     super.key,
   });
 
@@ -33,6 +34,10 @@ class SettingsScreen extends StatefulWidget {
   final String version;
   final SettingsSection initialSection;
   final VoidCallback onClose;
+
+  /// Commands this desktop lacks (Finder tags elsewhere than macOS): the
+  /// Hotkeys page leaves them out.
+  final Set<AppCommand> unavailable;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -113,6 +118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         shortcutMap: map,
                         version: widget.version,
                         onClose: widget.onClose,
+                        unavailable: widget.unavailable,
                       ),
                     ),
                   ],
@@ -322,6 +328,7 @@ class _Content extends StatelessWidget {
     required this.shortcutMap,
     required this.version,
     required this.onClose,
+    required this.unavailable,
   });
 
   final SettingsSection section;
@@ -331,6 +338,7 @@ class _Content extends StatelessWidget {
   final ShortcutMap shortcutMap;
   final String version;
   final VoidCallback onClose;
+  final Set<AppCommand> unavailable;
 
   @override
   Widget build(BuildContext context) {
@@ -347,6 +355,7 @@ class _Content extends StatelessWidget {
         platform: platform,
         shortcutMap: shortcutMap,
         vim: prefs.vimMode,
+        unavailable: unavailable,
       ),
       SettingsSection.editors => EditorsPage(prefs: prefs, service: service),
       SettingsSection.tools => ToolsPage(prefs: prefs, service: service),

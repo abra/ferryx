@@ -209,6 +209,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     // ─── Files core ───
     AppCommand.extractTo: () => unawaited(_extractTo()),
     AppCommand.toggleFlatView: () => unawaited(_active.toggleFlatView()),
+    AppCommand.editTags: () => unawaited(_editTags()),
   };
 
   // ─── Opening ───
@@ -639,6 +640,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         severalSelected: tab.selected.length > 1,
         map: widget.shortcutMap,
         archive: tab.location.isNative && widget.files.isArchive(focused.path),
+        tags: tab.location.isNative && widget.capabilities.finderTags,
       ),
     );
     if (picked == null || !mounted) return;

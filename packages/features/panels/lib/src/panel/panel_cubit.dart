@@ -34,6 +34,7 @@ class PanelCubit extends Cubit<PanelState> {
     required OperationsService operations,
     required PreferencesService preferences,
     required this.logger,
+    this.readTags = false,
   }) : _files = files,
        _operations = operations,
        _preferences = preferences,
@@ -45,6 +46,10 @@ class PanelCubit extends Cubit<PanelState> {
   }
 
   final PanelSide side;
+
+  /// Finder tags are read for the rows once a listing shows (the core
+  /// reports the capability; elsewhere there are none to read).
+  final bool readTags;
   final FileRepository _files;
   final OperationsService _operations;
   final PreferencesService _preferences;
@@ -182,6 +187,7 @@ class PanelCubit extends Cubit<PanelState> {
           ).copyWith(clearPendingFocus: true),
         ),
       );
+      unawaited(_loadTags(tab.id));
     } on FerryxException catch (error, stackTrace) {
       logger.warn(
         'cannot open ${location.display}',
@@ -302,9 +308,17 @@ class PanelCubit extends Cubit<PanelState> {
       emit(
         state.withTab(
           index,
-          _withListing(current.copyWith(listing: listing, clearError: true)),
+          _withListing(
+            current.copyWith(
+              listing: listing.copyWith(
+                entries: _keepTags(current.listing, listing.entries),
+              ),
+              clearError: true,
+            ),
+          ),
         ),
       );
+      unawaited(_loadTags(tab.id));
     } on FerryxException catch (error) {
       final gone =
           error.kind == FerryxErrorKind.notFound ||
@@ -1271,14 +1285,16 @@ class PanelCubit extends Cubit<PanelState> {
         _withListing(
           tab.copyWith(
             listing: tab.listing?.copyWith(
-              entries: [for (final i in order) walked[i]],
+              entries: _keepTags(tab.listing, [
+                for (final i in order) walked[i],
+              ]),
             ),
             flat: FlatView(
               generation: flat.generation,
               walking: false,
               count: batch.count,
               capped: batch.capped,
-              walked: walked,
+              walked: _keepTags(tab.listing, walked),
             ),
             loading: false,
           ),
@@ -1287,6 +1303,7 @@ class PanelCubit extends Cubit<PanelState> {
       ),
     );
     await _stopFlat(id);
+    unawaited(_loadTags(id));
     if (tab.sort != sort) {
       // The order changed while the rows were sorted.
       await _resortFlat(index, tab.sort);
@@ -1368,6 +1385,98 @@ class PanelCubit extends Cubit<PanelState> {
   static String _parentOf(String path) {
     final slash = path.lastIndexOf('/');
     return slash <= 0 ? '/' : path.substring(0, slash);
+  }
+
+  // ─── Finder tags ───
+
+  /// The rows' tags, read apart from the listing once it shows (each item
+  /// costs the core a system call); the dots follow a moment later.
+  Future<void> _loadTags(String id) async {
+    if (!readTags) return;
+    final tab = state.tabs.where((t) => t.id == id).firstOrNull;
+    if (tab == null || !tab.location.isNative) return;
+    final Map<String, List<FileTag>> found;
+    try {
+      found = await _files.listingTags(id);
+    } on FerryxException catch (error) {
+      logger.warn('cannot read the tags', error: error);
+      return;
+    }
+    if (found.isEmpty || isClosed) return;
+    _mergeTags(found, only: id);
+  }
+
+  /// Tags changed (an edit from this window): the rows of [byPath] in
+  /// every tab take their new tags, none included.
+  void applyTags(Map<String, List<FileTag>> byPath) => _mergeTags(byPath);
+
+  void _mergeTags(Map<String, List<FileTag>> byPath, {String? only}) {
+    var next = state;
+    for (var i = 0; i < next.tabs.length; i++) {
+      final tab = next.tabs[i];
+      if (only != null && tab.id != only) continue;
+      if (!tab.location.isNative) continue;
+      // The same list when nothing in it changed, so the rows rebuild
+      // only where tags did.
+      List<FileEntry> merge(List<FileEntry> entries) {
+        List<FileEntry>? out;
+        for (var at = 0; at < entries.length; at++) {
+          final entry = entries[at];
+          final tags = byPath[entry.path];
+          if (tags == null || _sameTags(tags, entry.tags)) continue;
+          (out ??= [...entries])[at] = entry.copyWith(tags: tags);
+        }
+        return out ?? entries;
+      }
+
+      final listing = tab.listing;
+      final flat = tab.flat;
+      final rows = merge(tab.rows);
+      final entries = listing == null ? null : merge(listing.entries);
+      final walked = flat == null ? null : merge(flat.walked);
+      final pending = flat == null ? null : merge(flat.pending);
+      if (identical(rows, tab.rows) &&
+          identical(entries, listing?.entries) &&
+          identical(walked, flat?.walked) &&
+          identical(pending, flat?.pending)) {
+        continue;
+      }
+      next = next.withTab(
+        i,
+        tab.copyWith(
+          listing: entries == null ? null : listing?.copyWith(entries: entries),
+          rows: rows,
+          flat: flat?.copyWith(walked: walked, pending: pending),
+        ),
+      );
+    }
+    if (!identical(next, state)) emit(next);
+  }
+
+  static bool _sameTags(List<FileTag> a, List<FileTag> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  /// [entries] with the tags the rows of [before] had, by path: a listing
+  /// read again shows its dots at once, until its tags are read anew.
+  List<FileEntry> _keepTags(Listing? before, List<FileEntry> entries) {
+    if (!readTags || before == null) return entries;
+    final tags = {
+      for (final e in before.entries)
+        if (e.tags.isNotEmpty) e.path: e.tags,
+    };
+    if (tags.isEmpty) return entries;
+    return [
+      for (final e in entries)
+        if (tags[e.path] case final kept? when e.tags.isEmpty)
+          e.copyWith(tags: kept)
+        else
+          e,
+    ];
   }
 
   // ─── Archive passwords ───

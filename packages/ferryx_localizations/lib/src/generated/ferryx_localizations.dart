@@ -4021,6 +4021,108 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'{name}, in {folder}'**
   String flatRowLabel(String name, String folder);
+
+  /// No description provided for @tagsMenuTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get tagsMenuTitle;
+
+  /// No description provided for @tagColorRed.
+  ///
+  /// In en, this message translates to:
+  /// **'Red'**
+  String get tagColorRed;
+
+  /// No description provided for @tagColorOrange.
+  ///
+  /// In en, this message translates to:
+  /// **'Orange'**
+  String get tagColorOrange;
+
+  /// No description provided for @tagColorYellow.
+  ///
+  /// In en, this message translates to:
+  /// **'Yellow'**
+  String get tagColorYellow;
+
+  /// No description provided for @tagColorGreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Green'**
+  String get tagColorGreen;
+
+  /// No description provided for @tagColorBlue.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get tagColorBlue;
+
+  /// No description provided for @tagColorPurple.
+  ///
+  /// In en, this message translates to:
+  /// **'Purple'**
+  String get tagColorPurple;
+
+  /// No description provided for @tagColorGray.
+  ///
+  /// In en, this message translates to:
+  /// **'Gray'**
+  String get tagColorGray;
+
+  /// No description provided for @tagsNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New Tag…'**
+  String get tagsNew;
+
+  /// No description provided for @tagsNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Tag'**
+  String get tagsNewTitle;
+
+  /// No description provided for @tagsNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get tagsNameLabel;
+
+  /// No description provided for @tagsColorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get tagsColorLabel;
+
+  /// No description provided for @tagsColorNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get tagsColorNone;
+
+  /// No description provided for @tagsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get tagsAdd;
+
+  /// Two tag names in a list; longer lists repeat it.
+  ///
+  /// In en, this message translates to:
+  /// **'{first}, {second}'**
+  String tagsList(String first, String second);
+
+  /// No description provided for @tagsRowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}, tags: {tags}'**
+  String tagsRowLabel(String label, String tags);
+
+  /// No description provided for @tagsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{The tags of {count} item could not be changed: {reason}} other{The tags of {count} items could not be changed: {reason}}}'**
+  String tagsFailed(int count, String reason);
 }
 
 class _FerryxLocalizationsDelegate

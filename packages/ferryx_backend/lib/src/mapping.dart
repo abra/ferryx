@@ -6,7 +6,9 @@ library;
 import 'package:domain_models/domain_models.dart' as d;
 
 import 'rust/api/archives.dart' as rust;
+import 'rust/api/capabilities.dart' as rust;
 import 'rust/api/flat.dart' as rust;
+import 'rust/api/tags.dart' as rust;
 import 'rust/api/types.dart' as rust;
 
 DateTime? dateTimeFromMs(int? ms) => ms == null
@@ -81,7 +83,9 @@ d.FileEntry entryFromView(rust.EntryView view, {String folder = ''}) =>
       flags: view.flags,
       isHidden: view.isHidden,
       extension: view.extension_,
-      tags: view.tags,
+      tags: view.tags.isEmpty
+          ? const []
+          : view.tags.map(tagFromView).toList(growable: false),
       folder: folder,
     );
 
@@ -419,3 +423,26 @@ d.FlatBatch flatBatchFromView(rust.FlatBatchView view) => d.FlatBatch(
   count: view.count,
   capped: view.capped,
 );
+
+// ─── Tags and capabilities ───
+
+d.FileTag tagFromView(rust.TagView view) =>
+    d.FileTag(view.name, color: view.color);
+
+rust.TagView tagToView(d.FileTag tag) =>
+    rust.TagView(name: tag.name, color: tag.color);
+
+d.TagOutcome tagOutcomeFromView(rust.TagOutcomeView view) => d.TagOutcome(
+  path: view.path,
+  tags: view.tags.map(tagFromView).toList(growable: false),
+  failure: view.failure == null
+      ? null
+      : d.FerryxException(
+          errorKindFromView(view.failure!),
+          view.message,
+          path: view.path,
+        ),
+);
+
+d.Capabilities capabilitiesFromView(rust.CapabilitiesView view) =>
+    d.Capabilities(finderTags: view.finderTags, spotlight: view.spotlight);

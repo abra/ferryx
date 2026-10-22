@@ -762,5 +762,26 @@
   "flatCappedCount": "{count, plural, one{the first {count} file} other{the first {count} files}}",
   "@flatCappedCount": {"placeholders": {"count": {"type": "int", "format": "decimalPattern"}}},
   "flatRowLabel": "{name}, in {folder}",
-  "@flatRowLabel": {"placeholders": {"name": {"type": "String"}, "folder": {"type": "String"}}}
+  "@flatRowLabel": {"placeholders": {"name": {"type": "String"}, "folder": {"type": "String"}}},
+
+"tagsMenuTitle": "Tags",
+  "tagColorRed": "Red",
+  "tagColorOrange": "Orange",
+  "tagColorYellow": "Yellow",
+  "tagColorGreen": "Green",
+  "tagColorBlue": "Blue",
+  "tagColorPurple": "Purple",
+  "tagColorGray": "Gray",
+  "tagsNew": "New Tag…",
+  "tagsNewTitle": "New Tag",
+  "tagsNameLabel": "Name",
+  "tagsColorLabel": "Color",
+  "tagsColorNone": "None",
+  "tagsAdd": "Add",
+  "tagsList": "{first}, {second}",
+  "@tagsList": {"description": "Two tag names in a list; longer lists repeat it.", "placeholders": {"first": {"type": "String"}, "second": {"type": "String"}}},
+  "tagsRowLabel": "{label}, tags: {tags}",
+  "@tagsRowLabel": {"placeholders": {"label": {"type": "String"}, "tags": {"type": "String"}}},
+  "tagsFailed": "{count, plural, one{The tags of {count} item could not be changed: {reason}} other{The tags of {count} items could not be changed: {reason}}}",
+  "@tagsFailed": {"placeholders": {"count": {"type": "int"}, "reason": {"type": "String"}}}
 }

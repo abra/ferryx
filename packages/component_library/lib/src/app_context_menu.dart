@@ -29,6 +29,7 @@ final class AppMenuAction<T> extends AppMenuEntry<T> {
     this.danger = false,
     this.enabled = true,
     this.checked,
+    this.mixed = false,
   });
 
   final T value;
@@ -49,6 +50,9 @@ final class AppMenuAction<T> extends AppMenuEntry<T> {
 
   /// A check mark before the label (an option that is on).
   final bool? checked;
+
+  /// A dash in the check's place: on for some items, off for others.
+  final bool mixed;
 }
 
 /// A hairline between groups of items.
@@ -295,8 +299,9 @@ class _AppMenuListState<T> extends State<AppMenuList<T>> {
   }
 
   /// Some item can carry a check mark: every item keeps room for one.
-  bool get _checks =>
-      widget.entries.any((e) => e is AppMenuAction<T> && e.checked != null);
+  bool get _checks => widget.entries.any(
+    (e) => e is AppMenuAction<T> && (e.checked != null || e.mixed),
+  );
 
   /// A menu with an icon anywhere keeps one column for it, so the labels
   /// line up.
@@ -459,6 +464,7 @@ class _AppMenuListState<T> extends State<AppMenuList<T>> {
                   checked: _checks || context.metrics.menuHighlightAccent
                       ? (action.checked ?? false)
                       : null,
+                  mixed: action.mixed,
                   selected: i == _highlight,
                   onTap: () => _pick(i),
                 ),

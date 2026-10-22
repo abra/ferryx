@@ -2,6 +2,7 @@
 
 pub mod archives;
 pub mod attrs;
+pub mod capabilities;
 pub mod events;
 pub mod files;
 pub mod find;
@@ -10,6 +11,7 @@ pub mod listing;
 pub mod ops;
 pub mod rename;
 pub mod system;
+pub mod tags;
 pub mod types;
 
 #[flutter_rust_bridge::frb(init)]

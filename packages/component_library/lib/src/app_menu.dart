@@ -184,6 +184,7 @@ class AppMenuItem extends StatefulWidget {
     this.danger = false,
     this.enabled = true,
     this.checked,
+    this.mixed = false,
     super.key,
   });
 
@@ -198,6 +199,11 @@ class AppMenuItem extends StatefulWidget {
 
   /// A check mark before the label when `true`; room for one when `false`.
   final bool? checked;
+
+  /// With [checked] `false`: a dash in the check's place, for an option
+  /// that is on for some of the items and off for others (NSMenu's mixed
+  /// state).
+  final bool mixed;
 
   @override
   State<AppMenuItem> createState() => _AppMenuItemState();
@@ -260,6 +266,12 @@ class _AppMenuItemState extends State<AppMenuItem> {
                     child: widget.checked!
                         ? Icon(
                             AppIcons.check,
+                            size: AppIconSize.sm,
+                            color: foreground,
+                          )
+                        : widget.mixed
+                        ? Icon(
+                            AppIcons.minus,
                             size: AppIconSize.sm,
                             color: foreground,
                           )

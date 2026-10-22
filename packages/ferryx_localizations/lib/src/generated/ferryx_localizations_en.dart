@@ -2321,4 +2321,67 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String flatRowLabel(String name, String folder) {
     return '$name, in $folder';
   }
+
+  @override
+  String get tagsMenuTitle => 'Tags';
+
+  @override
+  String get tagColorRed => 'Red';
+
+  @override
+  String get tagColorOrange => 'Orange';
+
+  @override
+  String get tagColorYellow => 'Yellow';
+
+  @override
+  String get tagColorGreen => 'Green';
+
+  @override
+  String get tagColorBlue => 'Blue';
+
+  @override
+  String get tagColorPurple => 'Purple';
+
+  @override
+  String get tagColorGray => 'Gray';
+
+  @override
+  String get tagsNew => 'New Tag…';
+
+  @override
+  String get tagsNewTitle => 'New Tag';
+
+  @override
+  String get tagsNameLabel => 'Name';
+
+  @override
+  String get tagsColorLabel => 'Color';
+
+  @override
+  String get tagsColorNone => 'None';
+
+  @override
+  String get tagsAdd => 'Add';
+
+  @override
+  String tagsList(String first, String second) {
+    return '$first, $second';
+  }
+
+  @override
+  String tagsRowLabel(String label, String tags) {
+    return '$label, tags: $tags';
+  }
+
+  @override
+  String tagsFailed(int count, String reason) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'The tags of $count items could not be changed: $reason',
+      one: 'The tags of $count item could not be changed: $reason',
+    );
+    return '$_temp0';
+  }
 }

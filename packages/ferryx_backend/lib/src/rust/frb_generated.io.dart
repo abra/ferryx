@@ -5,6 +5,7 @@
 
 import 'api/archives.dart';
 import 'api/attrs.dart';
+import 'api/capabilities.dart';
 import 'api/events.dart';
 import 'api/files.dart';
 import 'api/find.dart';
@@ -13,6 +14,7 @@ import 'api/listing.dart';
 import 'api/ops.dart';
 import 'api/rename.dart';
 import 'api/system.dart';
+import 'api/tags.dart';
 import 'api/types.dart';
 
 import 'dart:async';
@@ -76,6 +78,9 @@ abstract class FerryxRustLibApiImplPlatform
   ConflictSideView dco_decode_box_autoadd_conflict_side_view(dynamic raw);
 
   @protected
+  FerryxErrorKind dco_decode_box_autoadd_ferryx_error_kind(dynamic raw);
+
+  @protected
   FindRequestView dco_decode_box_autoadd_find_request_view(dynamic raw);
 
   @protected
@@ -104,6 +109,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
+
+  @protected
+  CapabilitiesView dco_decode_capabilities_view(dynamic raw);
 
   @protected
   CaseTransformView dco_decode_case_transform_view(dynamic raw);
@@ -151,6 +159,9 @@ abstract class FerryxRustLibApiImplPlatform
   PlatformInt64 dco_decode_i_64(dynamic raw);
 
   @protected
+  ItemTagsView dco_decode_item_tags_view(dynamic raw);
+
+  @protected
   List<String> dco_decode_list_String(dynamic raw);
 
   @protected
@@ -164,6 +175,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   List<FolderSizeView> dco_decode_list_folder_size_view(dynamic raw);
+
+  @protected
+  List<ItemTagsView> dco_decode_list_item_tags_view(dynamic raw);
 
   @protected
   List<OpErrorView> dco_decode_list_op_error_view(dynamic raw);
@@ -188,6 +202,12 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   List<RenamePairView> dco_decode_list_rename_pair_view(dynamic raw);
+
+  @protected
+  List<TagOutcomeView> dco_decode_list_tag_outcome_view(dynamic raw);
+
+  @protected
+  List<TagView> dco_decode_list_tag_view(dynamic raw);
 
   @protected
   List<VolumeView> dco_decode_list_volume_view(dynamic raw);
@@ -224,6 +244,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   ConflictSideView? dco_decode_opt_box_autoadd_conflict_side_view(dynamic raw);
+
+  @protected
+  FerryxErrorKind? dco_decode_opt_box_autoadd_ferryx_error_kind(dynamic raw);
 
   @protected
   PlatformInt64? dco_decode_opt_box_autoadd_i_64(dynamic raw);
@@ -278,6 +301,12 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   StandardFoldersView dco_decode_standard_folders_view(dynamic raw);
+
+  @protected
+  TagOutcomeView dco_decode_tag_outcome_view(dynamic raw);
+
+  @protected
+  TagView dco_decode_tag_view(dynamic raw);
 
   @protected
   int dco_decode_u_32(dynamic raw);
@@ -341,6 +370,11 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  FerryxErrorKind sse_decode_box_autoadd_ferryx_error_kind(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   FindRequestView sse_decode_box_autoadd_find_request_view(
     SseDeserializer deserializer,
   );
@@ -383,6 +417,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  CapabilitiesView sse_decode_capabilities_view(SseDeserializer deserializer);
 
   @protected
   CaseTransformView sse_decode_case_transform_view(
@@ -434,6 +471,9 @@ abstract class FerryxRustLibApiImplPlatform
   PlatformInt64 sse_decode_i_64(SseDeserializer deserializer);
 
   @protected
+  ItemTagsView sse_decode_item_tags_view(SseDeserializer deserializer);
+
+  @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer);
 
   @protected
@@ -447,6 +487,11 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   List<FolderSizeView> sse_decode_list_folder_size_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<ItemTagsView> sse_decode_list_item_tags_view(
     SseDeserializer deserializer,
   );
 
@@ -485,6 +530,14 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  List<TagOutcomeView> sse_decode_list_tag_outcome_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<TagView> sse_decode_list_tag_view(SseDeserializer deserializer);
+
+  @protected
   List<VolumeView> sse_decode_list_volume_view(SseDeserializer deserializer);
 
   @protected
@@ -521,6 +574,11 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   ConflictSideView? sse_decode_opt_box_autoadd_conflict_side_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  FerryxErrorKind? sse_decode_opt_box_autoadd_ferryx_error_kind(
     SseDeserializer deserializer,
   );
 
@@ -593,6 +651,12 @@ abstract class FerryxRustLibApiImplPlatform
   StandardFoldersView sse_decode_standard_folders_view(
     SseDeserializer deserializer,
   );
+
+  @protected
+  TagOutcomeView sse_decode_tag_outcome_view(SseDeserializer deserializer);
+
+  @protected
+  TagView sse_decode_tag_view(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_32(SseDeserializer deserializer);
@@ -670,6 +734,12 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_box_autoadd_ferryx_error_kind(
+    FerryxErrorKind self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_find_request_view(
     FindRequestView self,
     SseSerializer serializer,
@@ -725,6 +795,12 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_capabilities_view(
+    CapabilitiesView self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_case_transform_view(
@@ -790,6 +866,9 @@ abstract class FerryxRustLibApiImplPlatform
   void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer);
 
   @protected
+  void sse_encode_item_tags_view(ItemTagsView self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
 
   @protected
@@ -813,6 +892,12 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_list_folder_size_view(
     List<FolderSizeView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_item_tags_view(
+    List<ItemTagsView> self,
     SseSerializer serializer,
   );
 
@@ -865,6 +950,15 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_list_tag_outcome_view(
+    List<TagOutcomeView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_tag_view(List<TagView> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_volume_view(
     List<VolumeView> self,
     SseSerializer serializer,
@@ -906,6 +1000,12 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_opt_box_autoadd_conflict_side_view(
     ConflictSideView? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_ferryx_error_kind(
+    FerryxErrorKind? self,
     SseSerializer serializer,
   );
 
@@ -1001,6 +1101,15 @@ abstract class FerryxRustLibApiImplPlatform
     StandardFoldersView self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_tag_outcome_view(
+    TagOutcomeView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_tag_view(TagView self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_32(int self, SseSerializer serializer);

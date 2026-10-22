@@ -61,7 +61,11 @@ pub fn stat(path: &Path) -> VfsResult<Entry> {
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_else(|| path.to_string_lossy().into_owned());
-    Ok(build_entry(name, path.to_path_buf(), &meta, &mut Names::default()))
+    let mut entry = build_entry(name, path.to_path_buf(), &meta, &mut Names::default());
+    // One item's tags cost nothing to read; a listing's come apart (see
+    // `tags`).
+    entry.tags = crate::tags::read(path);
+    Ok(entry)
 }
 
 /// Whether `path` is a folder, following a symlink.

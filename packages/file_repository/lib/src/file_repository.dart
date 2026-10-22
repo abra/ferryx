@@ -251,6 +251,39 @@ class FileRepository {
   Future<bool> detectArchive(String path) =>
       rust.FerryxBackend.guard(() => rust.detectArchive(path: path));
 
+  // ─── Tags and capabilities ───
+
+  /// What this desktop can do that others cannot (Finder tags, the
+  /// Spotlight index); the interface hides what it lacks.
+  Capabilities capabilities() => rust.capabilitiesFromView(rust.capabilities());
+
+  /// The tags of [listingId]'s items that have any, by path. A listing
+  /// comes without them (each costs a system call); ask once it shows.
+  Future<Map<String, List<FileTag>>> listingTags(String listingId) =>
+      rust.FerryxBackend.guard(() async {
+        final found = await rust.readListingTags(listingId: listingId);
+        return {
+          for (final item in found)
+            item.path: item.tags.map(rust.tagFromView).toList(growable: false),
+        };
+      });
+
+  /// Adds [add] to each of [paths] (a tag already there takes the colour
+  /// given) and takes off the tags named in [remove]; answers each item's
+  /// tags after, or its failure.
+  Future<List<TagOutcome>> setTags(
+    List<String> paths, {
+    List<FileTag> add = const [],
+    List<String> remove = const [],
+  }) => rust.FerryxBackend.guard(() async {
+    final outcomes = await rust.setTags(
+      paths: paths,
+      add: add.map(rust.tagToView).toList(),
+      remove: remove,
+    );
+    return outcomes.map(rust.tagOutcomeFromView).toList(growable: false);
+  });
+
   // ─── Attributes ───
 
   Future<FileAttributes> readAttributes(String path) =>

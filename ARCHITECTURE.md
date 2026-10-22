@@ -41,8 +41,8 @@ controls (`AppNavItem`, `showAppMenu`, `AppDialog`, `AppToggle`,
 `AppTopBarRow`, `FocusRing`, tooltips, overlay scrollbars). Hairlines snap
 to device pixels (`AppBorder`, `AppDivider`, `PixelSnap`). The component
 library is shared with Mnema and documented there in depth; Ferryx adds
-file icons (`AppIcons`) and the tag palette (`AppColorsExt.ink/wash` by
-index).
+file icons (`AppIcons`), the tag palette (`AppColorsExt.ink/wash` by
+index) and Finder's tag colours (`AppTagColors`, `AppTagDots`).
 
 The HIG details the library keeps for every screen, so features need
 not:
@@ -332,6 +332,43 @@ archive the view comes from the index, in memory.
   mode sizes its columns as thirds (as it now does for any list over
   2 000 rows), and only the rows in view are built.
 
+### Finder tags
+
+macOS keeps tags in the extended attribute
+`com.apple.metadata:_kMDItemUserTags` (a binary property list of
+`Name\nColour` strings); `ferryx_vfs::tags` reads and writes it on the
+item itself (never through a link) and keeps the legacy Finder-info
+colour label in step (the last coloured tag's), so older tools agree.
+`capabilities()` says whether the desktop has tags (macOS) and whether
+Spotlight answers (`mdfind`); the routing passes them to the workspace
+(`WorkspaceScreen.capabilities`) and to Settings (`unavailable`
+commands), so ⌃⌘T, its menu items and its Hotkeys row are hidden
+elsewhere — features never ask the platform.
+
+- **Read lazily.** One `getxattr` costs about 14 µs on APFS even for an
+  item without tags, more than the rest of its row (10 000 files: 0.06–0.1 s
+  to list, 0.14–0.16 s more for the tags), so a listing does not read
+  them. `PanelCubit` (`readTags`) asks `read_listing_tags` once a listing
+  or a flat view shows — read on up to four threads, only the tagged
+  items come back — and merges them in by path; a listing read again keeps
+  the dots it showed until the new read answers, so they never blink. One
+  item (`stat`) reads its own.
+- **Shown** as Finder does: up to three dots right after the name in List
+  and Brief (`AppTagDots`, Finder's colours in light and dark from
+  `AppTagColors`, each ringed with the row's background so they stay
+  apart on the cursor's accent too), the names in the dots' tip and the
+  row's semantics; uncoloured tags have no dot.
+- **Edited** with ⌃⌘T (the row menu's "Tags…", `:tag red,work`,
+  `:tag -red`): a menu by the cursor's row lists Finder's seven colours in
+  its order, then the named tags of the folder's rows, each checked when
+  every target has it, with a dash when some do (`AppMenuAction.mixed`);
+  a pick turns it on for all, or off when all had it; "New Tag…" asks a
+  name and a colour. `set_tags` applies one edit to every target and
+  answers each one's tags or its typed failure; the window shows the new
+  tags in both panels at once and words the failures in one notice. A
+  standard tag is matched by its colour and its name in the interface's
+  language or an English Finder's, and taken off under both.
+
 ### Keyboard model
 
 - A single `CommandIntent` type carries an `AppCommand`. `CommandShortcuts`
@@ -453,7 +490,6 @@ partially created resources.
   or process-list virtual file systems; archives are read-only, and a rar
   set of several volumes lists its first volume's members only; no Quick
   Look (the viewer's preview shows images).
-- Finder tags are not read; the tag palette is in place for them.
 - Scroll-only keys (⌥Home, ⌥End, ⌥PgUp, ⌥PgDn) move the cursor as the plain
   keys do.
 - Drag and drop between the panels and with other applications is not

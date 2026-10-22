@@ -19,6 +19,7 @@ class HotkeysPage extends StatefulWidget {
     required this.platform,
     required this.vim,
     required this.shortcutMap,
+    this.unavailable = const {},
     super.key,
   });
 
@@ -29,6 +30,9 @@ class HotkeysPage extends StatefulWidget {
   /// Keys read as Vim writes them (`j`, `gg`), as the panels take them.
   final bool vim;
   final ShortcutMap shortcutMap;
+
+  /// Commands this desktop lacks: not listed.
+  final Set<AppCommand> unavailable;
 
   @override
   State<HotkeysPage> createState() => _HotkeysPageState();
@@ -159,8 +163,9 @@ class _HotkeysPageState extends State<HotkeysPage> {
     for (final scope in CommandScope.values) {
       final commands = [
         for (final command in AppCommand.inScope(scope))
-          if (needle.isEmpty ||
-              l10n.commandLabel(command).toLowerCase().contains(needle))
+          if (!widget.unavailable.contains(command) &&
+              (needle.isEmpty ||
+                  l10n.commandLabel(command).toLowerCase().contains(needle)))
             command,
       ];
       if (commands.isEmpty) continue;

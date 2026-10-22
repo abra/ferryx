@@ -10,6 +10,7 @@
 //! - [`flat`]: a folder's whole subtree as one list of files, in batches.
 //! - [`volumes`], [`system`]: the disks, the standard folders, opening,
 //!   revealing, the trash.
+//! - [`tags`]: Finder tags, read with each item and written (macOS).
 //! - [`attrs`], [`links`]: permissions, flags, owners, times; symbolic and
 //!   hard links.
 
@@ -21,6 +22,7 @@ pub mod links;
 pub mod location;
 pub mod native;
 pub mod system;
+pub mod tags;
 pub mod volumes;
 pub mod watch;
 

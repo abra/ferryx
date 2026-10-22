@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:panels_feature/panels_feature.dart';
 import 'package:settings_feature/settings_feature.dart';
+import 'package:shortcuts/shortcuts.dart';
 import 'package:viewer_feature/viewer_feature.dart';
 
 /// Route paths.
@@ -87,6 +88,9 @@ GoRouter buildRouter({
             initialSection: state.extra is SettingsSection
                 ? state.extra! as SettingsSection
                 : SettingsSection.general,
+            unavailable: {
+              if (!deps.files.capabilities().finderTags) AppCommand.editTags,
+            },
             onClose: () => context.pop(),
           ),
         ),
@@ -120,6 +124,7 @@ class _WorkspaceRoute extends StatelessWidget {
         files: deps.files,
         operations: deps.operations,
         rename: deps.rename,
+        capabilities: deps.files.capabilities(),
         preferences: deps.preferencesService,
         logger: deps.logger,
         shortcutMap: deps.shortcutMap,

@@ -21,6 +21,7 @@ import '../dialogs/favorites_dialog.dart';
 import '../dialogs/go_to_menus.dart';
 import '../dialogs/question_dialog.dart';
 import '../dialogs/simple_dialogs.dart';
+import '../dialogs/tag_dialog.dart';
 import '../operations/operations_cards.dart';
 import '../panel/panel_cubit.dart';
 import '../panel/panel_footer.dart';
@@ -31,6 +32,7 @@ import '../panel/saved_panel.dart';
 import '../path_text.dart';
 import 'context_menu.dart';
 import 'key_hints.dart';
+import 'tag_menu.dart';
 import 'vim_register.dart';
 import 'workspace_cubit.dart';
 import 'workspace_state.dart';
@@ -38,6 +40,7 @@ import 'workspace_state.dart';
 part 'vim_actions.dart';
 part 'workspace_actions.dart';
 part 'archive_actions.dart';
+part 'tag_actions.dart';
 
 /// Where the window sends what it does not do itself.
 class WorkspaceNavigation {
@@ -102,6 +105,7 @@ class WorkspaceScreen extends StatefulWidget {
     required this.savedActive,
     required this.fallbackLocation,
     required this.onSnapshot,
+    this.capabilities = const Capabilities(),
     super.key,
   });
 
@@ -120,6 +124,10 @@ class WorkspaceScreen extends StatefulWidget {
   /// Where a panel opens when it has nothing saved: the home folder.
   final Location fallbackLocation;
   final ValueChanged<WorkspaceSnapshot> onSnapshot;
+
+  /// What this desktop can do that others cannot, as the core reports
+  /// it: the commands it lacks are hidden.
+  final Capabilities capabilities;
 
   @override
   State<WorkspaceScreen> createState() => _WorkspaceScreenState();
@@ -171,6 +179,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     operations: widget.operations,
     preferences: widget.preferences,
     logger: widget.logger,
+    readTags: widget.capabilities.finderTags,
   );
 
   @override

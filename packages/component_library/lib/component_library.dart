@@ -40,6 +40,7 @@ export 'src/popup_focus.dart';
 export 'src/app_section_label.dart';
 export 'src/app_segmented_control.dart';
 export 'src/app_toggle.dart';
+export 'src/app_tag_dots.dart';
 export 'src/app_tooltip.dart';
 export 'src/app_top_bar_row.dart';
 export 'src/app_value_tip.dart';

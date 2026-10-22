@@ -2364,4 +2364,69 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String flatRowLabel(String name, String folder) {
     return '$name, в $folder';
   }
+
+  @override
+  String get tagsMenuTitle => 'Теги';
+
+  @override
+  String get tagColorRed => 'Красный';
+
+  @override
+  String get tagColorOrange => 'Оранжевый';
+
+  @override
+  String get tagColorYellow => 'Желтый';
+
+  @override
+  String get tagColorGreen => 'Зеленый';
+
+  @override
+  String get tagColorBlue => 'Синий';
+
+  @override
+  String get tagColorPurple => 'Лиловый';
+
+  @override
+  String get tagColorGray => 'Серый';
+
+  @override
+  String get tagsNew => 'Новый тег…';
+
+  @override
+  String get tagsNewTitle => 'Новый тег';
+
+  @override
+  String get tagsNameLabel => 'Имя';
+
+  @override
+  String get tagsColorLabel => 'Цвет';
+
+  @override
+  String get tagsColorNone => 'Без цвета';
+
+  @override
+  String get tagsAdd => 'Добавить';
+
+  @override
+  String tagsList(String first, String second) {
+    return '$first, $second';
+  }
+
+  @override
+  String tagsRowLabel(String label, String tags) {
+    return '$label, теги: $tags';
+  }
+
+  @override
+  String tagsFailed(int count, String reason) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Не удалось изменить теги $count объекта: $reason',
+      many: 'Не удалось изменить теги $count объектов: $reason',
+      few: 'Не удалось изменить теги $count объектов: $reason',
+      one: 'Не удалось изменить теги $count объекта: $reason',
+    );
+    return '$_temp0';
+  }
 }

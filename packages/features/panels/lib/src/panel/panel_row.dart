@@ -118,7 +118,7 @@ class RowName extends StatelessWidget {
     final match = look.match;
     // A long name loses its middle, so the extension stays in view; with
     // a search on, the underlined letters stay instead.
-    final name = match == null || match.isEmpty
+    final plainName = match == null || match.isEmpty
         ? AppMiddleEllipsis(entry.isParent ? '..' : entry.name, style: style)
         : Text.rich(
             _spans(entry.name, match, style, colors),
@@ -126,6 +126,32 @@ class RowName extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             softWrap: false,
           );
+    // Finder tags: their colours as dots right after the name, their
+    // names in the dots' tip.
+    final dots = [
+      for (final tag in entry.tags)
+        if (tag.color > 0) tag.color,
+    ];
+    final dotSize = ((base.fontSize ?? AppIconSize.sm) * 0.75).roundToDouble();
+    final Widget name = dots.isEmpty
+        ? plainName
+        : Row(
+            children: [
+              Flexible(child: plainName),
+              const SizedBox(width: AppSpacing.xs),
+              AppTooltip(
+                message: context.l10n.tagNames(entry.tags.map((t) => t.name)),
+                child: AppTagDots(
+                  colors: dots,
+                  ring: look.background(colors) ?? colors.window,
+                  size: dotSize,
+                ),
+              ),
+            ],
+          );
+    final dotsWidth = dots.isEmpty
+        ? 0.0
+        : AppTagDots.widthOf(dots.length, dotSize) + AppSpacing.xs;
     return Row(
       children: [
         Icon(icon, size: iconSize, color: iconColor),
@@ -138,6 +164,7 @@ class RowName extends StatelessWidget {
                   : _NameWithFolder(
                       name: name,
                       nameText: entry.name,
+                      nameExtra: dotsWidth,
                       nameStyle: style,
                       folder: entry.folder,
                       folderStyle: base.copyWith(
@@ -194,11 +221,15 @@ class _NameWithFolder extends StatelessWidget {
     required this.nameStyle,
     required this.folder,
     required this.folderStyle,
+    this.nameExtra = 0,
   });
 
   final Widget name;
   final String nameText;
   final TextStyle nameStyle;
+
+  /// What [name] shows besides its text (the tags' dots).
+  final double nameExtra;
   final String folder;
   final TextStyle folderStyle;
 
@@ -227,7 +258,7 @@ class _NameWithFolder extends StatelessWidget {
         return width.ceilToDouble();
       }
 
-      final nameWidth = measure(nameText, nameStyle);
+      final nameWidth = measure(nameText, nameStyle) + nameExtra;
       final folderWidth = measure(folder, folderStyle);
       final double nameRoom;
       if (nameWidth + folderWidth <= available) {
@@ -256,13 +287,15 @@ class _NameWithFolder extends StatelessWidget {
 }
 
 /// What a screen reader says for a row: its name, the folder of a flat
-/// view's row.
+/// view's row, its tags.
 String rowSemanticsLabel(BuildContext context, FileEntry entry) {
   final l10n = context.l10n;
   if (entry.isParent) return l10n.panelParentFolder;
-  return entry.folder.isEmpty
+  final label = entry.folder.isEmpty
       ? entry.name
       : l10n.flatRowLabel(entry.name, entry.folder);
+  if (entry.tags.isEmpty) return label;
+  return l10n.tagsRowLabel(label, l10n.tagNames(entry.tags.map((t) => t.name)));
 }
 
 /// A folder with nothing to show, in either view.

@@ -14,6 +14,7 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
   required bool severalSelected,
   required ShortcutMap map,
   bool archive = false,
+  bool tags = false,
 }) {
   final l10n = context.l10n;
   final platform = Theme.of(context).platform;
@@ -88,6 +89,7 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
         l10n.cmdAddToFavorites,
         icon: AppIcons.star,
       ),
+    if (tags) action(AppCommand.editTags, l10n.cmdEditTags, icon: AppIcons.tag),
     action(AppCommand.copyItemPath, l10n.menuCopyPath, icon: AppIcons.link),
     action(AppCommand.copyItemName, l10n.menuCopyName, icon: AppIcons.text),
     if (native) ...[

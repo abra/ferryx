@@ -37,6 +37,8 @@ lzma-rust2 = { version = "0.16", default-features = false, features = ["std", "x
 sevenz-rust2 = { version = "0.20", default-features = false, features = ["aes256", "bzip2", "deflate", "ppmd", "zstd"] }
 unrar-rs = { version = "0.14", default-features = false, features = ["crypto-rust"] }
 zstd = "0.13"
+# 1.8: the last line for Rust 1.85.
+plist = { version = "~1.8", default-features = false }
 filetime = "0.2"
 nix = { version = "0.29", features = ["fs", "user"] }
 

@@ -15,5 +15,6 @@ export 'src/location.dart';
 export 'src/operations.dart';
 export 'src/panel_layout.dart';
 export 'src/rename.dart';
+export 'src/tags.dart';
 export 'src/volumes.dart';
 export 'src/tools.dart';

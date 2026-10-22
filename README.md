@@ -51,6 +51,10 @@ files is Rust.
   branch view; sort, select, quick search and every command across the
   whole tree; the first rows show at once even in a huge tree; works
   inside archives too.
+- **Finder tags** (macOS): coloured dots after the names, as Finder
+  shows them, and the names in their tip; ⌃⌘T (or `:tag red,work`,
+  `:tag -red`) tags the selection from a menu that checks what every item
+  has and dashes what some have, with new tags of any name and colour.
 - **Go anywhere**: the Go To pop-up (F1 / F2) with favorites, volumes, the
   other panel's places and the history; quick lists for parents (⌘1),
   history (⌘2), favorites (⌘3) and volumes (⌘4, with eject); Go to Folder

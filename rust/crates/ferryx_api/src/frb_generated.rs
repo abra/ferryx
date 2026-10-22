@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -2029200364;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -657939503;
 
 // Section: executor
 
@@ -315,6 +315,34 @@ fn wire__crate__api__ops__cancel_operation_impl(
                     std::result::Result::Ok(output_ok)
                 })())
             }
+        },
+    )
+}
+fn wire__crate__api__capabilities__capabilities_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "capabilities",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Ok::<_, ()>(crate::api::capabilities::capabilities())?;
+                std::result::Result::Ok(output_ok)
+            })())
         },
     )
 }
@@ -1257,6 +1285,38 @@ fn wire__crate__api__files__read_file_range_impl(
         },
     )
 }
+fn wire__crate__api__tags__read_listing_tags_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "read_listing_tags",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_listing_id = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::types::FerryxError>((move || {
+                    let output_ok = crate::api::tags::read_listing_tags(api_listing_id)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__files__read_symlink_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -1512,6 +1572,40 @@ fn wire__crate__api__archives__set_archive_password_impl(
             move |context| {
                 transform_result_sse::<_, crate::api::types::FerryxError>((move || {
                     let output_ok = crate::api::archives::set_archive_password(api_archive, api_password)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__tags__set_tags_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "set_tags",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_paths = <Vec<String>>::sse_decode(&mut deserializer);
+            let api_add = <Vec<crate::api::tags::TagView>>::sse_decode(&mut deserializer);
+            let api_remove = <Vec<String>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::tags::set_tags(api_paths, api_add, api_remove))?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -1934,6 +2028,18 @@ impl SseDecode for bool {
     }
 }
 
+impl SseDecode for crate::api::capabilities::CapabilitiesView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_finderTags = <bool>::sse_decode(deserializer);
+        let mut var_spotlight = <bool>::sse_decode(deserializer);
+        return crate::api::capabilities::CapabilitiesView {
+            finder_tags: var_finderTags,
+            spotlight: var_spotlight,
+        };
+    }
+}
+
 impl SseDecode for crate::api::types::CaseTransformView {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2028,7 +2134,7 @@ impl SseDecode for crate::api::types::EntryView {
         let mut var_flags = <u32>::sse_decode(deserializer);
         let mut var_isHidden = <bool>::sse_decode(deserializer);
         let mut var_extension_ = <String>::sse_decode(deserializer);
-        let mut var_tags = <Vec<i32>>::sse_decode(deserializer);
+        let mut var_tags = <Vec<crate::api::tags::TagView>>::sse_decode(deserializer);
         return crate::api::types::EntryView {
             name: var_name,
             path: var_path,
@@ -2185,6 +2291,15 @@ impl SseDecode for i64 {
     }
 }
 
+impl SseDecode for crate::api::tags::ItemTagsView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_path = <String>::sse_decode(deserializer);
+        let mut var_tags = <Vec<crate::api::tags::TagView>>::sse_decode(deserializer);
+        return crate::api::tags::ItemTagsView { path: var_path, tags: var_tags };
+    }
+}
+
 impl SseDecode for Vec<String> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2240,6 +2355,18 @@ impl SseDecode for Vec<crate::api::types::FolderSizeView> {
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
             ans_.push(<crate::api::types::FolderSizeView>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::tags::ItemTagsView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::tags::ItemTagsView>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -2336,6 +2463,30 @@ impl SseDecode for Vec<crate::api::types::RenamePairView> {
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
             ans_.push(<crate::api::types::RenamePairView>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::tags::TagOutcomeView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::tags::TagOutcomeView>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::tags::TagView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::tags::TagView>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -2511,6 +2662,17 @@ impl SseDecode for Option<crate::api::types::ConflictSideView> {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
             return Some(<crate::api::types::ConflictSideView>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::api::types::FerryxErrorKind> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::types::FerryxErrorKind>::sse_decode(deserializer));
         } else {
             return None;
         }
@@ -2810,6 +2972,31 @@ impl SseDecode for crate::api::types::StandardFoldersView {
     }
 }
 
+impl SseDecode for crate::api::tags::TagOutcomeView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_path = <String>::sse_decode(deserializer);
+        let mut var_tags = <Vec<crate::api::tags::TagView>>::sse_decode(deserializer);
+        let mut var_failure = <Option<crate::api::types::FerryxErrorKind>>::sse_decode(deserializer);
+        let mut var_message = <String>::sse_decode(deserializer);
+        return crate::api::tags::TagOutcomeView {
+            path: var_path,
+            tags: var_tags,
+            failure: var_failure,
+            message: var_message,
+        };
+    }
+}
+
+impl SseDecode for crate::api::tags::TagView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_name = <String>::sse_decode(deserializer);
+        let mut var_color = <i32>::sse_decode(deserializer);
+        return crate::api::tags::TagView { name: var_name, color: var_color };
+    }
+}
+
 impl SseDecode for u32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2868,46 +3055,48 @@ fn pde_ffi_dispatcher_primary_impl(
         6 => wire__crate__api__rename__batch_rename_preview_impl(port, ptr, rust_vec_len, data_len),
         7 => wire__crate__api__find__cancel_find_impl(port, ptr, rust_vec_len, data_len),
         8 => wire__crate__api__ops__cancel_operation_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__listing__close_listing_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__files__create_directory_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__files__create_file_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__files__create_hardlink_impl(port, ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__files__create_symlink_impl(port, ptr, rust_vec_len, data_len),
-        14 => wire__crate__api__archives__detect_archive_impl(port, ptr, rust_vec_len, data_len),
-        15 => wire__crate__api__files__edit_symlink_impl(port, ptr, rust_vec_len, data_len),
-        16 => wire__crate__api__system__eject_volume_impl(port, ptr, rust_vec_len, data_len),
-        17 => wire__crate__api__files__extract_to_temp_impl(port, ptr, rust_vec_len, data_len),
-        18 => wire__crate__api__files__file_size_impl(port, ptr, rust_vec_len, data_len),
-        19 => wire__crate__api__ops__forget_operation_impl(port, ptr, rust_vec_len, data_len),
-        21 => wire__crate__api__system__free_space_impl(port, ptr, rust_vec_len, data_len),
-        22 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
-        25 => wire__crate__api__ops__list_operations_impl(port, ptr, rust_vec_len, data_len),
-        26 => wire__crate__api__system__list_volumes_impl(port, ptr, rust_vec_len, data_len),
-        27 => wire__crate__api__attrs__lookup_group_impl(port, ptr, rust_vec_len, data_len),
-        28 => wire__crate__api__attrs__lookup_user_impl(port, ptr, rust_vec_len, data_len),
-        29 => wire__crate__api__system__open_default_impl(port, ptr, rust_vec_len, data_len),
-        30 => wire__crate__api__flat__open_flat_listing_impl(port, ptr, rust_vec_len, data_len),
-        31 => wire__crate__api__listing__open_listing_impl(port, ptr, rust_vec_len, data_len),
-        32 => wire__crate__api__system__open_with_impl(port, ptr, rust_vec_len, data_len),
-        33 => wire__crate__api__ops__operation_progress_impl(port, ptr, rust_vec_len, data_len),
-        34 => wire__crate__api__ops__pause_operation_impl(port, ptr, rust_vec_len, data_len),
-        35 => wire__crate__api__listing__peek_listing_impl(port, ptr, rust_vec_len, data_len),
-        36 => wire__crate__api__attrs__read_attributes_impl(port, ptr, rust_vec_len, data_len),
-        37 => wire__crate__api__files__read_file_range_impl(port, ptr, rust_vec_len, data_len),
-        38 => wire__crate__api__files__read_symlink_impl(port, ptr, rust_vec_len, data_len),
-        39 => wire__crate__api__listing__refresh_listing_impl(port, ptr, rust_vec_len, data_len),
-        40 => wire__crate__api__files__rename_item_impl(port, ptr, rust_vec_len, data_len),
-        41 => wire__crate__api__files__resolve_path_impl(port, ptr, rust_vec_len, data_len),
-        42 => wire__crate__api__listing__resort_listing_impl(port, ptr, rust_vec_len, data_len),
-        43 => wire__crate__api__ops__resume_operation_impl(port, ptr, rust_vec_len, data_len),
-        44 => wire__crate__api__system__reveal_in_file_manager_impl(port, ptr, rust_vec_len, data_len),
-        45 => wire__crate__api__archives__set_archive_password_impl(port, ptr, rust_vec_len, data_len),
-        46 => wire__crate__api__flat__sort_flat_listing_impl(port, ptr, rust_vec_len, data_len),
-        48 => wire__crate__api__find__start_find_impl(port, ptr, rust_vec_len, data_len),
-        49 => wire__crate__api__ops__start_operation_impl(port, ptr, rust_vec_len, data_len),
-        50 => wire__crate__api__files__stat_impl(port, ptr, rust_vec_len, data_len),
-        51 => wire__crate__api__flat__stream_flat_listing_impl(port, ptr, rust_vec_len, data_len),
-        52 => wire__crate__api__events__subscribe_events_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__listing__close_listing_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__files__create_directory_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__files__create_file_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__files__create_hardlink_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__files__create_symlink_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__archives__detect_archive_impl(port, ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__files__edit_symlink_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__crate__api__system__eject_volume_impl(port, ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__files__extract_to_temp_impl(port, ptr, rust_vec_len, data_len),
+        19 => wire__crate__api__files__file_size_impl(port, ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__ops__forget_operation_impl(port, ptr, rust_vec_len, data_len),
+        22 => wire__crate__api__system__free_space_impl(port, ptr, rust_vec_len, data_len),
+        23 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
+        26 => wire__crate__api__ops__list_operations_impl(port, ptr, rust_vec_len, data_len),
+        27 => wire__crate__api__system__list_volumes_impl(port, ptr, rust_vec_len, data_len),
+        28 => wire__crate__api__attrs__lookup_group_impl(port, ptr, rust_vec_len, data_len),
+        29 => wire__crate__api__attrs__lookup_user_impl(port, ptr, rust_vec_len, data_len),
+        30 => wire__crate__api__system__open_default_impl(port, ptr, rust_vec_len, data_len),
+        31 => wire__crate__api__flat__open_flat_listing_impl(port, ptr, rust_vec_len, data_len),
+        32 => wire__crate__api__listing__open_listing_impl(port, ptr, rust_vec_len, data_len),
+        33 => wire__crate__api__system__open_with_impl(port, ptr, rust_vec_len, data_len),
+        34 => wire__crate__api__ops__operation_progress_impl(port, ptr, rust_vec_len, data_len),
+        35 => wire__crate__api__ops__pause_operation_impl(port, ptr, rust_vec_len, data_len),
+        36 => wire__crate__api__listing__peek_listing_impl(port, ptr, rust_vec_len, data_len),
+        37 => wire__crate__api__attrs__read_attributes_impl(port, ptr, rust_vec_len, data_len),
+        38 => wire__crate__api__files__read_file_range_impl(port, ptr, rust_vec_len, data_len),
+        39 => wire__crate__api__tags__read_listing_tags_impl(port, ptr, rust_vec_len, data_len),
+        40 => wire__crate__api__files__read_symlink_impl(port, ptr, rust_vec_len, data_len),
+        41 => wire__crate__api__listing__refresh_listing_impl(port, ptr, rust_vec_len, data_len),
+        42 => wire__crate__api__files__rename_item_impl(port, ptr, rust_vec_len, data_len),
+        43 => wire__crate__api__files__resolve_path_impl(port, ptr, rust_vec_len, data_len),
+        44 => wire__crate__api__listing__resort_listing_impl(port, ptr, rust_vec_len, data_len),
+        45 => wire__crate__api__ops__resume_operation_impl(port, ptr, rust_vec_len, data_len),
+        46 => wire__crate__api__system__reveal_in_file_manager_impl(port, ptr, rust_vec_len, data_len),
+        47 => wire__crate__api__archives__set_archive_password_impl(port, ptr, rust_vec_len, data_len),
+        48 => wire__crate__api__tags__set_tags_impl(port, ptr, rust_vec_len, data_len),
+        49 => wire__crate__api__flat__sort_flat_listing_impl(port, ptr, rust_vec_len, data_len),
+        51 => wire__crate__api__find__start_find_impl(port, ptr, rust_vec_len, data_len),
+        52 => wire__crate__api__ops__start_operation_impl(port, ptr, rust_vec_len, data_len),
+        53 => wire__crate__api__files__stat_impl(port, ptr, rust_vec_len, data_len),
+        54 => wire__crate__api__flat__stream_flat_listing_impl(port, ptr, rust_vec_len, data_len),
+        55 => wire__crate__api__events__subscribe_events_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -2920,10 +3109,11 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        20 => wire__crate__api__files__free_name_impl(ptr, rust_vec_len, data_len),
-        23 => wire__crate__api__listing__is_archive_impl(ptr, rust_vec_len, data_len),
-        24 => wire__crate__api__listing__is_directory_impl(ptr, rust_vec_len, data_len),
-        47 => wire__crate__api__system__standard_folders_impl(ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__capabilities__capabilities_impl(ptr, rust_vec_len, data_len),
+        21 => wire__crate__api__files__free_name_impl(ptr, rust_vec_len, data_len),
+        24 => wire__crate__api__listing__is_archive_impl(ptr, rust_vec_len, data_len),
+        25 => wire__crate__api__listing__is_directory_impl(ptr, rust_vec_len, data_len),
+        50 => wire__crate__api__system__standard_folders_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -3068,6 +3258,24 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::types::AttributesView>
     for crate::api::types::AttributesView
 {
     fn into_into_dart(self) -> crate::api::types::AttributesView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::capabilities::CapabilitiesView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.finder_tags.into_into_dart().into_dart(), self.spotlight.into_into_dart().into_dart()]
+            .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::capabilities::CapabilitiesView
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::capabilities::CapabilitiesView>
+    for crate::api::capabilities::CapabilitiesView
+{
+    fn into_into_dart(self) -> crate::api::capabilities::CapabilitiesView {
         self
     }
 }
@@ -3339,6 +3547,18 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::types::FolderSizeView>
     for crate::api::types::FolderSizeView
 {
     fn into_into_dart(self) -> crate::api::types::FolderSizeView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::tags::ItemTagsView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.path.into_into_dart().into_dart(), self.tags.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::tags::ItemTagsView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::tags::ItemTagsView> for crate::api::tags::ItemTagsView {
+    fn into_into_dart(self) -> crate::api::tags::ItemTagsView {
         self
     }
 }
@@ -3780,6 +4000,38 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::types::StandardFoldersView>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::tags::TagOutcomeView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.path.into_into_dart().into_dart(),
+            self.tags.into_into_dart().into_dart(),
+            self.failure.into_into_dart().into_dart(),
+            self.message.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::tags::TagOutcomeView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::tags::TagOutcomeView>
+    for crate::api::tags::TagOutcomeView
+{
+    fn into_into_dart(self) -> crate::api::tags::TagOutcomeView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::tags::TagView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.name.into_into_dart().into_dart(), self.color.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::tags::TagView {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::tags::TagView> for crate::api::tags::TagView {
+    fn into_into_dart(self) -> crate::api::tags::TagView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::types::VolumeView {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -3939,6 +4191,14 @@ impl SseEncode for bool {
     }
 }
 
+impl SseEncode for crate::api::capabilities::CapabilitiesView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.finder_tags, serializer);
+        <bool>::sse_encode(self.spotlight, serializer);
+    }
+}
+
 impl SseEncode for crate::api::types::CaseTransformView {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -4043,7 +4303,7 @@ impl SseEncode for crate::api::types::EntryView {
         <u32>::sse_encode(self.flags, serializer);
         <bool>::sse_encode(self.is_hidden, serializer);
         <String>::sse_encode(self.extension, serializer);
-        <Vec<i32>>::sse_encode(self.tags, serializer);
+        <Vec<crate::api::tags::TagView>>::sse_encode(self.tags, serializer);
     }
 }
 
@@ -4152,6 +4412,14 @@ impl SseEncode for i64 {
     }
 }
 
+impl SseEncode for crate::api::tags::ItemTagsView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.path, serializer);
+        <Vec<crate::api::tags::TagView>>::sse_encode(self.tags, serializer);
+    }
+}
+
 impl SseEncode for Vec<String> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -4198,6 +4466,16 @@ impl SseEncode for Vec<crate::api::types::FolderSizeView> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::api::types::FolderSizeView>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::tags::ItemTagsView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::tags::ItemTagsView>::sse_encode(item, serializer);
         }
     }
 }
@@ -4278,6 +4556,26 @@ impl SseEncode for Vec<crate::api::types::RenamePairView> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::api::types::RenamePairView>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::tags::TagOutcomeView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::tags::TagOutcomeView>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::tags::TagView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::tags::TagView>::sse_encode(item, serializer);
         }
     }
 }
@@ -4439,6 +4737,16 @@ impl SseEncode for Option<crate::api::types::ConflictSideView> {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <crate::api::types::ConflictSideView>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::api::types::FerryxErrorKind> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::types::FerryxErrorKind>::sse_encode(value, serializer);
         }
     }
 }
@@ -4675,6 +4983,24 @@ impl SseEncode for crate::api::types::StandardFoldersView {
         <String>::sse_encode(self.root, serializer);
         <String>::sse_encode(self.temporary, serializer);
         <String>::sse_encode(self.user_name, serializer);
+    }
+}
+
+impl SseEncode for crate::api::tags::TagOutcomeView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.path, serializer);
+        <Vec<crate::api::tags::TagView>>::sse_encode(self.tags, serializer);
+        <Option<crate::api::types::FerryxErrorKind>>::sse_encode(self.failure, serializer);
+        <String>::sse_encode(self.message, serializer);
+    }
+}
+
+impl SseEncode for crate::api::tags::TagView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.name, serializer);
+        <i32>::sse_encode(self.color, serializer);
     }
 }
 
