@@ -8,6 +8,7 @@ import 'package:monitoring/monitoring.dart';
 import 'package:operations_service/operations_service.dart';
 import 'package:preferences_service/preferences_service.dart';
 
+import 'flat_view.dart';
 import 'panel_side.dart';
 import 'panel_state.dart';
 import 'quick_search.dart';
@@ -34,6 +35,7 @@ class PanelCubit extends Cubit<PanelState> {
     required PreferencesService preferences,
     required this.logger,
     this.onFolderShown,
+    this.readTags = false,
   }) : _files = files,
        _operations = operations,
        _preferences = preferences,
@@ -45,6 +47,10 @@ class PanelCubit extends Cubit<PanelState> {
   }
 
   final PanelSide side;
+
+  /// Finder tags are read for the rows once a listing shows (the core
+  /// reports the capability; elsewhere there are none to read).
+  final bool readTags;
   final FileRepository _files;
   final OperationsService _operations;
   final PreferencesService _preferences;
@@ -65,6 +71,9 @@ class PanelCubit extends Cubit<PanelState> {
 
   /// Operations started here whose folder sizes go into the tabs.
   final _sizeOperations = <int>{};
+
+  /// The flat views' walks under way, by listing id.
+  final _flatWalks = <String, StreamSubscription<FlatBatch>>{};
 
   Preferences get _p => _preferences.current;
 
@@ -156,6 +165,7 @@ class PanelCubit extends Cubit<PanelState> {
         location,
         _options(tab.sort),
       );
+      await _stopFlat(tab.id);
       final current = state.tabs.elementAtOrNull(index);
       if (current == null || current.id != tab.id) return;
       if (visit &&
@@ -188,11 +198,14 @@ class PanelCubit extends Cubit<PanelState> {
               clearRange: true,
               clearVisual: true,
               searching: false,
+              clearPasswordLocation: true,
+              clearFlat: true,
             ),
             focusName: focusName ?? current.pendingFocusName,
           ).copyWith(clearPendingFocus: true),
         ),
       );
+      unawaited(_loadTags(tab.id));
     } on FerryxException catch (error, stackTrace) {
       logger.warn(
         'cannot open ${location.display}',
@@ -201,6 +214,23 @@ class PanelCubit extends Cubit<PanelState> {
       );
       final current = state.tabs.elementAtOrNull(index);
       if (current == null || current.id != tab.id) return;
+      if (error.kind == FerryxErrorKind.passwordRequired &&
+          !location.isNative) {
+        // The window asks for the password and opens it again; the tab
+        // stays where it was meanwhile.
+        emit(
+          state.withTab(
+            index,
+            current.copyWith(
+              loading: false,
+              error: error,
+              clearPendingFocus: true,
+              passwordLocation: location,
+            ),
+          ),
+        );
+        if (current.listing != null) return;
+      }
       if (current.listing == null) {
         // Nothing to fall back on in the tab: try the fallback, then the
         // root, which always reads.
@@ -257,19 +287,19 @@ class PanelCubit extends Cubit<PanelState> {
         if (ranges == null) {
           if (onlyMatching) continue;
         } else {
-          matches[entry.name] = ranges;
+          matches[entry.key] = ranges;
         }
       }
       rows.add(row);
     }
-    final wanted = focusName ?? tab.focused?.name;
-    var cursor = wanted == null ? -1 : rows.indexWhere((r) => r.name == wanted);
+    final wanted = focusName ?? tab.focused?.key;
+    var cursor = wanted == null ? -1 : rows.indexWhere((r) => r.key == wanted);
     if (cursor < 0) {
       cursor = rows.isEmpty
           ? -1
           : math.min(math.max(tab.cursor, 0), rows.length - 1);
     }
-    final names = rows.map((r) => r.name).toSet();
+    final names = rows.map((r) => r.key).toSet();
     return tab.copyWith(
       rows: rows,
       matches: matches,
@@ -287,6 +317,10 @@ class PanelCubit extends Cubit<PanelState> {
   Future<void> _refreshTab(int index) async {
     final tab = state.tabs.elementAtOrNull(index);
     if (tab == null || tab.loading) return;
+    if (tab.isFlat) {
+      await _walkFlatAgain(index);
+      return;
+    }
     try {
       final listing = await _files.refreshListing(tab.id);
       final current = state.tabs.elementAtOrNull(index);
@@ -294,9 +328,17 @@ class PanelCubit extends Cubit<PanelState> {
       emit(
         state.withTab(
           index,
-          _withListing(current.copyWith(listing: listing, clearError: true)),
+          _withListing(
+            current.copyWith(
+              listing: listing.copyWith(
+                entries: _keepTags(current.listing, listing.entries),
+              ),
+              clearError: true,
+            ),
+          ),
         ),
       );
+      unawaited(_loadTags(tab.id));
     } on FerryxException catch (error) {
       final gone =
           error.kind == FerryxErrorKind.notFound ||
@@ -328,14 +370,27 @@ class PanelCubit extends Cubit<PanelState> {
         before.quickSearchWhere != next.quickSearchWhere ||
         before.quickSearchOnlyMatching != next.quickSearchOnlyMatching;
     if (!listingChanged) return;
+    final rowsChanged =
+        before.showHiddenFiles != next.showHiddenFiles ||
+        before.showParentEntry != next.showParentEntry;
     for (var i = 0; i < state.tabs.length; i++) {
-      await _resortTab(i, state.tabs[i].sort);
+      final tab = state.tabs[i];
+      if (tab.isFlat && rowsChanged) {
+        // Other rows: the tree is walked again.
+        await _walkFlatAgain(i);
+        continue;
+      }
+      await _resortTab(i, tab.sort);
     }
   }
 
   Future<void> _resortTab(int index, SortOptions sort) async {
     final tab = state.tabs.elementAtOrNull(index);
     if (tab == null || tab.listing == null) return;
+    if (tab.isFlat) {
+      await _resortFlat(index, sort);
+      return;
+    }
     try {
       final listing = await _files.resortListing(tab.id, _options(sort));
       final current = state.tabs.elementAtOrNull(index);
@@ -371,10 +426,10 @@ class PanelCubit extends Cubit<PanelState> {
       return null;
     }
     if (entry.isDir) {
-      await open(tab.location.join(entry.name));
+      await open(tab.locationOf(entry));
       return null;
     }
-    final location = tab.location.join(entry.name);
+    final location = tab.locationOf(entry);
     if (location.isNative && _files.isArchive(entry.path)) {
       await open(Location.inArchive(archive: entry.path));
       return null;
@@ -389,14 +444,14 @@ class PanelCubit extends Cubit<PanelState> {
     final entry = tab?.focused;
     if (tab == null || entry == null || entry.isParent) return null;
     if (entry.isDir) {
-      await open(tab.location.join(entry.name));
+      await open(tab.locationOf(entry));
       return null;
     }
     if (tab.location.isNative) {
       await open(Location.inArchive(archive: entry.path));
       return null;
     }
-    return OpenFileRequest(entry, tab.location.join(entry.name));
+    return OpenFileRequest(entry, tab.locationOf(entry));
   }
 
   Future<void> goParent() async {
@@ -498,7 +553,7 @@ class PanelCubit extends Cubit<PanelState> {
     final focused = tab.focused;
     final mode =
         tab.rangeSelecting ??
-        (focused == null || !tab.selected.contains(focused.name));
+        (focused == null || !tab.selected.contains(focused.key));
     final selected = {...tab.selected};
     if (from != target) {
       final step = target > from ? 1 : -1;
@@ -515,9 +570,9 @@ class PanelCubit extends Cubit<PanelState> {
   void _apply(Set<String> selected, FileEntry row, bool select) {
     if (row.isParent) return;
     if (select) {
-      selected.add(row.name);
+      selected.add(row.key);
     } else {
-      selected.remove(row.name);
+      selected.remove(row.key);
     }
   }
 
@@ -579,7 +634,7 @@ class PanelCubit extends Cubit<PanelState> {
     final row = tab.rows[index];
     if (row.isParent) return;
     final selected = {...tab.selected};
-    if (!selected.remove(row.name)) selected.add(row.name);
+    if (!selected.remove(row.key)) selected.add(row.key);
     _emitActive(tab.copyWith(selected: selected, clearRange: true));
   }
 
@@ -602,7 +657,7 @@ class PanelCubit extends Cubit<PanelState> {
   void invertSelection() {
     final tab = state.active;
     if (tab == null) return;
-    _setSelection((row) => !tab.selected.contains(row.name));
+    _setSelection((row) => !tab.selected.contains(row.key));
   }
 
   /// Selects ([select]) or deselects the rows whose name [matches].
@@ -613,7 +668,7 @@ class PanelCubit extends Cubit<PanelState> {
     final tab = state.active;
     if (tab == null) return;
     _setSelection(
-      (row) => matches(row) ? select : tab.selected.contains(row.name),
+      (row) => matches(row) ? select : tab.selected.contains(row.key),
     );
   }
 
@@ -640,7 +695,7 @@ class PanelCubit extends Cubit<PanelState> {
     if (tab == null) return;
     final next = {
       for (final row in tab.rows)
-        if (!row.isParent && selected(row)) row.name,
+        if (!row.isParent && selected(row)) row.key,
     };
     _emitActive(
       tab.copyWith(
@@ -689,7 +744,7 @@ class PanelCubit extends Cubit<PanelState> {
   void reselectLast() {
     final tab = state.active;
     if (tab == null || tab.lastSelection.isEmpty) return;
-    final names = tab.rows.map((r) => r.name).toSet();
+    final names = tab.rows.map((r) => r.key).toSet();
     _emitActive(
       tab.copyWith(
         selected: tab.lastSelection.where(names.contains).toSet(),
@@ -729,7 +784,7 @@ class PanelCubit extends Cubit<PanelState> {
       final start = at;
       do {
         at = (at + (forward ? 1 : -1) + tab.rows.length) % tab.rows.length;
-        if (tab.matches.containsKey(tab.rows[at].name)) break;
+        if (tab.matches.containsKey(tab.rows[at].key)) break;
       } while (at != start);
     }
     moveCursorTo(at);
@@ -826,15 +881,15 @@ class PanelCubit extends Cubit<PanelState> {
     if (tab == null) return;
     final next = _withListing(
       tab.copyWith(quickSearch: query),
-      focusName: tab.focused?.name,
+      focusName: tab.focused?.key,
     );
     // The cursor goes to the first match, when the one under it is none.
     var cursor = next.cursor;
     if (query.isNotEmpty) {
       final focused = next.focused;
-      if (focused == null || !next.matches.containsKey(focused.name)) {
+      if (focused == null || !next.matches.containsKey(focused.key)) {
         final first = next.rows.indexWhere(
-          (r) => next.matches.containsKey(r.name),
+          (r) => next.matches.containsKey(r.key),
         );
         if (first >= 0) cursor = first;
       }
@@ -877,11 +932,12 @@ class PanelCubit extends Cubit<PanelState> {
       await _files.rename(row.path, trimmed);
       final current = state.active;
       if (current != null && current.id == tab.id) {
-        _emitActive(current.copyWith(pendingFocusName: trimmed));
+        final key = row.folder.isEmpty ? trimmed : '${row.folder}/$trimmed';
+        _emitActive(current.copyWith(pendingFocusName: key));
         await _refreshTab(state.activeIndex);
         final after = state.active;
-        if (after != null) {
-          final at = after.indexOfName(trimmed);
+        if (after != null && !after.isFlat) {
+          final at = after.indexOfName(key);
           if (at >= 0) moveCursorTo(at);
         }
       }
@@ -911,6 +967,9 @@ class PanelCubit extends Cubit<PanelState> {
   }
 
   void _onProgress(OperationProgress progress) {
+    if (progress.state.isFinished && progress.kind != OpKind.calcSizes) {
+      _walkFlatViewsUnder(progress);
+    }
     if (!_sizeOperations.contains(progress.id)) return;
     if (progress.state.isFinished) _sizeOperations.remove(progress.id);
     if (progress.sizes.isEmpty) return;
@@ -974,6 +1033,7 @@ class PanelCubit extends Cubit<PanelState> {
         closedTabs: [tab.location, ...state.closedTabs].take(20).toList(),
       ),
     );
+    await _stopFlat(tab.id);
     await _files.closeListing(tab.id);
   }
 
@@ -992,6 +1052,7 @@ class PanelCubit extends Cubit<PanelState> {
       ),
     );
     for (final tab in others) {
+      await _stopFlat(tab.id);
       await _files.closeListing(tab.id);
     }
   }
@@ -1044,11 +1105,434 @@ class PanelCubit extends Cubit<PanelState> {
   Future<void> reveal(Location location, {required String focusName}) =>
       open(location, focusName: focusName);
 
+  // ─── Flat view ───
+
+  /// ⌥⌘B, `zf`, `:flat`: the folder's whole subtree as one list, or back
+  /// to the folder.
+  Future<void> toggleFlatView() async {
+    final tab = state.active;
+    if (tab == null) return;
+    if (tab.isFlat) {
+      await leaveFlatView();
+    } else {
+      await _openFlat(state.activeIndex, again: false);
+    }
+  }
+
+  /// Back to the folder, the cursor on the item that holds the row it was
+  /// on (the row itself, or its folder at the top).
+  Future<void> leaveFlatView() async {
+    final tab = state.active;
+    if (tab == null || !tab.isFlat) return;
+    final focused = tab.focused;
+    final focusName = focused == null || focused.isParent
+        ? null
+        : focused.folder.isEmpty
+        ? focused.name
+        : focused.folder.split('/').first;
+    await _load(
+      state.activeIndex,
+      tab.location,
+      pushHistory: false,
+      focusName: focusName,
+    );
+  }
+
+  /// Starts a walk of the tab's tree: the first one shows its rows as
+  /// they come; one [again] keeps the rows shown until it ends.
+  Future<void> _openFlat(int index, {required bool again}) async {
+    final tab = state.tabs.elementAtOrNull(index);
+    if (tab == null) return;
+    await _stopFlat(tab.id);
+    if (!again) {
+      emit(state.withTab(index, tab.copyWith(loading: true, clearError: true)));
+    }
+    try {
+      final start = await _files.openFlatListing(
+        tab.id,
+        tab.location,
+        _options(tab.sort),
+      );
+      // Found by its id: tabs before it may have closed meanwhile.
+      final at = state.tabs.indexWhere((t) => t.id == tab.id);
+      if (at < 0) {
+        // The tab closed meanwhile: the walk and its listing go too.
+        await start.batches.listen(null).cancel();
+        await _files.closeListing(tab.id);
+        return;
+      }
+      final current = state.tabs[at];
+      if (again && current.isFlat) {
+        emit(
+          state.withTab(
+            at,
+            current.copyWith(
+              flat: FlatView(
+                generation: start.generation,
+                walking: false,
+                refreshing: true,
+                count: current.flat!.count,
+                capped: current.flat!.capped,
+                walked: current.flat!.walked,
+              ),
+            ),
+          ),
+        );
+      } else {
+        emit(
+          state.withTab(
+            at,
+            current.copyWith(
+              listing: start.listing,
+              rows: const [],
+              cursor: -1,
+              selected: const {},
+              quickSearch: '',
+              matches: const {},
+              folderSizes: const {},
+              loading: false,
+              clearError: true,
+              clearRenaming: true,
+              clearRange: true,
+              clearVisual: true,
+              searching: false,
+              scrollRequest: current.scrollRequest + 1,
+              flat: FlatView(generation: start.generation),
+            ),
+          ),
+        );
+      }
+      _flatWalks[tab.id] = start.batches.listen(
+        (batch) => unawaited(_onFlatBatch(tab.id, batch)),
+      );
+    } on FerryxException catch (error, stackTrace) {
+      logger.warn(
+        'cannot walk ${tab.location.display}',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      final at = state.tabs.indexWhere((t) => t.id == tab.id);
+      if (at >= 0) {
+        emit(
+          state.withTab(
+            at,
+            state.tabs[at].copyWith(loading: false, error: error),
+          ),
+        );
+      }
+    }
+  }
+
+  /// The tree is walked again (⌘R, a change in the folder, an operation
+  /// under it); a change while a walk again is under way asks for one
+  /// more after it.
+  Future<void> _walkFlatAgain(int index) async {
+    final tab = state.tabs.elementAtOrNull(index);
+    final flat = tab?.flat;
+    if (tab == null || flat == null) return;
+    if (flat.refreshing) {
+      emit(
+        state.withTab(index, tab.copyWith(flat: flat.copyWith(again: true))),
+      );
+      return;
+    }
+    await _openFlat(index, again: true);
+  }
+
+  Future<void> _stopFlat(String id) async {
+    await _flatWalks.remove(id)?.cancel();
+  }
+
+  Future<void> _onFlatBatch(String id, FlatBatch batch) async {
+    final index = state.tabs.indexWhere((t) => t.id == id);
+    if (index < 0) return;
+    final tab = state.tabs[index];
+    final flat = tab.flat;
+    if (flat == null || flat.generation != batch.generation) return;
+    if (batch.done) {
+      await _finishFlat(id, batch);
+      return;
+    }
+    if (flat.refreshing) {
+      emit(
+        state.withTab(
+          index,
+          tab.copyWith(
+            flat: flat.copyWith(
+              pending: [...flat.pending, ...batch.entries],
+              count: batch.count,
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+    emit(state.withTab(index, _appendFlat(tab, flat, batch)));
+  }
+
+  /// The first walk's new rows go under the shown ones; only they are
+  /// matched against the quick search.
+  PanelTabState _appendFlat(PanelTabState tab, FlatView flat, FlatBatch batch) {
+    final walked = [...flat.walked, ...batch.entries];
+    final where = _p.quickSearchWhere;
+    final onlyMatching = _p.quickSearchOnlyMatching;
+    Map<String, List<(int, int)>>? matches;
+    final added = <FileEntry>[];
+    for (final entry in batch.entries) {
+      if (tab.quickSearch.isNotEmpty && !entry.isParent) {
+        final ranges = quickMatch(tab.quickSearch, entry.name, where);
+        if (ranges == null) {
+          if (onlyMatching) continue;
+        } else {
+          (matches ??= {...tab.matches})[entry.key] = ranges;
+        }
+      }
+      added.add(entry);
+    }
+    final rows = [...tab.rows, ...added];
+    return tab.copyWith(
+      listing: tab.listing?.copyWith(entries: walked),
+      rows: rows,
+      matches: matches,
+      cursor: tab.cursor < 0 && rows.isNotEmpty ? 0 : null,
+      flat: flat.copyWith(walked: walked, count: batch.count),
+    );
+  }
+
+  /// The walk ended: its rows, sorted, replace the shown ones; the cursor
+  /// and the selection stay on their rows.
+  Future<void> _finishFlat(String id, FlatBatch batch) async {
+    final before = state.tabs.where((t) => t.id == id).firstOrNull;
+    final flat = before?.flat;
+    if (before == null || flat == null) return;
+    final walked = flat.refreshing ? flat.pending : flat.walked;
+    final sort = before.sort;
+    final order = await _flatOrder(id, flat.generation, sort, walked.length);
+    final index = state.tabs.indexWhere((t) => t.id == id);
+    if (index < 0) return;
+    final tab = state.tabs[index];
+    if (tab.flat?.generation != flat.generation) return;
+    final again = tab.flat!.again;
+    emit(
+      state.withTab(
+        index,
+        _withListing(
+          tab.copyWith(
+            listing: tab.listing?.copyWith(
+              entries: _keepTags(tab.listing, [
+                for (final i in order) walked[i],
+              ]),
+            ),
+            flat: FlatView(
+              generation: flat.generation,
+              walking: false,
+              count: batch.count,
+              capped: batch.capped,
+              walked: _keepTags(tab.listing, walked),
+            ),
+            loading: false,
+          ),
+          focusName: tab.pendingFocusName,
+        ).copyWith(clearPendingFocus: true),
+      ),
+    );
+    await _stopFlat(id);
+    unawaited(_loadTags(id));
+    if (tab.sort != sort) {
+      // The order changed while the rows were sorted.
+      await _resortFlat(index, tab.sort);
+    }
+    if (again) await _walkFlatAgain(index);
+  }
+
+  /// The order of a flat view's rows (indices into the walk's), from the
+  /// core; the walk's own order when it cannot say.
+  Future<List<int>> _flatOrder(
+    String id,
+    int generation,
+    SortOptions sort,
+    int length,
+  ) async {
+    try {
+      final order = await _files.sortFlatListing(
+        id,
+        generation,
+        _options(sort),
+      );
+      if (order.length == length) return order;
+    } on FerryxException catch (error) {
+      logger.warn('cannot sort the flat view', error: error);
+    }
+    return [for (var i = 0; i < length; i++) i];
+  }
+
+  Future<void> _resortFlat(int index, SortOptions sort) async {
+    final tab = state.tabs.elementAtOrNull(index);
+    final flat = tab?.flat;
+    if (tab == null || flat == null) return;
+    if (flat.busy) {
+      // The walk sorts its rows when it ends, by the order asked last.
+      emit(state.withTab(index, tab.copyWith(sort: sort)));
+      return;
+    }
+    final order = await _flatOrder(
+      tab.id,
+      flat.generation,
+      sort,
+      flat.walked.length,
+    );
+    final current = state.tabs.elementAtOrNull(index);
+    if (current == null || current.flat?.generation != flat.generation) return;
+    emit(
+      state.withTab(
+        index,
+        _withListing(
+          current.copyWith(
+            sort: sort,
+            listing: current.listing?.copyWith(
+              entries: [for (final i in order) flat.walked[i]],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// An operation ended: the flat views whose trees it wrote into or took
+  /// from are walked again (their folder alone is watched).
+  void _walkFlatViewsUnder(OperationProgress progress) {
+    final touched = [
+      for (final source in progress.sources) _parentOf(source),
+      ?progress.destination,
+    ];
+    for (var i = 0; i < state.tabs.length; i++) {
+      final tab = state.tabs[i];
+      if (!tab.isFlat || !tab.location.isNative) continue;
+      final root = tab.location.path;
+      final prefix = root.endsWith('/') ? root : '$root/';
+      if (touched.any((p) => p == root || p.startsWith(prefix))) {
+        unawaited(_walkFlatAgain(i));
+      }
+    }
+  }
+
+  static String _parentOf(String path) {
+    final slash = path.lastIndexOf('/');
+    return slash <= 0 ? '/' : path.substring(0, slash);
+  }
+
+  // ─── Finder tags ───
+
+  /// The rows' tags, read apart from the listing once it shows (each item
+  /// costs the core a system call); the dots follow a moment later.
+  Future<void> _loadTags(String id) async {
+    if (!readTags) return;
+    final tab = state.tabs.where((t) => t.id == id).firstOrNull;
+    if (tab == null || !tab.location.isNative) return;
+    final Map<String, List<FileTag>> found;
+    try {
+      found = await _files.listingTags(id);
+    } on FerryxException catch (error) {
+      logger.warn('cannot read the tags', error: error);
+      return;
+    }
+    if (found.isEmpty || isClosed) return;
+    _mergeTags(found, only: id);
+  }
+
+  /// Tags changed (an edit from this window): the rows of [byPath] in
+  /// every tab take their new tags, none included.
+  void applyTags(Map<String, List<FileTag>> byPath) => _mergeTags(byPath);
+
+  void _mergeTags(Map<String, List<FileTag>> byPath, {String? only}) {
+    var next = state;
+    for (var i = 0; i < next.tabs.length; i++) {
+      final tab = next.tabs[i];
+      if (only != null && tab.id != only) continue;
+      if (!tab.location.isNative) continue;
+      // The same list when nothing in it changed, so the rows rebuild
+      // only where tags did.
+      List<FileEntry> merge(List<FileEntry> entries) {
+        List<FileEntry>? out;
+        for (var at = 0; at < entries.length; at++) {
+          final entry = entries[at];
+          final tags = byPath[entry.path];
+          if (tags == null || _sameTags(tags, entry.tags)) continue;
+          (out ??= [...entries])[at] = entry.copyWith(tags: tags);
+        }
+        return out ?? entries;
+      }
+
+      final listing = tab.listing;
+      final flat = tab.flat;
+      final rows = merge(tab.rows);
+      final entries = listing == null ? null : merge(listing.entries);
+      final walked = flat == null ? null : merge(flat.walked);
+      final pending = flat == null ? null : merge(flat.pending);
+      if (identical(rows, tab.rows) &&
+          identical(entries, listing?.entries) &&
+          identical(walked, flat?.walked) &&
+          identical(pending, flat?.pending)) {
+        continue;
+      }
+      next = next.withTab(
+        i,
+        tab.copyWith(
+          listing: entries == null ? null : listing?.copyWith(entries: entries),
+          rows: rows,
+          flat: flat?.copyWith(walked: walked, pending: pending),
+        ),
+      );
+    }
+    if (!identical(next, state)) emit(next);
+  }
+
+  static bool _sameTags(List<FileTag> a, List<FileTag> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  /// [entries] with the tags the rows of [before] had, by path: a listing
+  /// read again shows its dots at once, until its tags are read anew.
+  List<FileEntry> _keepTags(Listing? before, List<FileEntry> entries) {
+    if (!readTags || before == null) return entries;
+    final tags = {
+      for (final e in before.entries)
+        if (e.tags.isNotEmpty) e.path: e.tags,
+    };
+    if (tags.isEmpty) return entries;
+    return [
+      for (final e in entries)
+        if (tags[e.path] case final kept? when e.tags.isEmpty)
+          e.copyWith(tags: kept)
+        else
+          e,
+    ];
+  }
+
+  // ─── Archive passwords ───
+
+  /// The password was given: the folder that asked for it opens. Until
+  /// then the tab stays where it was, its error saying why.
+  Future<void> openAfterPassword() async {
+    final tab = state.active;
+    final location = tab?.passwordLocation;
+    if (tab == null || location == null) return;
+    await open(location);
+  }
+
   @override
   Future<void> close() async {
     await _changes?.cancel();
     await _progress?.cancel();
     await _prefs?.cancel();
+    for (final walk in _flatWalks.values) {
+      await walk.cancel();
+    }
+    _flatWalks.clear();
     for (final tab in state.tabs) {
       await _files.closeListing(tab.id);
     }

@@ -28,3 +28,5 @@ sha2 = { workspace = true, features = ["asm"] }
 
 [dev-dependencies]
 tempfile.workspace = true
+flate2.workspace = true
+tar.workspace = true

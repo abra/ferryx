@@ -48,8 +48,22 @@ pub struct Entry {
     pub is_hidden: bool,
     /// The extension without its dot, as spelled; empty when there is none.
     pub extension: String,
-    /// Finder tag colours on macOS (indices into the tag palette).
-    pub tags: Vec<u8>,
+    /// Finder tags on macOS, in the order Finder keeps them.
+    pub tags: Vec<Tag>,
+}
+
+/// A Finder tag: its name and its colour, in Finder's numbering (0 none,
+/// 1 grey, 2 green, 3 purple, 4 blue, 5 yellow, 6 red, 7 orange).
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Tag {
+    pub name: String,
+    pub color: u8,
+}
+
+impl Tag {
+    pub fn new(name: impl Into<String>, color: u8) -> Tag {
+        Tag { name: name.into(), color: color.min(7) }
+    }
 }
 
 impl Entry {

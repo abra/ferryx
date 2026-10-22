@@ -35,8 +35,26 @@ files is Rust.
   a search and replace and a case change, with a live preview.
 - **File attributes** (⌃A): permissions, flags, owner, group and dates of
   one or several items, recursively if asked.
-- **Archives** open as folders on Return: zip, jar, tar, tar.gz; copy out of
-  them (F5) or open members with their application.
+- **Archives** open as folders on Return: zip (jar, apk…), tar alone or
+  with gzip, bzip2, xz or zstd, 7z, rar, ISO images (Joliet and Rock Ridge
+  names), and one file compressed with gzip, bzip2, xz or zstd; ⌘↓ opens
+  any file whose first bytes say it is one. Encrypted zip, 7z and rar
+  archives ask for their password once. Copy out of them (F5), open
+  members with their application, or Extract To (⌥F9, `:extract dir`):
+  every archive selected into a folder you pick, each into a folder named
+  after it when it holds more than one item, with progress, conflict
+  questions and cancellation. Large archives open fast: the member list
+  is read once (from the archive's directory where it has one, in one
+  pass otherwise) and kept while the file is unchanged.
+- **Flat view** (⌥⌘B, Vim `zf`, `:flat`): every file under the folder in
+  one list, each with its folder beside its name, as Total Commander's
+  branch view; sort, select, quick search and every command across the
+  whole tree; the first rows show at once even in a huge tree; works
+  inside archives too.
+- **Finder tags** (macOS): coloured dots after the names, as Finder
+  shows them, and the names in their tip; ⌃⌘T (or `:tag red,work`,
+  `:tag -red`) tags the selection from a menu that checks what every item
+  has and dashes what some have, with new tags of any name and colour.
 - **Go anywhere**: the Go To pop-up (F1 / F2) with favorites, volumes, the
   other panel's places and the history; quick lists for parents (⌘1),
   history (⌘2), favorites (⌘3) and volumes (⌘4, with eject); Go to Folder
@@ -47,7 +65,8 @@ files is Rust.
   of large files, find (⌘F), go to an offset (⌘L).
 - **Find files** (⌘F): by mask or regular expression, by contents (phrase
   or words, case, not containing), by size; results stream in; go to a
-  hit or view it.
+  hit or view it. On macOS it can ask the Spotlight index first (much
+  faster on large trees), checking every hit as a walk would.
 - **Command palette** (⌘P): every command that can run where you are,
   found by a fuzzy search (English names work in any language), the ones
   used lately first, with their keys; it runs as the key would.

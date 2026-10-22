@@ -12,7 +12,7 @@ use parking_lot::{Condvar, Mutex};
 
 use crate::journal::{Change, Direction, Fingerprint, Journal, Step, StepKind, StepRecord};
 use crate::types::*;
-use crate::{compress, copy, delete, sizes};
+use crate::{compress, copy, delete, extract, sizes};
 
 pub type Listener = Arc<dyn Fn(Progress) + Send + Sync>;
 
@@ -175,7 +175,8 @@ fn journaling_of(request: &OpRequest) -> Journaling {
 
 fn run(ctx: &OpContext, request: OpRequest) -> Result<(), Abort> {
     match request.kind {
-        OpKind::Copy | OpKind::Move | OpKind::Extract | OpKind::Duplicate => copy::run(ctx, &request),
+        OpKind::Copy | OpKind::Move | OpKind::Duplicate => copy::run(ctx, &request),
+        OpKind::Extract => extract::run(ctx, &request),
         OpKind::Delete | OpKind::Trash => delete::run(ctx, &request),
         OpKind::Compress => compress::run(ctx, &request),
         OpKind::CalcSizes => sizes::run(ctx, &request),
@@ -480,6 +481,43 @@ impl OpContext {
             _ => {
                 self.record_error(path, error.message.clone());
                 Ok(false)
+            }
+        }
+    }
+
+    /// Asks what to do about `error` at `path` where trying again cannot
+    /// help (a stream already read past): skip or stop. Skip records the
+    /// error.
+    pub fn ask_skip(&self, path: &Path, error: &VfsError) -> Result<(), Abort> {
+        let sticky = self.sticky.lock().errors;
+        let answer = match sticky {
+            Some(answer) => answer,
+            None => {
+                let side = ConflictSide {
+                    path: path.to_string_lossy().into_owned(),
+                    size: None,
+                    modified_ms: None,
+                    is_dir: false,
+                };
+                self.ask(
+                    QuestionKind::Error,
+                    error.message.clone(),
+                    Some(side),
+                    None,
+                    vec![Answer::Skip, Answer::SkipAll, Answer::Abort],
+                )?
+            }
+        };
+        match answer {
+            Answer::Abort => Err(Abort::Stopped),
+            Answer::SkipAll => {
+                self.sticky.lock().errors = Some(Answer::SkipAll);
+                self.record_error(path, error.message.clone());
+                Ok(())
+            }
+            _ => {
+                self.record_error(path, error.message.clone());
+                Ok(())
             }
         }
     }

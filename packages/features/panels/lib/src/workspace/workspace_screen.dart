@@ -14,15 +14,18 @@ import 'package:platform_services/platform_services.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 
+import '../dialogs/archive_password_dialog.dart';
 import '../dialogs/attributes_dialog.dart';
 import '../dialogs/batch_rename_dialog.dart';
 import '../dialogs/copy_move_dialog.dart';
+import '../dialogs/extract_dialog.dart';
 import '../dialogs/favorites_dialog.dart';
 import '../dialogs/go_to_menus.dart';
 import '../dialogs/jump_to_folder.dart';
 import '../dialogs/names_editor_dialog.dart';
 import '../dialogs/question_dialog.dart';
 import '../dialogs/simple_dialogs.dart';
+import '../dialogs/tag_dialog.dart';
 import '../dialogs/undo_dialog.dart';
 import '../native/drag_image.dart';
 import '../native/drop_plan.dart';
@@ -41,6 +44,7 @@ import 'folder_compare.dart';
 import 'key_hints.dart';
 import 'shelf.dart';
 import 'shelf_strip.dart';
+import 'tag_menu.dart';
 import 'terminal_dock.dart';
 import 'workspace_cubit.dart';
 import 'workspace_state.dart';
@@ -52,6 +56,8 @@ part 'operations_actions.dart';
 part 'terminal_actions.dart';
 part 'vim_actions.dart';
 part 'workspace_actions.dart';
+part 'archive_actions.dart';
+part 'tag_actions.dart';
 
 /// Where the window sends what it does not do itself.
 class WorkspaceNavigation {
@@ -153,6 +159,7 @@ class WorkspaceScreen extends StatefulWidget {
     required this.platformServices,
     this.terminal,
     required this.folderSync,
+    this.capabilities = const Capabilities(),
     super.key,
   });
 
@@ -186,6 +193,10 @@ class WorkspaceScreen extends StatefulWidget {
   /// The integrated terminal; none without it (the terminal's commands
   /// then do nothing).
   final WorkspaceTerminal? terminal;
+
+  /// What this desktop can do that others cannot, as the core reports
+  /// it: the commands it lacks are hidden.
+  final Capabilities capabilities;
 
   @override
   State<WorkspaceScreen> createState() => _WorkspaceScreenState();
@@ -277,6 +288,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     preferences: widget.preferences,
     logger: widget.logger,
     onFolderShown: widget.frecency.visit,
+    readTags: widget.capabilities.finderTags,
   );
 
   @override
@@ -653,6 +665,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     onVimComplete: _vimComplete,
     drag: _dragHooksFor(side),
     onEscape: _escapeQuickLook,
+    onArchivePassword: (location) =>
+        unawaited(_passwordForPanel(side, location)),
   );
 
   List<AppKeyHint> _splitterHints(BuildContext context) {

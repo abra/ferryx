@@ -43,11 +43,13 @@ class OperationRequest extends Equatable {
     this.preserveAttributes = true,
     this.verify = false,
     this.password,
+    this.intoFolders = false,
   });
 
   final OpKind kind;
 
-  /// Paths on disk; for [OpKind.extract], member paths inside [archive].
+  /// Paths on disk; for [OpKind.extract], member paths inside [archive],
+  /// or archives on disk to extract whole when there is none.
   final List<String> sources;
   final String? archive;
 
@@ -60,8 +62,12 @@ class OperationRequest extends Equatable {
   final bool preserveAttributes;
   final bool verify;
 
-  /// Compress: an AES-256 password.
+  /// Compress: an AES-256 password. Extract: the archives' password.
   final String? password;
+
+  /// Extract whole archives ([sources] are archives on disk, no
+  /// [archive]): each into a folder named after it.
+  final bool intoFolders;
 
   @override
   List<Object?> get props => [
@@ -74,6 +80,7 @@ class OperationRequest extends Equatable {
     preserveAttributes,
     verify,
     password,
+    intoFolders,
   ];
 }
 

@@ -13,6 +13,8 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
   required Location location,
   required bool severalSelected,
   required ShortcutMap map,
+  bool archive = false,
+  bool tags = false,
 }) {
   final l10n = context.l10n;
   final platform = Theme.of(context).platform;
@@ -73,6 +75,12 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
         ),
       action(AppCommand.compress, l10n.cmdCompress, icon: AppIcons.fileArchive),
       action(AppCommand.checksums, l10n.cmdChecksums, icon: AppIcons.checksum),
+      if (archive && !entry.isDir)
+        action(
+          AppCommand.extractTo,
+          l10n.cmdExtractTo,
+          icon: AppIcons.fileArchive,
+        ),
     ] else ...[
       action(
         AppCommand.copyTo,
@@ -87,6 +95,7 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
         l10n.cmdAddToFavorites,
         icon: AppIcons.star,
       ),
+    if (tags) action(AppCommand.editTags, l10n.cmdEditTags, icon: AppIcons.tag),
     action(AppCommand.copyItemPath, l10n.menuCopyPath, icon: AppIcons.link),
     action(AppCommand.copyItemName, l10n.menuCopyName, icon: AppIcons.text),
     if (native) ...[
@@ -123,6 +132,7 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
   required bool native,
   required ShortcutMap map,
   JournalSummary journal = JournalSummary.empty,
+  bool flat = false,
 }) {
   final l10n = context.l10n;
   final platform = Theme.of(context).platform;
@@ -206,6 +216,13 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
       label: l10n.cmdRefresh,
       icon: AppIcons.refresh,
       shortcut: chord(AppCommand.refresh),
+    ),
+    AppMenuAction(
+      value: AppCommand.toggleFlatView,
+      label: l10n.cmdToggleFlatView,
+      icon: AppIcons.layoutList,
+      shortcut: chord(AppCommand.toggleFlatView),
+      checked: flat,
     ),
     AppMenuAction(
       value: AppCommand.toggleSinglePane,

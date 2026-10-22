@@ -42,8 +42,8 @@ controls (`AppNavItem`, `showAppMenu`, `AppDialog`, `AppToggle`,
 `AppTopBarRow`, `FocusRing`, tooltips, overlay scrollbars). Hairlines snap
 to device pixels (`AppBorder`, `AppDivider`, `PixelSnap`). The component
 library is shared with Mnema and documented there in depth; Ferryx adds
-file icons (`AppIcons`) and the tag palette (`AppColorsExt.ink/wash` by
-index).
+file icons (`AppIcons`), the tag palette (`AppColorsExt.ink/wash` by
+index) and Finder's tag colours (`AppTagColors`, `AppTagDots`).
 
 The HIG details the library keeps for every screen, so features need
 not:
@@ -99,7 +99,7 @@ buttons'. The window is shown only after the preferences are read
 | Crate | Responsibility |
 |-------|----------------|
 | `ferryx_core` | Pure logic: the `Entry` of a panel row, natural / case-insensitive / case-sensitive collation (`collation`), sorting by field with folders first and extensionless folders (`sorting`), file masks and regular expressions (`mask`), quick-search matching with the ranges to underline (`quick_search`), and the batch-rename language (`batch_rename`: placeholders, substrings, dates, counters, case commands, then search and replace and a case change). No I/O. |
-| `ferryx_vfs` | The file system: a folder's rows with their metadata (size, times, the macOS added time through `getattrlist`, mode, owner and group names, BSD flags, hidden), one entry, byte ranges of a file (`native`); archives as read-only folders (`archive`: zip, jar, tar, tar.gz; an index per archive read once and again when the file changed, members extracted to a temporary folder for opening); a folder watched for changes reported once per burst (`watch`, `notify`); the volumes (`volumes`, `sysinfo`) and the free space; the standard folders, opening with the desktop or an application, revealing in the file manager, the trash, ejecting (`system`); permissions, flags, owners and times read and written (`attrs`); symbolic and hard links (`links`). Every error is a `VfsError` with a kind the interface words. |
+| `ferryx_vfs` | The file system: a folder's rows with their metadata (size, times, the macOS added time through `getattrlist`, mode, owner and group names, BSD flags, hidden), one entry, byte ranges of a file (`native`); archives as read-only folders (`archive`: zip, tar with any compression, 7z, rar, iso, single compressed files; see Archives below); a folder watched for changes reported once per burst (`watch`, `notify`); the volumes (`volumes`, `sysinfo`) and the free space; the standard folders, opening with the desktop or an application, revealing in the file manager, the trash, ejecting (`system`); permissions, flags, owners and times read and written (`attrs`); symbolic and hard links (`links`). Every error is a `VfsError` with a kind the interface words. |
 | `ferryx_ops` | Operations on threads with progress, pause, cancellation and questions: copy and move (a rename on the same volume, else a copy and a delete; folders merge; conflicts ask or follow the policy; attributes preserved; optional verification), duplicate (`name copy.ext`), extract out of an archive, delete and trash, compress to zip (deflate, optional AES-256), folder sizes, plus Find Files (`find`: name, contents in overlapping windows, size, streamed hits) and the application of a batch rename (`rename`: staged through temporary names when names swap). `Runner` holds every operation; `OpContext` is what an operation checks, reports and asks through. |
 | `ferryx_term` | The integrated terminal's shell: a `Session` runs the user's shell as a login shell in a pseudo-terminal (`portable-pty`: openpty, ConPTY on Windows), sends its output in batches with flow control, probes whether it waits at its prompt (`tcgetpgrp`) and its folder (`proc_pidinfo`, `/proc/<pid>/cwd`), types `cd` when asked, and hangs up and reaps it on close. No emulation: that is the interface's. |
 | `ferryx_api` | `flutter_rust_bridge` surface. Holds the open listings (`app.rs`: one per panel tab, with its raw rows for resorting and its watcher), the archive indexes, the operations runner (whose listener forwards progress as events) and the searches; converts to plain DTOs (`api/types.rs`, `…View` types, enums without payloads so Dart sees enums, `i64` counts so Dart sees `int`); `volume_id` names a path's volume for a drop to tell a move from a copy. Its `Cargo.toml` uses literal fields because cargokit parses it without workspace inheritance. |
@@ -134,6 +134,21 @@ Rules:
   sizes done so far; the panel merges them into its rows by name.
 - Find Files runs on a thread and sends hits in batches (`FindProgress`,
   at most every 80 ms or 200 hits) and `FindDone` at the end or on cancel.
+- With "Use the Spotlight index" (offered where `capabilities().spotlight`
+  says `mdfind` is there) `find::search` asks Spotlight first
+  (`ferryx_ops::spotlight`): `mdfind -0 -onlyin <root>` with a query made of
+  the mask's parts as file-name matches (`?` and `[…]` widened to `*`),
+  each word of the contents as a word prefix and the size as a bound; the
+  paths stream from a reader thread, so a cancel kills `mdfind` within a
+  tenth of a second. Every hit is then checked here as a walk would check
+  it (`find::Matcher`: the exact mask or the regular expression, hidden
+  items, folders, size, the contents read for case, a whole phrase or "not
+  containing"), so Spotlight only narrows the candidates. When `mdfind`
+  cannot run or fails without a hit, the folders are walked instead and
+  `FindDone` says so (`find_spotlight_failed`, a notice in the dialog).
+  Spotlight skips system folders, hidden folders and the folders excluded
+  in System Settings — the option's note says so. (Live: `/Applications`'
+  67 apps in 0.16 s.)
 
 - A terminal session's output, state and end come on a stream of its own
   (`terminal_events`), not the app's event stream: they are high-volume
@@ -144,6 +159,73 @@ bridge end to end (listings, resorting, the watcher's event, archives,
 operations with a question answered, folder sizes, batch rename, find);
 the tests take turns on the process-wide state. `terminal_flow.rs` runs a
 `/bin/sh` session through the bridge.
+
+### Archives
+
+`ferryx_vfs::archive` reads zip (jar, apk, ipa, whl), tar alone or with
+gzip, bzip2, xz or zstd, 7z, rar, ISO 9660 images and a single file
+compressed with gzip, bzip2, xz or zstd (an archive of one member named
+without the compression's extension). `detect` reads a file's first bytes
+before its name: a `.zip` that is a 7z opens as one, a `.gz` that holds a
+tar is a tar, and ⌘↓ (`detect_archive`) opens an archive of any name;
+`is_archive` (Return) asks the name only, so it costs no I/O per row.
+
+- **One index per archive.** `ArchiveIndex` keeps the members sorted by
+  path with each folder's children (a folder lists in the time its own
+  rows take; a subtree, for a flat view or an extraction, is one
+  contiguous run). It is read from the archive's directory where the
+  format has one (zip central directory, 7z headers, rar headers, iso
+  directory records) and in one pass over the stream otherwise (tar, a
+  plain tar seeking past each member's data). `archive::shared` keeps the
+  last eight indexes for the whole process, keyed by path and checked
+  against the file's modification time and length, and reads a new one
+  outside its lock so a large archive never holds up another listing.
+  Measured (release, M-series Mac): a 50 000-member zip opens in 0.2 s, a
+  50 000-member tar.gz in 0.07 s; a folder of a thousand members lists in
+  0.06 ms, the whole tree flat in 7 ms.
+- **Streaming reads.** `extract_members` hands members to a `MemberSink`
+  (begin, write, end) in the archive's own order: a tar stream once
+  whatever the number of members, a 7z block decoded once for all the
+  members it holds (members of a solid block passed by are drained, never
+  kept), rar in member order, iso extents read straight from the image. No
+  member is held whole in memory; the viewer's ranges of a member over
+  4 MiB come from a copy unpacked once to the temporary folder.
+- **Passwords.** An encrypted member list (7z `-mhe`, rar `-hp`) answers
+  `PasswordRequired` until `set_archive_password` gives one that opens it;
+  encrypted members (zip AES and ZipCrypto, 7z AES, rar) are read with the
+  password kept for the archive. A password is tried before it is kept
+  (the member list, or the first 64 KiB of the smallest encrypted member),
+  so a wrong one is the typed `WrongPassword`, never a crash or garbage.
+  The interface asks in a dialog that stays until a password opens the
+  archive (`showArchivePasswordDialog`): when a panel enters an archive
+  whose list is encrypted (`PanelTabState.passwordLocation`, the panel's
+  `onArchivePassword` hook), before a member is opened, viewed or copied
+  out, and in Extract To's own password field.
+- **Extract** (`ferryx_ops::extract`, `OpKind::Extract`): members out of
+  an archive (F5 inside one, ⌥F9 there with a dialog), or whole archives
+  on disk (Extract To, ⌥F9, `:extract [dir]`) each into the destination or
+  into a folder named after it (`into_folders`, `archive_stem`: `site.tar.gz`
+  → `site`). The dialog turns that option on when an archive holds more
+  than one item at its root, as Archive Utility does, and the user can
+  turn it either way. Conflicts follow the policy or ask, a member that
+  fails asks to skip or stop (a stream cannot retry), a missing or wrong
+  password passes that archive by with an error, folders are made even
+  when empty, modes and times are kept, symbolic links are made as links,
+  and member paths never climb out of the destination (`..` is dropped).
+- **Crates.** All pure Rust except zstd and the zip crate's bzip2, which
+  were in already: `sevenz-rust2` 0.20 (the last release for Rust 1.85;
+  AES, LZMA/LZMA2, BZip2, Deflate, PPMd, Zstd), `unrar-rs` (a Rust port of
+  RARLAB's UnRAR, RAR 1.5–5, solid and encrypted archives; built with
+  `crypto-rust` so no C toolchain is needed — the default AWS-LC backend
+  wants CMake), `lzma-rust2` (xz, the one `sevenz-rust2` uses), `bzip2` 0.6
+  (its default backend is the pure-Rust `libbz2-rs-sys`). The official
+  `unrar` crate compiles RARLAB's C++ sources: mature, but a C++ build
+  through cargokit for every target; `unrar-rs` reads the same formats
+  with none. Both carry the UnRAR licence: free to use for extraction,
+  never to make a RAR compressor — Ferryx only extracts, and the licence
+  text ships with the crate. ISO 9660 is read by Ferryx's own small
+  reader (`archive/iso.rs`): primary and Joliet descriptors, Rock Ridge
+  `NM`/`PX`/`SL`, files of several extents.
 
 ## Bridge (`packages/ferryx_backend`)
 
@@ -162,20 +244,20 @@ that `ferryx_backend` loads, as part of the Flutter build.
 
 | Package | Role |
 |---------|------|
-| `domain_models` | Pure Dart contracts: `FileEntry`, `Listing`, `Location`, `SortOptions`, `ListingOptions`, `Volume`, `StandardFolders`, `OperationRequest`/`OperationProgress`/`OperationQuestion`, `FindRequest`/`FindHit`/`FindUpdate`, `RenameOptions`/`RenameOutcome`, `FileAttributes`/`AttributeChanges`, `Favorite`, `PanelLayout`, `ExternalEditor`/`ExternalTool`, `FerryxException`. |
+| `domain_models` | Pure Dart contracts: `FileEntry`, `Listing`, `Location`, `SortOptions`, `ListingOptions`, `Volume`, `StandardFolders`, `OperationRequest`/`OperationProgress`/`OperationQuestion`, `FindRequest`/`FindHit`/`FindUpdate`, `RenameOptions`/`RenameOutcome`, `FileAttributes`/`AttributeChanges`, `Favorite`, `PanelLayout`, `ExternalEditor`/`ExternalTool`, `FerryxException`, `ArchiveInfo`, `FlatStart`/`FlatBatch`, `FileTag`/`TagOutcome`, `Capabilities`. |
 | `ferryx_backend` | The generated bridge, `FerryxBackend` (init, the event stream, `guard`) and `mapping.dart`. |
 | `monitoring` | `Logger` and the console observer. |
 | `shortcuts` | `AppCommand` (scopes: global, panel, viewer, lists, dialogs, terminal; `CommandSection` for the palette's groups), `Chord`, `ShortcutMap` (defaults per desktop, `forUser` with overrides), the `CommandHandlers` dispatch chain (`commandsAt` answers what a place handles), `ChordCodec`. |
 | `preferences_service` | Installation preferences (theme, locale, text scale, shortcut overrides, window frame, the panels' state, layouts, sorting defaults, quick search, favorites, editors, tools, confirmations, copy defaults, viewer, the terminal's settings and place) + `PreferencesScope` and `PreferenceBuilder`; beside the blob, under keys of their own (`SideStorage`), `FolderFrecency` (the folders visited) and `RecentItems` (the commands run lately). |
-| `file_repository` | `FileRepository`: listings (open, refresh, resort, close, peek), items (stat, byte ranges, extract to temp, make, rename, links, resolve), the system (volumes, standard folders, free space, open, open with, reveal, eject, applications), attributes; `directoryChanges` names listings whose folders changed. |
+| `file_repository` | `FileRepository`: listings (open, refresh, resort, close, peek), items (stat, byte ranges, extract to temp, make, rename, links, resolve), the system (volumes, standard folders, free space, open, open with, reveal, eject, applications), attributes; archives (what one holds, its password, detection by its bytes); flat listings (open with their stream of batches, the order of their rows); Finder tags (a listing's, edits) and the desktop's `capabilities`; `directoryChanges` names listings whose folders changed. |
 | `operations_service` | `OperationsService` (start, pause, resume, cancel, answer, forget; `progress` stream and the latest report per operation; `run` waits for one), `FindService` (start, cancel, `updates`), `RenameService` (preview, apply). |
 | `platform_services` | What only some desktops offer, behind one injected `PlatformServices` (capabilities; Quick Look; the share picker; file drags out of the window): `ChannelPlatformServices` on macOS (the runner's `ferryx/platform` channel), `DesktopPlatformServices` elsewhere (drags only), `FakePlatformServices` for tests (`testing.dart`); `PlatformDropArea`, the window's one drop region (super_drag_and_drop). |
 | `terminal_service` | `TerminalService.start` → a `TerminalSession` (its `updates`: `TerminalOutput`, `TerminalShellState`, `TerminalExited`; write, resize, ack, state, change directory, close) over `ferryx_api`'s terminal; the default shell's name. |
 | `ferryx_localizations` | ARB-generated `FerryxLocalizations`, command and scope labels, formatting helpers (sizes, dates, durations, error titles, operation titles, answers, columns). |
 | `component_library` | Tokens, the platform-adaptive theme and the desktop widgets (see Native look); for drags, `FileDragSource` (past `metrics.dragThreshold`), `FileDropTarget` (found by hit-testing) and `AppDropOutline`. |
-| `features/panels` | The main window (`WorkspaceScreen`): two `PanelView`s with a `PanelCubit` each, the edge between them, the integrated terminal's place (`TerminalDock`, the view injected as a `WorkspaceTerminal`), the operations cards, every file command (`workspace_actions.dart`), the row and panel menus, and the dialogs: copy / move / copy as / move as, new folder, delete, compress, select by mask, go to folder, links, favorites, the Go To pop-up and the quick lists, batch rename, file attributes, and the questions of operations. |
+| `features/panels` | The main window (`WorkspaceScreen`): two `PanelView`s with a `PanelCubit` each, the edge between them, the integrated terminal's place (`TerminalDock`, the view injected as a `WorkspaceTerminal`), the operations cards, every file command (`workspace_actions.dart`), the row and panel menus, and the dialogs: copy / move / copy as / move as, new folder, delete, compress, select by mask, go to folder, links, favorites, the Go To pop-up and the quick lists, batch rename, file attributes, Extract To and an archive's password, the tag menu and a new tag, and the questions of operations; a tab's flat view (`FlatView`). |
 | `features/viewer` | The built-in viewer (`ViewerScreen`): text, hex and preview over a `ViewerSource` (a file on disk or an archive member), windows of large files, find and go to. |
-| `features/find` | Find Files (`showFindDialog`, `FindCubit`): the form, the streaming results, go to a hit or view it. |
+| `features/find` | Find Files (`showFindDialog`, `FindCubit`): the form (with the Spotlight option where the desktop has it), the streaming results, go to a hit or view it. |
 | `features/settings` | The settings window (`SettingsScreen`: General, Panels, Viewer, Terminal, Hotkeys, Editors, Tools, About) and the cheat sheet (`showCheatSheet`). |
 | `features/palette` | The command palette (`showCommandPalette`, `PaletteCubit`, the `fuzzyMatch` scorer). |
 | `features/terminal` | The integrated terminal: `TerminalSessionCubit` (the session, the xterm.dart emulator it writes into, `FolderSync`), `TerminalPane` (its bar, the emulator in the theme's colours, the end notice, the menu) and `TerminalKeys` (which keys are the window's). |
@@ -237,6 +319,96 @@ match ranges, the sort options and the layout index. Rules:
   it (`SavedPanel`: locations, sort, layout, the tab shown, the closed
   ones), and read back at start; a saved folder that is gone falls back
   to the home folder, then the root.
+
+### Flat view
+
+⌥⌘B (Vim `zf`, `:flat`) turns a tab into Total Commander's branch view:
+every file under its folder in one list, each row with its folder
+relative to the tab's in the secondary colour after the name
+(`FileEntry.folder`; in List the name column holds both and the data
+columns give way to it sooner, `ColumnWidths.flatNameMin`; a long name
+keeps three fifths of the room and its extension, a long folder its last
+letters). Folders are not rows — an empty folder shows nothing — and a
+symbolic link to a folder is a row, never followed, so a link cannot make
+the walk go round. Hidden items follow the preference, a hidden folder
+with all it holds. The footer's capsule says "Flat" (with the spinner
+while the tree is read) and the count says files; Esc (once no search is
+on), the command again, the capsule, or going anywhere else leaves it,
+the cursor landing on the item that holds the row it was on. Inside an
+archive the view comes from the index, in memory. A tab saved for the
+next run keeps its folder, not its flat view.
+
+- **Keys.** Rows of one name in two folders are two rows: a row's key is
+  its path under the root (`FileEntry.key`, the name in a plain listing),
+  and the selection, the quick search's matches, the cursor kept across a
+  re-read and the list's row keys all use it. Commands work on the
+  targets' real paths, so copy, move, delete, rename, open and the viewer
+  work unchanged; `PanelTabState.locationOf` is where a row is.
+- **Streaming.** `open_flat_listing` answers the header and a generation;
+  `stream_flat_listing` walks on a thread of its own (`ferryx_vfs::flat`,
+  walkdir, cancellable) and sends rows on a stream of their own in batches
+  — the first after 200 rows or 30 ms, then every 5 000 rows or 120 ms —
+  so the first rows show at once and each batch is decoded as it arrives.
+  The walk stops at 200 000 rows and says so (`capped`, "the first 200 000
+  files"). Rows show in walk order while they come; at the end
+  `sort_flat_listing` answers the order as indices into the rows sent, so
+  a sort never sends the rows again (by name, rows of one name keep their
+  folders' order). A sort asked meanwhile applies when the walk ends.
+- **Refresh.** The tab's folder is watched, not its subfolders: a change
+  there, ⌘R, the hidden items shown or not, or an operation that wrote
+  into or took from the tree (`PanelCubit._walkFlatViewsUnder`) walks the
+  tree again. A walk again keeps the rows shown and swaps in the new ones
+  when it ends (no flicker; cursor and selection stay by key); a change
+  during one asks for one more after it. Changes deeper in the tree by
+  other programs need ⌘R: watching a whole tree is costly (inotify keeps
+  a watch per folder) and re-reading it on every change of a busy tree
+  (`~/Library`) would never rest.
+- **Measured** (release, M-series Mac, warm cache): `~/Library`, capped at
+  200 000 files — first rows after 24 ms, all after 7–9 s, sorted by name
+  in 0.33 s; `/usr`, 22 000 files — first rows after 14 ms, all after
+  0.5–0.7 s, sorted in 14 ms. Sorting needed the natural collation to
+  stop allocating a string per character compared (it took 3.9 s for the
+  200 000 rows before; every listing's sort gains the same). The panel
+  appends each batch (only the new rows meet the quick search), Brief
+  mode sizes its columns as thirds (as it now does for any list over
+  2 000 rows), and only the rows in view are built.
+
+### Finder tags
+
+macOS keeps tags in the extended attribute
+`com.apple.metadata:_kMDItemUserTags` (a binary property list of
+`Name\nColour` strings); `ferryx_vfs::tags` reads and writes it on the
+item itself (never through a link) and keeps the legacy Finder-info
+colour label in step (the last coloured tag's), so older tools agree.
+`capabilities()` says whether the desktop has tags (macOS) and whether
+Spotlight answers (`mdfind`); the routing passes them to the workspace
+(`WorkspaceScreen.capabilities`) and to Settings (`unavailable`
+commands), so ⌃⌘T, its menu items and its Hotkeys row are hidden
+elsewhere — features never ask the platform.
+
+- **Read lazily.** One `getxattr` costs about 14 µs on APFS even for an
+  item without tags, more than the rest of its row (10 000 files: 0.06–0.1 s
+  to list, 0.14–0.16 s more for the tags), so a listing does not read
+  them. `PanelCubit` (`readTags`) asks `read_listing_tags` once a listing
+  or a flat view shows — read on up to four threads, only the tagged
+  items come back — and merges them in by path; a listing read again keeps
+  the dots it showed until the new read answers, so they never blink. One
+  item (`stat`) reads its own.
+- **Shown** as Finder does: up to three dots right after the name in List
+  and Brief (`AppTagDots`, Finder's colours in light and dark from
+  `AppTagColors`, each ringed with the row's background so they stay
+  apart on the cursor's accent too), the names in the dots' tip and the
+  row's semantics; uncoloured tags have no dot.
+- **Edited** with ⌃⌘T (the row menu's "Tags…", `:tag red,work`,
+  `:tag -red`): a menu by the cursor's row lists Finder's seven colours in
+  its order, then the named tags of the folder's rows, each checked when
+  every target has it, with a dash when some do (`AppMenuAction.mixed`);
+  a pick turns it on for all, or off when all had it; "New Tag…" asks a
+  name and a colour. `set_tags` applies one edit to every target and
+  answers each one's tags or its typed failure; the window shows the new
+  tags in both panels at once and words the failures in one notice. A
+  standard tag is matched by its colour and its name in the interface's
+  language or an English Finder's, and taken off under both.
 
 ### Keyboard model
 
@@ -704,7 +876,12 @@ partially created resources.
 ## Tests
 
 - Rust: unit tests per crate; `ferryx_api/tests/api_flow.rs` runs the
-  bridge end to end.
+  bridge end to end, `archives_flow.rs`, `flat_flow.rs` and
+  `tags_flow.rs` the archives' passwords and Extract To, flat views and
+  Finder tags. The archive tests write every format they read (a stored
+  RAR5 and an ISO with Joliet names by hand); ignored tests time large
+  archives, a flat walk of a big tree (`FERRYX_FLAT_BENCH=~/Library`), tag
+  reading and a live Spotlight search.
 - Dart: cubit tests (`bloc_test`, `mocktail`) in the panels, viewer,
   find and terminal features; widget tests in the settings feature, the
   component library and the terminal (its keys on macOS and Linux, the end
@@ -743,11 +920,14 @@ partially created resources.
 ## Known gaps
 
 - No SFTP/FTP/WebDAV, no extended-attributes or process-list virtual file
-  systems; archives are read-only (zip, jar, tar, tar.gz).
+  systems; archives are read-only, and a rar set of several volumes lists
+  its first volume's members only.
 - The terminal: one session per window; no search in its scrollback;
   NC's "paste the file name into the terminal" (⌃⌥↩) is not there yet; on
   Windows the folder is not synchronised (see above).
-- Finder tags are not read; the tag palette is in place for them.
+- Finder tags have no list column of their own yet (the dots and the
+  tip carry them); a flat view sees changes deeper than its folder made
+  by other programs only on ⌘R.
 - Scroll-only keys (⌥Home, ⌥End, ⌥PgUp, ⌥PgDn) move the cursor as the plain
   keys do.
 - The clipboard carries paths as text (⌘C / ⌘V / ⌥⌘V). An archive's

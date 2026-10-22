@@ -81,6 +81,10 @@ See `ARCHITECTURE.md`. The rules that matter most:
   chords no program is given: with ⌘ on macOS, with Ctrl+Shift elsewhere
   (`ShortcutMap.terminalShortcuts`). A window command that must work from
   the terminal needs such a chord; never a plain Ctrl+letter.
+- A row is known by `FileEntry.key` (its name; in a flat view its path
+  under the root, as two folders may hold one name): selection, quick
+  search matches and the cursor kept across a re-read use the key, never
+  `name`; where a row is comes from `PanelTabState.locationOf(entry)`.
 
 ## Conventions
 

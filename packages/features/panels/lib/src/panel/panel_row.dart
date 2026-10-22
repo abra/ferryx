@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
@@ -121,25 +123,64 @@ class RowName extends StatelessWidget {
         ? base.copyWith(color: colors.textFaint)
         : base;
     final match = look.match;
+    // A long name loses its middle, so the extension stays in view; with
+    // a search on, the underlined letters stay instead.
+    final plainName = match == null || match.isEmpty
+        ? AppMiddleEllipsis(entry.isParent ? '..' : entry.name, style: style)
+        : Text.rich(
+            _spans(entry.name, match, style, colors),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
+          );
+    // Finder tags: their colours as dots right after the name, their
+    // names in the dots' tip.
+    final dots = [
+      for (final tag in entry.tags)
+        if (tag.color > 0) tag.color,
+    ];
+    final dotSize = ((base.fontSize ?? AppIconSize.sm) * 0.75).roundToDouble();
+    final Widget name = dots.isEmpty
+        ? plainName
+        : Row(
+            children: [
+              Flexible(child: plainName),
+              const SizedBox(width: AppSpacing.xs),
+              AppTooltip(
+                message: context.l10n.tagNames(entry.tags.map((t) => t.name)),
+                child: AppTagDots(
+                  colors: dots,
+                  // On the accent the dots take a light ring, as Finder's.
+                  ring: look.emphasized
+                      ? colors.onAccent
+                      : look.background(colors) ?? colors.window,
+                  size: dotSize,
+                ),
+              ),
+            ],
+          );
+    final dotsWidth = dots.isEmpty
+        ? 0.0
+        : AppTagDots.widthOf(dots.length, dotSize) + AppSpacing.xs;
     return Row(
       children: [
         Icon(icon, size: iconSize, color: iconColor),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
-          // A long name loses its middle, so the extension stays in view;
-          // with a search on, the underlined letters stay instead.
           child:
               field ??
-              (match == null || match.isEmpty
-                  ? AppMiddleEllipsis(
-                      entry.isParent ? '..' : entry.name,
-                      style: style,
-                    )
-                  : Text.rich(
-                      _spans(entry.name, match, style, colors),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: false,
+              (entry.folder.isEmpty
+                  ? name
+                  : _NameWithFolder(
+                      name: name,
+                      nameText: entry.name,
+                      nameExtra: dotsWidth,
+                      nameStyle: style,
+                      folder: entry.folder,
+                      folderStyle: base.copyWith(
+                        color: look.secondary(colors),
+                        fontStyle: FontStyle.normal,
+                      ),
                     )),
         ),
       ],
@@ -176,6 +217,102 @@ class RowName extends StatelessWidget {
     if (at < chars.length) spans.add(TextSpan(text: chars.sublist(at).join()));
     return TextSpan(style: style, children: spans);
   }
+}
+
+/// A flat view's row: the name, then in the secondary colour the folder
+/// it is in. Both take their own width when they fit; when they do not,
+/// the folder gives way first (losing its middle, so its last folder
+/// stays) down to what the name leaves, and the name keeps at least
+/// three fifths of the room.
+class _NameWithFolder extends StatelessWidget {
+  const _NameWithFolder({
+    required this.name,
+    required this.nameText,
+    required this.nameStyle,
+    required this.folder,
+    required this.folderStyle,
+    this.nameExtra = 0,
+  });
+
+  final Widget name;
+  final String nameText;
+  final TextStyle nameStyle;
+
+  /// What [name] shows besides its text (the tags' dots).
+  final double nameExtra;
+  final String folder;
+  final TextStyle folderStyle;
+
+  /// The share of the row a long name keeps against a long folder.
+  static const double nameShare = 0.6;
+
+  /// The room a long folder keeps against a long name: a part of the
+  /// row, within these bounds at text scale 1.
+  static const double folderKeepsShare = 0.3;
+  static const double folderKeepsMin = 36;
+  static const double folderKeepsMax = 96;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final available = constraints.maxWidth - AppSpacing.md;
+      if (available <= 0) return name;
+      final scaler = MediaQuery.textScalerOf(context);
+      final direction = Directionality.of(context);
+      double measure(String text, TextStyle style) {
+        final painter = TextPainter(
+          text: TextSpan(text: text, style: style),
+          textDirection: direction,
+          textScaler: scaler,
+          maxLines: 1,
+        )..layout();
+        final width = painter.width;
+        painter.dispose();
+        return width.ceilToDouble();
+      }
+
+      final nameWidth = measure(nameText, nameStyle) + nameExtra;
+      final folderWidth = measure(folder, folderStyle);
+      final double nameRoom;
+      if (nameWidth + folderWidth <= available) {
+        nameRoom = nameWidth;
+      } else {
+        // The folder keeps a little room for its last letters; the name
+        // keeps the rest, three fifths at least.
+        final scale = MediaQuery.textScalerOf(context).scale(1);
+        final folderKeeps = math.min(
+          folderWidth,
+          (available * folderKeepsShare).clamp(
+            folderKeepsMin * scale,
+            folderKeepsMax * scale,
+          ),
+        );
+        nameRoom = math.min(
+          nameWidth,
+          math.max(available * nameShare, available - folderKeeps),
+        );
+      }
+      return Row(
+        children: [
+          SizedBox(width: nameRoom, child: name),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(child: AppMiddleEllipsis(folder, style: folderStyle)),
+        ],
+      );
+    },
+  );
+}
+
+/// What a screen reader says for a row: its name, the folder of a flat
+/// view's row, its tags.
+String rowSemanticsLabel(BuildContext context, FileEntry entry) {
+  final l10n = context.l10n;
+  if (entry.isParent) return l10n.panelParentFolder;
+  final label = entry.folder.isEmpty
+      ? entry.name
+      : l10n.flatRowLabel(entry.name, entry.folder);
+  if (entry.tags.isEmpty) return label;
+  return l10n.tagsRowLabel(label, l10n.tagNames(entry.tags.map((t) => t.name)));
 }
 
 /// A folder with nothing to show, in either view.
@@ -247,6 +384,9 @@ abstract final class ColumnWidths {
   /// The name column at least: the data columns give way to it together
   /// in a narrow panel, down to half their width.
   static const double nameMin = 160;
+
+  /// The name column of a flat view at least: the name and its folder.
+  static const double flatNameMin = 320;
 }
 
 /// The width a column takes at the text size in [context]: a date column

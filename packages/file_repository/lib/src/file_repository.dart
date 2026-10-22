@@ -72,6 +72,46 @@ class FileRepository {
     }
   }
 
+  /// Opens [location]'s whole subtree as one list of files for
+  /// [listingId], replacing what it showed; the rows come in batches on
+  /// [FlatStart.batches] (decoded as they arrive, never all at once) and
+  /// [sortFlatListing] then orders them. [location]'s folder is watched,
+  /// not its subfolders.
+  Future<FlatStart> openFlatListing(
+    String listingId,
+    Location location,
+    ListingOptions options,
+  ) => rust.FerryxBackend.guard(() async {
+    final start = await rust.openFlatListing(
+      listingId: listingId,
+      location: rust.locationToView(location),
+      options: rust.listingOptionsToView(options),
+    );
+    final batches = rust
+        .streamFlatListing(listingId: listingId, generation: start.generation)
+        .map(rust.flatBatchFromView);
+    return FlatStart(
+      listing: rust.listingFromView(start.listing),
+      generation: start.generation,
+      batches: batches,
+    );
+  });
+
+  /// The order of a flat listing's rows under [options]' sort: indices
+  /// into its rows as the batches brought them. Fails while the walk is
+  /// under way, or for a walk since replaced.
+  Future<List<int>> sortFlatListing(
+    String listingId,
+    int generation,
+    ListingOptions options,
+  ) => rust.FerryxBackend.guard(
+    () => rust.sortFlatListing(
+      listingId: listingId,
+      generation: generation,
+      options: rust.listingOptionsToView(options),
+    ),
+  );
+
   /// The rows of [location] once, unwatched: for a dialog's completion.
   Future<List<FileEntry>> peek(
     Location location, {
@@ -194,6 +234,60 @@ class FileRepository {
   /// Applications that open files like [path] (macOS; empty elsewhere).
   Future<List<String>> applicationsFor(String path) =>
       rust.FerryxBackend.guard(() => rust.applicationsFor(path: path));
+
+  // ─── Archives ───
+
+  /// What the archive at [path] holds; an encrypted member list says
+  /// [ArchiveInfo.needsPassword] rather than failing.
+  Future<ArchiveInfo> archiveInfo(String path) => rust.FerryxBackend.guard(
+    () async => rust.archiveInfoFromView(await rust.archiveInfo(path: path)),
+  );
+
+  /// Tries [password] on [archive] and keeps it for the archive's
+  /// listings, viewer and extractions; a wrong one throws
+  /// [FerryxErrorKind.wrongPassword].
+  Future<void> setArchivePassword(String archive, String password) =>
+      rust.FerryxBackend.guard(
+        () => rust.setArchivePassword(archive: archive, password: password),
+      );
+
+  /// Whether the file at [path] is an archive by its first bytes or its
+  /// name; [isArchive] asks the name alone.
+  Future<bool> detectArchive(String path) =>
+      rust.FerryxBackend.guard(() => rust.detectArchive(path: path));
+
+  // ─── Tags and capabilities ───
+
+  /// What this desktop can do that others cannot (Finder tags, the
+  /// Spotlight index); the interface hides what it lacks.
+  Capabilities capabilities() => rust.capabilitiesFromView(rust.capabilities());
+
+  /// The tags of [listingId]'s items that have any, by path. A listing
+  /// comes without them (each costs a system call); ask once it shows.
+  Future<Map<String, List<FileTag>>> listingTags(String listingId) =>
+      rust.FerryxBackend.guard(() async {
+        final found = await rust.readListingTags(listingId: listingId);
+        return {
+          for (final item in found)
+            item.path: item.tags.map(rust.tagFromView).toList(growable: false),
+        };
+      });
+
+  /// Adds [add] to each of [paths] (a tag already there takes the colour
+  /// given) and takes off the tags named in [remove]; answers each item's
+  /// tags after, or its failure.
+  Future<List<TagOutcome>> setTags(
+    List<String> paths, {
+    List<FileTag> add = const [],
+    List<String> remove = const [],
+  }) => rust.FerryxBackend.guard(() async {
+    final outcomes = await rust.setTags(
+      paths: paths,
+      add: add.map(rust.tagToView).toList(),
+      remove: remove,
+    );
+    return outcomes.map(rust.tagOutcomeFromView).toList(growable: false);
+  });
 
   // ─── Attributes ───
 

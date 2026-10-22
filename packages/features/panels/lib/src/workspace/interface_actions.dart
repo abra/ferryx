@@ -252,6 +252,12 @@ extension _InterfaceActions on _WorkspaceScreenState {
       showAppNotice(context, _l10n.noticeNotInArchive);
       return;
     }
+    // Its checks are one folder's: a name taken there, the same new name
+    // on two lines. A flat view's rows are in many.
+    if (tab.isFlat) {
+      showAppNotice(context, _l10n.noticeNotInFlat);
+      return;
+    }
     final items = tab.selected.isNotEmpty
         ? tab.targets
         : [

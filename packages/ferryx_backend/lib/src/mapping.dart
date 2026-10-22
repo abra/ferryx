@@ -5,6 +5,10 @@ library;
 
 import 'package:domain_models/domain_models.dart' as d;
 
+import 'rust/api/archives.dart' as rust;
+import 'rust/api/capabilities.dart' as rust;
+import 'rust/api/flat.dart' as rust;
+import 'rust/api/tags.dart' as rust;
 import 'rust/api/types.dart' as rust;
 
 DateTime? dateTimeFromMs(int? ms) => ms == null
@@ -13,21 +17,23 @@ DateTime? dateTimeFromMs(int? ms) => ms == null
 
 int? msFromDateTime(DateTime? time) => time?.toUtc().millisecondsSinceEpoch;
 
-d.FerryxErrorKind errorKindFromView(rust.FerryxErrorKind kind) =>
-    switch (kind) {
-      rust.FerryxErrorKind.notFound => d.FerryxErrorKind.notFound,
-      rust.FerryxErrorKind.permissionDenied =>
-        d.FerryxErrorKind.permissionDenied,
-      rust.FerryxErrorKind.alreadyExists => d.FerryxErrorKind.alreadyExists,
-      rust.FerryxErrorKind.notADirectory => d.FerryxErrorKind.notADirectory,
-      rust.FerryxErrorKind.isADirectory => d.FerryxErrorKind.isADirectory,
-      rust.FerryxErrorKind.notEmpty => d.FerryxErrorKind.notEmpty,
-      rust.FerryxErrorKind.unsupported => d.FerryxErrorKind.unsupported,
-      rust.FerryxErrorKind.cancelled => d.FerryxErrorKind.cancelled,
-      rust.FerryxErrorKind.invalidName => d.FerryxErrorKind.invalidName,
-      rust.FerryxErrorKind.invalidPattern => d.FerryxErrorKind.invalidPattern,
-      rust.FerryxErrorKind.io => d.FerryxErrorKind.io,
-    };
+d.FerryxErrorKind errorKindFromView(
+  rust.FerryxErrorKind kind,
+) => switch (kind) {
+  rust.FerryxErrorKind.notFound => d.FerryxErrorKind.notFound,
+  rust.FerryxErrorKind.permissionDenied => d.FerryxErrorKind.permissionDenied,
+  rust.FerryxErrorKind.alreadyExists => d.FerryxErrorKind.alreadyExists,
+  rust.FerryxErrorKind.notADirectory => d.FerryxErrorKind.notADirectory,
+  rust.FerryxErrorKind.isADirectory => d.FerryxErrorKind.isADirectory,
+  rust.FerryxErrorKind.notEmpty => d.FerryxErrorKind.notEmpty,
+  rust.FerryxErrorKind.unsupported => d.FerryxErrorKind.unsupported,
+  rust.FerryxErrorKind.cancelled => d.FerryxErrorKind.cancelled,
+  rust.FerryxErrorKind.invalidName => d.FerryxErrorKind.invalidName,
+  rust.FerryxErrorKind.invalidPattern => d.FerryxErrorKind.invalidPattern,
+  rust.FerryxErrorKind.io => d.FerryxErrorKind.io,
+  rust.FerryxErrorKind.passwordRequired => d.FerryxErrorKind.passwordRequired,
+  rust.FerryxErrorKind.wrongPassword => d.FerryxErrorKind.wrongPassword,
+};
 
 // ─── Locations and entries ───
 
@@ -55,28 +61,33 @@ d.EntryKind entryKindFromView(rust.EntryKindView kind) => switch (kind) {
   rust.EntryKindView.other => d.EntryKind.other,
 };
 
-d.FileEntry entryFromView(rust.EntryView view) => d.FileEntry(
-  name: view.name,
-  path: view.path,
-  kind: entryKindFromView(view.kind),
-  isDir: view.isDir,
-  isParent: view.isParent,
-  symlinkTarget: view.symlinkTarget,
-  size: view.size,
-  modified: dateTimeFromMs(view.modifiedMs),
-  created: dateTimeFromMs(view.createdMs),
-  accessed: dateTimeFromMs(view.accessedMs),
-  added: dateTimeFromMs(view.addedMs),
-  mode: view.mode,
-  uid: view.uid,
-  gid: view.gid,
-  owner: view.owner,
-  group: view.group,
-  flags: view.flags,
-  isHidden: view.isHidden,
-  extension: view.extension_,
-  tags: view.tags,
-);
+/// [folder] is a flat view's folder of the entry, relative to its root.
+d.FileEntry entryFromView(rust.EntryView view, {String folder = ''}) =>
+    d.FileEntry(
+      name: view.name,
+      path: view.path,
+      kind: entryKindFromView(view.kind),
+      isDir: view.isDir,
+      isParent: view.isParent,
+      symlinkTarget: view.symlinkTarget,
+      size: view.size,
+      modified: dateTimeFromMs(view.modifiedMs),
+      created: dateTimeFromMs(view.createdMs),
+      accessed: dateTimeFromMs(view.accessedMs),
+      added: dateTimeFromMs(view.addedMs),
+      mode: view.mode,
+      uid: view.uid,
+      gid: view.gid,
+      owner: view.owner,
+      group: view.group,
+      flags: view.flags,
+      isHidden: view.isHidden,
+      extension: view.extension_,
+      tags: view.tags.isEmpty
+          ? const []
+          : view.tags.map(tagFromView).toList(growable: false),
+      folder: folder,
+    );
 
 d.Listing listingFromView(rust.ListingView view) => d.Listing(
   location: locationFromView(view.location),
@@ -200,6 +211,7 @@ rust.OpRequestView operationRequestToView(d.OperationRequest request) =>
       preserveAttributes: request.preserveAttributes,
       verify: request.verify,
       password: request.password,
+      intoFolders: request.intoFolders,
     );
 
 d.OpState opStateFromView(rust.OpStateView state) => switch (state) {
@@ -310,6 +322,7 @@ rust.FindRequestView findRequestToView(d.FindRequest request) =>
       sizeBytes: request.size?.bytes ?? 0,
       includeHidden: request.includeHidden,
       includeFolders: request.includeFolders,
+      useSpotlight: request.useSpotlight,
     );
 
 d.FindHit findHitFromView(rust.FindHitView view) => d.FindHit(
@@ -393,3 +406,52 @@ rust.AttributeChangesView attributeChangesToView(d.AttributeChanges changes) =>
       modifiedMs: msFromDateTime(changes.modified),
       accessedMs: msFromDateTime(changes.accessed),
     );
+
+// ─── Archives ───
+
+d.ArchiveInfo archiveInfoFromView(rust.ArchiveInfoView view) => d.ArchiveInfo(
+  format: view.format,
+  topLevelCount: view.topLevelCount,
+  singleTopLevel: view.singleTopLevel,
+  fileCount: view.fileCount,
+  unpackedBytes: view.unpackedBytes,
+  encrypted: view.encrypted,
+  needsPassword: view.needsPassword,
+  hasPassword: view.hasPassword,
+);
+
+// ─── Flat views ───
+
+d.FlatBatch flatBatchFromView(rust.FlatBatchView view) => d.FlatBatch(
+  generation: view.generation,
+  entries: [
+    for (var i = 0; i < view.entries.length; i++)
+      entryFromView(view.entries[i], folder: view.folders[i]),
+  ],
+  done: view.done,
+  count: view.count,
+  capped: view.capped,
+);
+
+// ─── Tags and capabilities ───
+
+d.FileTag tagFromView(rust.TagView view) =>
+    d.FileTag(view.name, color: view.color);
+
+rust.TagView tagToView(d.FileTag tag) =>
+    rust.TagView(name: tag.name, color: tag.color);
+
+d.TagOutcome tagOutcomeFromView(rust.TagOutcomeView view) => d.TagOutcome(
+  path: view.path,
+  tags: view.tags.map(tagFromView).toList(growable: false),
+  failure: view.failure == null
+      ? null
+      : d.FerryxException(
+          errorKindFromView(view.failure!),
+          view.message,
+          path: view.path,
+        ),
+);
+
+d.Capabilities capabilitiesFromView(rust.CapabilitiesView view) =>
+    d.Capabilities(finderTags: view.finderTags, spotlight: view.spotlight);

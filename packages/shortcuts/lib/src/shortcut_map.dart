@@ -252,6 +252,8 @@ class ShortcutMap {
     // `u` is a prefix here (`uv`, `uy`), so undo takes `uu`.
     add(AppCommand.undo, seq(u, u));
     add(AppCommand.redo, key(u, shift: true));
+    // ─── Files core ───
+    add(AppCommand.toggleFlatView, seq(z, LogicalKeyboardKey.keyF));
     return map;
   }
 
@@ -648,6 +650,14 @@ const _defaults = <AppCommand, List<Chord>>{
   AppCommand.togglePanelsOverTerminal: [
     Chord(LogicalKeyboardKey.keyO, control: true, alt: true),
   ],
+  // ─── Files core ───
+  AppCommand.extractTo: [Chord(LogicalKeyboardKey.f9, alt: true)],
+  AppCommand.toggleFlatView: [
+    Chord(LogicalKeyboardKey.keyB, primary: true, alt: true),
+  ],
+  AppCommand.editTags: [
+    Chord(LogicalKeyboardKey.keyT, primary: true, control: true),
+  ],
 
   // File panel keys
   AppCommand.moveUp: [Chord(LogicalKeyboardKey.arrowUp)],
@@ -828,4 +838,8 @@ const _otherDesktops = <AppCommand, List<Chord>>{
   AppCommand.terminalClear: [
     Chord(LogicalKeyboardKey.keyK, control: true, shift: true),
   ],
+  // ─── Files core ───
+  // Finder tags are macOS's alone; there Ctrl with the primary key would
+  // be Ctrl+T, New Tab.
+  AppCommand.editTags: [],
 };

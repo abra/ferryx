@@ -11,6 +11,12 @@ enum FerryxErrorKind {
   invalidName,
   invalidPattern,
   io,
+
+  /// An encrypted archive needs a password to be listed or read.
+  passwordRequired,
+
+  /// The password given does not open the archive.
+  wrongPassword,
 }
 
 class FerryxException implements Exception {

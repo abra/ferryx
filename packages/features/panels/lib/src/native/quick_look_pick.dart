@@ -63,4 +63,4 @@ int quickLookFolderIndex(PanelTabState tab) {
 
 /// Where [focused] is in [entries], or -1.
 int quickLookIndexIn(List<FileEntry> entries, FileEntry? focused) =>
-    focused == null ? -1 : entries.indexWhere((e) => e.name == focused.name);
+    focused == null ? -1 : entries.indexWhere((e) => e.key == focused.key);

@@ -3445,4 +3445,220 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get dupesUnmark => 'Снять отметку';
+
+  @override
+  String get cmdExtractTo => 'Распаковать в…';
+
+  @override
+  String get cmdToggleFlatView => 'Плоский список';
+
+  @override
+  String get cmdEditTags => 'Теги…';
+
+  @override
+  String get archivePasswordRequired => 'Нужен пароль';
+
+  @override
+  String get archiveWrongPassword => 'Неверный пароль';
+
+  @override
+  String archiveExtractOneTitle(String name) {
+    return 'Распаковать «$name» в';
+  }
+
+  @override
+  String archiveExtractManyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Распаковать $count архива в',
+      many: 'Распаковать $count архивов в',
+      few: 'Распаковать $count архива в',
+      one: 'Распаковать $count архив в',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String archiveExtractMembersTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Распаковать $count объекта в',
+      many: 'Распаковать $count объектов в',
+      few: 'Распаковать $count объекта в',
+      one: 'Распаковать $count объект в',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get archiveIntoFolders => 'Каждый архив — в папку с его именем';
+
+  @override
+  String archiveIntoFolder(String name) {
+    return 'В папку «$name»';
+  }
+
+  @override
+  String get archivePasswordLabel => 'Пароль';
+
+  @override
+  String archiveWrongPasswordFor(String name) {
+    return 'Этот пароль не открывает «$name»';
+  }
+
+  @override
+  String get archiveExtractAction => 'Распаковать';
+
+  @override
+  String get archiveNoArchives => 'Среди объектов нет архивов';
+
+  @override
+  String archivePasswordTitle(String name) {
+    return '«$name» зашифрован';
+  }
+
+  @override
+  String get archivePasswordMessage => 'Введите пароль, чтобы открыть архив.';
+
+  @override
+  String get archivePasswordOpen => 'Открыть';
+
+  @override
+  String get archiveEnterPassword => 'Ввести пароль…';
+
+  @override
+  String archiveDestinationHint(String key) {
+    return '$key дополняет имя папки';
+  }
+
+  @override
+  String get flatCapsule => 'Плоский';
+
+  @override
+  String get flatLeave => 'Вернуться к папке';
+
+  @override
+  String get flatWalking => 'Чтение дерева папки';
+
+  @override
+  String flatFileCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString файла',
+      many: '$countString файлов',
+      few: '$countString файла',
+      one: '$countString файл',
+      zero: 'нет файлов',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String flatCappedCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'первые $countString файла',
+      many: 'первые $countString файлов',
+      few: 'первые $countString файла',
+      one: 'первый $countString файл',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String flatRowLabel(String name, String folder) {
+    return '$name, в $folder';
+  }
+
+  @override
+  String get tagsMenuTitle => 'Теги';
+
+  @override
+  String get tagColorRed => 'Красный';
+
+  @override
+  String get tagColorOrange => 'Оранжевый';
+
+  @override
+  String get tagColorYellow => 'Желтый';
+
+  @override
+  String get tagColorGreen => 'Зеленый';
+
+  @override
+  String get tagColorBlue => 'Синий';
+
+  @override
+  String get tagColorPurple => 'Лиловый';
+
+  @override
+  String get tagColorGray => 'Серый';
+
+  @override
+  String get tagsNew => 'Новый тег…';
+
+  @override
+  String get tagsNewTitle => 'Новый тег';
+
+  @override
+  String get tagsNameLabel => 'Имя';
+
+  @override
+  String get tagsColorLabel => 'Цвет';
+
+  @override
+  String get tagsColorNone => 'Без цвета';
+
+  @override
+  String get tagsAdd => 'Добавить';
+
+  @override
+  String tagsList(String first, String second) {
+    return '$first, $second';
+  }
+
+  @override
+  String tagsRowLabel(String label, String tags) {
+    return '$label, теги: $tags';
+  }
+
+  @override
+  String tagsFailed(int count, String reason) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Не удалось изменить теги $count объекта: $reason',
+      many: 'Не удалось изменить теги $count объектов: $reason',
+      few: 'Не удалось изменить теги $count объектов: $reason',
+      one: 'Не удалось изменить теги $count объекта: $reason',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get findSpotlight => 'Искать по индексу Spotlight';
+
+  @override
+  String get findSpotlightNote =>
+      'Быстрее, но Spotlight не видит системные и скрытые папки, а также папки, исключенные в Системных настройках.';
+
+  @override
+  String get findSpotlightFailed =>
+      'Spotlight не смог искать здесь — папки просмотрены напрямую.';
+
+  @override
+  String get noticeNotInFlat =>
+      'Это работает с содержимым одной папки: сначала выйдите из плоского списка';
 }

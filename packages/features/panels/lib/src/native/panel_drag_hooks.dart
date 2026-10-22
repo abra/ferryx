@@ -43,9 +43,7 @@ DropSpot? rowDropSpot(Location location, FileEntry entry) {
     final parent = location.parent;
     return parent == null ? null : DropSpot.row(parent, entry.name);
   }
-  return entry.isDir
-      ? DropSpot.row(location.join(entry.name), entry.name)
-      : null;
+  return entry.isDir ? DropSpot.row(location.join(entry.key), entry.key) : null;
 }
 
 /// The panel's rows as a place to drop files into its folder, ringed

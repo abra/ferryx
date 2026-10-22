@@ -27,3 +27,4 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
 
 [dev-dependencies]
 tempfile.workspace = true
+zip.workspace = true

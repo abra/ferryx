@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use ferryx_ops::journal::{Change, Step, StepKind};
 use ferryx_ops::types::*;
-use ferryx_ops::{compress, copy, delete, undo, OpContext};
+use ferryx_ops::{compress, copy, delete, extract, undo, OpContext};
 
 fn request(kind: OpKind, sources: Vec<PathBuf>, destination: Option<&Path>) -> OpRequest {
     OpRequest {
@@ -29,6 +29,7 @@ fn recorded(request: &OpRequest) -> Vec<Change> {
     match request.kind {
         OpKind::Compress => compress::run(&ctx, request).unwrap(),
         OpKind::Trash | OpKind::Delete => delete::run(&ctx, request).unwrap(),
+        OpKind::Extract => extract::run(&ctx, request).unwrap(),
         _ => copy::run(&ctx, request).unwrap(),
     }
     ctx.recorded()
@@ -138,10 +139,24 @@ fn duplicates_and_archives_record_what_they_made() {
     let changes = recorded(&request(OpKind::Compress, vec![file.clone()], Some(dir.path())));
     assert!(made(&changes, &dir.path().join("note.zip")));
 
-    let mut extract = request(OpKind::Extract, vec![PathBuf::from("note.md")], Some(&dir.path().join("out")));
+    // Into a folder that was there: each item it wrote.
+    let out = dir.path().join("out");
+    fs::create_dir(&out).unwrap();
+    let mut extract = request(OpKind::Extract, vec![PathBuf::from("note.md")], Some(&out));
     extract.archive = Some(dir.path().join("note.zip"));
     let changes = recorded(&extract);
-    assert!(made(&changes, &dir.path().join("out/note.md")));
+    assert!(made(&changes, &out.join("note.md")));
+    assert!(!made(&changes, &out));
+
+    // Into a folder it made (Extract To, a folder per archive): the folder
+    // alone, as a copy records its topmost item.
+    let mut whole =
+        request(OpKind::Extract, vec![dir.path().join("note.zip")], Some(&dir.path().join("new")));
+    whole.options.into_folders = true;
+    let changes = recorded(&whole);
+    assert!(made(&changes, &dir.path().join("new")));
+    assert!(!made(&changes, &dir.path().join("new/note/note.md")));
+    assert_eq!(fs::read(dir.path().join("new/note/note.md")).unwrap(), b"n");
 }
 
 #[test]

@@ -52,6 +52,7 @@ fn request(kind: OpKindView, sources: Vec<String>, destination: Option<String>) 
         preserve_attributes: true,
         verify: true,
         password: None,
+        into_folders: false,
     }
 }
 
@@ -225,6 +226,7 @@ fn find_streams_hits() {
         size_bytes: 0,
         include_hidden: false,
         include_folders: true,
+        use_spotlight: false,
     });
     let mut hits = Vec::new();
     wait_for(|| {

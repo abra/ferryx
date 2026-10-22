@@ -163,6 +163,10 @@ enum AppCommand {
   showTerminal(CommandScope.global),
   hideTerminal(CommandScope.global),
   togglePanelsOverTerminal(CommandScope.global),
+  // ─── Files core ───
+  extractTo(CommandScope.global),
+  toggleFlatView(CommandScope.global),
+  editTags(CommandScope.global),
 
   // ─── File panel keys ───
   moveUp(CommandScope.panel),

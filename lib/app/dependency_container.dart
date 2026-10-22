@@ -1,3 +1,4 @@
+import 'package:domain_models/domain_models.dart';
 import 'package:ferryx/app/resource_disposer.dart';
 import 'package:ferryx/app/window_frame.dart';
 import 'package:ferryx_backend/ferryx_backend.dart';
@@ -99,6 +100,7 @@ class DependenciesContainer {
   /// menus, the palette, the cheat sheet and the hotkeys.
   late final Set<AppCommand> unavailableCommands = unavailableCommandsFor(
     platformServices.capabilities,
+    files.capabilities(),
   );
 
   Future<void> dispose() => _resourceDisposer.dispose();
@@ -107,9 +109,13 @@ class DependenciesContainer {
       _resourceDisposer.dispose(rollback: true);
 }
 
-/// The commands whose capability [capabilities] lacks.
-Set<AppCommand> unavailableCommandsFor(PlatformCapabilities capabilities) =>
-    Set.unmodifiable({
-      if (!capabilities.quickLook) AppCommand.quickLook,
-      if (!capabilities.share) AppCommand.share,
-    });
+/// The commands whose capability the desktop's services ([platform]) or
+/// the core ([core]) lack.
+Set<AppCommand> unavailableCommandsFor(
+  PlatformCapabilities platform,
+  Capabilities core,
+) => Set.unmodifiable({
+  if (!platform.quickLook) AppCommand.quickLook,
+  if (!platform.share) AppCommand.share,
+  if (!core.finderTags) AppCommand.editTags,
+});

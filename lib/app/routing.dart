@@ -128,6 +128,7 @@ class _WorkspaceRoute extends StatelessWidget {
         operations: deps.operations,
         rename: deps.rename,
         platformServices: deps.platformServices,
+        capabilities: deps.files.capabilities(),
         preferences: deps.preferencesService,
         logger: deps.logger,
         shortcutMap: deps.shortcutMap,
@@ -198,6 +199,7 @@ class _WorkspaceRoute extends StatelessWidget {
             root: root,
             find: deps.find,
             onView: view,
+            spotlight: deps.files.capabilities().spotlight,
           ),
           openSettings: (context) => openSettings(context),
           openCheatSheet: (context) => showCheatSheet(

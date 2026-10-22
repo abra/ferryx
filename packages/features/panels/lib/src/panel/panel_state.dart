@@ -2,6 +2,7 @@ import 'package:domain_models/domain_models.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
+import 'flat_view.dart';
 import 'panel_side.dart';
 
 /// One tab of a panel: where it is, what it shows, where its cursor and
@@ -34,6 +35,8 @@ class PanelTabState extends Equatable {
     this.searching = false,
     this.lastSelection = const {},
     this.renameCaret = RenameCaret.stem,
+    this.passwordLocation,
+    this.flat,
   });
 
   /// The listing id in the core, unique across both panels.
@@ -53,7 +56,8 @@ class PanelTabState extends Equatable {
   /// The index of the cursor in [rows]; -1 when there are no rows.
   final int cursor;
 
-  /// Selected names; the `..` row is never among them.
+  /// Selected rows by their keys (names; under a flat view's root, paths);
+  /// the `..` row is never among them.
   final Set<String> selected;
   final List<Location> history;
   final int historyIndex;
@@ -101,6 +105,14 @@ class PanelTabState extends Equatable {
   /// Where the caret goes in the rename field.
   final RenameCaret renameCaret;
 
+  /// An archive's folder that could not open without its password: the
+  /// window asks for it and opens the folder again.
+  final Location? passwordLocation;
+
+  /// The tab shows its folder's whole subtree as one list; `null` for the
+  /// folder itself.
+  final FlatView? flat;
+
   FileEntry? get focused =>
       cursor >= 0 && cursor < rows.length ? rows[cursor] : null;
 
@@ -110,7 +122,7 @@ class PanelTabState extends Equatable {
     if (selected.isNotEmpty) {
       return [
         for (final row in rows)
-          if (selected.contains(row.name)) row,
+          if (selected.contains(row.key)) row,
       ];
     }
     final focused = this.focused;
@@ -118,7 +130,7 @@ class PanelTabState extends Equatable {
   }
 
   int get selectedBytes => rows
-      .where((r) => selected.contains(r.name))
+      .where((r) => selected.contains(r.key))
       .fold(0, (sum, r) => sum + (r.size ?? folderSizes[r.name] ?? 0));
 
   /// Visual mode is on.
@@ -128,7 +140,14 @@ class PanelTabState extends Equatable {
 
   bool get canGoForward => historyIndex < history.length - 1;
 
-  int indexOfName(String name) => rows.indexWhere((r) => r.name == name);
+  /// The row with [key] (its name, or its path under a flat view's root).
+  int indexOfName(String key) => rows.indexWhere((r) => r.key == key);
+
+  bool get isFlat => flat != null;
+
+  /// Where [entry] is: under the tab's folder, in its own folder of a
+  /// flat view.
+  Location locationOf(FileEntry entry) => location.join(entry.key);
 
   PanelTabState copyWith({
     Location? location,
@@ -161,6 +180,10 @@ class PanelTabState extends Equatable {
     bool? searching,
     Set<String>? lastSelection,
     RenameCaret? renameCaret,
+    Location? passwordLocation,
+    bool clearPasswordLocation = false,
+    FlatView? flat,
+    bool clearFlat = false,
   }) => PanelTabState(
     id: id,
     location: location ?? this.location,
@@ -189,6 +212,10 @@ class PanelTabState extends Equatable {
     searching: searching ?? this.searching,
     lastSelection: lastSelection ?? this.lastSelection,
     renameCaret: renameCaret ?? this.renameCaret,
+    passwordLocation: clearPasswordLocation
+        ? null
+        : (passwordLocation ?? this.passwordLocation),
+    flat: clearFlat ? null : (flat ?? this.flat),
   );
 
   @override
@@ -218,6 +245,8 @@ class PanelTabState extends Equatable {
     searching,
     lastSelection,
     renameCaret,
+    passwordLocation,
+    flat,
   ];
 }
 

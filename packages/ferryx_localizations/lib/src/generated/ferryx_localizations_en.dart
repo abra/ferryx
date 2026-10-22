@@ -3359,4 +3359,211 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get dupesUnmark => 'Unmark';
+
+  @override
+  String get cmdExtractTo => 'Extract To…';
+
+  @override
+  String get cmdToggleFlatView => 'Flat View';
+
+  @override
+  String get cmdEditTags => 'Tags…';
+
+  @override
+  String get archivePasswordRequired => 'A password is needed';
+
+  @override
+  String get archiveWrongPassword => 'Wrong password';
+
+  @override
+  String archiveExtractOneTitle(String name) {
+    return 'Extract “$name” to';
+  }
+
+  @override
+  String archiveExtractManyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Extract $count archives to',
+      one: 'Extract $count archive to',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String archiveExtractMembersTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Extract $count items to',
+      one: 'Extract $count item to',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get archiveIntoFolders => 'Into a folder named after each archive';
+
+  @override
+  String archiveIntoFolder(String name) {
+    return 'Into a folder named “$name”';
+  }
+
+  @override
+  String get archivePasswordLabel => 'Password';
+
+  @override
+  String archiveWrongPasswordFor(String name) {
+    return 'This password does not open “$name”';
+  }
+
+  @override
+  String get archiveExtractAction => 'Extract';
+
+  @override
+  String get archiveNoArchives => 'None of the items is an archive';
+
+  @override
+  String archivePasswordTitle(String name) {
+    return '“$name” is encrypted';
+  }
+
+  @override
+  String get archivePasswordMessage =>
+      'Enter the password to open the archive.';
+
+  @override
+  String get archivePasswordOpen => 'Open';
+
+  @override
+  String get archiveEnterPassword => 'Enter Password…';
+
+  @override
+  String archiveDestinationHint(String key) {
+    return '$key completes a folder’s name';
+  }
+
+  @override
+  String get flatCapsule => 'Flat';
+
+  @override
+  String get flatLeave => 'Back to the folder';
+
+  @override
+  String get flatWalking => 'Reading the folder’s tree';
+
+  @override
+  String flatFileCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString files',
+      one: '$countString file',
+      zero: 'no files',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String flatCappedCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'the first $countString files',
+      one: 'the first $countString file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String flatRowLabel(String name, String folder) {
+    return '$name, in $folder';
+  }
+
+  @override
+  String get tagsMenuTitle => 'Tags';
+
+  @override
+  String get tagColorRed => 'Red';
+
+  @override
+  String get tagColorOrange => 'Orange';
+
+  @override
+  String get tagColorYellow => 'Yellow';
+
+  @override
+  String get tagColorGreen => 'Green';
+
+  @override
+  String get tagColorBlue => 'Blue';
+
+  @override
+  String get tagColorPurple => 'Purple';
+
+  @override
+  String get tagColorGray => 'Gray';
+
+  @override
+  String get tagsNew => 'New Tag…';
+
+  @override
+  String get tagsNewTitle => 'New Tag';
+
+  @override
+  String get tagsNameLabel => 'Name';
+
+  @override
+  String get tagsColorLabel => 'Color';
+
+  @override
+  String get tagsColorNone => 'None';
+
+  @override
+  String get tagsAdd => 'Add';
+
+  @override
+  String tagsList(String first, String second) {
+    return '$first, $second';
+  }
+
+  @override
+  String tagsRowLabel(String label, String tags) {
+    return '$label, tags: $tags';
+  }
+
+  @override
+  String tagsFailed(int count, String reason) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'The tags of $count items could not be changed: $reason',
+      one: 'The tags of $count item could not be changed: $reason',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get findSpotlight => 'Use the Spotlight index';
+
+  @override
+  String get findSpotlightNote =>
+      'Faster, but Spotlight skips system folders, hidden folders and the folders excluded in System Settings.';
+
+  @override
+  String get findSpotlightFailed =>
+      'Spotlight could not search here: the folders were searched instead.';
+
+  @override
+  String get noticeNotInFlat =>
+      'This works on one folder’s items; leave the flat view first';
 }

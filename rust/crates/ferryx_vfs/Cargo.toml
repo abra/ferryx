@@ -22,6 +22,13 @@ tar.workspace = true
 thiserror.workspace = true
 trash.workspace = true
 zip.workspace = true
+bzip2.workspace = true
+lzma-rust2.workspace = true
+sevenz-rust2.workspace = true
+unrar-rs.workspace = true
+zstd.workspace = true
+walkdir.workspace = true
+plist.workspace = true
 
 [target.'cfg(unix)'.dependencies]
 nix.workspace = true
@@ -32,3 +39,6 @@ objc2-foundation.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+# The tests write the archives they read.
+lzma-rust2 = { workspace = true, features = ["encoder"] }
+sevenz-rust2 = { workspace = true, features = ["compress"] }

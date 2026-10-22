@@ -184,6 +184,13 @@ extension _VimActions on _WorkspaceScreenState {
         await _checksums(algorithm: algorithm);
       case 'dupes' || 'duplicates':
         await _findDuplicates();
+      // ─── Files core ───
+      case 'extract':
+        await _extractTo(destination: arg.isEmpty ? null : _vimPath(arg));
+      case 'flat':
+        await _active.toggleFlatView();
+      case 'tag':
+        await _vimTag(arg);
       default:
         showAppNotice(context, _l10n.vimUnknownCommand(name));
     }
@@ -456,5 +463,9 @@ extension _VimActions on _WorkspaceScreenState {
     'redo',
     'synchronize',
     'undo',
+    // ─── Files core ───
+    'extract',
+    'flat',
+    'tag',
   ];
 }

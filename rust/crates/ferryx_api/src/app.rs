@@ -1,8 +1,8 @@
 //! Process-wide state: the event sink, open listings, the operations
-//! runner and the searches under way.
+//! runner and the searches under way. Archive indexes and passwords are
+//! kept by `ferryx_vfs::archive::shared`, which the operations use too.
 
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::sync::{Arc, LazyLock};
 
@@ -22,12 +22,45 @@ pub struct OpenListing {
     pub options: ListingOptionsView,
     pub raw: Vec<Entry>,
     pub watcher: Option<FolderWatcher>,
+    /// A flat view's walk and rows (see `api::flat`); `raw` stays empty.
+    pub flat: Option<FlatListing>,
+}
+
+/// The rows of a flat view, filled by its walk while the panel shows the
+/// first ones; sorted (into an order the panel applies) once complete.
+pub struct FlatListing {
+    pub generation: i64,
+    pub cancel: Arc<AtomicBool>,
+    pub rows: Arc<Mutex<FlatRows>>,
+}
+
+#[derive(Default)]
+pub struct FlatRows {
+    pub entries: Vec<Entry>,
+    /// Each row's folder relative to the root, in step with `entries`.
+    pub folders: Vec<String>,
+    pub done: bool,
+    pub capped: bool,
+}
+
+impl Drop for FlatListing {
+    /// A flat listing replaced or closed stops its walk.
+    fn drop(&mut self) {
+        self.cancel.store(true, Ordering::SeqCst);
+    }
+}
+
+static NEXT_GENERATION: AtomicI64 = AtomicI64::new(1);
+
+/// A number no flat walk had: the panel tells a walk's rows from an older
+/// one's by it.
+pub fn next_generation() -> i64 {
+    NEXT_GENERATION.fetch_add(1, Ordering::SeqCst)
 }
 
 #[derive(Default)]
 pub struct AppState {
     pub listings: HashMap<String, OpenListing>,
-    pub archives: HashMap<PathBuf, Arc<ArchiveIndex>>,
     pub finds: HashMap<i64, Arc<AtomicBool>>,
 }
 
@@ -85,17 +118,16 @@ pub fn emit_directory_changed(listing_id: &str) {
     emit(AppEvent::of(AppEventKind::DirectoryChanged, Some(listing_id.to_string())));
 }
 
-/// The index of `archive`, read once and again when the file changed.
+/// The index of `archive`, read once and again when the file changed;
+/// shared with the operations (see `ferryx_vfs::archive::shared`), read
+/// without holding the state's lock.
 pub fn archive_index(archive: &std::path::Path) -> Result<Arc<ArchiveIndex>, ferryx_vfs::VfsError> {
-    let mut guard = state().lock();
-    if let Some(index) = guard.archives.get(archive) {
-        if !index.is_stale() {
-            return Ok(index.clone());
-        }
-    }
-    let index = Arc::new(ArchiveIndex::open(archive)?);
-    guard.archives.insert(archive.to_path_buf(), index.clone());
-    Ok(index)
+    ferryx_vfs::archive::shared::index(archive)
+}
+
+/// The password given for `archive`, if any.
+pub fn archive_password(archive: &std::path::Path) -> Option<String> {
+    ferryx_vfs::archive::shared::password(archive)
 }
 
 /// Keeps every event from now on for [`take_events`].
@@ -111,7 +143,7 @@ pub fn take_events() -> Vec<AppEvent> {
 pub fn reset_for_tests() {
     let mut guard = state().lock();
     guard.listings.clear();
-    guard.archives.clear();
+    ferryx_vfs::archive::shared::clear();
     guard.finds.clear();
     *EVENTS.lock() = None;
     *RECORDED.lock() = None;

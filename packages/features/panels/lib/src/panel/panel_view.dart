@@ -41,6 +41,7 @@ class PanelHooks {
     required this.onVimComplete,
     this.drag,
     this.onEscape,
+    this.onArchivePassword,
   });
 
   /// The panel was clicked or took the keys: it is the active one now.
@@ -80,6 +81,10 @@ class PanelHooks {
   /// Esc closes what floats over the panels (Quick Look) before anything
   /// in the panel; answers whether it closed something.
   final bool Function()? onEscape;
+
+  /// An archive's folder asked for its password: the window asks the
+  /// user and opens it again.
+  final ValueChanged<Location>? onArchivePassword;
 }
 
 /// One file panel: header, tabs, rows and footer, with the panel's keys.
@@ -313,7 +318,12 @@ class _PanelViewState extends State<PanelView> {
     if (widget.hooks.onEscape?.call() ?? false) return;
     final tab = _cubit.state.active;
     if (!widget.vimMode || tab == null) {
-      _cubit.clearQuickSearch();
+      // A flat view goes back to its folder once no search is on.
+      if (tab != null && tab.quickSearch.isEmpty && tab.isFlat) {
+        unawaited(_cubit.leaveFlatView());
+      } else {
+        _cubit.clearQuickSearch();
+      }
       return;
     }
     if (_vim.count != null || _vim.pending != null) {
@@ -326,6 +336,8 @@ class _PanelViewState extends State<PanelView> {
       _cubit.endVisual();
     } else if (tab.selected.isNotEmpty) {
       _cubit.deselectAll();
+    } else if (tab.isFlat) {
+      unawaited(_cubit.leaveFlatView());
     }
   }
 
@@ -625,8 +637,33 @@ class _PanelViewState extends State<PanelView> {
     );
   }
 
+  /// A new error that is a password request: the window asks at once.
+  static bool _asksPassword(PanelState previous, PanelState next) {
+    final before = previous.active;
+    final after = next.active;
+    return after?.passwordLocation != null &&
+        after?.error?.kind == FerryxErrorKind.passwordRequired &&
+        (before?.id != after?.id || !identical(before?.error, after?.error));
+  }
+
+  /// The error strip's button: the password again for an archive that
+  /// asked for one, else another read.
+  VoidCallback _retryOf(PanelTabState tab) {
+    final location = tab.passwordLocation;
+    if (location != null &&
+        tab.error?.kind == FerryxErrorKind.passwordRequired) {
+      return () => widget.hooks.onArchivePassword?.call(location);
+    }
+    return () => unawaited(_cubit.refresh());
+  }
+
   @override
-  Widget build(BuildContext context) => BlocBuilder<PanelCubit, PanelState>(
+  Widget build(BuildContext context) => BlocConsumer<PanelCubit, PanelState>(
+    listenWhen: _asksPassword,
+    listener: (context, state) {
+      final location = state.active?.passwordLocation;
+      if (location != null) widget.hooks.onArchivePassword?.call(location);
+    },
     builder: (context, state) {
       final tab = state.active;
       final l10n = context.l10n;
@@ -770,15 +807,13 @@ class _PanelViewState extends State<PanelView> {
                     ),
                   ),
                   if (tab.error != null)
-                    _ErrorArea(
-                      error: tab.error!,
-                      onRetry: () => unawaited(_cubit.refresh()),
-                    ),
+                    _ErrorArea(error: tab.error!, onRetry: _retryOf(tab)),
                   PanelFooter(
                     tab: tab,
                     active: widget.active,
                     vim: _vimLine(tab),
                     shelfNote: widget.registerNote,
+                    onLeaveFlat: () => unawaited(_cubit.leaveFlatView()),
                   ),
                 ],
               ),
@@ -838,7 +873,11 @@ class _ErrorArea extends StatelessWidget {
             child: OutlinedButton(
               style: AppButtonStyles.small(context),
               onPressed: onRetry,
-              child: Text(l10n.actionRetry),
+              child: Text(
+                error.kind == FerryxErrorKind.passwordRequired
+                    ? l10n.archiveEnterPassword
+                    : l10n.actionRetry,
+              ),
             ),
           ),
         ],

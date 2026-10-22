@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
+import 'tags.dart';
+
 enum EntryKind { file, directory, symlink, other }
 
 /// A file, folder or link as a panel shows it.
@@ -27,6 +29,7 @@ class FileEntry extends Equatable {
     this.isHidden = false,
     this.extension = '',
     this.tags = const [],
+    this.folder = '',
   });
 
   final String name;
@@ -65,8 +68,17 @@ class FileEntry extends Equatable {
   /// The extension without its dot, as spelled; empty when there is none.
   final String extension;
 
-  /// Finder tag colours (indices into the tag palette).
-  final List<int> tags;
+  /// Finder tags (macOS), in the order Finder keeps them; a listing's
+  /// come a moment after its rows.
+  final List<FileTag> tags;
+
+  /// In a flat view, the folder the item is in relative to the view's
+  /// root (`a/b`); empty for the root's own items and in a plain listing.
+  final String folder;
+
+  /// The row's identity in its listing: the name, or in a flat view the
+  /// path relative to the root, as two folders may hold the same name.
+  String get key => folder.isEmpty ? name : '$folder/$name';
 
   bool get isSymlink => kind == EntryKind.symlink;
 
@@ -96,28 +108,30 @@ class FileEntry extends Equatable {
   /// not a folder).
   bool get isExecutable => !isDir && (mode & 0x49) != 0;
 
-  FileEntry copyWith({int? size, List<int>? tags}) => FileEntry(
-    name: name,
-    path: path,
-    kind: kind,
-    isDir: isDir,
-    isParent: isParent,
-    symlinkTarget: symlinkTarget,
-    size: size ?? this.size,
-    modified: modified,
-    created: created,
-    accessed: accessed,
-    added: added,
-    mode: mode,
-    uid: uid,
-    gid: gid,
-    owner: owner,
-    group: group,
-    flags: flags,
-    isHidden: isHidden,
-    extension: extension,
-    tags: tags ?? this.tags,
-  );
+  FileEntry copyWith({int? size, List<FileTag>? tags, String? folder}) =>
+      FileEntry(
+        name: name,
+        path: path,
+        kind: kind,
+        isDir: isDir,
+        isParent: isParent,
+        symlinkTarget: symlinkTarget,
+        size: size ?? this.size,
+        modified: modified,
+        created: created,
+        accessed: accessed,
+        added: added,
+        mode: mode,
+        uid: uid,
+        gid: gid,
+        owner: owner,
+        group: group,
+        flags: flags,
+        isHidden: isHidden,
+        extension: extension,
+        tags: tags ?? this.tags,
+        folder: folder ?? this.folder,
+      );
 
   @override
   List<Object?> get props => [
@@ -141,5 +155,6 @@ class FileEntry extends Equatable {
     isHidden,
     extension,
     tags,
+    folder,
   ];
 }

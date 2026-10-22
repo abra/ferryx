@@ -22,7 +22,7 @@ class _NativeState {
   Set<String>? selected;
   QuickLookPick pick = QuickLookPick.empty;
 
-  /// The archive member shown, by name.
+  /// The archive member shown, by its row's key.
   String? member;
   int index = -1;
 
@@ -113,7 +113,8 @@ extension _NativeActions on _WorkspaceScreenState {
       try {
         final path = await widget.files.extractToTemp(
           location.archive!,
-          location.join(entry.name).path,
+          // A flat view's row is in a folder of its own.
+          location.join(entry.key).path,
         );
         out.add((entry, path));
       } on FerryxException catch (error) {
@@ -171,7 +172,7 @@ extension _NativeActions on _WorkspaceScreenState {
       ..rows = tab.rows
       ..selected = tab.selected
       ..pick = pick
-      ..member = tab.location.isNative ? null : tab.focused?.name
+      ..member = tab.location.isNative ? null : tab.focused?.key
       ..index = pick.index;
     final generation = ++native.generation;
     final List<String> paths;
@@ -185,8 +186,8 @@ extension _NativeActions on _WorkspaceScreenState {
         notify: notify,
       );
       paths = [for (final (_, path) in taken) path];
-      final wanted = pick.entries.elementAtOrNull(pick.index)?.name;
-      index = taken.indexWhere((t) => t.$1.name == wanted);
+      final wanted = pick.entries.elementAtOrNull(pick.index)?.key;
+      index = taken.indexWhere((t) => t.$1.key == wanted);
     }
     if (generation != native.generation || !mounted) return false;
     if (paths.isEmpty) {
@@ -240,7 +241,7 @@ extension _NativeActions on _WorkspaceScreenState {
       await _platformGuarded(() => _platform.selectQuickLookItem(index));
       return;
     }
-    if (sameList && tab.focused?.name == native.member) return;
+    if (sameList && tab.focused?.key == native.member) return;
     await _showQuickLookOf(tab, notify: false);
   }
 
@@ -299,7 +300,7 @@ extension _NativeActions on _WorkspaceScreenState {
     final row = before.rows[index];
     if (row.isParent) return;
     _focusPanel(side);
-    final selection = before.selected.contains(row.name);
+    final selection = before.selected.contains(row.key);
     if (!selection) cubit.moveCursorTo(index, scroll: false);
     final tab = cubit.state.active ?? before;
     final entries = selection ? tab.targets : [row];

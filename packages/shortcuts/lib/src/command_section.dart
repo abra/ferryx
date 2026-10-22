@@ -71,4 +71,7 @@ const _placed = {
   AppCommand.togglePanelsOverTerminal: CommandSection.terminal,
   AppCommand.undo: CommandSection.edit,
   AppCommand.redo: CommandSection.edit,
+  AppCommand.extractTo: CommandSection.file,
+  AppCommand.editTags: CommandSection.file,
+  AppCommand.toggleFlatView: CommandSection.view,
 };

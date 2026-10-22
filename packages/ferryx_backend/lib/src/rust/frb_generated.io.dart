@@ -3,18 +3,22 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
+import 'api/archives.dart';
 import 'api/attrs.dart';
+import 'api/capabilities.dart';
 import 'api/checksum.dart';
 import 'api/duplicates.dart';
 import 'api/events.dart';
 import 'api/files.dart';
 import 'api/find.dart';
+import 'api/flat.dart';
 import 'api/journal.dart';
 import 'api/listing.dart';
 import 'api/ops.dart';
 import 'api/rename.dart';
 import 'api/sync.dart';
 import 'api/system.dart';
+import 'api/tags.dart';
 import 'api/terminal.dart';
 import 'api/types.dart';
 import 'api/volume_id.dart';
@@ -43,6 +47,11 @@ abstract class FerryxRustLibApiImplPlatform
   RustStreamSink<AppEvent> dco_decode_StreamSink_app_event_Sse(dynamic raw);
 
   @protected
+  RustStreamSink<FlatBatchView> dco_decode_StreamSink_flat_batch_view_Sse(
+    dynamic raw,
+  );
+
+  @protected
   RustStreamSink<TerminalEvent> dco_decode_StreamSink_terminal_event_Sse(
     dynamic raw,
   );
@@ -58,6 +67,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   AppEventKind dco_decode_app_event_kind(dynamic raw);
+
+  @protected
+  ArchiveInfoView dco_decode_archive_info_view(dynamic raw);
 
   @protected
   AttributeChangesView dco_decode_attribute_changes_view(dynamic raw);
@@ -108,6 +120,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   FerryxError dco_decode_box_autoadd_ferryx_error(dynamic raw);
+
+  @protected
+  FerryxErrorKind dco_decode_box_autoadd_ferryx_error_kind(dynamic raw);
 
   @protected
   FindRequestView dco_decode_box_autoadd_find_request_view(dynamic raw);
@@ -164,6 +179,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   UndoCheckView dco_decode_box_autoadd_undo_check_view(dynamic raw);
+
+  @protected
+  CapabilitiesView dco_decode_capabilities_view(dynamic raw);
 
   @protected
   CaseTransformView dco_decode_case_transform_view(dynamic raw);
@@ -247,6 +265,12 @@ abstract class FerryxRustLibApiImplPlatform
   FindRequestView dco_decode_find_request_view(dynamic raw);
 
   @protected
+  FlatBatchView dco_decode_flat_batch_view(dynamic raw);
+
+  @protected
+  FlatStartView dco_decode_flat_start_view(dynamic raw);
+
+  @protected
   FolderCompareRequestView dco_decode_folder_compare_request_view(dynamic raw);
 
   @protected
@@ -257,6 +281,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   PlatformInt64 dco_decode_i_64(dynamic raw);
+
+  @protected
+  ItemTagsView dco_decode_item_tags_view(dynamic raw);
 
   @protected
   JournalSummaryView dco_decode_journal_summary_view(dynamic raw);
@@ -301,6 +328,9 @@ abstract class FerryxRustLibApiImplPlatform
   List<FolderSizeView> dco_decode_list_folder_size_view(dynamic raw);
 
   @protected
+  List<ItemTagsView> dco_decode_list_item_tags_view(dynamic raw);
+
+  @protected
   List<OpErrorView> dco_decode_list_op_error_view(dynamic raw);
 
   @protected
@@ -332,6 +362,12 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   List<SyncItemView> dco_decode_list_sync_item_view(dynamic raw);
+
+  @protected
+  List<TagOutcomeView> dco_decode_list_tag_outcome_view(dynamic raw);
+
+  @protected
+  List<TagView> dco_decode_list_tag_view(dynamic raw);
 
   @protected
   List<UndoIssueView> dco_decode_list_undo_issue_view(dynamic raw);
@@ -402,6 +438,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   FerryxError? dco_decode_opt_box_autoadd_ferryx_error(dynamic raw);
+
+  @protected
+  FerryxErrorKind? dco_decode_opt_box_autoadd_ferryx_error_kind(dynamic raw);
 
   @protected
   int? dco_decode_opt_box_autoadd_i_32(dynamic raw);
@@ -493,6 +532,12 @@ abstract class FerryxRustLibApiImplPlatform
   SyncPlanView dco_decode_sync_plan_view(dynamic raw);
 
   @protected
+  TagOutcomeView dco_decode_tag_outcome_view(dynamic raw);
+
+  @protected
+  TagView dco_decode_tag_view(dynamic raw);
+
+  @protected
   TerminalEvent dco_decode_terminal_event(dynamic raw);
 
   @protected
@@ -537,6 +582,11 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  RustStreamSink<FlatBatchView> sse_decode_StreamSink_flat_batch_view_Sse(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   RustStreamSink<TerminalEvent> sse_decode_StreamSink_terminal_event_Sse(
     SseDeserializer deserializer,
   );
@@ -552,6 +602,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   AppEventKind sse_decode_app_event_kind(SseDeserializer deserializer);
+
+  @protected
+  ArchiveInfoView sse_decode_archive_info_view(SseDeserializer deserializer);
 
   @protected
   AttributeChangesView sse_decode_attribute_changes_view(
@@ -614,6 +667,11 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   FerryxError sse_decode_box_autoadd_ferryx_error(SseDeserializer deserializer);
+
+  @protected
+  FerryxErrorKind sse_decode_box_autoadd_ferryx_error_kind(
+    SseDeserializer deserializer,
+  );
 
   @protected
   FindRequestView sse_decode_box_autoadd_find_request_view(
@@ -696,6 +754,9 @@ abstract class FerryxRustLibApiImplPlatform
   UndoCheckView sse_decode_box_autoadd_undo_check_view(
     SseDeserializer deserializer,
   );
+
+  @protected
+  CapabilitiesView sse_decode_capabilities_view(SseDeserializer deserializer);
 
   @protected
   CaseTransformView sse_decode_case_transform_view(
@@ -805,6 +866,12 @@ abstract class FerryxRustLibApiImplPlatform
   FindRequestView sse_decode_find_request_view(SseDeserializer deserializer);
 
   @protected
+  FlatBatchView sse_decode_flat_batch_view(SseDeserializer deserializer);
+
+  @protected
+  FlatStartView sse_decode_flat_start_view(SseDeserializer deserializer);
+
+  @protected
   FolderCompareRequestView sse_decode_folder_compare_request_view(
     SseDeserializer deserializer,
   );
@@ -817,6 +884,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   PlatformInt64 sse_decode_i_64(SseDeserializer deserializer);
+
+  @protected
+  ItemTagsView sse_decode_item_tags_view(SseDeserializer deserializer);
 
   @protected
   JournalSummaryView sse_decode_journal_summary_view(
@@ -881,6 +951,11 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  List<ItemTagsView> sse_decode_list_item_tags_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<OpErrorView> sse_decode_list_op_error_view(SseDeserializer deserializer);
 
   @protected
@@ -924,6 +999,14 @@ abstract class FerryxRustLibApiImplPlatform
   List<SyncItemView> sse_decode_list_sync_item_view(
     SseDeserializer deserializer,
   );
+
+  @protected
+  List<TagOutcomeView> sse_decode_list_tag_outcome_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<TagView> sse_decode_list_tag_view(SseDeserializer deserializer);
 
   @protected
   List<UndoIssueView> sse_decode_list_undo_issue_view(
@@ -1000,6 +1083,11 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   FerryxError? sse_decode_opt_box_autoadd_ferryx_error(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  FerryxErrorKind? sse_decode_opt_box_autoadd_ferryx_error_kind(
     SseDeserializer deserializer,
   );
 
@@ -1115,6 +1203,12 @@ abstract class FerryxRustLibApiImplPlatform
   SyncPlanView sse_decode_sync_plan_view(SseDeserializer deserializer);
 
   @protected
+  TagOutcomeView sse_decode_tag_outcome_view(SseDeserializer deserializer);
+
+  @protected
+  TagView sse_decode_tag_view(SseDeserializer deserializer);
+
+  @protected
   TerminalEvent sse_decode_terminal_event(SseDeserializer deserializer);
 
   @protected
@@ -1171,6 +1265,12 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_StreamSink_flat_batch_view_Sse(
+    RustStreamSink<FlatBatchView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_StreamSink_terminal_event_Sse(
     RustStreamSink<TerminalEvent> self,
     SseSerializer serializer,
@@ -1187,6 +1287,12 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   void sse_encode_app_event_kind(AppEventKind self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_archive_info_view(
+    ArchiveInfoView self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_attribute_changes_view(
@@ -1263,6 +1369,12 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_box_autoadd_ferryx_error(
     FerryxError self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_ferryx_error_kind(
+    FerryxErrorKind self,
     SseSerializer serializer,
   );
 
@@ -1365,6 +1477,12 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_box_autoadd_undo_check_view(
     UndoCheckView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_capabilities_view(
+    CapabilitiesView self,
     SseSerializer serializer,
   );
 
@@ -1516,6 +1634,12 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_flat_batch_view(FlatBatchView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_flat_start_view(FlatStartView self, SseSerializer serializer);
+
+  @protected
   void sse_encode_folder_compare_request_view(
     FolderCompareRequestView self,
     SseSerializer serializer,
@@ -1532,6 +1656,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_item_tags_view(ItemTagsView self, SseSerializer serializer);
 
   @protected
   void sse_encode_journal_summary_view(
@@ -1615,6 +1742,12 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_list_item_tags_view(
+    List<ItemTagsView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_op_error_view(
     List<OpErrorView> self,
     SseSerializer serializer,
@@ -1676,6 +1809,15 @@ abstract class FerryxRustLibApiImplPlatform
     List<SyncItemView> self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_list_tag_outcome_view(
+    List<TagOutcomeView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_tag_view(List<TagView> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_undo_issue_view(
@@ -1764,6 +1906,12 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_opt_box_autoadd_ferryx_error(
     FerryxError? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_ferryx_error_kind(
+    FerryxErrorKind? self,
     SseSerializer serializer,
   );
 
@@ -1910,6 +2058,15 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   void sse_encode_sync_plan_view(SyncPlanView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_tag_outcome_view(
+    TagOutcomeView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_tag_view(TagView self, SseSerializer serializer);
 
   @protected
   void sse_encode_terminal_event(TerminalEvent self, SseSerializer serializer);

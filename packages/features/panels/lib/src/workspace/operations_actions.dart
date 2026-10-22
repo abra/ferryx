@@ -37,6 +37,11 @@ extension _OperationsActions on _WorkspaceScreenState {
       showAppNotice(context, _l10n.compareSameFolder);
       return;
     }
+    // Names pair across two folders; a flat view's rows are in many.
+    if (leftTab.isFlat || rightTab.isFlat) {
+      showAppNotice(context, _l10n.noticeNotInFlat);
+      return;
+    }
     final wanted = contents ?? _prefs.compareOptions.quickContents;
     final onDisk = leftTab.location.isNative && rightTab.location.isNative;
     final comparison = compareFolderEntries(

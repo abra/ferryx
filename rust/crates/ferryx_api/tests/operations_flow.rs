@@ -64,6 +64,7 @@ fn request(kind: OpKindView, sources: Vec<String>, destination: Option<String>) 
         preserve_attributes: true,
         verify: false,
         password: None,
+        into_folders: false,
     }
 }
 

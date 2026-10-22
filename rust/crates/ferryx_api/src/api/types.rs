@@ -32,6 +32,10 @@ pub enum FerryxErrorKind {
     InvalidName,
     InvalidPattern,
     Io,
+    /// An encrypted archive needs a password.
+    PasswordRequired,
+    /// The password given does not open the archive.
+    WrongPassword,
 }
 
 /// Every error the bridge raises; Dart sees it as an exception with a
@@ -68,6 +72,8 @@ impl From<VfsError> for FerryxError {
             VfsErrorKind::Cancelled => FerryxErrorKind::Cancelled,
             VfsErrorKind::InvalidName => FerryxErrorKind::InvalidName,
             VfsErrorKind::Io => FerryxErrorKind::Io,
+            VfsErrorKind::PasswordRequired => FerryxErrorKind::PasswordRequired,
+            VfsErrorKind::WrongPassword => FerryxErrorKind::WrongPassword,
         };
         FerryxError { kind, message: e.message, path: e.path }
     }
@@ -161,7 +167,7 @@ pub struct EntryView {
     pub flags: u32,
     pub is_hidden: bool,
     pub extension: String,
-    pub tags: Vec<i32>,
+    pub tags: Vec<crate::api::tags::TagView>,
 }
 
 impl From<&Entry> for EntryView {
@@ -191,7 +197,7 @@ impl From<&Entry> for EntryView {
             flags: e.flags,
             is_hidden: e.is_hidden,
             extension: e.extension.clone(),
-            tags: e.tags.iter().map(|t| *t as i32).collect(),
+            tags: e.tags.iter().map(crate::api::tags::TagView::from).collect(),
         }
     }
 }
@@ -308,6 +314,8 @@ pub struct OpRequestView {
     pub preserve_attributes: bool,
     pub verify: bool,
     pub password: Option<String>,
+    /// Extract whole archives: each into a folder named after it.
+    pub into_folders: bool,
 }
 
 impl OpRequestView {
@@ -343,6 +351,7 @@ impl OpRequestView {
                 preserve_attributes: self.preserve_attributes,
                 verify: self.verify,
                 password: self.password.clone(),
+                into_folders: self.into_folders,
             },
         }
     }
@@ -560,6 +569,9 @@ pub struct FindRequestView {
     pub size_bytes: i64,
     pub include_hidden: bool,
     pub include_folders: bool,
+    /// Ask the Spotlight index first (macOS); the folders are walked when
+    /// it cannot answer.
+    pub use_spotlight: bool,
 }
 
 impl FindRequestView {
@@ -588,6 +600,7 @@ impl FindRequestView {
             include_hidden: self.include_hidden,
             include_folders: self.include_folders,
             max_depth: None,
+            use_spotlight: self.use_spotlight,
         }
     }
 }
@@ -800,6 +813,9 @@ pub struct AppEvent {
     pub compare: Option<CompareUpdateView>,
     pub checksum: Option<ChecksumUpdateView>,
     pub duplicates: Option<DuplicatesUpdateView>,
+    /// A search that asked Spotlight walked the folders instead: Spotlight
+    /// could not answer.
+    pub find_spotlight_failed: bool,
 }
 
 impl AppEvent {
@@ -818,6 +834,7 @@ impl AppEvent {
             compare: None,
             checksum: None,
             duplicates: None,
+            find_spotlight_failed: false,
         }
     }
 

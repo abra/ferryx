@@ -19,6 +19,7 @@ class FindState extends Equatable {
     this.done = false,
     this.error,
     this.capped = false,
+    this.spotlightFailed = false,
   });
 
   final FindRequest? request;
@@ -39,6 +40,9 @@ class FindState extends Equatable {
   /// The list holds [FindCubit.maxHits]; the search was stopped there.
   final bool capped;
 
+  /// Spotlight was asked and could not answer: the folders were walked.
+  final bool spotlightFailed;
+
   FindState copyWith({
     FindRequest? request,
     int? findId,
@@ -52,6 +56,7 @@ class FindState extends Equatable {
     String? error,
     bool clearError = false,
     bool? capped,
+    bool? spotlightFailed,
   }) => FindState(
     request: request ?? this.request,
     findId: clearFindId ? null : (findId ?? this.findId),
@@ -62,6 +67,7 @@ class FindState extends Equatable {
     done: done ?? this.done,
     error: clearError ? null : (error ?? this.error),
     capped: capped ?? this.capped,
+    spotlightFailed: spotlightFailed ?? this.spotlightFailed,
   );
 
   @override
@@ -75,6 +81,7 @@ class FindState extends Equatable {
     done,
     error,
     capped,
+    spotlightFailed,
   ];
 }
 
@@ -123,6 +130,7 @@ class FindCubit extends Cubit<FindState> {
           scanned: update.scanned,
           error: update.error,
           clearCurrent: true,
+          spotlightFailed: update.spotlightFailed,
         ),
       );
       return;

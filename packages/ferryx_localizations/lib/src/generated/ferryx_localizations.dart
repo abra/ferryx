@@ -5539,6 +5539,282 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Unmark'**
   String get dupesUnmark;
+
+  /// No description provided for @cmdExtractTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract To…'**
+  String get cmdExtractTo;
+
+  /// No description provided for @cmdToggleFlatView.
+  ///
+  /// In en, this message translates to:
+  /// **'Flat View'**
+  String get cmdToggleFlatView;
+
+  /// No description provided for @cmdEditTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags…'**
+  String get cmdEditTags;
+
+  /// No description provided for @archivePasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'A password is needed'**
+  String get archivePasswordRequired;
+
+  /// No description provided for @archiveWrongPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong password'**
+  String get archiveWrongPassword;
+
+  /// No description provided for @archiveExtractOneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract “{name}” to'**
+  String archiveExtractOneTitle(String name);
+
+  /// No description provided for @archiveExtractManyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Extract {count} archive to} other{Extract {count} archives to}}'**
+  String archiveExtractManyTitle(int count);
+
+  /// No description provided for @archiveExtractMembersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Extract {count} item to} other{Extract {count} items to}}'**
+  String archiveExtractMembersTitle(int count);
+
+  /// No description provided for @archiveIntoFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Into a folder named after each archive'**
+  String get archiveIntoFolders;
+
+  /// No description provided for @archiveIntoFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Into a folder named “{name}”'**
+  String archiveIntoFolder(String name);
+
+  /// No description provided for @archivePasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get archivePasswordLabel;
+
+  /// No description provided for @archiveWrongPasswordFor.
+  ///
+  /// In en, this message translates to:
+  /// **'This password does not open “{name}”'**
+  String archiveWrongPasswordFor(String name);
+
+  /// No description provided for @archiveExtractAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract'**
+  String get archiveExtractAction;
+
+  /// No description provided for @archiveNoArchives.
+  ///
+  /// In en, this message translates to:
+  /// **'None of the items is an archive'**
+  String get archiveNoArchives;
+
+  /// No description provided for @archivePasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'“{name}” is encrypted'**
+  String archivePasswordTitle(String name);
+
+  /// No description provided for @archivePasswordMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the password to open the archive.'**
+  String get archivePasswordMessage;
+
+  /// No description provided for @archivePasswordOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get archivePasswordOpen;
+
+  /// No description provided for @archiveEnterPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Password…'**
+  String get archiveEnterPassword;
+
+  /// No description provided for @archiveDestinationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{key} completes a folder’s name'**
+  String archiveDestinationHint(String key);
+
+  /// No description provided for @flatCapsule.
+  ///
+  /// In en, this message translates to:
+  /// **'Flat'**
+  String get flatCapsule;
+
+  /// No description provided for @flatLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the folder'**
+  String get flatLeave;
+
+  /// No description provided for @flatWalking.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the folder’s tree'**
+  String get flatWalking;
+
+  /// No description provided for @flatFileCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{no files} one{{count} file} other{{count} files}}'**
+  String flatFileCount(int count);
+
+  /// No description provided for @flatCappedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{the first {count} file} other{the first {count} files}}'**
+  String flatCappedCount(int count);
+
+  /// No description provided for @flatRowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, in {folder}'**
+  String flatRowLabel(String name, String folder);
+
+  /// No description provided for @tagsMenuTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get tagsMenuTitle;
+
+  /// No description provided for @tagColorRed.
+  ///
+  /// In en, this message translates to:
+  /// **'Red'**
+  String get tagColorRed;
+
+  /// No description provided for @tagColorOrange.
+  ///
+  /// In en, this message translates to:
+  /// **'Orange'**
+  String get tagColorOrange;
+
+  /// No description provided for @tagColorYellow.
+  ///
+  /// In en, this message translates to:
+  /// **'Yellow'**
+  String get tagColorYellow;
+
+  /// No description provided for @tagColorGreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Green'**
+  String get tagColorGreen;
+
+  /// No description provided for @tagColorBlue.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get tagColorBlue;
+
+  /// No description provided for @tagColorPurple.
+  ///
+  /// In en, this message translates to:
+  /// **'Purple'**
+  String get tagColorPurple;
+
+  /// No description provided for @tagColorGray.
+  ///
+  /// In en, this message translates to:
+  /// **'Gray'**
+  String get tagColorGray;
+
+  /// No description provided for @tagsNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New Tag…'**
+  String get tagsNew;
+
+  /// No description provided for @tagsNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Tag'**
+  String get tagsNewTitle;
+
+  /// No description provided for @tagsNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get tagsNameLabel;
+
+  /// No description provided for @tagsColorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get tagsColorLabel;
+
+  /// No description provided for @tagsColorNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get tagsColorNone;
+
+  /// No description provided for @tagsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get tagsAdd;
+
+  /// Two tag names in a list; longer lists repeat it.
+  ///
+  /// In en, this message translates to:
+  /// **'{first}, {second}'**
+  String tagsList(String first, String second);
+
+  /// No description provided for @tagsRowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}, tags: {tags}'**
+  String tagsRowLabel(String label, String tags);
+
+  /// No description provided for @tagsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{The tags of {count} item could not be changed: {reason}} other{The tags of {count} items could not be changed: {reason}}}'**
+  String tagsFailed(int count, String reason);
+
+  /// No description provided for @findSpotlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the Spotlight index'**
+  String get findSpotlight;
+
+  /// No description provided for @findSpotlightNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Faster, but Spotlight skips system folders, hidden folders and the folders excluded in System Settings.'**
+  String get findSpotlightNote;
+
+  /// No description provided for @findSpotlightFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Spotlight could not search here: the folders were searched instead.'**
+  String get findSpotlightFailed;
+
+  /// No description provided for @noticeNotInFlat.
+  ///
+  /// In en, this message translates to:
+  /// **'This works on one folder’s items; leave the flat view first'**
+  String get noticeNotInFlat;
 }
 
 class _FerryxLocalizationsDelegate

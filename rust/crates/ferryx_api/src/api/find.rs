@@ -44,7 +44,7 @@ pub fn start_find(request: FindRequestView) -> i64 {
         .spawn(move || {
             let batch =
                 RefCell::new(Batch { id, pending: Vec::new(), last_sent: Instant::now(), scanned: 0 });
-            let result = ferryx_ops::find::run(
+            let result = ferryx_ops::find::search(
                 &ops_request,
                 &cancel,
                 &mut |hit| {
@@ -67,9 +67,9 @@ pub fn start_find(request: FindRequestView) -> i64 {
                     }
                 },
             );
-            let (scanned, error) = match result {
-                Ok(scanned) => (scanned, None),
-                Err(message) => (0, Some(message)),
+            let (scanned, error, spotlight_failed) = match result {
+                Ok(summary) => (summary.scanned, None, summary.spotlight_failed),
+                Err(message) => (0, Some(message), false),
             };
             {
                 let mut b = batch.borrow_mut();
@@ -83,6 +83,7 @@ pub fn start_find(request: FindRequestView) -> i64 {
                 find_id: Some(id),
                 find_scanned: scanned as i64,
                 find_error: error,
+                find_spotlight_failed: spotlight_failed,
                 ..AppEvent::of(AppEventKind::FindDone, None)
             });
         })

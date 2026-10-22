@@ -218,6 +218,10 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     ..._terminalHandlers(),
     // ─── Operations ───
     ..._operationsHandlers(),
+    // ─── Files core ───
+    AppCommand.extractTo: () => unawaited(_extractTo()),
+    AppCommand.toggleFlatView: () => unawaited(_active.toggleFlatView()),
+    AppCommand.editTags: () => unawaited(_editTags()),
   };
 
   // ─── Opening ───
@@ -227,6 +231,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     if (location.isNative) {
       await widget.files.openDefault(request.entry.path);
     } else {
+      if (!await _ensureArchivePassword(location.archive!)) return;
       final path = await widget.files.extractToTemp(
         location.archive!,
         location.path,
@@ -239,7 +244,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     final tab = _tab;
     final focused = tab?.focused;
     if (tab == null || focused == null || focused.isParent) return;
-    await _openFile(OpenFileRequest(focused, tab.location.join(focused.name)));
+    await _openFile(OpenFileRequest(focused, tab.locationOf(focused)));
   }
 
   Future<void> _goInto() async {
@@ -325,9 +330,12 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     if (tab == null || focused == null || focused.isParent || focused.isDir) {
       return;
     }
+    final archive = tab.location.archive;
+    if (archive != null && !await _ensureArchivePassword(archive)) return;
+    if (!mounted) return;
     await widget.navigation.openViewer(
       context,
-      tab.location.join(focused.name),
+      tab.locationOf(focused),
       preview: preview,
     );
     if (mounted) _focusOf(_workspace.state.active).requestFocus();
@@ -348,9 +356,12 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     final tab = _tab;
     final focused = tab?.focused;
     if (tab == null || focused == null || focused.isParent) return;
+    // A flat view's row is shown in its own folder.
     final target = focused.isDir
-        ? tab.location.join(focused.name)
-        : tab.location;
+        ? tab.locationOf(focused)
+        : focused.folder.isEmpty
+        ? tab.location
+        : tab.location.join(focused.folder);
     final focusName = focused.isDir ? null : focused.name;
     if (newTab) {
       await _opposite.openInNewTab(target, focusName: focusName);
@@ -640,6 +651,8 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         location: tab.location,
         severalSelected: tab.selected.length > 1,
         map: widget.shortcutMap,
+        archive: tab.location.isNative && widget.files.isArchive(focused.path),
+        tags: tab.location.isNative && widget.capabilities.finderTags,
       ),
     );
     if (picked == null || !mounted) return;
@@ -668,6 +681,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         native: tab?.location.isNative ?? false,
         map: widget.shortcutMap,
         journal: widget.operations.currentJournal,
+        flat: tab?.isFlat ?? false,
       ),
     );
     if (picked == null || !mounted) return;
@@ -819,6 +833,8 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         showAppNotice(context, _l10n.noticeNotInArchive);
         return;
       }
+      final archive = tab.location.archive;
+      if (archive != null && !await _ensureArchivePassword(archive)) return;
       await _guarded(() async {
         await widget.operations.start(
           OperationRequest(
@@ -1042,7 +1058,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     if (tab == null) return;
     final focused = tab.focused;
     final location = focused != null && focused.isDir && !focused.isParent
-        ? tab.location.join(focused.name)
+        ? tab.locationOf(focused)
         : tab.location;
     final favorites = _prefs.favorites;
     if (favorites.any((f) => f.location == location)) {

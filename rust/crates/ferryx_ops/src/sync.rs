@@ -541,6 +541,7 @@ pub fn run_sync(ctx: &OpContext, plan: &SyncPlan) -> Result<(), Abort> {
         preserve_attributes: plan.preserve_attributes,
         verify: plan.verify,
         password: None,
+        into_folders: false,
     };
     for item in copies {
         ctx.check()?;

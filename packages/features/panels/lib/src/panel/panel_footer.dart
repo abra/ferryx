@@ -31,6 +31,7 @@ class PanelFooter extends StatelessWidget {
     required this.active,
     this.vim,
     this.shelfNote,
+    this.onLeaveFlat,
     super.key,
   });
 
@@ -40,6 +41,9 @@ class PanelFooter extends StatelessWidget {
 
   /// `3 on the shelf`, `2 cut`.
   final String? shelfNote;
+
+  /// The flat view's capsule was clicked: back to the folder.
+  final VoidCallback? onLeaveFlat;
 
   /// The footer's height at the text size in [context]: a control's
   /// height and a margin, taller as the text grows.
@@ -94,7 +98,8 @@ class PanelFooter extends StatelessWidget {
           : null;
       left = Row(
         children: [
-          Flexible(child: AppMiddleEllipsis(focused.name, style: strong)),
+          // A flat view's row says its folder too.
+          Flexible(child: AppMiddleEllipsis(focused.key, style: strong)),
           if (details != null) ...[
             const SizedBox(width: AppSpacing.md),
             _Line(details, strong),
@@ -106,9 +111,15 @@ class PanelFooter extends StatelessWidget {
     }
     final count = tab.rows.where((r) => !r.isParent).length;
     final free = tab.listing?.freeBytes;
+    final flat = tab.flat;
     final right = [
       ?shelfNote,
-      l10n.panelItemsCount(count),
+      if (flat == null)
+        l10n.panelItemsCount(count)
+      else if (flat.capped)
+        l10n.flatCappedCount(count)
+      else
+        l10n.flatFileCount(count),
       if (free != null) l10n.panelFreeSpace(l10n.fileSize(free)),
     ].reduce(l10n.joinedDetails);
     return Container(
@@ -131,6 +142,10 @@ class PanelFooter extends StatelessWidget {
                 style: mono.copyWith(color: colors.textMuted),
               ),
             ],
+            const SizedBox(width: AppSpacing.md),
+          ],
+          if (flat != null) ...[
+            _FlatCap(busy: flat.busy, active: active, onLeave: onLeaveFlat),
             const SizedBox(width: AppSpacing.md),
           ],
           Expanded(child: left),
@@ -157,6 +172,68 @@ class _Line extends StatelessWidget {
     overflow: TextOverflow.ellipsis,
     softWrap: false,
   );
+}
+
+/// The flat view's capsule: its name, with the platform's spinner while
+/// the tree is walked; a click (or its ⌘J hint) goes back to the folder,
+/// as the command and Esc do.
+class _FlatCap extends StatelessWidget {
+  const _FlatCap({
+    required this.busy,
+    required this.active,
+    required this.onLeave,
+  });
+
+  final bool busy;
+  final bool active;
+  final VoidCallback? onLeave;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final colors = context.appColors;
+    final (fill, ink) = active
+        ? (colors.wash(4), colors.ink(4))
+        : (colors.selectionMuted, colors.textMuted);
+    final style = context.text.labelSmall!
+        .copyWith(color: ink)
+        .weight(FontWeight.w700);
+    final capsule = Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: AppSpacing.xxs,
+      ),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(context.metrics.radius.chip),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (busy) ...[
+            Semantics(
+              label: l10n.flatWalking,
+              child: AppSpinner(size: style.fontSize ?? AppIconSize.xs),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+          ],
+          Text(l10n.flatCapsule, style: style),
+        ],
+      ),
+    );
+    final leave = onLeave;
+    if (leave == null) return capsule;
+    return AppTooltip(
+      message: l10n.flatLeave,
+      child: HintTarget(
+        onActivate: leave,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(onTap: leave, child: capsule),
+        ),
+      ),
+    );
+  }
 }
 
 /// The mode's name in a small capsule: the accent while the panel has the

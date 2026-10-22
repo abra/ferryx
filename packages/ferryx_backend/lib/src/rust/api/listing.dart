@@ -7,9 +7,10 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
+import 'tags.dart';
 import 'types.dart';
 
-// These functions are ignored because they are not marked as `pub`: `build_view`, `not_open`, `read`, `watcher_for`
+// These functions are ignored because they are not marked as `pub`: `build_view`, `flat_elsewhere`, `not_open`, `read`, `watcher_for`
 
 /// Opens `location` as the listing `listing_id` (a panel's tab), replacing
 /// whatever that id showed, and answers its rows sorted by `options`.

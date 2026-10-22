@@ -11,6 +11,7 @@ import 'journal.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 import 'sync.dart';
+import 'tags.dart';
 
 // These functions are ignored because they are not marked as `pub`: `from_ops`, `part`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`
@@ -44,6 +45,10 @@ class AppEvent {
   final ChecksumUpdateView? checksum;
   final DuplicatesUpdateView? duplicates;
 
+  /// A search that asked Spotlight walked the folders instead: Spotlight
+  /// could not answer.
+  final bool findSpotlightFailed;
+
   const AppEvent({
     required this.kind,
     this.listingId,
@@ -57,6 +62,7 @@ class AppEvent {
     this.compare,
     this.checksum,
     this.duplicates,
+    required this.findSpotlightFailed,
   });
 
   @override
@@ -72,7 +78,8 @@ class AppEvent {
       journal.hashCode ^
       compare.hashCode ^
       checksum.hashCode ^
-      duplicates.hashCode;
+      duplicates.hashCode ^
+      findSpotlightFailed.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -90,7 +97,8 @@ class AppEvent {
           journal == other.journal &&
           compare == other.compare &&
           checksum == other.checksum &&
-          duplicates == other.duplicates;
+          duplicates == other.duplicates &&
+          findSpotlightFailed == other.findSpotlightFailed;
 }
 
 enum AppEventKind {
@@ -310,7 +318,7 @@ class EntryView {
   final int flags;
   final bool isHidden;
   final String extension_;
-  final Int32List tags;
+  final List<TagView> tags;
 
   const EntryView({
     required this.name,
@@ -423,6 +431,12 @@ enum FerryxErrorKind {
   invalidName,
   invalidPattern,
   io,
+
+  /// An encrypted archive needs a password.
+  passwordRequired,
+
+  /// The password given does not open the archive.
+  wrongPassword,
 }
 
 class FindHitView {
@@ -466,6 +480,10 @@ class FindRequestView {
   final bool includeHidden;
   final bool includeFolders;
 
+  /// Ask the Spotlight index first (macOS); the folders are walked when
+  /// it cannot answer.
+  final bool useSpotlight;
+
   const FindRequestView({
     required this.root,
     required this.name,
@@ -478,6 +496,7 @@ class FindRequestView {
     required this.sizeBytes,
     required this.includeHidden,
     required this.includeFolders,
+    required this.useSpotlight,
   });
 
   @override
@@ -492,7 +511,8 @@ class FindRequestView {
       sizeOp.hashCode ^
       sizeBytes.hashCode ^
       includeHidden.hashCode ^
-      includeFolders.hashCode;
+      includeFolders.hashCode ^
+      useSpotlight.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -509,7 +529,8 @@ class FindRequestView {
           sizeOp == other.sizeOp &&
           sizeBytes == other.sizeBytes &&
           includeHidden == other.includeHidden &&
-          includeFolders == other.includeFolders;
+          includeFolders == other.includeFolders &&
+          useSpotlight == other.useSpotlight;
 }
 
 class FolderSizeView {
@@ -683,6 +704,9 @@ class OpRequestView {
   final bool verify;
   final String? password;
 
+  /// Extract whole archives: each into a folder named after it.
+  final bool intoFolders;
+
   const OpRequestView({
     required this.kind,
     required this.sources,
@@ -693,6 +717,7 @@ class OpRequestView {
     required this.preserveAttributes,
     required this.verify,
     this.password,
+    required this.intoFolders,
   });
 
   @override
@@ -705,7 +730,8 @@ class OpRequestView {
       conflicts.hashCode ^
       preserveAttributes.hashCode ^
       verify.hashCode ^
-      password.hashCode;
+      password.hashCode ^
+      intoFolders.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -720,7 +746,8 @@ class OpRequestView {
           conflicts == other.conflicts &&
           preserveAttributes == other.preserveAttributes &&
           verify == other.verify &&
-          password == other.password;
+          password == other.password &&
+          intoFolders == other.intoFolders;
 }
 
 enum OpStateView {
