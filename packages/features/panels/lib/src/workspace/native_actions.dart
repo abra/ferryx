@@ -166,6 +166,11 @@ extension _NativeActions on _WorkspaceScreenState {
     PanelTabState tab, {
     required bool notify,
   }) async {
+    if (tab.location.isRemote) {
+      // A server's files are not on this computer for Quick Look to read.
+      if (notify) showAppNotice(context, _l10n.networkNotOnServer);
+      return false;
+    }
     final pick = quickLookPick(tab);
     final native = _native
       ..location = tab.location
@@ -261,7 +266,7 @@ extension _NativeActions on _WorkspaceScreenState {
   /// The share picker for the targets, pointing at [anchor]: where a menu
   /// was opened, else the cursor's row.
   Future<void> _share({Rect? anchor}) async {
-    if (!_available(AppCommand.share)) return;
+    if (!_available(AppCommand.share) || _onServer()) return;
     final tab = _tab;
     final targets = _targetsOrNotice();
     if (tab == null || targets.isEmpty) return;
@@ -305,6 +310,9 @@ extension _NativeActions on _WorkspaceScreenState {
     final tab = cubit.state.active ?? before;
     final entries = selection ? tab.targets : [row];
     final native = tab.location.isNative;
+    // A server's items move between the panels; other applications get
+    // none of them.
+    final movable = native || tab.location.isRemote;
     final paths = [for (final entry in entries) entry.path];
     final request = FileDragRequest(
       position: global,
@@ -317,7 +325,7 @@ extension _NativeActions on _WorkspaceScreenState {
         folder: tab.location,
         paths: paths,
       ).encode(),
-      allowed: native
+      allowed: movable
           ? const {FileDropOperation.copy, FileDropOperation.move}
           : const {FileDropOperation.copy},
     );
@@ -358,6 +366,11 @@ extension _NativeActions on _WorkspaceScreenState {
   /// either cannot be told (another application's drag not read yet).
   bool? _sameVolume(DragSource source, Location destination) {
     final folder = source.folder;
+    // ─── Network ───
+    // On a server, a move within it is a rename; across, a copy.
+    if (folder != null && (folder.isRemote || destination.isRemote)) {
+      return folder.server == destination.server;
+    }
     if (folder == null || !folder.isNative || !destination.isNative) {
       return null;
     }
@@ -396,7 +409,8 @@ extension _NativeActions on _WorkspaceScreenState {
       showAppNotice(context, _l10n.dropNoFiles);
       return;
     }
-    if (plan == FileDropOperation.forbidden && spot.folder.isNative) {
+    if (plan == FileDropOperation.forbidden &&
+        (spot.folder.isNative || spot.folder.isRemote)) {
       // Found only now that every path is known: a folder into itself.
       showAppNotice(context, _l10n.dropIntoItself);
       return;
@@ -412,12 +426,15 @@ extension _NativeActions on _WorkspaceScreenState {
           destination: spot.folder.path,
         );
       } else {
+        final network = source.fromServer || spot.folder.isRemote;
         request = OperationRequest(
           kind: operation == FileDropOperation.move ? OpKind.move : OpKind.copy,
           sources: source.paths,
           destination: spot.folder.path,
           preserveAttributes: _prefs.preserveAttributes,
-          verify: _prefs.verifyCopies,
+          verify: _prefs.verifyCopies && !network,
+          sourceServer: source.folder?.server,
+          destinationServer: spot.folder.server,
         );
       }
       await widget.operations.start(request);

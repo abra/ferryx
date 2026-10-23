@@ -258,6 +258,7 @@ class PanelState extends Equatable {
     this.tabs = const [],
     this.activeIndex = 0,
     this.closedTabs = const [],
+    this.servers = const {},
   });
 
   final PanelSide side;
@@ -267,6 +268,18 @@ class PanelState extends Equatable {
   /// Locations of tabs closed lately, the last closed first.
   final List<Location> closedTabs;
 
+  // ─── Network ───
+
+  /// The servers open, by key, with their state.
+  final Map<String, ServerStatus> servers;
+
+  /// The state of the server [tab] is on; `null` for a tab elsewhere.
+  ServerState? serverStateOf(PanelTabState tab) {
+    final server = tab.location.server;
+    if (server == null) return null;
+    return servers[server]?.state ?? ServerState.closed;
+  }
+
   PanelTabState? get active =>
       activeIndex >= 0 && activeIndex < tabs.length ? tabs[activeIndex] : null;
 
@@ -274,11 +287,13 @@ class PanelState extends Equatable {
     List<PanelTabState>? tabs,
     int? activeIndex,
     List<Location>? closedTabs,
+    Map<String, ServerStatus>? servers,
   }) => PanelState(
     side: side,
     tabs: tabs ?? this.tabs,
     activeIndex: activeIndex ?? this.activeIndex,
     closedTabs: closedTabs ?? this.closedTabs,
+    servers: servers ?? this.servers,
   );
 
   /// The state with the active tab replaced by [tab].
@@ -292,7 +307,7 @@ class PanelState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [side, tabs, activeIndex, closedTabs];
+  List<Object?> get props => [side, tabs, activeIndex, closedTabs, servers];
 }
 
 /// What the view knows about its size, for the page and column keys.

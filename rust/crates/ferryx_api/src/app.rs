@@ -62,6 +62,45 @@ pub fn next_generation() -> i64 {
 pub struct AppState {
     pub listings: HashMap<String, OpenListing>,
     pub finds: HashMap<i64, Arc<AtomicBool>>,
+    // ─── Network ───
+    /// Each listing's latest read: its number and its stop. A read that is
+    /// no longer the latest leaves the listing alone.
+    pub reads: HashMap<String, Read>,
+}
+
+/// A listing's read under way (see [`begin_read`]).
+#[derive(Clone)]
+pub struct Read {
+    pub generation: u64,
+    pub stop: Arc<AtomicBool>,
+}
+
+static NEXT_READ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+
+/// A new read of `listing_id` (the panel opens a folder): the read under
+/// way stops, and only this one may fill the listing from now on.
+pub fn begin_read(listing_id: &str) -> Read {
+    let read =
+        Read { generation: NEXT_READ.fetch_add(1, Ordering::SeqCst), stop: Arc::new(AtomicBool::new(false)) };
+    let earlier = state().lock().reads.insert(listing_id.to_string(), read.clone());
+    if let Some(earlier) = earlier {
+        earlier.stop.store(true, Ordering::SeqCst);
+    }
+    read
+}
+
+/// The read `listing_id` has under way, or a new one when none is (a
+/// refresh reads as the latest read and stops with it).
+pub fn current_read(listing_id: &str) -> Read {
+    let mut state = state().lock();
+    state
+        .reads
+        .entry(listing_id.to_string())
+        .or_insert_with(|| Read {
+            generation: NEXT_READ.fetch_add(1, Ordering::SeqCst),
+            stop: Arc::new(AtomicBool::new(false)),
+        })
+        .clone()
 }
 
 static STATE: LazyLock<Mutex<AppState>> = LazyLock::new(|| Mutex::new(AppState::default()));
@@ -101,6 +140,7 @@ pub fn next_find_id() -> i64 {
 /// Registers the Dart-side listener; only the latest sink receives events.
 pub fn set_event_sink(sink: StreamSink<AppEvent>) {
     *EVENTS.lock() = Some(sink);
+    crate::api::network::install_listeners();
 }
 
 /// Sends `event` to Dart; silently dropped when nobody listens.
@@ -133,6 +173,7 @@ pub fn archive_password(archive: &std::path::Path) -> Option<String> {
 /// Keeps every event from now on for [`take_events`].
 pub fn record_events() {
     *RECORDED.lock() = Some(Vec::new());
+    crate::api::network::install_listeners();
 }
 
 /// The events kept since the last call (see [`record_events`]).
@@ -145,8 +186,11 @@ pub fn reset_for_tests() {
     guard.listings.clear();
     ferryx_vfs::archive::shared::clear();
     guard.finds.clear();
+    guard.reads.clear();
+    drop(guard);
     *EVENTS.lock() = None;
     *RECORDED.lock() = None;
     crate::tasks::reset();
     runner().journal().clear();
+    ferryx_vfs::remote::connection::disconnect_all();
 }

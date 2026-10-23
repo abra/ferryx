@@ -52,6 +52,25 @@ sha1 = "0.10"
 md-5 = "0.10"
 blake3 = "1"
 unicode-normalization = "0.1"
+# ─── Network ───
+# Pure Rust but for `ring` (C and assembly built by `cc`, no CMake, no
+# OpenSSL); versions held to the line that still builds with Rust 1.85.
+tokio = { version = "1", features = ["rt-multi-thread", "net", "time", "sync", "io-util", "macros"] }
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+russh = { version = "~0.63.1", default-features = false, features = ["ring", "rsa", "flate2"] }
+russh-sftp = "2.1"
+suppaftp = { version = "~6.3", default-features = false, features = ["rustls"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+rustls-platform-verifier = "~0.6"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls-manual-roots-no-provider", "stream"] }
+quick-xml = "0.38"
+percent-encoding = "2"
+base64 = "0.22"
+bytes = "1"
+hmac = "0.12"
+keyring = { version = "3.6", default-features = false }
+rcgen = { version = "0.13", default-features = false, features = ["ring", "pem"] }
+ferryx_test_servers = { path = "crates/ferryx_test_servers" }
 
 [profile.release]
 # Desktop app: favour runtime speed and a small binary over compile time.

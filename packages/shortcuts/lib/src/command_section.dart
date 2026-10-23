@@ -74,4 +74,7 @@ const _placed = {
   AppCommand.extractTo: CommandSection.file,
   AppCommand.editTags: CommandSection.file,
   AppCommand.toggleFlatView: CommandSection.view,
+  // Finder's Go menu has Connect to Server.
+  AppCommand.connectToServer: CommandSection.go,
+  AppCommand.disconnectServer: CommandSection.go,
 };

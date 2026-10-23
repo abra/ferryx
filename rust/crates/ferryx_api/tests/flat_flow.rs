@@ -208,6 +208,7 @@ fn a_new_walk_replaces_the_old_and_inside_archives_too() {
         kind: LocationKind::Archive,
         path: "d".into(),
         archive: Some(archive.to_string_lossy().into_owned()),
+        server: None,
     };
     let start = flat::open_flat_listing("z".into(), location, options(SortFieldView::Name, false)).unwrap();
     assert!(!start.listing.watched);

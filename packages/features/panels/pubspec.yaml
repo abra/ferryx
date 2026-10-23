@@ -30,6 +30,8 @@ dependencies:
     path: ../../monitoring
   shortcuts:
     path: ../../shortcuts
+  network_service:
+    path: ../../network_service
 
 dev_dependencies:
   bloc_test: ^10.0.0

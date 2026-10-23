@@ -56,6 +56,11 @@ dependencies:
     path: packages/features/checksums
   duplicates_feature:
     path: packages/features/duplicates
+  # ─── Network ───
+  network_service:
+    path: packages/network_service
+  network_feature:
+    path: packages/features/network
 
   # External packages
   flutter_bloc: ^9.1.1

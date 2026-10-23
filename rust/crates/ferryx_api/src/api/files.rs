@@ -25,7 +25,17 @@ pub fn read_file_range(location: LocationView, offset: i64, len: i64) -> ApiResu
             let password = app::archive_password(&archive);
             Ok(index.read_range(location.path.trim_matches('/'), offset, len, password.as_deref())?)
         }
+        // ─── Network ───
+        LocationKind::Remote => {
+            let server = remote_server(&location)?;
+            Ok(server.fs().read_range(&location.path, offset, len, &ferryx_vfs::remote::never)?)
+        }
     }
+}
+
+/// The server a location on one is on.
+fn remote_server(location: &LocationView) -> ApiResult<std::sync::Arc<ferryx_vfs::remote::Server>> {
+    Ok(ferryx_vfs::remote::connection::get(location.server.as_deref().unwrap_or_default())?)
 }
 
 /// The file's size; an archive member's as its archive keeps it, or as
@@ -38,6 +48,14 @@ pub fn file_size(location: LocationView) -> ApiResult<i64> {
             let index = app::archive_index(&archive)?;
             let password = app::archive_password(&archive);
             Ok(index.member_size(location.path.trim_matches('/'), password.as_deref())? as i64)
+        }
+        // ─── Network ───
+        LocationKind::Remote => {
+            let server = remote_server(&location)?;
+            let entry = server.fs().stat(&location.path, &ferryx_vfs::remote::never)?.ok_or_else(|| {
+                FerryxError::new(FerryxErrorKind::NotFound, format!("{} is not there", location.path))
+            })?;
+            Ok(entry.size.unwrap_or(0) as i64)
         }
     }
 }

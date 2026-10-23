@@ -11,7 +11,7 @@ extension _TagActions on _WorkspaceScreenState {
     final targets = _targetsOrNotice();
     if (tab == null || targets.isEmpty) return null;
     if (!tab.location.isNative) {
-      showAppNotice(context, _l10n.noticeNotInArchive);
+      showAppNotice(context, _notHere(tab.location));
       return null;
     }
     return targets;

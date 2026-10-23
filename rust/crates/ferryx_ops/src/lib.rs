@@ -22,6 +22,8 @@ pub mod spotlight;
 pub mod sync;
 pub mod types;
 pub mod undo;
+// ─── Network ───
+pub mod transfer;
 
 pub use runner::{OpContext, Runner};
 pub use types::*;

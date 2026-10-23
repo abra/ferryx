@@ -5815,6 +5815,516 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'This works on one folder’s items; leave the flat view first'**
   String get noticeNotInFlat;
+
+  /// No description provided for @cmdConnectToServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to Server…'**
+  String get cmdConnectToServer;
+
+  /// No description provided for @cmdDisconnectServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get cmdDisconnectServer;
+
+  /// No description provided for @errorAuthFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The server refused the login'**
+  String get errorAuthFailed;
+
+  /// No description provided for @errorHostUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'The server cannot be reached'**
+  String get errorHostUnreachable;
+
+  /// No description provided for @errorTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'The server did not answer in time'**
+  String get errorTimedOut;
+
+  /// No description provided for @errorHostKeyUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'The server’s key was not trusted'**
+  String get errorHostKeyUnknown;
+
+  /// No description provided for @errorHostKeyChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The server’s key has changed'**
+  String get errorHostKeyChanged;
+
+  /// No description provided for @errorConnectionLost.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection to the server dropped'**
+  String get errorConnectionLost;
+
+  /// No description provided for @errorNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected to the server'**
+  String get errorNotConnected;
+
+  /// No description provided for @errorCertificateInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The server’s certificate is not trusted'**
+  String get errorCertificateInvalid;
+
+  /// No description provided for @networkConnectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to Server'**
+  String get networkConnectTitle;
+
+  /// No description provided for @networkAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get networkAddressLabel;
+
+  /// No description provided for @networkAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'sftp://user@host/folder'**
+  String get networkAddressHint;
+
+  /// No description provided for @networkAddressNote.
+  ///
+  /// In en, this message translates to:
+  /// **'SFTP, FTP, FTPS (ftps://), WebDAV (dav:// or davs://, http://, https://).'**
+  String get networkAddressNote;
+
+  /// No description provided for @networkSavedServers.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved Servers'**
+  String get networkSavedServers;
+
+  /// No description provided for @networkNoServers.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved servers yet. Type an address above, or add a server.'**
+  String get networkNoServers;
+
+  /// No description provided for @networkAddServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Server…'**
+  String get networkAddServer;
+
+  /// No description provided for @networkEditServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit…'**
+  String get networkEditServer;
+
+  /// No description provided for @networkRemoveServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get networkRemoveServer;
+
+  /// No description provided for @networkRemoveServerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove “{name}”?'**
+  String networkRemoveServerTitle(String name);
+
+  /// No description provided for @networkRemoveServerMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Its saved password stays in the keychain until you forget it in its settings.'**
+  String get networkRemoveServerMessage;
+
+  /// No description provided for @networkConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get networkConnect;
+
+  /// No description provided for @networkConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to {server}…'**
+  String networkConnecting(String server);
+
+  /// No description provided for @networkInsecure.
+  ///
+  /// In en, this message translates to:
+  /// **'Not encrypted: names, passwords and files cross the network in the clear.'**
+  String get networkInsecure;
+
+  /// No description provided for @networkServerNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New Server'**
+  String get networkServerNew;
+
+  /// No description provided for @networkServerEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Server Settings'**
+  String get networkServerEdit;
+
+  /// No description provided for @networkFieldName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get networkFieldName;
+
+  /// No description provided for @networkFieldNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The host when empty'**
+  String get networkFieldNameHint;
+
+  /// No description provided for @networkFieldProtocol.
+  ///
+  /// In en, this message translates to:
+  /// **'Protocol'**
+  String get networkFieldProtocol;
+
+  /// No description provided for @networkFieldHost.
+  ///
+  /// In en, this message translates to:
+  /// **'Host'**
+  String get networkFieldHost;
+
+  /// No description provided for @networkFieldPort.
+  ///
+  /// In en, this message translates to:
+  /// **'Port'**
+  String get networkFieldPort;
+
+  /// No description provided for @networkFieldUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get networkFieldUser;
+
+  /// No description provided for @networkFieldUserHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Anonymous when empty'**
+  String get networkFieldUserHint;
+
+  /// No description provided for @networkFieldFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder'**
+  String get networkFieldFolder;
+
+  /// No description provided for @networkFieldFolderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The server’s start folder'**
+  String get networkFieldFolderHint;
+
+  /// No description provided for @networkFieldAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in with'**
+  String get networkFieldAuth;
+
+  /// No description provided for @networkFieldKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Key file'**
+  String get networkFieldKey;
+
+  /// No description provided for @networkFieldKeyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'~/.ssh/id_ed25519'**
+  String get networkFieldKeyHint;
+
+  /// No description provided for @networkAuthAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Keys or password'**
+  String get networkAuthAutomatic;
+
+  /// No description provided for @networkAuthPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get networkAuthPassword;
+
+  /// No description provided for @networkAuthKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Key file'**
+  String get networkAuthKey;
+
+  /// No description provided for @networkAuthAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH agent'**
+  String get networkAuthAgent;
+
+  /// No description provided for @networkProtocolSftp.
+  ///
+  /// In en, this message translates to:
+  /// **'SFTP (SSH)'**
+  String get networkProtocolSftp;
+
+  /// No description provided for @networkProtocolFtp.
+  ///
+  /// In en, this message translates to:
+  /// **'FTP'**
+  String get networkProtocolFtp;
+
+  /// No description provided for @networkProtocolFtps.
+  ///
+  /// In en, this message translates to:
+  /// **'FTPS (FTP with TLS)'**
+  String get networkProtocolFtps;
+
+  /// No description provided for @networkProtocolDav.
+  ///
+  /// In en, this message translates to:
+  /// **'WebDAV (HTTP)'**
+  String get networkProtocolDav;
+
+  /// No description provided for @networkProtocolDavs.
+  ///
+  /// In en, this message translates to:
+  /// **'WebDAV (HTTPS)'**
+  String get networkProtocolDavs;
+
+  /// No description provided for @networkHostRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the server’s host name or address'**
+  String get networkHostRequired;
+
+  /// No description provided for @networkPortInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'A port is a number from 1 to 65535'**
+  String get networkPortInvalid;
+
+  /// No description provided for @networkForgetPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget Saved Password'**
+  String get networkForgetPassword;
+
+  /// No description provided for @networkPasswordForgotten.
+  ///
+  /// In en, this message translates to:
+  /// **'The saved password of {server} is forgotten'**
+  String networkPasswordForgotten(String server);
+
+  /// No description provided for @networkPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log In to {server}'**
+  String networkPasswordTitle(String server);
+
+  /// No description provided for @networkPasswordMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the password of {user}.'**
+  String networkPasswordMessage(String user);
+
+  /// No description provided for @networkPasswordWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'The password was not accepted. Try again.'**
+  String get networkPasswordWrong;
+
+  /// No description provided for @networkPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get networkPasswordLabel;
+
+  /// No description provided for @networkRememberPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember in the system keychain'**
+  String get networkRememberPassword;
+
+  /// No description provided for @networkPassphraseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock the Key'**
+  String get networkPassphraseTitle;
+
+  /// No description provided for @networkPassphraseMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The key {key} is protected by a passphrase.'**
+  String networkPassphraseMessage(String key);
+
+  /// No description provided for @networkPassphraseWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'The passphrase did not unlock the key. Try again.'**
+  String get networkPassphraseWrong;
+
+  /// No description provided for @networkPassphraseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Passphrase'**
+  String get networkPassphraseLabel;
+
+  /// No description provided for @networkPromptsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log In to {server}'**
+  String networkPromptsTitle(String server);
+
+  /// No description provided for @networkContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get networkContinue;
+
+  /// No description provided for @networkHostKeyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Server'**
+  String get networkHostKeyTitle;
+
+  /// No description provided for @networkHostKeyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Ferryx has not connected to {host} before. Its {algorithm} key has this fingerprint:'**
+  String networkHostKeyMessage(String host, String algorithm);
+
+  /// No description provided for @networkHostKeyAdvice.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust it only when the fingerprint is the one the server’s administrator gave you.'**
+  String get networkHostKeyAdvice;
+
+  /// No description provided for @networkHostKeyRemember.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember this key'**
+  String get networkHostKeyRemember;
+
+  /// No description provided for @networkHostKeyTrust.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust'**
+  String get networkHostKeyTrust;
+
+  /// No description provided for @networkHostKeyChangedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning: The Server’s Key Has Changed'**
+  String get networkHostKeyChangedTitle;
+
+  /// No description provided for @networkHostKeyChangedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The key that {host} presented is not the one on record. Someone may be intercepting the connection — or the server was reinstalled. Ferryx will not connect.'**
+  String networkHostKeyChangedMessage(String host);
+
+  /// No description provided for @networkHostKeyChangedAdvice.
+  ///
+  /// In en, this message translates to:
+  /// **'If the server’s administrator confirms the new key, remove the old one from the known_hosts file named below, then connect again.'**
+  String get networkHostKeyChangedAdvice;
+
+  /// No description provided for @networkStateConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to {server}'**
+  String networkStateConnected(String server);
+
+  /// No description provided for @networkStateLost.
+  ///
+  /// In en, this message translates to:
+  /// **'The connection to {server} dropped; the next action tries again'**
+  String networkStateLost(String server);
+
+  /// No description provided for @networkStateClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected to {server}'**
+  String networkStateClosed(String server);
+
+  /// No description provided for @networkStateInsecure.
+  ///
+  /// In en, this message translates to:
+  /// **'{state} (not encrypted)'**
+  String networkStateInsecure(String state);
+
+  /// No description provided for @networkReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect'**
+  String get networkReconnect;
+
+  /// No description provided for @networkDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected from {server}'**
+  String networkDisconnected(String server);
+
+  /// No description provided for @networkNotOnServer.
+  ///
+  /// In en, this message translates to:
+  /// **'This works with files on this computer only'**
+  String get networkNotOnServer;
+
+  /// No description provided for @networkNoTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'A server has no Trash to put them in.'**
+  String get networkNoTrash;
+
+  /// No description provided for @networkOpenedCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Opened a copy of “{name}”: changes to it are not sent back to the server'**
+  String networkOpenedCopy(String name);
+
+  /// No description provided for @networkNotAnAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a server address: {text}'**
+  String networkNotAnAddress(String text);
+
+  /// No description provided for @networkGoToServers.
+  ///
+  /// In en, this message translates to:
+  /// **'Servers'**
+  String get networkGoToServers;
+
+  /// No description provided for @networkNotRemote.
+  ///
+  /// In en, this message translates to:
+  /// **'The panel is not on a server'**
+  String get networkNotRemote;
+
+  /// No description provided for @networkRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get networkRecent;
+
+  /// No description provided for @networkCapsuleLost.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection lost'**
+  String get networkCapsuleLost;
+
+  /// No description provided for @networkCapsuleClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected'**
+  String get networkCapsuleClosed;
 }
 
 class _FerryxLocalizationsDelegate

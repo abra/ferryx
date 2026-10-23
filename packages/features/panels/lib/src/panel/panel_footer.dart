@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:component_library/component_library.dart';
+import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/material.dart';
 
@@ -32,6 +34,8 @@ class PanelFooter extends StatelessWidget {
     this.vim,
     this.shelfNote,
     this.onLeaveFlat,
+    this.serverState,
+    this.onReconnect,
     super.key,
   });
 
@@ -44,6 +48,12 @@ class PanelFooter extends StatelessWidget {
 
   /// The flat view's capsule was clicked: back to the folder.
   final VoidCallback? onLeaveFlat;
+
+  /// The state of the server the tab is on; `null` elsewhere.
+  final ServerState? serverState;
+
+  /// The server's capsule was clicked while it is out of reach.
+  final VoidCallback? onReconnect;
 
   /// The footer's height at the text size in [context]: a control's
   /// height and a margin, taller as the text grows.
@@ -102,7 +112,8 @@ class PanelFooter extends StatelessWidget {
           Flexible(child: AppMiddleEllipsis(focused.key, style: strong)),
           if (details != null) ...[
             const SizedBox(width: AppSpacing.md),
-            _Line(details, strong),
+            // Cut too when the footer is narrow (a server's capsule, Vim's).
+            Flexible(child: _Line(details, strong)),
           ],
         ],
       );
@@ -148,6 +159,16 @@ class PanelFooter extends StatelessWidget {
             _FlatCap(busy: flat.busy, active: active, onLeave: onLeaveFlat),
             const SizedBox(width: AppSpacing.md),
           ],
+          if (_server case final server?) ...[
+            _ServerCap(
+              server: server,
+              state: serverState ?? ServerState.closed,
+              busy: tab.loading,
+              active: active,
+              onReconnect: onReconnect,
+            ),
+            const SizedBox(width: AppSpacing.md),
+          ],
           Expanded(child: left),
           const SizedBox(width: AppSpacing.md),
           Flexible(child: _Line(right, muted)),
@@ -155,6 +176,164 @@ class PanelFooter extends StatelessWidget {
       ),
     );
   }
+
+  ServerKey? get _server {
+    final key = tab.location.server;
+    return key == null ? null : ServerKey.parse(key);
+  }
+}
+
+/// A server's capsule: its protocol, with a lock when the connection is
+/// encrypted and an open one when it is not, and its state when it is not
+/// simply open; the platform's spinner while a folder is read. Out of
+/// reach, a click (or its ⌘J hint) connects again.
+class _ServerCap extends StatelessWidget {
+  const _ServerCap({
+    required this.server,
+    required this.state,
+    required this.busy,
+    required this.active,
+    required this.onReconnect,
+  });
+
+  final ServerKey server;
+  final ServerState state;
+  final bool busy;
+  final bool active;
+  final VoidCallback? onReconnect;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final colors = context.appColors;
+    final secure = server.protocol.secure;
+    final open = state == ServerState.connected;
+    final (fill, ink) = !active
+        ? (colors.selectionMuted, colors.textMuted)
+        : !open
+        ? (colors.wash(0), colors.ink(0))
+        : secure
+        ? (colors.wash(3), colors.ink(3))
+        : (colors.wash(1), colors.ink(1));
+    final style = context.text.labelSmall!
+        .copyWith(color: ink)
+        .weight(FontWeight.w700);
+    // The glyphs grow with the text beside them.
+    final size = MediaQuery.textScalerOf(
+      context,
+    ).scale(style.fontSize ?? AppIconSize.xs);
+    final said = l10n.serverStateLabel(
+      state,
+      server.displayRoot,
+      secure: secure,
+    );
+    final capsule = Semantics(
+      label: said,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs,
+          vertical: AppSpacing.xxs,
+        ),
+        decoration: BoxDecoration(
+          color: fill,
+          borderRadius: BorderRadius.circular(context.metrics.radius.chip),
+        ),
+        child: ExcludeSemantics(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (busy)
+                _Later(
+                  placeholder: _LockGlyph(secure: secure, size: size, ink: ink),
+                  child: AppSpinner(size: size),
+                )
+              else
+                _LockGlyph(secure: secure, size: size, ink: ink),
+              const SizedBox(width: AppSpacing.xs),
+              Text(l10n.protocolShortName(server.protocol), style: style),
+              if (!open) ...[
+                const SizedBox(width: AppSpacing.xs),
+                Text(
+                  state == ServerState.lost
+                      ? l10n.networkCapsuleLost
+                      : l10n.networkCapsuleClosed,
+                  style: style.weight(FontWeight.w500),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+    final reconnect = onReconnect;
+    if (open || reconnect == null) {
+      return AppTooltip(message: said, child: capsule);
+    }
+    return AppTooltip(
+      message: l10n.networkReconnect,
+      child: HintTarget(
+        onActivate: reconnect,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(onTap: reconnect, child: capsule),
+        ),
+      ),
+    );
+  }
+}
+
+/// A closed lock for an encrypted connection, an open one otherwise.
+class _LockGlyph extends StatelessWidget {
+  const _LockGlyph({
+    required this.secure,
+    required this.size,
+    required this.ink,
+  });
+
+  final bool secure;
+  final double size;
+  final Color ink;
+
+  @override
+  Widget build(BuildContext context) =>
+      Icon(secure ? AppIcons.lock : AppIcons.unlocked, size: size, color: ink);
+}
+
+/// [child] once a moment has passed, [placeholder] until then: a quick
+/// read never flashes its spinner.
+class _Later extends StatefulWidget {
+  const _Later({required this.placeholder, required this.child});
+
+  static const delay = Duration(milliseconds: 300);
+
+  final Widget placeholder;
+  final Widget child;
+
+  @override
+  State<_Later> createState() => _LaterState();
+}
+
+class _LaterState extends State<_Later> {
+  Timer? _wait;
+  bool _shown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _wait = Timer(_Later.delay, () {
+      if (mounted) setState(() => _shown = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _wait?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      _shown ? widget.child : widget.placeholder;
 }
 
 /// One line of the footer, cut with an ellipsis.

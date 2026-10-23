@@ -46,6 +46,13 @@ pub fn end(id: i64) {
     CANCELS.lock().remove(&id);
 }
 
+// ─── Network ───
+
+/// The cancel flag of the task `id` begun earlier, if it is still on.
+pub fn flag(id: i64) -> Option<Arc<AtomicBool>> {
+    CANCELS.lock().get(&id).cloned()
+}
+
 /// Keeps where the content comparison `op` puts the pairs that differ.
 pub fn keep_differences(op: i64, differing: Differences) {
     DIFFERENCES.lock().insert(op, differing);

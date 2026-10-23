@@ -14,6 +14,7 @@ extension _ArchiveActions on _WorkspaceScreenState {
   /// picked. With [destination] given (`:extract dir`) no dialog asks
   /// unless a password is needed.
   Future<void> _extractTo({String? destination}) async {
+    if (_onServer()) return;
     final tab = _tab;
     final targets = _targetsOrNotice();
     if (tab == null || targets.isEmpty) return;

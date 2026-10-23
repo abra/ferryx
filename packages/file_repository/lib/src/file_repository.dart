@@ -318,6 +318,77 @@ class FileRepository {
   Future<int?> lookupGroup(String name) =>
       rust.FerryxBackend.guard(() => rust.lookupGroup(name: name));
 
+  // ─── Network ───
+  // Items by location, on disk or on a server: the commands that make and
+  // rename items need not ask where the panel is.
+
+  /// Makes the folder at [location] (on disk, every missing one above it
+  /// too).
+  Future<void> makeFolderAt(Location location) => switch (location.kind) {
+    LocationKind.remote => rust.FerryxBackend.guard(
+      () => rust.remoteMakeFolder(
+        server: location.server!,
+        path: location.path,
+      ),
+    ),
+    _ => createDirectory(location.path),
+  };
+
+  /// Makes an empty file at [location].
+  Future<void> makeFileAt(Location location) => switch (location.kind) {
+    LocationKind.remote => rust.FerryxBackend.guard(
+      () => rust.remoteMakeFile(server: location.server!, path: location.path),
+    ),
+    _ => createFile(location.path),
+  };
+
+  /// Renames the item at [location] to [newName]; answers where it is
+  /// now.
+  Future<Location> renameAt(Location location, String newName) async {
+    if (!location.isRemote) {
+      final renamed = await rename(location.path, newName);
+      return Location.native(renamed);
+    }
+    final path = await rust.FerryxBackend.guard(
+      () => rust.remoteRename(
+        server: location.server!,
+        path: location.path,
+        newName: newName,
+      ),
+    );
+    return Location.remote(server: location.server!, path: path);
+  }
+
+  /// The item at [location]; `null` when there is none.
+  Future<FileEntry?> statAt(Location location) async {
+    if (!location.isRemote) {
+      try {
+        return await stat(location.path);
+      } on FerryxException catch (error) {
+        if (error.kind == FerryxErrorKind.notFound) return null;
+        rethrow;
+      }
+    }
+    return rust.FerryxBackend.guard(
+      () async => rust.remoteEntryFromView(
+        await rust.remoteStat(server: location.server!, path: location.path),
+      ),
+    );
+  }
+
+  /// The first free name in the folder [folder] for a new item: [name],
+  /// else `name 2`…
+  Future<String> freeNameAt(Location folder, String name) async =>
+      folder.isRemote
+      ? rust.FerryxBackend.guard(
+          () => rust.remoteFreeName(
+            server: folder.server!,
+            dir: folder.path,
+            name: name,
+          ),
+        )
+      : freeName(folder.path, name);
+
   Future<void> dispose() async {
     await _subscription?.cancel();
     await _changes.close();

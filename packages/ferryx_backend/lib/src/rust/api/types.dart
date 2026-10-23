@@ -7,6 +7,7 @@ import '../frb_generated.dart';
 import 'checksum.dart';
 import 'duplicates.dart';
 import 'journal.dart';
+import 'network.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
@@ -48,6 +49,7 @@ class AppEvent {
   /// A search that asked Spotlight walked the folders instead: Spotlight
   /// could not answer.
   final bool findSpotlightFailed;
+  final NetworkEventView? network;
 
   const AppEvent({
     required this.kind,
@@ -63,6 +65,7 @@ class AppEvent {
     this.checksum,
     this.duplicates,
     required this.findSpotlightFailed,
+    this.network,
   });
 
   @override
@@ -79,7 +82,8 @@ class AppEvent {
       compare.hashCode ^
       checksum.hashCode ^
       duplicates.hashCode ^
-      findSpotlightFailed.hashCode;
+      findSpotlightFailed.hashCode ^
+      network.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -98,7 +102,8 @@ class AppEvent {
           compare == other.compare &&
           checksum == other.checksum &&
           duplicates == other.duplicates &&
-          findSpotlightFailed == other.findSpotlightFailed;
+          findSpotlightFailed == other.findSpotlightFailed &&
+          network == other.network;
 }
 
 enum AppEventKind {
@@ -125,6 +130,15 @@ enum AppEventKind {
 
   /// A duplicate search settled groups or ended (`duplicates`).
   duplicatesProgress,
+
+  /// A server's connection came, dropped or closed (`network`).
+  connectionChanged,
+
+  /// A connection asks the user something (`network.question`).
+  networkQuestion,
+
+  /// A question no longer waits (`network.question_id`).
+  networkQuestionWithdrawn,
 }
 
 class AttributeChangesView {
@@ -437,6 +451,30 @@ enum FerryxErrorKind {
 
   /// The password given does not open the archive.
   wrongPassword,
+
+  /// The server refused the login.
+  authFailed,
+
+  /// The server could not be reached.
+  hostUnreachable,
+
+  /// The server did not answer in time.
+  timedOut,
+
+  /// The server's SSH key was not trusted.
+  hostKeyUnknown,
+
+  /// The server's SSH key is not the one on record: refused.
+  hostKeyChanged,
+
+  /// The connection dropped.
+  connectionLost,
+
+  /// No connection to the server is open.
+  notConnected,
+
+  /// The server's certificate is not trusted.
+  certificateInvalid,
 }
 
 class FindHitView {
@@ -623,23 +661,29 @@ class ListingView {
 enum LocationKind {
   native,
   archive,
+  remote,
 }
 
-/// Where a panel is: a folder on disk, or a folder inside an archive
-/// (`archive` the file, `path` the folder inside it, empty at its root).
+/// Where a panel is: a folder on disk, a folder inside an archive
+/// (`archive` the file, `path` the folder inside it, empty at its root),
+/// or a folder on a server (`server` its key, `sftp://me@host:22`, and
+/// `path` the folder there).
 class LocationView {
   final LocationKind kind;
   final String path;
   final String? archive;
+  final String? server;
 
   const LocationView({
     required this.kind,
     required this.path,
     this.archive,
+    this.server,
   });
 
   @override
-  int get hashCode => kind.hashCode ^ path.hashCode ^ archive.hashCode;
+  int get hashCode =>
+      kind.hashCode ^ path.hashCode ^ archive.hashCode ^ server.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -648,7 +692,8 @@ class LocationView {
           runtimeType == other.runtimeType &&
           kind == other.kind &&
           path == other.path &&
-          archive == other.archive;
+          archive == other.archive &&
+          server == other.server;
 }
 
 enum NamePartView {

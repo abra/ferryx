@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:monitoring/monitoring.dart';
+import 'package:network_service/network_service.dart';
 import 'package:operations_service/operations_service.dart';
 import 'package:platform_services/platform_services.dart';
 import 'package:preferences_service/preferences_service.dart';
@@ -58,6 +59,7 @@ part 'vim_actions.dart';
 part 'workspace_actions.dart';
 part 'archive_actions.dart';
 part 'tag_actions.dart';
+part 'network_actions.dart';
 
 /// Where the window sends what it does not do itself.
 class WorkspaceNavigation {
@@ -121,6 +123,45 @@ class WorkspaceNavigation {
   openDuplicates;
 }
 
+// ─── Network ───
+
+/// Servers in the window: their connections, and the dialogs that make
+/// them, which the window around it owns (Connect to Server and the
+/// questions a connection asks).
+class WorkspaceNetwork {
+  const WorkspaceNetwork({
+    required this.service,
+    required this.connectToServer,
+    required this.connectServer,
+    required this.connectProfile,
+    required this.connectAddress,
+  });
+
+  final NetworkService service;
+
+  /// Connect to Server: the dialog; answers the connection made.
+  final Future<ServerConnection?> Function(BuildContext context)
+  connectToServer;
+
+  /// The connection to a server (its key) opened again, with the way of
+  /// logging in its saved server has; answers whether it is open. A
+  /// failure has said why.
+  final Future<bool> Function(BuildContext context, String server)
+  connectServer;
+
+  /// A saved server connected to; answers the connection made.
+  final Future<ServerConnection?> Function(
+    BuildContext context,
+    ServerProfile server,
+  )
+  connectProfile;
+
+  /// An address typed (`sftp://me@host/srv`) connected to; answers the
+  /// connection made, its home the address's folder.
+  final Future<ServerConnection?> Function(BuildContext context, String text)
+  connectAddress;
+}
+
 /// What the window keeps between runs.
 class WorkspaceSnapshot {
   const WorkspaceSnapshot({
@@ -160,6 +201,7 @@ class WorkspaceScreen extends StatefulWidget {
     this.terminal,
     required this.folderSync,
     this.capabilities = const Capabilities(),
+    this.network,
     super.key,
   });
 
@@ -197,6 +239,9 @@ class WorkspaceScreen extends StatefulWidget {
   /// What this desktop can do that others cannot, as the core reports
   /// it: the commands it lacks are hidden.
   final Capabilities capabilities;
+
+  /// Servers; without it the panels stay on this computer.
+  final WorkspaceNetwork? network;
 
   @override
   State<WorkspaceScreen> createState() => _WorkspaceScreenState();
@@ -289,7 +334,16 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     logger: widget.logger,
     onFolderShown: widget.frecency.visit,
     readTags: widget.capabilities.finderTags,
+    network: widget.network?.service,
+    connectServer: widget.network == null ? null : _reconnectServer,
   );
+
+  /// A panel's server connected to again, the window's dialogs asking.
+  Future<bool> _reconnectServer(String server) async {
+    final network = widget.network;
+    if (network == null || !mounted) return false;
+    return network.connectServer(context, server);
+  }
 
   @override
   void dispose() {

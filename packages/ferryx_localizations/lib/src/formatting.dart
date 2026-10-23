@@ -76,6 +76,15 @@ extension FerryxFormatting on FerryxLocalizations {
     FerryxErrorKind.io => errorIo,
     FerryxErrorKind.passwordRequired => archivePasswordRequired,
     FerryxErrorKind.wrongPassword => archiveWrongPassword,
+    // ─── Network ───
+    FerryxErrorKind.authFailed => errorAuthFailed,
+    FerryxErrorKind.hostUnreachable => errorHostUnreachable,
+    FerryxErrorKind.timedOut => errorTimedOut,
+    FerryxErrorKind.hostKeyUnknown => errorHostKeyUnknown,
+    FerryxErrorKind.hostKeyChanged => errorHostKeyChanged,
+    FerryxErrorKind.connectionLost => errorConnectionLost,
+    FerryxErrorKind.notConnected => errorNotConnected,
+    FerryxErrorKind.certificateInvalid => errorCertificateInvalid,
   };
 
   /// The error's title with the core's own words after it.

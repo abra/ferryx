@@ -658,6 +658,11 @@ const _defaults = <AppCommand, List<Chord>>{
   AppCommand.editTags: [
     Chord(LogicalKeyboardKey.keyT, primary: true, control: true),
   ],
+  // ─── Network ───
+  // Finder's Connect to Server. Inside the terminal ⌘K clears it, as in
+  // Terminal.app: the terminal's own keys are matched first.
+  AppCommand.connectToServer: [Chord(LogicalKeyboardKey.keyK, primary: true)],
+  AppCommand.disconnectServer: [],
 
   // File panel keys
   AppCommand.moveUp: [Chord(LogicalKeyboardKey.arrowUp)],

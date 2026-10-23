@@ -10,7 +10,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'tags.dart';
 import 'types.dart';
 
-// These functions are ignored because they are not marked as `pub`: `record_created`
+// These functions are ignored because they are not marked as `pub`: `record_created`, `remote_server`
 
 Future<EntryView> stat({required String path}) =>
     FerryxRustLib.instance.api.crateApiFilesStat(path: path);

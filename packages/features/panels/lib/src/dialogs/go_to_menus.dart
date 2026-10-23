@@ -22,6 +22,20 @@ class GoToEject extends GoToPick {
   final String mountPoint;
 }
 
+// ─── Network ───
+
+/// A saved server, connected to with its way of logging in.
+class GoToServer extends GoToPick {
+  const GoToServer(this.server);
+
+  final ServerProfile server;
+}
+
+/// Connect to Server, the dialog.
+class GoToConnect extends GoToPick {
+  const GoToConnect();
+}
+
 /// A location's path as a menu label: shortened in the middle when long,
 /// its last two folders kept.
 String _pathLabel(Location location) => PathText.shortened(location.display);
@@ -35,6 +49,7 @@ Future<GoToPick?> showGoToPopup(
   required List<Volume> volumes,
   required List<Location> otherPanel,
   required List<Location> history,
+  List<ServerProfile>? servers,
 }) {
   final l10n = context.l10n;
   final entries = <AppMenuEntry<GoToPick>>[
@@ -56,13 +71,30 @@ Future<GoToPick?> showGoToPopup(
           icon: volume.removable ? AppIcons.usb : AppIcons.hardDrive,
         ),
     ],
+    // ─── Network ───
+    // With servers at all: the saved ones, and the dialog for others.
+    if (servers != null) ...[
+      AppMenuSection(l10n.networkGoToServers),
+      for (final server in servers)
+        AppMenuAction(
+          value: GoToServer(server),
+          label: server.label,
+          detail: server.displayRoot,
+          icon: AppIcons.server,
+        ),
+      AppMenuAction(
+        value: const GoToConnect(),
+        label: l10n.cmdConnectToServer,
+        icon: AppIcons.globe,
+      ),
+    ],
     if (otherPanel.isNotEmpty) ...[
       AppMenuSection(l10n.sectionOtherPanel),
       for (final location in otherPanel)
         AppMenuAction(
           value: GoToLocation(location),
           label: _pathLabel(location),
-          icon: AppIcons.folder,
+          icon: location.isRemote ? AppIcons.server : AppIcons.folder,
         ),
     ],
     if (history.isNotEmpty) ...[

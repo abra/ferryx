@@ -108,6 +108,15 @@ files is Rust.
 - **Find duplicates** (⇧⌘F): files with the same contents, grouped by the
   space they waste, marked by hand or by rule, moved to the Trash (and
   back with ⌘Z).
+- **Servers** (⌘K, Connect to Server; `:connect sftp://me@host/srv`): SFTP,
+  FTP and FTPS, WebDAV over HTTP and HTTPS in the panels like any folder:
+  browse, view, copy and move both ways and between servers with progress
+  and cancel, rename, make folders, delete (for good: servers have no
+  trash), open a copy. Saved servers in the dialog and the Go To pop-up;
+  host keys checked against `~/.ssh/known_hosts` (a changed key is
+  refused, never waved through), the SSH agent and key files, passwords
+  in the system keychain only when you ask; plain FTP and HTTP say they
+  are not encrypted. Pure Rust underneath (russh, rustls), no OpenSSL.
 - **Keyboard first, no mouse needed**: every command has a shortcut you can
   rebind (Settings → Hotkeys), click hints (⌘J) label everything clickable,
   the menu key (⌃↩, ⇧F10) opens what a right click opens, a cheat sheet
@@ -130,7 +139,8 @@ files is Rust.
   and CI.
 - **UI:** Flutter. **Core:** Rust (listings with full metadata, folder
   watching, operations with cancellation, archives, batch rename, find,
-  the terminal's pseudo-terminal), connected through `flutter_rust_bridge`.
+  the terminal's pseudo-terminal, SFTP, FTP and WebDAV), connected
+  through `flutter_rust_bridge`.
 
 ## Toolchain
 
@@ -181,10 +191,11 @@ lib/app/                 composition root: bootstrap, dependencies, routing
 packages/                Dart packages (see ARCHITECTURE.md)
 packages/features/*      one package per screen or flow
 rust/crates/ferryx_core  sorting, natural collation, masks, quick search, batch rename
-rust/crates/ferryx_vfs   listings, metadata, watching, volumes, attributes, links, archives
-rust/crates/ferryx_ops   copy, move, delete, trash, duplicate, compress, extract, sizes, find
+rust/crates/ferryx_vfs   listings, metadata, watching, volumes, attributes, links, archives, servers
+rust/crates/ferryx_ops   copy, move, delete, trash, duplicate, compress, extract, sizes, find, transfers
 rust/crates/ferryx_term  the terminal's shell in a pseudo-terminal: batched output, its state
 rust/crates/ferryx_api   flutter_rust_bridge surface and the event stream
+rust/crates/ferryx_test_servers  in-process SFTP, FTP and WebDAV servers for the tests
 rust_builder/            cargokit FFI plugin that compiles the Rust crate
 brand/                   app icon masters, one per desktop (make icons)
 linux/packaging/         desktop entry and hicolor icons for Linux packages
@@ -195,8 +206,14 @@ value under `ferryx.preferences`): theme and language, the panels' tabs
 and their places, view modes, favorites, editors, tools and shortcut
 overrides. Beside it, under keys of their own, it keeps the folders you
 visit with their frecency (`ferryx.folderFrecency`, for Jump to Folder)
-and the commands you ran from the palette (`ferryx.recentCommands`).
-Nothing else is written outside the folders you work in.
+and the commands you ran from the palette (`ferryx.recentCommands`) and
+the server addresses you connected to (`ferryx.recentServers`, never with
+a password). Saved servers are in the preferences without passwords; a
+password or key passphrase goes to the system keychain only when you tick
+Remember, and a host key you trust is remembered in Ferryx's own
+`known_hosts` (`~/Library/Application Support/Ferryx/` on macOS), never in
+yours. A file opened from a server is copied to the system's temporary
+folder. Nothing else is written outside the folders you work in.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the rules that keep the codebase
 navigable and [CLAUDE.md](CLAUDE.md) for the working conventions.

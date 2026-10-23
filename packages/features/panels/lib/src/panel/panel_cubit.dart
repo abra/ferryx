@@ -5,6 +5,7 @@ import 'package:domain_models/domain_models.dart';
 import 'package:file_repository/file_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:monitoring/monitoring.dart';
+import 'package:network_service/network_service.dart';
 import 'package:operations_service/operations_service.dart';
 import 'package:preferences_service/preferences_service.dart';
 
@@ -36,14 +37,17 @@ class PanelCubit extends Cubit<PanelState> {
     required this.logger,
     this.onFolderShown,
     this.readTags = false,
+    NetworkService? network,
+    this.connectServer,
   }) : _files = files,
        _operations = operations,
        _preferences = preferences,
-       super(PanelState(side: side)) {
+       super(PanelState(side: side, servers: network?.servers ?? const {})) {
     _changes = files.directoryChanges.listen(_onDirectoryChanged);
     _progress = operations.progress.listen(_onProgress);
     _prefs = preferences.stream.listen(_onPreferences);
     _lastPrefs = preferences.current;
+    _serverChanges = network?.serverChanges.listen(_onServers);
   }
 
   final PanelSide side;
@@ -60,6 +64,15 @@ class PanelCubit extends Cubit<PanelState> {
   /// visit for Jump to Folder. Not for the tabs a start restores, nor for
   /// a folder read again where it is.
   final void Function(String path)? onFolderShown;
+
+  /// Opens the connection to a server (by its key) again, asking the user
+  /// what it must; answers whether it is open. Without it a folder on a
+  /// server that is not connected stays unread.
+  final Future<bool> Function(String server)? connectServer;
+  StreamSubscription<Map<String, ServerStatus>>? _serverChanges;
+
+  /// Where a tab goes when nothing else is left to it: the home folder.
+  Location _fallback = const Location.native('/');
   StreamSubscription<String>? _changes;
   StreamSubscription<OperationProgress>? _progress;
   StreamSubscription<Preferences>? _prefs;
@@ -87,6 +100,7 @@ class PanelCubit extends Cubit<PanelState> {
 
   /// Opens the saved tabs, or one at [fallback].
   Future<void> start(SavedPanel? saved, Location fallback) async {
+    _fallback = fallback;
     // A first run starts in the Full layout: a list with its columns.
     final tabs = saved?.tabs ?? [SavedTab(location: fallback, layoutIndex: 2)];
     final states = <PanelTabState>[];
@@ -115,6 +129,8 @@ class PanelCubit extends Cubit<PanelState> {
         pushHistory: true,
         fallback: fallback,
         visit: false,
+        // A tab left on a server waits for the user to connect again.
+        connect: false,
       );
     }
   }
@@ -138,7 +154,8 @@ class PanelCubit extends Cubit<PanelState> {
 
   /// Reads [location] into the tab at [index]. A folder that cannot be
   /// read leaves the tab where it was and records the error; a tab with
-  /// nothing yet falls back to [fallback], then to the root.
+  /// nothing yet falls back to [fallback], then to the root. A folder on a
+  /// server that is not connected is connected to first, with [connect].
   Future<void> _load(
     int index,
     Location location, {
@@ -146,6 +163,7 @@ class PanelCubit extends Cubit<PanelState> {
     String? focusName,
     Location? fallback,
     bool visit = true,
+    bool connect = true,
   }) async {
     final tab = state.tabs.elementAtOrNull(index);
     if (tab == null) return;
@@ -207,6 +225,41 @@ class PanelCubit extends Cubit<PanelState> {
       );
       unawaited(_loadTags(tab.id));
     } on FerryxException catch (error, stackTrace) {
+      // A later read of the tab took this one's place.
+      if (error.kind == FerryxErrorKind.cancelled) return;
+      final server = location.server;
+      final connector = connectServer;
+      if (server != null &&
+          connect &&
+          connector != null &&
+          error.kind == FerryxErrorKind.notConnected) {
+        final open = await connector(server);
+        final at = state.tabs.indexWhere((t) => t.id == tab.id);
+        if (at < 0) return;
+        if (open) {
+          await _load(
+            at,
+            location,
+            pushHistory: pushHistory,
+            focusName: focusName,
+            fallback: fallback,
+            visit: visit,
+            connect: false,
+          );
+          return;
+        }
+        // Given up, or failed and said why: the tab stays where it was.
+        final current = state.tabs[at];
+        emit(
+          state.withTab(
+            at,
+            current.listing == null
+                ? _unreached(current, location, error)
+                : current.copyWith(loading: false, clearPendingFocus: true),
+          ),
+        );
+        return;
+      }
       logger.warn(
         'cannot open ${location.display}',
         error: error,
@@ -214,6 +267,13 @@ class PanelCubit extends Cubit<PanelState> {
       );
       final current = state.tabs.elementAtOrNull(index);
       if (current == null || current.id != tab.id) return;
+      if (current.listing == null &&
+          location.isRemote &&
+          error.kind.needsConnection) {
+        // A server out of reach keeps its tab, to connect to again.
+        emit(state.withTab(index, _unreached(current, location, error)));
+        return;
+      }
       if (error.kind == FerryxErrorKind.passwordRequired &&
           !location.isNative) {
         // The window asks for the password and opens it again; the tab
@@ -267,6 +327,21 @@ class PanelCubit extends Cubit<PanelState> {
     }
   }
 
+  /// A tab with nothing read yet, left at [location] on a server it could
+  /// not reach, [error] saying why.
+  PanelTabState _unreached(
+    PanelTabState tab,
+    Location location,
+    FerryxException error,
+  ) => tab.copyWith(
+    location: location,
+    loading: false,
+    error: error,
+    clearPendingFocus: true,
+    history: tab.history.isEmpty ? [location] : null,
+    historyIndex: tab.history.isEmpty ? 0 : null,
+  );
+
   /// The tab with its rows rebuilt from its listing: quick search applied,
   /// folder sizes merged, the cursor kept on its name or put on
   /// [focusName].
@@ -310,8 +385,74 @@ class PanelCubit extends Cubit<PanelState> {
   }
 
   Future<void> refresh() async {
-    final index = state.activeIndex;
-    await _refreshTab(index);
+    final tab = state.active;
+    if (tab != null &&
+        tab.location.isRemote &&
+        (tab.listing == null || (tab.error?.kind.needsConnection ?? false))) {
+      // A server that dropped or was never reached: connected to, then
+      // read.
+      await reconnect();
+      return;
+    }
+    await _refreshTab(state.activeIndex);
+  }
+
+  // ─── Network ───
+
+  /// The active tab's server connected to again, and its folder read.
+  Future<void> reconnect() async {
+    final tab = state.active;
+    if (tab == null || !tab.location.isRemote) return;
+    await _load(
+      state.activeIndex,
+      tab.location,
+      pushHistory: false,
+      focusName: tab.focused?.key,
+    );
+  }
+
+  void _onServers(Map<String, ServerStatus> next) {
+    final before = state.servers;
+    emit(state.copyWith(servers: next));
+    for (final server in before.keys) {
+      if (!next.containsKey(server)) unawaited(_leaveServer(server));
+    }
+  }
+
+  /// [server] was disconnected: its tabs go back to where they were on
+  /// disk last, else home.
+  Future<void> _leaveServer(String server) async {
+    final ids = [
+      for (final tab in state.tabs)
+        if (tab.location.server == server) tab.id,
+    ];
+    for (final id in ids) {
+      final index = state.tabs.indexWhere((t) => t.id == id);
+      if (index < 0) continue;
+      final tab = state.tabs[index];
+      // The places before the current one, the nearest first, then after.
+      final before = tab.history.take(tab.historyIndex + 1).toList().reversed;
+      final after = tab.history.skip(tab.historyIndex + 1);
+      final back = before.followedBy(after).where((l) => !l.isRemote);
+      await _load(
+        index,
+        back.firstOrNull ?? _fallback,
+        pushHistory: true,
+        visit: false,
+      );
+    }
+  }
+
+  /// An operation on a server ended: the tabs on that server are read
+  /// again (nothing watches a server's folders).
+  void _refreshServersTouched(OperationProgress progress) {
+    final touched = [...progress.sources, ?progress.destination];
+    for (var i = 0; i < state.tabs.length; i++) {
+      final server = state.tabs[i].location.server;
+      if (server != null && touched.any((p) => p.startsWith('$server/'))) {
+        unawaited(_refreshTab(i));
+      }
+    }
   }
 
   Future<void> _refreshTab(int index) async {
@@ -340,6 +481,8 @@ class PanelCubit extends Cubit<PanelState> {
       );
       unawaited(_loadTags(tab.id));
     } on FerryxException catch (error) {
+      // A read of the tab's own took this one's place.
+      if (error.kind == FerryxErrorKind.cancelled) return;
       final gone =
           error.kind == FerryxErrorKind.notFound ||
           error.kind == FerryxErrorKind.notADirectory;
@@ -905,7 +1048,7 @@ class PanelCubit extends Cubit<PanelState> {
     if (tab == null ||
         focused == null ||
         focused.isParent ||
-        !tab.location.isNative) {
+        !(tab.location.isNative || tab.location.isRemote)) {
       return;
     }
     _emitActive(
@@ -929,7 +1072,11 @@ class PanelCubit extends Cubit<PanelState> {
     final trimmed = newName.trim();
     if (trimmed.isEmpty || trimmed == row.name) return null;
     try {
-      await _files.rename(row.path, trimmed);
+      if (tab.location.isRemote) {
+        await _files.renameAt(tab.locationOf(row), trimmed);
+      } else {
+        await _files.rename(row.path, trimmed);
+      }
       final current = state.active;
       if (current != null && current.id == tab.id) {
         final key = row.folder.isEmpty ? trimmed : '${row.folder}/$trimmed';
@@ -953,7 +1100,9 @@ class PanelCubit extends Cubit<PanelState> {
   /// the listing when empty).
   Future<void> calcSizes({List<String>? names}) async {
     final tab = state.active;
-    if (tab == null || !tab.location.isNative) return;
+    if (tab == null || !(tab.location.isNative || tab.location.isRemote)) {
+      return;
+    }
     final folders = [
       for (final row in tab.rows)
         if (row.isDir && !row.isParent && !row.isSymlink)
@@ -961,7 +1110,11 @@ class PanelCubit extends Cubit<PanelState> {
     ];
     if (folders.isEmpty) return;
     final id = await _operations.start(
-      OperationRequest(kind: OpKind.calcSizes, sources: folders),
+      OperationRequest(
+        kind: OpKind.calcSizes,
+        sources: folders,
+        sourceServer: tab.location.server,
+      ),
     );
     _sizeOperations.add(id);
   }
@@ -969,16 +1122,18 @@ class PanelCubit extends Cubit<PanelState> {
   void _onProgress(OperationProgress progress) {
     if (progress.state.isFinished && progress.kind != OpKind.calcSizes) {
       _walkFlatViewsUnder(progress);
+      _refreshServersTouched(progress);
     }
     if (!_sizeOperations.contains(progress.id)) return;
     if (progress.state.isFinished) _sizeOperations.remove(progress.id);
     if (progress.sizes.isEmpty) return;
     for (var i = 0; i < state.tabs.length; i++) {
       final tab = state.tabs[i];
-      if (!tab.location.isNative) continue;
-      final prefix = tab.location.path.endsWith('/')
-          ? tab.location.path
-          : '${tab.location.path}/';
+      if (!tab.location.isNative && !tab.location.isRemote) continue;
+      // A server's folders are named with its key, as the progress names
+      // them.
+      final shown = '${tab.location.server ?? ''}${tab.location.path}';
+      final prefix = shown.endsWith('/') ? shown : '$shown/';
       final sizes = {...tab.folderSizes};
       var changed = false;
       for (final size in progress.sizes) {
@@ -1526,6 +1681,7 @@ class PanelCubit extends Cubit<PanelState> {
 
   @override
   Future<void> close() async {
+    await _serverChanges?.cancel();
     await _changes?.cancel();
     await _progress?.cancel();
     await _prefs?.cancel();

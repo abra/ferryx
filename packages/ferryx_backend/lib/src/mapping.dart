@@ -33,6 +33,16 @@ d.FerryxErrorKind errorKindFromView(
   rust.FerryxErrorKind.io => d.FerryxErrorKind.io,
   rust.FerryxErrorKind.passwordRequired => d.FerryxErrorKind.passwordRequired,
   rust.FerryxErrorKind.wrongPassword => d.FerryxErrorKind.wrongPassword,
+  // ─── Network ───
+  rust.FerryxErrorKind.authFailed => d.FerryxErrorKind.authFailed,
+  rust.FerryxErrorKind.hostUnreachable => d.FerryxErrorKind.hostUnreachable,
+  rust.FerryxErrorKind.timedOut => d.FerryxErrorKind.timedOut,
+  rust.FerryxErrorKind.hostKeyUnknown => d.FerryxErrorKind.hostKeyUnknown,
+  rust.FerryxErrorKind.hostKeyChanged => d.FerryxErrorKind.hostKeyChanged,
+  rust.FerryxErrorKind.connectionLost => d.FerryxErrorKind.connectionLost,
+  rust.FerryxErrorKind.notConnected => d.FerryxErrorKind.notConnected,
+  rust.FerryxErrorKind.certificateInvalid =>
+    d.FerryxErrorKind.certificateInvalid,
 };
 
 // ─── Locations and entries ───
@@ -41,15 +51,21 @@ rust.LocationView locationToView(d.Location location) => rust.LocationView(
   kind: switch (location.kind) {
     d.LocationKind.native => rust.LocationKind.native,
     d.LocationKind.archive => rust.LocationKind.archive,
+    d.LocationKind.remote => rust.LocationKind.remote,
   },
   path: location.path,
   archive: location.archive,
+  server: location.server,
 );
 
 d.Location locationFromView(rust.LocationView view) => switch (view.kind) {
   rust.LocationKind.native => d.Location.native(view.path),
   rust.LocationKind.archive => d.Location.inArchive(
     archive: view.archive ?? '',
+    path: view.path,
+  ),
+  rust.LocationKind.remote => d.Location.remote(
+    server: view.server ?? '',
     path: view.path,
   ),
 };

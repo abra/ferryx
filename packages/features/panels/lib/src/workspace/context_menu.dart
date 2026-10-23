@@ -32,6 +32,9 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
     danger: danger,
   );
   final native = location.isNative;
+  // A server's items: read, copied, moved, renamed and deleted (for good:
+  // servers have no trash); the rest is this computer's.
+  final remote = location.isRemote;
   final fileManager = switch (context.metrics.style.fileManager) {
     FileManager.finder => l10n.menuShowInFinder,
     FileManager.explorer => l10n.menuShowInExplorer,
@@ -42,7 +45,7 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
       action(AppCommand.enterItem, l10n.cmdEnterItem, icon: AppIcons.folderOpen)
     else
       action(AppCommand.openItem, l10n.menuOpen, icon: AppIcons.externalLink),
-    if (!entry.isDir && native)
+    if (!entry.isDir && (native || remote))
       action(
         AppCommand.internalViewer,
         l10n.cmdInternalViewer,
@@ -57,9 +60,9 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
         icon: AppIcons.reveal,
       ),
     // What this desktop has of its own: hidden where it has none.
-    if (map.isAvailable(AppCommand.quickLook))
+    if (!remote && map.isAvailable(AppCommand.quickLook))
       action(AppCommand.quickLook, l10n.cmdQuickLook, icon: AppIcons.quickLook),
-    if (map.isAvailable(AppCommand.share))
+    if (!remote && map.isAvailable(AppCommand.share))
       action(AppCommand.share, l10n.cmdShare, icon: AppIcons.share),
     const AppMenuSeparator(),
     if (native) ...[
@@ -81,6 +84,10 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
           l10n.cmdExtractTo,
           icon: AppIcons.fileArchive,
         ),
+    ] else if (remote) ...[
+      action(AppCommand.copyTo, l10n.cmdCopyTo, icon: AppIcons.copy),
+      action(AppCommand.moveTo, l10n.cmdMoveTo, icon: AppIcons.scissors),
+      action(AppCommand.renameInPlace, l10n.actionRename, icon: AppIcons.edit),
     ] else ...[
       action(
         AppCommand.copyTo,
@@ -89,7 +96,7 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
       ),
     ],
     const AppMenuSeparator(),
-    if (entry.isDir && native)
+    if (entry.isDir && (native || remote))
       action(
         AppCommand.addToFavorites,
         l10n.cmdAddToFavorites,
@@ -120,6 +127,15 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
         danger: true,
       ),
     ],
+    if (remote) ...[
+      const AppMenuSeparator(),
+      action(
+        AppCommand.deletePermanently,
+        l10n.cmdDeletePermanently,
+        icon: AppIcons.cancel,
+        danger: true,
+      ),
+    ],
   ];
 }
 
@@ -133,6 +149,7 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
   required ShortcutMap map,
   JournalSummary journal = JournalSummary.empty,
   bool flat = false,
+  bool remote = false,
 }) {
   final l10n = context.l10n;
   final platform = Theme.of(context).platform;
@@ -162,20 +179,33 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
       label: l10n.cmdCompareFolders,
       icon: AppIcons.compareFolders,
       shortcut: chord(AppCommand.compareFolders),
+      enabled: !remote,
     ),
     AppMenuAction(
       value: AppCommand.synchronizeFolders,
       label: l10n.cmdSynchronizeFolders,
       icon: AppIcons.synchronize,
       shortcut: chord(AppCommand.synchronizeFolders),
+      enabled: !remote,
     ),
     AppMenuAction(
       value: AppCommand.findDuplicates,
       label: l10n.cmdFindDuplicates,
       icon: AppIcons.duplicates,
       shortcut: chord(AppCommand.findDuplicates),
+      enabled: !remote,
     ),
     const AppMenuSeparator(),
+    // ─── Network ───
+    if (remote) ...[
+      AppMenuAction(
+        value: AppCommand.disconnectServer,
+        label: l10n.cmdDisconnectServer,
+        icon: AppIcons.disconnect,
+        shortcut: chord(AppCommand.disconnectServer),
+      ),
+      const AppMenuSeparator(),
+    ],
     AppMenuAction(
       value: AppCommand.newTab,
       label: l10n.cmdNewTab,
@@ -194,14 +224,14 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
       label: l10n.menuNewFolder,
       icon: AppIcons.folder,
       shortcut: chord(AppCommand.newFolder),
-      enabled: native,
+      enabled: native || remote,
     ),
     AppMenuAction(
       value: AppCommand.newFile,
       label: l10n.menuNewFile,
       icon: AppIcons.file,
       shortcut: chord(AppCommand.newFile),
-      enabled: native,
+      enabled: native || remote,
     ),
     const AppMenuSeparator(),
     AppMenuAction(
@@ -223,6 +253,7 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
       icon: AppIcons.layoutList,
       shortcut: chord(AppCommand.toggleFlatView),
       checked: flat,
+      enabled: !remote,
     ),
     AppMenuAction(
       value: AppCommand.toggleSinglePane,

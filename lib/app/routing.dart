@@ -16,6 +16,7 @@ import 'package:duplicates_feature/duplicates_feature.dart';
 import 'package:find_feature/find_feature.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:network_feature/network_feature.dart';
 import 'package:panels_feature/panels_feature.dart';
 import 'package:settings_feature/settings_feature.dart';
 import 'package:sync_feature/sync_feature.dart';
@@ -123,131 +124,166 @@ class _WorkspaceRoute extends StatelessWidget {
     final home = deps.files.standardFolders().home;
     return WindowTitleIntegration(
       title: windowTitle,
-      child: WorkspaceScreen(
-        files: deps.files,
-        operations: deps.operations,
-        rename: deps.rename,
-        platformServices: deps.platformServices,
-        capabilities: deps.files.capabilities(),
-        preferences: deps.preferencesService,
-        logger: deps.logger,
-        shortcutMap: deps.shortcutMap,
-        windowDecor: windowDecor(deps.windowFrame),
-        savedLeft: SavedPanel.decode(saved[PanelSide.left.key]),
-        savedRight: SavedPanel.decode(saved[PanelSide.right.key]),
-        savedActive: saved['active'] == PanelSide.right.name
-            ? PanelSide.right
-            : PanelSide.left,
-        fallbackLocation: Location.native(home),
-        frecency: deps.frecency,
-        terminal: WorkspaceTerminal(
-          create: () => TerminalLink(
-            service: deps.terminal,
-            preferences: deps.preferencesService,
-            platform: deps.platform,
-          ),
-          builder: (context, controller, view) => TerminalPane(
-            cubit: TerminalLink.of(controller).cubit,
-            focusNode: view.focusNode,
-            shortcutMap: deps.shortcutMap,
-            fontSize: deps.preferencesService.current.terminal.fontSize,
-            placement: TerminalPlacement(
-              panelsHidden: view.panelsHidden,
-              fullWindow: view.fullWindow,
-              decor: view.decor,
+      // ─── Network ───
+      // The questions a connection asks (a host key, a password) come here
+      // from wherever it is made.
+      child: NetworkPromptHost(
+        service: deps.network,
+        child: WorkspaceScreen(
+          files: deps.files,
+          operations: deps.operations,
+          rename: deps.rename,
+          platformServices: deps.platformServices,
+          capabilities: deps.files.capabilities(),
+          preferences: deps.preferencesService,
+          logger: deps.logger,
+          shortcutMap: deps.shortcutMap,
+          windowDecor: windowDecor(deps.windowFrame),
+          savedLeft: SavedPanel.decode(saved[PanelSide.left.key]),
+          savedRight: SavedPanel.decode(saved[PanelSide.right.key]),
+          savedActive: saved['active'] == PanelSide.right.name
+              ? PanelSide.right
+              : PanelSide.left,
+          fallbackLocation: Location.native(home),
+          frecency: deps.frecency,
+          terminal: WorkspaceTerminal(
+            create: () => TerminalLink(
+              service: deps.terminal,
+              preferences: deps.preferencesService,
+              platform: deps.platform,
             ),
-            onHide: view.onHide,
-            onTogglePanels: view.onTogglePanels,
-            onToggleFullWindow: view.onToggleFullWindow,
-          ),
-        ),
-        onSnapshot: (snapshot) {
-          windowTitle.location =
-              (snapshot.active == PanelSide.left
-                      ? snapshot.left
-                      : snapshot.right)
-                  .tabs
-                  .elementAtOrNull(
-                    snapshot.active == PanelSide.left
-                        ? snapshot.left.activeIndex
-                        : snapshot.right.activeIndex,
-                  )
-                  ?.location
-                  .name;
-          unawaited(
-            deps.preferencesService.update(
-              (p) => p.copyWith(
-                panelState: {
-                  PanelSide.left.key: snapshot.left.encode(),
-                  PanelSide.right.key: snapshot.right.encode(),
-                  'active': snapshot.active.name,
-                },
-                singlePane: snapshot.singlePane,
-                splitFraction: snapshot.splitFraction,
+            builder: (context, controller, view) => TerminalPane(
+              cubit: TerminalLink.of(controller).cubit,
+              focusNode: view.focusNode,
+              shortcutMap: deps.shortcutMap,
+              fontSize: deps.preferencesService.current.terminal.fontSize,
+              placement: TerminalPlacement(
+                panelsHidden: view.panelsHidden,
+                fullWindow: view.fullWindow,
+                decor: view.decor,
               ),
+              onHide: view.onHide,
+              onTogglePanels: view.onTogglePanels,
+              onToggleFullWindow: view.onToggleFullWindow,
             ),
-          );
-        },
-        navigation: WorkspaceNavigation(
-          openViewer: (context, location, {bool preview = false}) =>
-              context.push<void>(
-                AppRoutes.viewer,
-                extra: ViewerRouteArguments(location, preview: preview),
-              ),
-          openFind: (context, root, {required view}) => showFindDialog(
-            context,
-            root: root,
-            find: deps.find,
-            onView: view,
-            spotlight: deps.files.capabilities().spotlight,
           ),
-          openSettings: (context) => openSettings(context),
-          openCheatSheet: (context) => showCheatSheet(
-            context,
-            shortcutMap: deps.shortcutMap,
-            platform: deps.platform,
-            vim: deps.preferencesService.current.vimMode,
-          ),
-          // ─── Operations stream ───
-          openSync: (context, {required left, required right}) {
-            final prefs = deps.preferencesService.current;
-            return showSyncDialog(
-              context,
-              left: left,
-              right: right,
-              service: deps.folderSync,
-              options: prefs.compareOptions,
-              onOptions: (options) => unawaited(
-                deps.preferencesService.update(
-                  (p) => p.copyWith(compareOptions: options),
+          onSnapshot: (snapshot) {
+            windowTitle.location =
+                (snapshot.active == PanelSide.left
+                        ? snapshot.left
+                        : snapshot.right)
+                    .tabs
+                    .elementAtOrNull(
+                      snapshot.active == PanelSide.left
+                          ? snapshot.left.activeIndex
+                          : snapshot.right.activeIndex,
+                    )
+                    ?.location
+                    .name;
+            unawaited(
+              deps.preferencesService.update(
+                (p) => p.copyWith(
+                  panelState: {
+                    PanelSide.left.key: snapshot.left.encode(),
+                    PanelSide.right.key: snapshot.right.encode(),
+                    'active': snapshot.active.name,
+                  },
+                  singlePane: snapshot.singlePane,
+                  splitFraction: snapshot.splitFraction,
                 ),
               ),
-              preserveAttributes: prefs.preserveAttributes,
-              verify: prefs.verifyCopies,
-              shortcutMap: deps.shortcutMap,
             );
           },
-          openChecksums:
-              (context, {required paths, required base, algorithm}) =>
-                  showChecksumsDialog(
-                    context,
-                    paths: paths,
-                    base: base,
-                    algorithm: algorithm,
-                    service: deps.checksums,
-                  ),
-          openDuplicates: (context, {required root, other}) =>
-              showDuplicatesDialog(
+          navigation: WorkspaceNavigation(
+            openViewer: (context, location, {bool preview = false}) =>
+                context.push<void>(
+                  AppRoutes.viewer,
+                  extra: ViewerRouteArguments(location, preview: preview),
+                ),
+            openFind: (context, root, {required view}) => showFindDialog(
+              context,
+              root: root,
+              find: deps.find,
+              onView: view,
+              spotlight: deps.files.capabilities().spotlight,
+            ),
+            openSettings: (context) => openSettings(context),
+            openCheatSheet: (context) => showCheatSheet(
+              context,
+              shortcutMap: deps.shortcutMap,
+              platform: deps.platform,
+              vim: deps.preferencesService.current.vimMode,
+            ),
+            // ─── Operations stream ───
+            openSync: (context, {required left, required right}) {
+              final prefs = deps.preferencesService.current;
+              return showSyncDialog(
                 context,
-                root: root,
-                other: other,
-                service: deps.duplicates,
-                operations: deps.operations,
+                left: left,
+                right: right,
+                service: deps.folderSync,
+                options: prefs.compareOptions,
+                onOptions: (options) => unawaited(
+                  deps.preferencesService.update(
+                    (p) => p.copyWith(compareOptions: options),
+                  ),
+                ),
+                preserveAttributes: prefs.preserveAttributes,
+                verify: prefs.verifyCopies,
                 shortcutMap: deps.shortcutMap,
-              ),
+              );
+            },
+            openChecksums:
+                (context, {required paths, required base, algorithm}) =>
+                    showChecksumsDialog(
+                      context,
+                      paths: paths,
+                      base: base,
+                      algorithm: algorithm,
+                      service: deps.checksums,
+                    ),
+            openDuplicates: (context, {required root, other}) =>
+                showDuplicatesDialog(
+                  context,
+                  root: root,
+                  other: other,
+                  service: deps.duplicates,
+                  operations: deps.operations,
+                  shortcutMap: deps.shortcutMap,
+                ),
+          ),
+          folderSync: deps.folderSync,
+          network: _network(),
         ),
-        folderSync: deps.folderSync,
       ),
+    );
+  }
+
+  // ─── Network ───
+
+  /// The window's servers: the core's connections and the dialogs of the
+  /// network feature that make them.
+  WorkspaceNetwork _network() {
+    final connector = ServerConnector(
+      service: deps.network,
+      servers: () => deps.preferencesService.current.servers,
+    );
+    return WorkspaceNetwork(
+      service: deps.network,
+      connectToServer: (context) => showConnectDialog(
+        context,
+        service: deps.network,
+        servers: deps.preferencesService.current.servers,
+        onServersChanged: (servers) => unawaited(
+          deps.preferencesService.update((p) => p.copyWith(servers: servers)),
+        ),
+        shortcutMap: deps.shortcutMap,
+        recent: deps.recentServers.items,
+        onRecent: (address) => unawaited(deps.recentServers.record(address)),
+      ),
+      connectServer: connector.reconnect,
+      connectProfile: connector.connect,
+      connectAddress: connector.connectAddress,
     );
   }
 }

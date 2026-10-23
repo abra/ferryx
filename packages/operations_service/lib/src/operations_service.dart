@@ -39,12 +39,18 @@ class OperationsService {
     _progress.add(report);
   }
 
-  /// Starts [request]; its progress follows on [progress].
+  /// Starts [request]; its progress follows on [progress]. One with a
+  /// server on a side ([OperationRequest.crossesNetwork]) goes over the
+  /// network: a copy, a move, a delete or folder sizes, never journaled.
   Future<int> start(OperationRequest request) =>
       rust.FerryxBackend.guard(() async {
-        final id = await rust.startOperation(
-          request: rust.operationRequestToView(request),
-        );
+        final id = request.crossesNetwork
+            ? await rust.startNetworkOperation(
+                request: rust.networkOperationToView(request),
+              )
+            : await rust.startOperation(
+                request: rust.operationRequestToView(request),
+              );
         logger.debug('operation $id started: ${request.kind.name}');
         return id;
       });

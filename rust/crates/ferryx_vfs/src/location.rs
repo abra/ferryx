@@ -1,8 +1,11 @@
-//! Where a panel is: a folder on disk, or a folder inside an archive.
+//! Where a panel is: a folder on disk, a folder inside an archive, or a
+//! folder on a server.
 
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
+
+use crate::remote::address;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Location {
@@ -12,6 +15,13 @@ pub enum Location {
     Archive {
         archive: PathBuf,
         inner: String,
+    },
+    // ─── Network ───
+    /// A folder on the server `server` (its key, `sftp://me@host:22`):
+    /// `path` is absolute and `/`-separated, as the server spells it.
+    Remote {
+        server: String,
+        path: String,
     },
 }
 
@@ -25,7 +35,8 @@ impl Location {
     }
 
     /// The folder this one is in: a folder's parent on disk, an archive
-    /// member's enclosing member, the archive's own folder from its root.
+    /// member's enclosing member, the archive's own folder from its root,
+    /// a server folder's parent; `None` at a root.
     pub fn parent(&self) -> Option<Location> {
         match self {
             Location::Native(path) => path.parent().map(|p| Location::Native(p.to_path_buf())),
@@ -40,6 +51,9 @@ impl Location {
                     Some(Location::Archive { archive: archive.clone(), inner })
                 }
             }
+            Location::Remote { server, path } => {
+                address::parent(path).map(|path| Location::Remote { server: server.clone(), path })
+            }
         }
     }
 
@@ -50,11 +64,14 @@ impl Location {
                 archive: archive.clone(),
                 inner: if inner.is_empty() { name.to_string() } else { format!("{inner}/{name}") },
             },
+            Location::Remote { server, path } => {
+                Location::Remote { server: server.clone(), path: address::join(path, name) }
+            }
         }
     }
 
     /// The last component: the folder's name, the archive's name at its
-    /// root.
+    /// root, the server's host at its root.
     pub fn name(&self) -> String {
         match self {
             Location::Native(path) => path
@@ -68,10 +85,15 @@ impl Location {
                     inner.rsplit('/').next().unwrap_or(inner).to_string()
                 }
             }
+            Location::Remote { server, path } => match address::name(path) {
+                "" => address::parse_key(server).map(|a| a.host).unwrap_or_else(|_| server.clone()),
+                name => name.to_string(),
+            },
         }
     }
 
-    /// The path as shown in a panel's header: `/Users/me/a.zip/dir`.
+    /// The path as shown in a panel's header: `/Users/me/a.zip/dir`,
+    /// `sftp://me@host/srv`.
     pub fn display(&self) -> String {
         match self {
             Location::Native(path) => path.to_string_lossy().into_owned(),
@@ -82,13 +104,17 @@ impl Location {
                     format!("{}/{}", archive.to_string_lossy(), inner)
                 }
             }
+            Location::Remote { server, path } => match address::parse_key(server) {
+                Ok(address) => address.display_url(path),
+                Err(_) => format!("{server}{path}"),
+            },
         }
     }
 
     /// The archive file a location is in, if any.
     pub fn archive_path(&self) -> Option<&Path> {
         match self {
-            Location::Native(_) => None,
+            Location::Native(_) | Location::Remote { .. } => None,
             Location::Archive { archive, .. } => Some(archive),
         }
     }
@@ -113,5 +139,23 @@ mod tests {
         assert_eq!(deep.name(), "e");
         assert_eq!(deep.display(), "/a/x.zip/d/e");
         assert_eq!(archive.name(), "x.zip");
+    }
+
+    #[test]
+    fn folders_on_a_server() {
+        let root = Location::Remote { server: "sftp://me@host.lan:22".into(), path: "/".into() };
+        assert_eq!(root.parent(), None);
+        assert_eq!(root.name(), "host.lan");
+        assert_eq!(root.display(), "sftp://me@host.lan/");
+        let deep = root.join("srv").join("www");
+        assert_eq!(
+            deep,
+            Location::Remote { server: "sftp://me@host.lan:22".into(), path: "/srv/www".into() }
+        );
+        assert_eq!(deep.parent(), Some(root.join("srv")));
+        assert_eq!(deep.name(), "www");
+        assert_eq!(deep.display(), "sftp://me@host.lan/srv/www");
+        assert_eq!(deep.archive_path(), None);
+        assert!(!deep.is_native());
     }
 }

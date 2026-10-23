@@ -603,6 +603,20 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+  network_feature:
+    dependency: "direct main"
+    description:
+      path: "packages/features/network"
+      relative: true
+    source: path
+    version: "0.1.0"
+  network_service:
+    dependency: "direct main"
+    description:
+      path: "packages/network_service"
+      relative: true
+    source: path
+    version: "0.1.0"
   node_preamble:
     dependency: transitive
     description:

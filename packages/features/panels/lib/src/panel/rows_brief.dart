@@ -232,7 +232,9 @@ class _RowsBriefState extends State<RowsBrief> {
                   : math.max(1, (constraints.maxWidth / widths.first).floor());
               _visibleColumns = visibleColumns;
               WidgetsBinding.instance.addPostFrameCallback((_) => _onScroll());
-              if (widget.tab.rows.isEmpty) return const EmptyRows();
+              if (widget.tab.rows.isEmpty) {
+                return EmptyRows(read: widget.tab.listing != null);
+              }
               return Scrollbar(
                 controller: _scroll,
                 child: ListView.builder(

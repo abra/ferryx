@@ -231,6 +231,7 @@ class _CrumbState extends State<_Crumb> {
   Widget build(BuildContext context) {
     final colors = context.appColors;
     final isArchive = widget.location.isArchiveRoot;
+    final isServer = widget.location.isRemoteRoot;
     final style =
         (widget.last ? context.text.titleSmall : context.text.bodyMedium)
             ?.copyWith(
@@ -240,7 +241,9 @@ class _CrumbState extends State<_Crumb> {
                         : colors.textMuted)
                   : colors.textMuted,
             );
-    final label = widget.location.name;
+    final label = isServer
+        ? _serverLabel(widget.location)
+        : widget.location.name;
     return HintTarget(
       onActivate: () => widget.onOpen(widget.location),
       enabled: !widget.last,
@@ -262,11 +265,11 @@ class _CrumbState extends State<_Crumb> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (isArchive) ...[
+                if (isArchive || isServer) ...[
                   Icon(
-                    AppIcons.fileArchive,
+                    isServer ? AppIcons.server : AppIcons.fileArchive,
                     size: AppIconSize.sm,
-                    color: colors.ink(1),
+                    color: isServer ? colors.ink(4) : colors.ink(1),
                   ),
                   const SizedBox(width: AppSpacing.xs),
                 ],
@@ -278,6 +281,16 @@ class _CrumbState extends State<_Crumb> {
       ),
     );
   }
+}
+
+/// A server's root crumb: who on which host (`me@host`), the scheme left
+/// to the icon and the footer.
+String _serverLabel(Location location) {
+  final key = ServerKey.parse(location.server ?? '');
+  if (key == null) return location.name;
+  final root = key.displayRoot;
+  final scheme = root.indexOf('://');
+  return scheme < 0 ? root : root.substring(scheme + 3);
 }
 
 /// The order of the sort, as the sort menu offers it.

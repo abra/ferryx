@@ -291,7 +291,7 @@ class _RowsListState extends State<RowsList> {
             ),
             Expanded(
               child: widget.tab.rows.isEmpty
-                  ? const EmptyRows()
+                  ? EmptyRows(read: widget.tab.listing != null)
                   : Scrollbar(
                       controller: _scroll,
                       child: ListView.builder(

@@ -28,3 +28,6 @@ export 'src/rust/api/terminal.dart';
 export 'src/rust/api/types.dart';
 export 'src/rust/api/volume_id.dart';
 export 'src/rust/frb_generated.dart' show FerryxRustLib;
+// ─── Network ───
+export 'src/mapping_network.dart';
+export 'src/rust/api/network.dart';

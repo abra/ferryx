@@ -37,6 +37,7 @@ Future<CopyMoveChoice?> showCopyMoveDialog(
   required String defaultDestination,
   required bool preserveAttributes,
   required bool verify,
+  bool canVerify = true,
 }) => showWorkspaceDialog<CopyMoveChoice>(
   context,
   (context) => _CopyMoveDialog(
@@ -47,6 +48,7 @@ Future<CopyMoveChoice?> showCopyMoveDialog(
     defaultDestination: defaultDestination,
     preserveAttributes: preserveAttributes,
     verify: verify,
+    canVerify: canVerify,
   ),
 );
 
@@ -59,6 +61,7 @@ class _CopyMoveDialog extends StatefulWidget {
     required this.defaultDestination,
     required this.preserveAttributes,
     required this.verify,
+    required this.canVerify,
   });
 
   final bool move;
@@ -68,6 +71,9 @@ class _CopyMoveDialog extends StatefulWidget {
   final String defaultDestination;
   final bool preserveAttributes;
   final bool verify;
+
+  /// The copy can be read back (not over the network).
+  final bool canVerify;
 
   @override
   State<_CopyMoveDialog> createState() => _CopyMoveDialogState();
@@ -170,7 +176,7 @@ class _CopyMoveDialogState extends State<_CopyMoveDialog> {
             value: _preserve,
             onChanged: (v) => setState(() => _preserve = v),
           ),
-          if (!widget.move) ...[
+          if (!widget.move && widget.canVerify) ...[
             const SizedBox(height: AppSpacing.sm),
             DialogToggle(
               label: l10n.optionVerify,

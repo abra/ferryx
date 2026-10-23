@@ -111,6 +111,7 @@ extension _OperationsActions on _WorkspaceScreenState {
   // ─── Synchronize Folders ───
 
   Future<void> _synchronizeFolders() async {
+    if (_onServer()) return;
     String folderOf(PanelCubit panel) {
       final location = panel.state.active?.location;
       return location != null && location.isNative ? location.path : '';
@@ -195,6 +196,7 @@ extension _OperationsActions on _WorkspaceScreenState {
   /// Find Duplicates under the active folder, the other panel's on offer;
   /// a file the dialog asks to show is revealed in the active panel.
   Future<void> _findDuplicates() async {
+    if (_onServer()) return;
     final tab = _tab;
     final root = tab?.location.isNative == true
         ? tab!.location.path

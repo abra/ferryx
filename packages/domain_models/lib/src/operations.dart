@@ -44,6 +44,8 @@ class OperationRequest extends Equatable {
     this.verify = false,
     this.password,
     this.intoFolders = false,
+    this.sourceServer,
+    this.destinationServer,
   });
 
   final OpKind kind;
@@ -69,6 +71,20 @@ class OperationRequest extends Equatable {
   /// [archive]): each into a folder named after it.
   final bool intoFolders;
 
+  // ─── Network ───
+
+  /// The server [sources] are on (its key, `sftp://me@host:22`); `null`
+  /// on disk.
+  final String? sourceServer;
+
+  /// The server [destination] is on; `null` on disk.
+  final String? destinationServer;
+
+  /// A server is on one side or both: the operation goes over the
+  /// network (copy, move, delete and folder sizes only; never on the undo
+  /// journal).
+  bool get crossesNetwork => sourceServer != null || destinationServer != null;
+
   @override
   List<Object?> get props => [
     kind,
@@ -81,6 +97,8 @@ class OperationRequest extends Equatable {
     verify,
     password,
     intoFolders,
+    sourceServer,
+    destinationServer,
   ];
 }
 

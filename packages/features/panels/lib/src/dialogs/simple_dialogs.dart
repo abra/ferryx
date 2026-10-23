@@ -72,12 +72,14 @@ Future<DeleteChoice?> showDeleteDialog(
   required List<String> names,
   required bool trashDefault,
   required bool trashAvailable,
+  String? note,
 }) => showWorkspaceDialog<DeleteChoice>(
   context,
   (context) => _DeleteDialog(
     names: names,
     trashDefault: trashDefault && trashAvailable,
     trashAvailable: trashAvailable,
+    note: note,
   ),
 );
 
@@ -286,11 +288,15 @@ class _DeleteDialog extends StatelessWidget {
     required this.names,
     required this.trashDefault,
     required this.trashAvailable,
+    this.note,
   });
 
   final List<String> names;
   final bool trashDefault;
   final bool trashAvailable;
+
+  /// Why there is no Trash (a server has none).
+  final String? note;
 
   @override
   Widget build(BuildContext context) {
@@ -316,8 +322,24 @@ class _DeleteDialog extends StatelessWidget {
       title: l10n.deleteTitle(names.length, firstName(names)),
       alert: true,
       destructive: !trashDefault,
-      body: Text(
-        trashDefault ? l10n.deleteMessageTrash : l10n.deleteMessagePermanent,
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        // Each line as wide as the alert, aligned as the alert aligns.
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            trashDefault
+                ? l10n.deleteMessageTrash
+                : l10n.deleteMessagePermanent,
+          ),
+          if (note case final note?) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              note,
+              style: context.text.bodySmall?.copyWith(color: colors.textMuted),
+            ),
+          ],
+        ],
       ),
       actions: [
         cancel,
