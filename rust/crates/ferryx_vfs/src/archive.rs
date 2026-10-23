@@ -445,9 +445,16 @@ impl ArchiveIndex {
             return ArchiveIndex::open_with(&self.archive, Some(password)).map(|_| ());
         }
         let Some(member) = self.smallest_encrypted() else { return Ok(()) };
-        let mut probe = Probe { left: 64 * 1024 };
+        const LIMIT: usize = 64 * 1024;
+        let mut probe = Probe { left: LIMIT };
+        // As much as the member has, up to the limit: a wrong key's garbage
+        // may also read as a stream that ends early, with no error at all.
+        let expected = usize::try_from(member.size).unwrap_or(usize::MAX).min(LIMIT);
         match self.read_member_to(&member.path, Some(password), &mut probe) {
-            Ok(_) => Ok(()),
+            Ok(_) | Err(VfsError { kind: VfsErrorKind::Cancelled, .. }) if LIMIT - probe.left >= expected => {
+                Ok(())
+            }
+            Ok(_) => Err(VfsError::wrong_password(&self.archive)),
             Err(e) if e.kind == VfsErrorKind::Cancelled => Ok(()),
             Err(e) if e.kind == VfsErrorKind::WrongPassword => Err(e),
             // Garbage out of a wrong key breaks the decoder or the check.

@@ -114,7 +114,26 @@ fn has_rock_ridge<R: Read + Seek>(file: &mut R, root: &(u64, u64)) -> io::Result
         at += 1;
     }
     let system_use = &sector[at.min(length)..length];
-    Ok(system_use.starts_with(b"SP") || system_use.windows(2).any(|w| w == b"RR" || w == b"NM" || w == b"PX"))
+    // An `SP` and an `ER` naming RRIP only announce it (hdiutil writes them
+    // with no Rock Ridge entry anywhere): the root must carry one itself.
+    let rock_ridge = susp_signatures(system_use).any(|signature| matches!(&signature, b"PX" | b"NM" | b"RR"));
+    Ok(rock_ridge)
+}
+
+/// The signatures of the SUSP entries in a record's system use area, each
+/// entry `signature, length, version, data`; a length that cannot be one
+/// ends the walk.
+fn susp_signatures(system_use: &[u8]) -> impl Iterator<Item = [u8; 2]> + '_ {
+    let mut at = 0;
+    std::iter::from_fn(move || {
+        let entry = system_use.get(at..at + 4)?;
+        let length = entry[2] as usize;
+        if length < 4 {
+            return None;
+        }
+        at += length;
+        Some([entry[0], entry[1]])
+    })
 }
 
 /// A file whose extents are being gathered (one record each).
@@ -380,4 +399,38 @@ pub(crate) fn extract(job: &Job, sink: &mut dyn MemberSink) -> Result<(), Extrac
         sink.end(member, outcome)?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A root `.` record carrying `system_use` after its one-byte name.
+    fn root_with(system_use: &[u8]) -> io::Cursor<Vec<u8>> {
+        let mut sector = vec![0u8; 2048];
+        let length = 34 + system_use.len();
+        sector[0] = length as u8;
+        sector[32] = 1;
+        sector[34..34 + system_use.len()].copy_from_slice(system_use);
+        io::Cursor::new(sector)
+    }
+
+    fn entry(signature: &[u8; 2], data: &[u8]) -> Vec<u8> {
+        let mut out = vec![signature[0], signature[1], (4 + data.len()) as u8, 1];
+        out.extend_from_slice(data);
+        out
+    }
+
+    #[test]
+    fn rock_ridge_is_its_entries_not_its_announcement() {
+        // hdiutil's way: SP and an ER naming RRIP, and no entry of it.
+        let announced =
+            [entry(b"SP", &[0xBE, 0xEF, 0]), entry(b"ER", b"\x0a\x00\x00\x01IEEE_P1282")].concat();
+        assert!(!has_rock_ridge(&mut root_with(&announced), &(0, 2048)).unwrap());
+        // mkisofs's: the root's own attributes as a PX entry.
+        let real = [entry(b"SP", &[0xBE, 0xEF, 0]), entry(b"PX", &[0; 32])].concat();
+        assert!(has_rock_ridge(&mut root_with(&real), &(0, 2048)).unwrap());
+        // A length that cannot be an entry's ends the walk, never loops.
+        assert!(!has_rock_ridge(&mut root_with(&[b'P', b'X', 0, 1]), &(0, 2048)).unwrap());
+    }
 }

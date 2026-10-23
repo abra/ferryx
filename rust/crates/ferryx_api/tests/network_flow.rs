@@ -288,3 +288,35 @@ fn a_refused_password_is_asked_again_and_cancel_withdraws_the_question() {
     assert_eq!(connect_server(attempt, hanging).unwrap_err().kind, FerryxErrorKind::Cancelled);
     assert!(started.elapsed() < Duration::from_secs(3));
 }
+
+#[test]
+fn an_ftp_address_typed_with_its_slash_asks_the_password_and_lists() {
+    let _turn = serial();
+    let server = ferryx_test_servers::ftp::FtpServer::start(Default::default());
+    std::fs::write(server.path("readme.txt"), "hi").unwrap();
+    let user = User::start(|_| (true, vec!["secret".into()], false));
+    let address =
+        parse_server_address(format!("ftp://me@127.0.0.1:{}/", server.port), ProtocolView::Sftp).unwrap();
+    let request = ConnectRequestView {
+        protocol: address.protocol,
+        host: address.host.clone(),
+        port: address.port,
+        user: address.user.clone(),
+        path: address.path.clone(),
+        password: address.password.clone(),
+        auth: AuthMethodView::Password,
+        key_path: None,
+    };
+    let connection = connect_server(begin_connect(), request).unwrap();
+    let root = listing::open_listing("t1".into(), remote(&connection.server, &address.path), options());
+    let commands = server.commands.lock().clone();
+    let root = root.unwrap_or_else(|e| panic!("{e:?}; commands: {commands:?}"));
+    assert_eq!(names(&root), ["readme.txt"]);
+    let asked: Vec<_> = user
+        .events()
+        .into_iter()
+        .filter_map(|e| e.network.and_then(|n| n.question))
+        .map(|q| q.kind)
+        .collect();
+    assert_eq!(asked, [NetworkQuestionKindView::Password]);
+}

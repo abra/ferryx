@@ -86,3 +86,9 @@ opt-level = 1
 
 [profile.dev.package."*"]
 opt-level = 3
+
+# lzma-rust2 0.16.5 with a progress check in its LZMA and LZMA2 readers: on
+# corrupt input (a 7z read with a wrong password) their loops could spin
+# forever. See vendor/lzma-rust2/FERRYX.md; drop once upstream has it.
+[patch.crates-io]
+lzma-rust2 = { path = "vendor/lzma-rust2" }

@@ -426,6 +426,31 @@ fn seven_zip_passwords() {
     assert_eq!(index.read_with("sub/b.txt", Some("secret")).unwrap(), b"bravo bravo");
 }
 
+/// A wrong password decrypts to random bytes, which the LZMA decoders
+/// once spun on forever about one time in ten, and which could also read
+/// as a stream that ends early and so pass for the right one: each try
+/// here must end, and end refused. (Every archive has a salt of its own,
+/// so the garbage differs from one to the next.)
+#[test]
+fn wrong_passwords_always_end_refused() {
+    let dir = tempfile::tempdir().unwrap();
+    for i in 0..50 {
+        let path = make_7z(&dir.path().join(format!("locked-{i}.7z")), Some("secret"), i % 2 == 0);
+        let (sent, got) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let refused = match ArchiveIndex::open_with(&path, Some("wrong")) {
+                Ok(index) => index.check_password("wrong").err().map(|e| e.kind),
+                Err(error) => Some(error.kind),
+            };
+            let _ = sent.send(refused);
+        });
+        let kind = got
+            .recv_timeout(std::time::Duration::from_secs(10))
+            .unwrap_or_else(|_| panic!("try {i} with a wrong password did not end"));
+        assert_eq!(kind, Some(VfsErrorKind::WrongPassword), "try {i}");
+    }
+}
+
 #[test]
 fn rar_lists_and_reads() {
     let dir = tempfile::tempdir().unwrap();
