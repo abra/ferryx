@@ -243,11 +243,12 @@ class _HostKeyDialogState extends State<HostKeyDialog> {
               Navigator.of(context).pop(const NetworkAnswer.cancel()),
           child: Text(l10n.actionCancel),
         ),
-        FilledButton(
+        // Not the default, and not drawn as one: Return cancels.
+        AppDestructiveButton(
+          label: l10n.networkHostKeyTrust,
           onPressed: () => Navigator.of(
             context,
           ).pop(NetworkAnswer(accept: true, remember: _remember)),
-          child: Text(l10n.networkHostKeyTrust),
         ),
       ],
     );

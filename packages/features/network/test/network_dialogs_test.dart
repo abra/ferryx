@@ -265,6 +265,15 @@ void main() {
           find.text(en.networkHostKeyMessage('box.lan', 'ssh-ed25519')),
           findsOneWidget,
         );
+        // Nor does Trust look like the default it is not.
+        expect(
+          find.widgetWithText(AppDestructiveButton, en.networkHostKeyTrust),
+          findsOneWidget,
+        );
+        expect(
+          find.widgetWithText(FilledButton, en.networkHostKeyTrust),
+          findsNothing,
+        );
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         await tester.pumpAndSettle();
         expect(service.answers[1]?.accept, isFalse);

@@ -130,9 +130,7 @@ class AppDialog extends StatelessWidget {
   );
 
   /// Shows a yes/no question; resolves to `true` on confirm. A
-  /// [destructive] action reads as one the platform's way: red text on
-  /// macOS, Fluent's accent button on Windows (it has no red button), the
-  /// red destructive button on GNOME.
+  /// [destructive] action is an [AppDestructiveButton].
   static Future<bool> confirm(
     BuildContext context, {
     required String title,
@@ -144,32 +142,10 @@ class AppDialog extends StatelessWidget {
     final result = await _showReturningSelection<bool>(
       context,
       (context) {
-        final colors = context.appColors;
-        final style = context.metrics.style;
         void confirm() => Navigator.of(context).pop(true);
         final Widget affirmative = !destructive
             ? FilledButton(onPressed: confirm, child: Text(confirmLabel))
-            : switch (style) {
-                AppPlatformStyle.macos => OutlinedButton(
-                  onPressed: confirm,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colors.danger,
-                  ),
-                  child: Text(confirmLabel),
-                ),
-                AppPlatformStyle.windows => FilledButton(
-                  onPressed: confirm,
-                  child: Text(confirmLabel),
-                ),
-                AppPlatformStyle.gnome => FilledButton(
-                  onPressed: confirm,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: colors.danger,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: Text(confirmLabel),
-                ),
-              };
+            : AppDestructiveButton(label: confirmLabel, onPressed: confirm);
         return AppDialog(
           title: title,
           alert: true,
@@ -186,6 +162,45 @@ class AppDialog extends StatelessWidget {
       },
     );
     return result ?? false;
+  }
+}
+
+/// The affirmative action of a [AppDialog.destructive] dialog, read as one
+/// the platform's way: red text on macOS, Fluent's accent button on
+/// Windows (it has no red button), the red destructive button on GNOME.
+/// Never the default: Return goes to the dismissive action.
+class AppDestructiveButton extends StatelessWidget {
+  const AppDestructiveButton({
+    required this.label,
+    required this.onPressed,
+    super.key,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return switch (context.metrics.style) {
+      AppPlatformStyle.macos => OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(foregroundColor: colors.danger),
+        child: Text(label),
+      ),
+      AppPlatformStyle.windows => FilledButton(
+        onPressed: onPressed,
+        child: Text(label),
+      ),
+      AppPlatformStyle.gnome => FilledButton(
+        onPressed: onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: colors.danger,
+          foregroundColor: Colors.white,
+        ),
+        child: Text(label),
+      ),
+    };
   }
 }
 
