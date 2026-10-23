@@ -16,6 +16,9 @@ rust_builder/**/pubspec.lock
 # FVM
 .fvm/
 
+# claude
+.claude/
+
 # Rust
 rust/target/
 rust_builder/cargokit/build_tool/.dart_tool/
