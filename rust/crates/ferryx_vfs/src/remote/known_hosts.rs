@@ -17,7 +17,7 @@ use std::sync::LazyLock;
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use hmac::{Hmac, Mac};
-use parking_lot::RwLock;
+use parking_lot::{Mutex, RwLock};
 use russh::keys::{Algorithm, HashAlg, PublicKey};
 use sha1::Sha1;
 
@@ -44,6 +44,10 @@ struct Files {
 }
 
 static FILES: LazyLock<RwLock<Files>> = LazyLock::new(|| RwLock::new(default_files()));
+
+/// Taken while a line is added to Ferryx's file: two connections trusting
+/// a key at once each add a whole line.
+static APPENDING: Mutex<()> = Mutex::new(());
 
 fn default_files() -> Files {
     let home = crate::system::home_dir();
@@ -126,13 +130,17 @@ pub fn remember(host: &str, port: u16, key: &PublicKey) -> VfsResult<()> {
     if let Some(dir) = path.parent() {
         fs::create_dir_all(dir).at(dir)?;
     }
-    let mut file = OpenOptions::new().create(true).append(true).open(&path).at(&path)?;
     let text =
         key.to_openssh().map_err(|e| crate::VfsError::new(crate::VfsErrorKind::Io, None, e.to_string()))?;
     // The comment a key may carry is the server's, not ours.
     let mut parts = text.split_whitespace();
     let (kind, data) = (parts.next().unwrap_or_default(), parts.next().unwrap_or_default());
-    writeln!(file, "{} {kind} {data}", host_port(host, port)).at(&path)
+    // One write of the whole line: `writeln!` on a file writes it piece by
+    // piece, and another line added at once would land between them.
+    let line = format!("{} {kind} {data}\n", host_port(host, port));
+    let _appending = APPENDING.lock();
+    let mut file = OpenOptions::new().create(true).append(true).open(&path).at(&path)?;
+    file.write_all(line.as_bytes()).at(&path)
 }
 
 /// The key's fingerprint as OpenSSH prints it: `SHA256:` and the hash in
@@ -302,6 +310,17 @@ mod tests {
         assert!(fs::read_to_string(&own).unwrap().starts_with("[new.lan]:2200 ssh-ed25519 AAAA"));
         assert_eq!(check("new.lan", 2200, &k), HostKeyCheck::Known);
         assert!(matches!(check("new.lan", 2200, &key(ED2)), HostKeyCheck::Changed { .. }));
+
+        // Keys trusted at once each land as a whole line.
+        std::thread::scope(|s| {
+            for i in 0..32 {
+                let k = &k;
+                s.spawn(move || remember(&format!("many{i}.lan"), 22, k).unwrap());
+            }
+        });
+        for i in 0..32 {
+            assert_eq!(check(&format!("many{i}.lan"), 22, &k), HostKeyCheck::Known, "many{i}.lan");
+        }
     }
 
     #[test]
