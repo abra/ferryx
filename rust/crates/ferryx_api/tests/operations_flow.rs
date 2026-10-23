@@ -230,10 +230,10 @@ fn copy_trash_and_new_folders_undo_through_the_trash() {
     // The copied tree went to the trash; the overwritten file stays as copied.
     assert!(!dest.join("tree").exists());
     assert_eq!(fs::read(dest.join("y.txt")).unwrap(), b"y");
-    // Redo puts the tree back from the trash.
+    // Redo puts the tree back from the trash, and it stays here: the
+    // user's trash keeps nothing of the test.
     finish(walk_journal_step(true, redo_step()).unwrap());
     assert_eq!(fs::read(dest.join("tree/x.txt")).unwrap(), b"x");
-    finish(walk_journal_step(false, undo_step()).unwrap());
 
     // Trash, then undo: back where it was.
     let id = ops::start_operation(request(OpKindView::Trash, vec![s(&src.join("y.txt"))], None));
