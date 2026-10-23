@@ -493,6 +493,146 @@ void main() {
     focus.dispose();
   });
 
+  group('a layout of another script', () {
+    // Apple's Russian layout: the key left of 1 types `]`, the keys at `,`
+    // and `]` type `б` and `ъ`.
+    Future<List<AppCommand>> press(
+      WidgetTester tester, {
+      required bool latin,
+      required LogicalKeyboardKey modifier,
+      required LogicalKeyboardKey typed,
+      required PhysicalKeyboardKey at,
+    }) async {
+      ChordLayout.latin = latin;
+      addTearDown(() => ChordLayout.latin = true);
+      final reached = <AppCommand>[];
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      const commands = [
+        AppCommand.showTerminal,
+        AppCommand.goForward,
+        AppCommand.openSettings,
+      ];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: CommandShortcuts(
+            shortcuts: ShortcutMap.defaults(TargetPlatform.macOS).toShortcuts(
+              TargetPlatform.macOS,
+              scopes: const {CommandScope.global, CommandScope.panel},
+            ),
+            child: CommandHandlers(
+              handlers: {
+                for (final command in commands)
+                  command: () => reached.add(command),
+              },
+              child: Focus(focusNode: focus, child: const SizedBox()),
+            ),
+          ),
+        ),
+      );
+      focus.requestFocus();
+      await tester.pump();
+      await tester.sendKeyDownEvent(modifier, platform: 'macos');
+      await tester.sendKeyDownEvent(typed, physicalKey: at, platform: 'macos');
+      await tester.sendKeyUpEvent(typed, physicalKey: at, platform: 'macos');
+      await tester.sendKeyUpEvent(modifier, platform: 'macos');
+      return reached;
+    }
+
+    testWidgets('finds a chord with ⌃ or ⌘ by the key\'s place', (
+      tester,
+    ) async {
+      expect(
+        await press(
+          tester,
+          latin: false,
+          modifier: LogicalKeyboardKey.control,
+          typed: LogicalKeyboardKey.bracketRight,
+          at: PhysicalKeyboardKey.backquote,
+        ),
+        [AppCommand.showTerminal],
+      );
+      // ⌘ on that key is ⌘`, not ⌘] (Forward).
+      expect(
+        await press(
+          tester,
+          latin: false,
+          modifier: LogicalKeyboardKey.meta,
+          typed: LogicalKeyboardKey.bracketRight,
+          at: PhysicalKeyboardKey.backquote,
+        ),
+        isEmpty,
+      );
+      expect(
+        await press(
+          tester,
+          latin: false,
+          modifier: LogicalKeyboardKey.meta,
+          typed: const LogicalKeyboardKey(0x431),
+          at: PhysicalKeyboardKey.comma,
+        ),
+        [AppCommand.openSettings],
+      );
+      // Forward is the key at `]`, which types `ъ` there.
+      expect(
+        await press(
+          tester,
+          latin: false,
+          modifier: LogicalKeyboardKey.meta,
+          typed: const LogicalKeyboardKey(0x44A),
+          at: PhysicalKeyboardKey.bracketRight,
+        ),
+        [AppCommand.goForward],
+      );
+    });
+
+    testWidgets('a chord recorded there is the key at its place', (
+      tester,
+    ) async {
+      ChordLayout.latin = false;
+      addTearDown(() => ChordLayout.latin = true);
+      const event = KeyDownEvent(
+        physicalKey: PhysicalKeyboardKey.backquote,
+        logicalKey: LogicalKeyboardKey.bracketRight,
+        timeStamp: Duration.zero,
+      );
+      final keyboard = HardwareKeyboard.instance;
+      // Without ⌘, ⌃ or ⌥ the key is what it types.
+      expect(Chord.keyOf(event, keyboard), LogicalKeyboardKey.bracketRight);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      expect(Chord.keyOf(event, keyboard), LogicalKeyboardKey.backquote);
+      ChordLayout.latin = true;
+      expect(Chord.keyOf(event, keyboard), LogicalKeyboardKey.bracketRight);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+    });
+
+    testWidgets('a Latin layout keeps finding it by what the key types', (
+      tester,
+    ) async {
+      expect(
+        await press(
+          tester,
+          latin: true,
+          modifier: LogicalKeyboardKey.control,
+          typed: LogicalKeyboardKey.backquote,
+          at: PhysicalKeyboardKey.backquote,
+        ),
+        [AppCommand.showTerminal],
+      );
+      // A German layout's `]` sits elsewhere; ⌘ on it is still Forward.
+      expect(
+        await press(
+          tester,
+          latin: true,
+          modifier: LogicalKeyboardKey.meta,
+          typed: LogicalKeyboardKey.bracketRight,
+          at: PhysicalKeyboardKey.digit9,
+        ),
+        [AppCommand.goForward],
+      );
+    });
+  });
+
   group('Interface commands', () {
     test('every command has a section; blocks keep their own', () {
       expect(AppCommand.newFolder.section, CommandSection.file);

@@ -23,6 +23,12 @@ abstract class PlatformServices {
 
   PlatformCapabilities get capabilities;
 
+  /// Whether the keyboard layout types Latin letters (U.S., German) rather
+  /// than another script (Russian, Greek), whose chords are found by the
+  /// keys' places (`ChordLayout` in packages/shortcuts). Always `true`
+  /// where the desktop does not say.
+  ValueListenable<bool> get latinKeyboard;
+
   // ─── Quick Look ───
 
   /// Whether the Quick Look panel is open; it may close by itself (its

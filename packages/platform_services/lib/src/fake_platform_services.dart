@@ -40,6 +40,13 @@ class FakePlatformServices implements PlatformServices {
 
   final _open = ValueNotifier<bool>(false);
   final _events = StreamController<QuickLookEvent>.broadcast();
+  final _latin = ValueNotifier<bool>(true);
+
+  /// The user switched the keyboard layout: to Latin letters or not.
+  void userSwitchesKeyboard({required bool latin}) => _latin.value = latin;
+
+  @override
+  ValueListenable<bool> get latinKeyboard => _latin;
 
   /// What the open panel shows, with the last item it was turned to.
   QuickLookItems? get shown {
@@ -103,5 +110,6 @@ class FakePlatformServices implements PlatformServices {
   Future<void> dispose() async {
     await _events.close();
     _open.dispose();
+    _latin.dispose();
   }
 }

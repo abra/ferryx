@@ -16,13 +16,16 @@ import 'system_file_drags.dart';
 ///
 /// The channel, both ways:
 /// - `quickLook.show {paths, index}`, `quickLook.select {index}`,
-///   `quickLook.close`, `share {paths, rect: [left, top, width, height]}`;
-/// - from the runner: `quickLook.closed`, `quickLook.step {delta}`.
+///   `quickLook.close`, `share {paths, rect: [left, top, width, height]}`,
+///   `keyboard.latin` (whether the layout is ASCII-capable);
+/// - from the runner: `quickLook.closed`, `quickLook.step {delta}`,
+///   `keyboard.changed {latin}` as the layout changes.
 class ChannelPlatformServices implements PlatformServices {
   ChannelPlatformServices({MethodChannel? channel, SystemFileDrags? drags})
     : _channel = channel ?? const MethodChannel(channelName),
       _drags = drags ?? SystemFileDrags() {
     _channel.setMethodCallHandler(_onCall);
+    unawaited(_readKeyboard());
   }
 
   static const channelName = 'ferryx/platform';
@@ -31,6 +34,7 @@ class ChannelPlatformServices implements PlatformServices {
   final SystemFileDrags _drags;
   final _open = ValueNotifier<bool>(false);
   final _events = StreamController<QuickLookEvent>.broadcast();
+  final _latin = ValueNotifier<bool>(true);
 
   @override
   PlatformCapabilities get capabilities => const PlatformCapabilities(
@@ -51,9 +55,27 @@ class ChannelPlatformServices implements PlatformServices {
         if (_open.value && delta is int && delta != 0) {
           _events.add(QuickLookStep(delta));
         }
+      case 'keyboard.changed':
+        final latin = (call.arguments as Map?)?['latin'];
+        if (latin is bool) _latin.value = latin;
     }
     return null;
   }
+
+  // A runner without the call leaves the layout Latin.
+  Future<void> _readKeyboard() async {
+    try {
+      final latin = await _channel.invokeMethod<bool>('keyboard.latin');
+      if (latin != null) _latin.value = latin;
+    } on MissingPluginException {
+      return;
+    } on PlatformException {
+      return;
+    }
+  }
+
+  @override
+  ValueListenable<bool> get latinKeyboard => _latin;
 
   // ─── Quick Look ───
 
@@ -108,5 +130,6 @@ class ChannelPlatformServices implements PlatformServices {
     _channel.setMethodCallHandler(null);
     await _events.close();
     _open.dispose();
+    _latin.dispose();
   }
 }

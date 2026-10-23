@@ -50,10 +50,14 @@ void main() {
     late ChannelPlatformServices services;
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    // The layout the runner reports when asked; its read is no request.
+    var latin = true;
 
     setUp(() {
       calls = [];
+      latin = true;
       messenger.setMockMethodCallHandler(channel, (call) async {
+        if (call.method == 'keyboard.latin') return latin;
         calls.add(call);
         return null;
       });
@@ -130,6 +134,19 @@ void main() {
         QuickLookClosed(),
       ]);
       await subscription.cancel();
+    });
+
+    test('follows the keyboard layout: asked at the start, then as the '
+        'runner reports it', () async {
+      await services.dispose();
+      latin = false;
+      services = ChannelPlatformServices();
+      await pumpEventQueue();
+      expect(services.latinKeyboard.value, isFalse);
+      await fromRunner('keyboard.changed', {'latin': true});
+      expect(services.latinKeyboard.value, isTrue);
+      await fromRunner('keyboard.changed', {'latin': false});
+      expect(services.latinKeyboard.value, isFalse);
     });
 
     test('shares the paths with the anchor in logical coordinates', () async {

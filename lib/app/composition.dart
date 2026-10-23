@@ -18,6 +18,7 @@ import 'package:operations_service/operations_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:platform_services/platform_services.dart';
 import 'package:preferences_service/preferences_service.dart';
+import 'package:shortcuts/shortcuts.dart';
 import 'package:terminal_service/terminal_service.dart';
 
 /// The app's strings where no widget tree is yet: the language chosen in
@@ -84,6 +85,11 @@ Future<DependenciesContainer> composeDependencies({
       defaultTargetPlatform,
     );
     resources.add('platformServices.dispose', platformServices.dispose);
+    // Chords on a layout of another script go by the keys' places.
+    final latinKeyboard = platformServices.latinKeyboard;
+    void followKeyboard() => ChordLayout.latin = latinKeyboard.value;
+    latinKeyboard.addListener(followKeyboard);
+    followKeyboard();
     // ─── Terminal ───
     final terminal = TerminalService();
     resources.add('terminal.dispose', terminal.dispose);

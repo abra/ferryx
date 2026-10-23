@@ -17,10 +17,14 @@ class DesktopPlatformServices implements PlatformServices {
 
   final SystemFileDrags _drags;
   final _closed = ValueNotifier<bool>(false);
+  final _latin = ValueNotifier<bool>(true);
 
   @override
   PlatformCapabilities get capabilities =>
       const PlatformCapabilities(fileDrags: true);
+
+  @override
+  ValueListenable<bool> get latinKeyboard => _latin;
 
   @override
   ValueListenable<bool> get quickLookOpen => _closed;
@@ -45,5 +49,8 @@ class DesktopPlatformServices implements PlatformServices {
       _drags.start(context, request);
 
   @override
-  Future<void> dispose() async => _closed.dispose();
+  Future<void> dispose() async {
+    _closed.dispose();
+    _latin.dispose();
+  }
 }

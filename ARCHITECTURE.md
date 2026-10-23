@@ -493,6 +493,16 @@ elsewhere — features never ask the platform.
   `ShortcutMap.forUser` applies the user's overrides; the app
   (`DependenciesContainer.shortcutMap`) and Settings → Hotkeys build the
   map the same way.
+- A chord's key is the one that types it on a layout of Latin letters. On
+  one of another script (Russian, Greek) a chord with ⌘, ⌃ or ⌥ on a
+  punctuation key (`Chord.places`) is the key at its place on a US
+  keyboard, as AppKit finds key equivalents: in Apple's Russian layout
+  the key left of 1 types `]`, and ⌃ on it is ⌃`, not ⌃]. Letters and
+  digits need nothing (Flutter names them so on any layout). The runner
+  reports whether the layout is ASCII-capable
+  (`PlatformServices.latinKeyboard`, macOS only for now); the composition
+  root keeps `ChordLayout.latin` current, and a chord recorded in Settings
+  goes through `Chord.keyOf`.
 - `KeyHintStrip` under the panels shows the keys for the active panel's
   state (`hintsFor`, a pure function over `PanelTabState`: a file, a
   folder, `..`, a selection, the quick search, the Vim prompt and Visual

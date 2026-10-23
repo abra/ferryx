@@ -4,6 +4,17 @@ import 'package:flutter/widgets.dart';
 
 import 'key_sequence.dart';
 
+/// The keyboard layout chords are found on. On a layout of Latin letters
+/// (U.S., German) a chord's key is the one that types it; on one of
+/// another script (Russian, Greek) a chord with ⌘, ⌃ or ⌥ on a key of
+/// [Chord.places] is the key at its place on a US keyboard, as the
+/// desktops' own menus find their key equivalents: in the Russian layout
+/// the key left of 1 types `]`, and ⌃ on it is still ⌃`. The composition
+/// root keeps [latin] current from the desktop.
+abstract final class ChordLayout {
+  static bool latin = true;
+}
+
 /// A key plus modifiers, written once for every platform.
 ///
 /// [primary] is the platform's command modifier: ⌘ on macOS, Ctrl elsewhere.
@@ -48,10 +59,54 @@ class Chord extends Equatable {
               alt: base.alt,
             ),
           );
+    final place = _place;
+    final placed = place == null
+        ? single
+        : _PlacedActivator(single, place: place, modifiers: base);
     return switch (prefix) {
-      null => single,
-      final prefix => SequenceActivator(prefix, single),
+      null => placed,
+      final prefix => SequenceActivator(prefix, placed),
     };
+  }
+
+  /// The keys a chord with ⌘, ⌃ or ⌥ finds by their place on a layout of
+  /// another script ([ChordLayout]), and where each is on a US keyboard.
+  /// Letters and digits need none: Flutter names them so on any layout.
+  static final places = {
+    LogicalKeyboardKey.backquote: PhysicalKeyboardKey.backquote,
+    LogicalKeyboardKey.minus: PhysicalKeyboardKey.minus,
+    LogicalKeyboardKey.equal: PhysicalKeyboardKey.equal,
+    LogicalKeyboardKey.bracketLeft: PhysicalKeyboardKey.bracketLeft,
+    LogicalKeyboardKey.bracketRight: PhysicalKeyboardKey.bracketRight,
+    LogicalKeyboardKey.backslash: PhysicalKeyboardKey.backslash,
+    LogicalKeyboardKey.semicolon: PhysicalKeyboardKey.semicolon,
+    LogicalKeyboardKey.quoteSingle: PhysicalKeyboardKey.quote,
+    LogicalKeyboardKey.comma: PhysicalKeyboardKey.comma,
+    LogicalKeyboardKey.period: PhysicalKeyboardKey.period,
+    LogicalKeyboardKey.slash: PhysicalKeyboardKey.slash,
+  };
+
+  static final _keysAt = {
+    for (final MapEntry(:key, :value) in places.entries) value: key,
+  };
+
+  /// Where this chord's key is looked for on a layout of another script;
+  /// `null` when it is found by name there too (no ⌘, ⌃ or ⌥: what the
+  /// key types is text then).
+  PhysicalKeyboardKey? get _place =>
+      primary || control || alt ? places[key] : null;
+
+  /// The key [event] stands for in a chord: its own, or on a layout of
+  /// another script with ⌘, ⌃ or ⌥ held, the key at its place on a US
+  /// keyboard ([ChordLayout]). A chord recorded from a key event takes it.
+  static LogicalKeyboardKey keyOf(KeyEvent event, HardwareKeyboard state) {
+    final modified =
+        state.isMetaPressed || state.isControlPressed || state.isAltPressed;
+    if (!ChordLayout.latin && modified) {
+      final placed = _keysAt[event.physicalKey];
+      if (placed != null) return placed;
+    }
+    return event.logicalKey;
   }
 
   /// What ⇧ makes of a key on a US layout. macOS names a key pressed with
@@ -258,6 +313,40 @@ class Chord extends Equatable {
     control,
     prefix?.keyId,
   ];
+}
+
+/// A chord found by its key's name on a layout of Latin letters and by the
+/// key's place on one of another script ([ChordLayout]).
+class _PlacedActivator extends ShortcutActivator {
+  const _PlacedActivator(
+    this.byName, {
+    required this.place,
+    required this.modifiers,
+  });
+
+  final ShortcutActivator byName;
+  final PhysicalKeyboardKey place;
+
+  /// The modifiers the chord holds; its key is not looked at.
+  final SingleActivator modifiers;
+
+  // Every event: on another script the key arrives under another name.
+  @override
+  Iterable<LogicalKeyboardKey>? get triggers => null;
+
+  @override
+  bool accepts(KeyEvent event, HardwareKeyboard state) {
+    if (ChordLayout.latin) return byName.accepts(event, state);
+    return (event is KeyDownEvent || event is KeyRepeatEvent) &&
+        event.physicalKey == place &&
+        state.isMetaPressed == modifiers.meta &&
+        state.isControlPressed == modifiers.control &&
+        state.isAltPressed == modifiers.alt &&
+        state.isShiftPressed == modifiers.shift;
+  }
+
+  @override
+  String debugDescribeKeys() => byName.debugDescribeKeys();
 }
 
 /// Either of two activators: a key with ⇧ under its own name or under the

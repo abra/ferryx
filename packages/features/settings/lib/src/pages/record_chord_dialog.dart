@@ -32,11 +32,12 @@ Future<RecordedChord?> showRecordChordDialog(
 );
 
 /// The chord a key event stands for on [platform]: the key under its
-/// unshifted name with the modifiers held; `null` for a modifier alone.
+/// unshifted name ([Chord.keyOf]: by its place on a layout of another
+/// script) with the modifiers held; `null` for a modifier alone.
 Chord? chordOfEvent(KeyEvent event, TargetPlatform platform) {
-  final key = event.logicalKey;
-  if (_modifiers.contains(key)) return null;
   final keyboard = HardwareKeyboard.instance;
+  final key = Chord.keyOf(event, keyboard);
+  if (_modifiers.contains(key)) return null;
   final isMac = platform == TargetPlatform.macOS;
   return Chord(
     Chord.unshifted(key),

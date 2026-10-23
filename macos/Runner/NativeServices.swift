@@ -1,9 +1,11 @@
+import Carbon
 import Cocoa
 import FlutterMacOS
 import Quartz
 
-/// Quick Look and the share picker for Dart (`ChannelPlatformServices` in
-/// packages/platform_services) over the `ferryx/platform` channel.
+/// Quick Look, the share picker and the keyboard layout for Dart
+/// (`ChannelPlatformServices` in packages/platform_services) over the
+/// `ferryx/platform` channel.
 ///
 /// Quick Look: the panel is ordered front without taking the keys, so the
 /// panel's cursor in Flutter keeps moving it (Dart sends `quickLook.select`
@@ -27,6 +29,28 @@ final class NativeServices: NSObject, QLPreviewPanelDataSource, QLPreviewPanelDe
     channel.setMethodCallHandler { [weak self] call, result in
       self?.handle(call, result: result)
     }
+    // The layout changes with the menu, a key, or the window it was last
+    // used in ("Automatically switch to a document's input source").
+    DistributedNotificationCenter.default().addObserver(
+      self, selector: #selector(keyboardChanged),
+      name: NSNotification.Name(kTISNotifySelectedKeyboardInputSourceChanged as String),
+      object: nil, suspensionBehavior: .deliverImmediately)
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(keyboardChanged),
+      name: NSApplication.didBecomeActiveNotification, object: nil)
+  }
+
+  /// Whether the current layout types Latin letters (ASCII-capable): on
+  /// another script Dart finds chords by the keys' places.
+  private static func latinKeyboard() -> Bool {
+    let source = TISCopyCurrentKeyboardInputSource().takeRetainedValue()
+    guard let value = TISGetInputSourceProperty(source, kTISPropertyInputSourceIsASCIICapable)
+    else { return true }
+    return CFBooleanGetValue(Unmanaged<CFBoolean>.fromOpaque(value).takeUnretainedValue())
+  }
+
+  @objc private func keyboardChanged() {
+    channel.invokeMethod("keyboard.changed", arguments: ["latin": Self.latinKeyboard()])
   }
 
   private func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -47,6 +71,8 @@ final class NativeServices: NSObject, QLPreviewPanelDataSource, QLPreviewPanelDe
     case "quickLook.close":
       closeQuickLook()
       result(nil)
+    case "keyboard.latin":
+      result(Self.latinKeyboard())
     case "share":
       let paths = arguments["paths"] as? [String] ?? []
       let rect = arguments["rect"] as? [Double] ?? [0, 0, 0, 0]
