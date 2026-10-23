@@ -95,7 +95,14 @@ abstract final class AppTheme {
       bodyColor: foreground,
       displayColor: foreground,
     );
-    final controls = _Controls(style, ext, metrics, textTheme, foreground);
+    final controls = _Controls(
+      style,
+      ext,
+      metrics,
+      textTheme,
+      foreground,
+      isDark: isDark,
+    );
 
     return ThemeData(
       useMaterial3: true,
@@ -143,9 +150,12 @@ abstract final class AppTheme {
         surfaceTintColor: Colors.transparent,
         elevation: 16,
         shadowColor: Colors.black.withValues(alpha: isDark ? 0.6 : 0.35),
-        // A sheet or alert does not dim the window behind it on macOS.
+        // A sheet or an alert darkens the window behind it a little on
+        // macOS; a dialog the more elsewhere.
         barrierColor: Colors.black.withValues(
-          alpha: style == AppPlatformStyle.macos ? 0 : 0.3,
+          alpha: style == AppPlatformStyle.macos
+              ? (isDark ? metrics.sheetDimDark : metrics.sheetDim)
+              : 0.3,
         ),
         shape: AppRoundedRectangleBorder(
           borderRadius: BorderRadius.circular(metrics.radius.dialog),
@@ -214,13 +224,37 @@ abstract final class AppTheme {
 
 /// Builds the control themes of one style.
 class _Controls {
-  _Controls(this.style, this.ext, this.metrics, this.ramp, this.foreground);
+  _Controls(
+    this.style,
+    this.ext,
+    this.metrics,
+    this.ramp,
+    this.foreground, {
+    required this.isDark,
+  });
 
   final AppPlatformStyle style;
   final AppColorsExt ext;
   final AppMetrics metrics;
   final TextTheme ramp;
   final Color foreground;
+  final bool isDark;
+
+  /// Laid over a bezel's lower edge where the platform shades it, as
+  /// AppKit's bezels end in a shadow (macOS 15, light: #B9B9B9 below a
+  /// #DFDFDF edge; dark: a near-black line under the fill).
+  Color? get _shade => metrics.bezelShade
+      ? Colors.black.withValues(alpha: isDark ? 0.35 : 0.17)
+      : null;
+
+  /// A text field's lower edge: darker in the light, as a button's; in the
+  /// dark an NSTextField's lower edge is the lighter one (#5D5D5D below a
+  /// #3F3F3F rim).
+  Color? get _fieldShade => metrics.bezelShade
+      ? (isDark
+            ? Colors.white.withValues(alpha: 0.12)
+            : Colors.black.withValues(alpha: 0.17))
+      : null;
 
   BorderRadius get _radius => BorderRadius.circular(metrics.radius.control);
 
@@ -238,14 +272,19 @@ class _Controls {
     );
   }
 
-  OutlinedBorder _shape({bool elevated = false}) =>
-      elevated && style == AppPlatformStyle.windows
-      ? FluentElevationBorder(
-          borderRadius: _radius,
-          top: ext.line,
-          bottom: ext.controlBorder,
-        )
-      : AppRoundedRectangleBorder(borderRadius: _radius);
+  OutlinedBorder _shape({bool elevated = false}) => switch (_shade) {
+    _ when elevated && style == AppPlatformStyle.windows =>
+      FluentElevationBorder(
+        borderRadius: _radius,
+        top: ext.line,
+        bottom: ext.controlBorder,
+      ),
+    final shade? when elevated => AppBezelBorder(
+      shade: shade,
+      borderRadius: _radius,
+    ),
+    _ => AppRoundedRectangleBorder(borderRadius: _radius),
+  };
 
   static WidgetStateProperty<T> _states<T>({
     required T normal,
@@ -301,9 +340,11 @@ class _Controls {
     ),
   );
 
-  /// The default (macOS), accent (Windows) or suggested (GNOME) button.
+  /// The default (macOS), accent (Windows) or suggested (GNOME) button;
+  /// in the dark a macOS 15 default button is the deeper selection blue
+  /// (#125CD2 measured), not the accent.
   ButtonStyle filled() => _base(
-    background: ext.accent,
+    background: metrics.bezelShade && isDark ? ext.selectionAccent : ext.accent,
     foreground: ext.onAccent,
     shape: _shape(),
     hover: switch (style) {
@@ -322,6 +363,10 @@ class _Controls {
     foreground: foreground,
     shape: _shape(elevated: true),
     side: switch (style) {
+      // A dark macOS 15 button is a plate with no light rim.
+      AppPlatformStyle.macos when metrics.bezelShade && isDark => BorderSide(
+        color: Colors.white.withValues(alpha: 0.04),
+      ),
       AppPlatformStyle.macos => BorderSide(color: ext.controlBorder),
       _ => BorderSide.none,
     },
@@ -348,7 +393,7 @@ class _Controls {
   );
 
   InputDecorationThemeData input(bool isDark) {
-    final radius = _radius;
+    final radius = BorderRadius.circular(metrics.radius.field);
     // The field's text line plus this padding is the platform's control
     // height, so a field lines up with the buttons beside it. (A minimum
     // height would not do: a dense field draws its border round the
@@ -357,7 +402,7 @@ class _Controls {
     final vertical =
         (metrics.controlHeight - field.fontSize! * field.height!) / 2;
     final padding = EdgeInsets.symmetric(
-      horizontal: style == AppPlatformStyle.macos ? 7 : 10,
+      horizontal: metrics.fieldPadding,
       vertical: vertical,
     );
     final InputBorder enabled;
@@ -368,12 +413,14 @@ class _Controls {
         enabled = AppOutlineInputBorder(
           borderRadius: radius,
           borderSide: BorderSide(color: ext.controlBorder),
+          shade: _fieldShade,
         );
         // The bezel stays; the focus ring is the accent halo outside it,
         // on any focus, as an NSTextField draws it.
         focused = AppOutlineInputBorder(
           borderRadius: radius,
           borderSide: BorderSide(color: ext.controlBorder),
+          shade: _fieldShade,
           halo: BorderSide(
             color: ext.focusRing,
             width: metrics.focusRingWidth,

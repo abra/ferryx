@@ -769,50 +769,55 @@ class _PanelViewState extends State<PanelView> {
                       ),
                       onLeave: widget.focusNode.requestFocus,
                     ),
+                  // The rows on the content colour, white or near black,
+                  // as a table's in an AppKit window (Finder's list).
                   Expanded(
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: PanelDropZone(
-                            hooks: widget.hooks.drag,
-                            folder: tab.location,
-                            child: ValueListenableBuilder<DropSpot?>(
-                              valueListenable:
-                                  widget.hooks.drag?.highlight ?? _noDrop,
-                              builder: (context, spot, _) =>
-                                  layout.mode == ViewMode.list
-                                  ? RowsList(
-                                      tab: tab,
-                                      layout: layout,
-                                      active: widget.active,
-                                      callbacks: callbacks,
-                                      rename: rename,
-                                      cursorKey: widget.cursorRowKey,
-                                      dropRow: spot?.row,
-                                      onSort: (field) => unawaited(
-                                        _cubit.toggleSortField(field),
+                    child: ColoredBox(
+                      color: context.colors.surface,
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: PanelDropZone(
+                              hooks: widget.hooks.drag,
+                              folder: tab.location,
+                              child: ValueListenableBuilder<DropSpot?>(
+                                valueListenable:
+                                    widget.hooks.drag?.highlight ?? _noDrop,
+                                builder: (context, spot, _) =>
+                                    layout.mode == ViewMode.list
+                                    ? RowsList(
+                                        tab: tab,
+                                        layout: layout,
+                                        active: widget.active,
+                                        callbacks: callbacks,
+                                        rename: rename,
+                                        cursorKey: widget.cursorRowKey,
+                                        dropRow: spot?.row,
+                                        onSort: (field) => unawaited(
+                                          _cubit.toggleSortField(field),
+                                        ),
+                                        onGeometry: (g) => _cubit.geometry = g,
+                                      )
+                                    : RowsBrief(
+                                        tab: tab,
+                                        layout: layout,
+                                        active: widget.active,
+                                        callbacks: callbacks,
+                                        rename: rename,
+                                        cursorKey: widget.cursorRowKey,
+                                        dropRow: spot?.row,
+                                        onSort: (field) => unawaited(
+                                          _cubit.toggleSortField(field),
+                                        ),
+                                        onGeometry: (g) => _cubit.geometry = g,
                                       ),
-                                      onGeometry: (g) => _cubit.geometry = g,
-                                    )
-                                  : RowsBrief(
-                                      tab: tab,
-                                      layout: layout,
-                                      active: widget.active,
-                                      callbacks: callbacks,
-                                      rename: rename,
-                                      cursorKey: widget.cursorRowKey,
-                                      dropRow: spot?.row,
-                                      onSort: (field) => unawaited(
-                                        _cubit.toggleSortField(field),
-                                      ),
-                                      onGeometry: (g) => _cubit.geometry = g,
-                                    ),
+                              ),
                             ),
                           ),
-                        ),
-                        if (tab.loading && tab.listing == null)
-                          const Positioned.fill(child: _LoadingVeil()),
-                      ],
+                          if (tab.loading && tab.listing == null)
+                            const Positioned.fill(child: _LoadingVeil()),
+                        ],
+                      ),
                     ),
                   ),
                   if (tab.error case final error?)
@@ -896,7 +901,7 @@ class _ErrorArea extends StatelessWidget {
     final colors = context.appColors;
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: context.metrics.rowInset + AppSpacing.sm,
+        horizontal: context.metrics.tableRowInset + AppSpacing.sm,
         vertical: AppSpacing.sm,
       ),
       decoration: BoxDecoration(

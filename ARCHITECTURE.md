@@ -48,14 +48,32 @@ index) and Finder's tag colours (`AppTagColors`, `AppTagDots`).
 The HIG details the library keeps for every screen, so features need
 not:
 
+- Measured, not remembered: the macOS 15 values below were taken beside
+  AppKit at one pixel per point (a scratch app with NSButton, NSTextField,
+  NSPopUpButton, NSTableView, NSMenu, NSAlert and a sheet, and Finder
+  itself); `test/macos_15_look_test.dart` in the component library holds
+  them. macOS 26 keeps its own metrics where it differs.
 - Selection: `selectionAccent` (NSColor.selectedContentBackgroundColor, a
   shade deeper than the button accent) with `onAccent` text where the
   keys are, `selectionMuted` (the unemphasized grey) everywhere else —
   another panel, or the whole window while it is not the active one
   (`AppWindowActivity` at the app root, read by `AppFocusArea.activeOf`).
-  A list row's highlight is rounded (`radius.row`) and inset from the
-  list's edge (`metrics.rowInset`), as Finder's since macOS 11; rows are
-  `metrics.listRowHeight` tall.
+- Rows: a table's (a panel's files, the results and comparisons in
+  dialogs) take `metrics.tableRowInset` and `radius.tableRow` — on macOS
+  15 the highlight spans the row, square, as in Finder's list view; a
+  sidebar's, a picker's or a menu's take `rowInset` and `radius.row`,
+  inset and rounded (an NSTableView's inset style, the source list).
+  Elsewhere and on macOS 26 the two are the same. Rows sit on the content
+  colour (`colors.surface`: white, or #1E1E1E), not on the window's grey;
+  a table inside a dialog is framed by a hairline (`radius.tableFrame`,
+  square on macOS 15). Rows are `metrics.listRowHeight` tall.
+- Bezels: on macOS 15 a push button, a pop-up and a text field end in a
+  darker lower edge (`AppBezelBorder`, `AppOutlineInputBorder.shade`);
+  a text field is square (`radius.field`) with its text 4 from the edge,
+  a search field stays rounded; a pop-up's chevrons sit in the accent's
+  cap (`metrics.popupCap`), grey in a background window. In the dark a
+  button is a plate with no light rim and the default button the deeper
+  selection blue.
 - Focus: a text field keeps its bezel and takes the accent halo outside it
   on any focus (`AppOutlineInputBorder.halo`); buttons, pop-ups, boxes and
   switches draw `FocusRing` in keyboard mode only (a ⌘ or ⌃ chord does not
@@ -63,20 +81,28 @@ not:
 - Dialogs: `AppDialog` runs the default (last) action on Return whatever
   has the focus, keeps Return for a focused field's submit, leaves on Esc
   and ⌘., holds the focus itself when nothing asked for it, never makes a
-  `destructive` action the default, wraps its buttons (each at least 68
-  wide, 12 apart, 20 from the edge), and does not dim the window behind a
-  macOS sheet; `showAppDialog` opens one with the theme's barrier and no
-  dismissal by a click beside it. Options a dialog's button applies are
+  `destructive` action the default, and wraps its buttons (each at least
+  68 wide, 12 apart, 20 from the edge). A macOS sheet sits in the middle
+  of the window, as on macOS 15, and darkens it (`metrics.sheetDim`: 19 %,
+  28 % in the dark); an alert is NSAlert's: the app's icon (`AppIdentity`,
+  given at the app root) 20 from the top, its buttons 28 high, 12 apart
+  and 18 in, side by side while both labels fit, the other buttons grey
+  plates without a bezel. `showAppDialog` opens one with the theme's
+  barrier and no dismissal by a click beside it. Options a dialog's button applies are
   `AppCheckbox`es (Space flips, the label is part of the target, a mixed
   state for several items); a switch (`AppToggle`) is for a setting that
   acts at once. A label with a control is an `AppControlRow` (the control
   is never squeezed or dropped); `AppLabelRow` is for a label with
   secondary text.
-- Menus: the check column is always kept on macOS and the icon column
-  whenever an item has one, so labels line up; key equivalents are set in
-  the menu's own size in the secondary colour; a pointer leaving the menu
-  takes the highlight with it; a pop-up button shows the two chevrons of
-  an NSPopUpButton. A search field clears with its button or Esc.
+- Menus: a check column only while an item is checked or mixed on macOS
+  (NSMenu since macOS 14: labels 11 in, 20 with the column), while one is
+  an option elsewhere; the icon column whenever an item shows one, so
+  labels line up; items' symbols (`AppMenuAction.icon`) only where the
+  platform's menus carry them (`metrics.menuIcons`: not on macOS 15), a
+  `leading` that says something (a tag's colour) always; key equivalents
+  are set in the menu's own size in the secondary colour; a pointer
+  leaving the menu takes the highlight with it. A search field clears
+  with its button or Esc.
 - Text: a file name or a path that does not fit loses its middle
   (`AppMiddleEllipsis`), never its extension; figures in columns and
   footers are tabular; secondary text is `textMuted` (AA on every

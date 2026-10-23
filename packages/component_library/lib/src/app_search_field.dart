@@ -6,8 +6,9 @@ import 'theme/extensions/build_context_ext.dart';
 import 'theme/tokens/app_icon_size.dart';
 
 /// The platform's search field: a text field with the magnifier before the
-/// hint, shaped as the platform shapes search fields (a capsule on macOS
-/// 26, a text field's corners elsewhere: `context.metrics.radius.search`).
+/// hint, shaped as the platform shapes search fields (rounded where a text
+/// field is square on macOS 15, a capsule on macOS 26, a text field's
+/// corners elsewhere: `context.metrics.radius.search`).
 /// While there is text, a clear button at its end and Esc empty it, as an
 /// NSSearchField does; Esc on an empty field goes on to whatever owns it.
 class AppSearchField extends StatefulWidget {
@@ -75,9 +76,9 @@ class _AppSearchFieldState extends State<AppSearchField> {
     final colors = context.appColors;
     final theme = Theme.of(context).inputDecorationTheme;
     // The theme's borders, rounded as a search field when the platform
-    // rounds one more than a text field.
+    // rounds one otherwise than a text field.
     InputBorder? shaped(InputBorder? border) =>
-        radius.search != radius.control && border is OutlineInputBorder
+        radius.search != radius.field && border is OutlineInputBorder
         ? border.copyWith(borderRadius: BorderRadius.circular(radius.search))
         : border;
     return Focus(

@@ -16,6 +16,7 @@ export 'src/app_label_and_detail.dart';
 export 'src/app_label_row.dart';
 export 'src/app_icon_button.dart';
 export 'src/app_icons.dart';
+export 'src/app_identity.dart';
 export 'src/app_tab_strip.dart';
 export 'src/app_key_cap.dart';
 export 'src/app_key_hints.dart';

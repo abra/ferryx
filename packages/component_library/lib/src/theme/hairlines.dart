@@ -192,6 +192,111 @@ class AppRoundedRectangleBorder extends RoundedRectangleBorder
       );
 }
 
+/// A bezel: [AppRoundedRectangleBorder] with [shade] laid over its bottom
+/// edge, as an AppKit push button or text field is drawn on macOS 15 (a
+/// light hairline above and at the sides, a darker one below, a shadow).
+class AppBezelBorder extends AppRoundedRectangleBorder {
+  const AppBezelBorder({
+    required this.shade,
+    super.side,
+    super.borderRadius,
+  });
+
+  final Color shade;
+
+  @override
+  AppBezelBorder copyWith({
+    BorderSide? side,
+    BorderRadiusGeometry? borderRadius,
+  }) => AppBezelBorder(
+    shade: shade,
+    side: side ?? this.side,
+    borderRadius: borderRadius ?? this.borderRadius,
+  );
+
+  @override
+  AppBezelBorder scale(double t) => AppBezelBorder(
+    shade: shade,
+    side: side.scale(t),
+    borderRadius: borderRadius * t,
+  );
+
+  @override
+  ShapeBorder? lerpFrom(ShapeBorder? a, double t) => a is RoundedRectangleBorder
+      ? AppBezelBorder(
+          shade: shade,
+          side: BorderSide.lerp(a.side, side, t),
+          borderRadius: BorderRadiusGeometry.lerp(
+            a.borderRadius,
+            borderRadius,
+            t,
+          )!,
+        )
+      : super.lerpFrom(a, t);
+
+  @override
+  ShapeBorder? lerpTo(ShapeBorder? b, double t) => b is RoundedRectangleBorder
+      ? AppBezelBorder(
+          shade: shade,
+          side: BorderSide.lerp(side, b.side, t),
+          borderRadius: BorderRadiusGeometry.lerp(
+            borderRadius,
+            b.borderRadius,
+            t,
+          )!,
+        )
+      : super.lerpTo(b, t);
+
+  @override
+  void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
+    super.paint(canvas, rect, textDirection: textDirection);
+    paintShade(
+      canvas,
+      snapToPixels(canvas, rect),
+      borderRadius.resolve(textDirection),
+      side,
+      shade,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is AppBezelBorder && other.shade == shade && super == other;
+
+  @override
+  int get hashCode => Object.hash(super.hashCode, shade);
+}
+
+/// [side]'s stroke round [rect] again in [shade], over the edge already
+/// drawn, along the bottom row only: a bezel's darker lower edge.
+void paintShade(
+  Canvas canvas,
+  Rect rect,
+  BorderRadius radius,
+  BorderSide side,
+  Color shade,
+) {
+  if (side.style == BorderStyle.none || side.width <= 0) return;
+  canvas
+    ..save()
+    ..clipRect(
+      Rect.fromLTRB(
+        rect.left,
+        rect.bottom - side.width,
+        rect.right,
+        rect.bottom,
+      ),
+    )
+    ..drawRRect(
+      radius.toRRect(rect).deflate(side.width / 2),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = side.width
+        ..color = shade,
+    )
+    ..restore();
+}
+
 /// [StadiumBorder] with its edge on the screen's pixels: a capsule.
 class AppStadiumBorder extends StadiumBorder with SnapsToPixels {
   const AppStadiumBorder({super.side});
@@ -230,11 +335,16 @@ class AppOutlineInputBorder extends OutlineInputBorder with SnapsToPixels {
     super.borderRadius,
     super.gapPadding,
     this.halo,
+    this.shade,
   });
 
   /// A ring outside the border: the focus ring of a macOS field, which
   /// keeps its bezel and takes the accent halo around it.
   final BorderSide? halo;
+
+  /// Laid over the bottom edge, darker than the rest as an NSTextField's
+  /// bezel is on macOS 15 ([AppBezelBorder]); none paints it as the rest.
+  final Color? shade;
 
   @override
   AppOutlineInputBorder copyWith({
@@ -242,11 +352,13 @@ class AppOutlineInputBorder extends OutlineInputBorder with SnapsToPixels {
     BorderRadius? borderRadius,
     double? gapPadding,
     BorderSide? halo,
+    Color? shade,
   }) => AppOutlineInputBorder(
     borderSide: borderSide ?? this.borderSide,
     borderRadius: borderRadius ?? this.borderRadius,
     gapPadding: gapPadding ?? this.gapPadding,
     halo: halo ?? this.halo,
+    shade: shade ?? this.shade,
   );
 
   @override
@@ -255,6 +367,7 @@ class AppOutlineInputBorder extends OutlineInputBorder with SnapsToPixels {
     borderRadius: borderRadius * t,
     gapPadding: gapPadding * t,
     halo: halo?.scale(t),
+    shade: shade,
   );
 
   // The decorator blends the enabled border into the focused one; the
@@ -266,6 +379,7 @@ class AppOutlineInputBorder extends OutlineInputBorder with SnapsToPixels {
           borderRadius: BorderRadius.lerp(a.borderRadius, borderRadius, t)!,
           gapPadding: gapPadding,
           halo: _lerpHalo(a is AppOutlineInputBorder ? a.halo : null, halo, t),
+          shade: shade,
         )
       : super.lerpFrom(a, t);
 
@@ -276,8 +390,21 @@ class AppOutlineInputBorder extends OutlineInputBorder with SnapsToPixels {
           borderRadius: BorderRadius.lerp(borderRadius, b.borderRadius, t)!,
           gapPadding: gapPadding,
           halo: _lerpHalo(halo, b is AppOutlineInputBorder ? b.halo : null, t),
+          shade: shade,
         )
       : super.lerpTo(b, t);
+
+  // The decorator moves to a new border only when the two differ: the
+  // focused one differs from the enabled one by its halo alone.
+  @override
+  bool operator ==(Object other) =>
+      other is AppOutlineInputBorder &&
+      other.halo == halo &&
+      other.shade == shade &&
+      super == other;
+
+  @override
+  int get hashCode => Object.hash(super.hashCode, halo, shade);
 
   static BorderSide? _lerpHalo(BorderSide? a, BorderSide? b, double t) {
     if (a == null && b == null) return null;
@@ -304,6 +431,15 @@ class AppOutlineInputBorder extends OutlineInputBorder with SnapsToPixels {
       gapPercentage: gapPercentage,
       textDirection: textDirection,
     );
+    if (shade case final shade?) {
+      paintShade(
+        canvas,
+        snapped,
+        borderRadius.resolve(textDirection),
+        borderSide,
+        shade,
+      );
+    }
     final ring = halo;
     if (ring == null || ring.width <= 0 || ring.color.a == 0) return;
     final outset = ring.width / 2;

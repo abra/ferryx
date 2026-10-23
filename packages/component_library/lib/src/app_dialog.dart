@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
+import 'app_identity.dart';
 import 'pixel_snap.dart';
 import 'popup_focus.dart';
 
+import 'theme/app_button_styles.dart';
 import 'theme/app_platform_style.dart';
 import 'theme/extensions/build_context_ext.dart';
 import 'theme/tokens/app_sizes.dart';
@@ -73,11 +75,13 @@ class AppDialog extends StatelessWidget {
             AppPlatformStyle.macos => _Standard(
               dialog: this,
               centered: alert,
-              // NSAlert: 260 wide, its buttons large, 8 apart and 16 in; a
-              // sheet's content 20 in, its buttons 12 apart.
+              // NSAlert on macOS 15: 260 wide, the app's icon 20 from the
+              // top, its buttons large, 12 apart and 18 in, 16 from the
+              // bottom; a sheet's content 20 in, its buttons 12 apart.
               maxWidth: alert ? 260 : width,
+              icon: alert ? AppIdentity.iconOf(context) : null,
               padding: alert
-                  ? const EdgeInsets.fromLTRB(16, 20, 16, 16)
+                  ? const EdgeInsets.fromLTRB(18, 20, 18, 16)
                   : EdgeInsets.all(context.metrics.contentMargin),
               titleStyle: context.text.titleSmall,
               bodyStyle: alert
@@ -85,7 +89,7 @@ class AppDialog extends StatelessWidget {
                   : context.text.bodyMedium,
               bodyColor: context.colors.onSurface,
               stretchActions: alert,
-              actionGap: alert ? AppSpacing.sm : AppSpacing.md,
+              actionGap: AppSpacing.md,
               actionHeight: alert ? context.metrics.controlHeightLarge : null,
             ),
             AppPlatformStyle.windows => _ContentDialog(dialog: this),
@@ -219,9 +223,13 @@ class _Standard extends StatelessWidget {
     required this.stretchActions,
     required this.actionGap,
     this.actionHeight,
+    this.icon,
   });
 
   final AppDialog dialog;
+
+  /// Above the title, 64 square: a macOS alert's app icon.
+  final ImageProvider? icon;
   final bool centered;
   final double maxWidth;
   final EdgeInsets padding;
@@ -246,6 +254,18 @@ class _Standard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (icon case final icon?) ...[
+              Center(
+                child: Image(
+                  image: icon,
+                  width: 64,
+                  height: 64,
+                  filterQuality: FilterQuality.medium,
+                  excludeFromSemantics: true,
+                ),
+              ),
+              SizedBox(height: context.metrics.contentMargin),
+            ],
             Text(dialog.title, style: titleStyle, textAlign: align),
             if (dialog.body != null) ...[
               const SizedBox(height: AppSpacing.sm),
@@ -479,23 +499,49 @@ class _AlertActionShape extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = context.metrics.radius;
-    if (radius.alertAction == radius.control) return child;
+    final metrics = context.metrics;
+    final radius = metrics.radius;
+    final mac = metrics.style == AppPlatformStyle.macos;
+    if (!mac && radius.alertAction == radius.control) return child;
     final theme = Theme.of(context);
     final shape = WidgetStatePropertyAll<OutlinedBorder>(
       AppRoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radius.alertAction),
       ),
     );
-    ButtonStyle? rounded(ButtonStyle? style) => style?.copyWith(shape: shape);
+    // NSAlert's buttons keep 8 beside their labels, so "Move to Trash"
+    // still fits beside "Cancel" in 260.
+    final padding = mac
+        ? WidgetStatePropertyAll<EdgeInsetsGeometry>(
+            EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppButtonStyles.labelRoom(context),
+            ),
+          )
+        : null;
+    ButtonStyle? rounded(ButtonStyle? style) =>
+        style?.copyWith(shape: shape, padding: padding);
+    final colors = context.appColors;
+    // A macOS alert's other buttons are grey plates, without a bezel.
+    final plate = theme.brightness == Brightness.dark
+        ? colors.controlFill
+        : Colors.black.withValues(alpha: 0.12);
+    final outlined = mac
+        ? rounded(theme.outlinedButtonTheme.style)?.copyWith(
+            backgroundColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.disabled)
+                  ? plate.withValues(alpha: plate.a / 2)
+                  : plate,
+            ),
+            side: const WidgetStatePropertyAll(BorderSide.none),
+          )
+        : rounded(theme.outlinedButtonTheme.style);
     return Theme(
       data: theme.copyWith(
         filledButtonTheme: FilledButtonThemeData(
           style: rounded(theme.filledButtonTheme.style),
         ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: rounded(theme.outlinedButtonTheme.style),
-        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(style: outlined),
         textButtonTheme: TextButtonThemeData(
           style: rounded(theme.textButtonTheme.style),
         ),

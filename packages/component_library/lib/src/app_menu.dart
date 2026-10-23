@@ -253,32 +253,39 @@ class _AppMenuItemState extends State<AppMenuItem> {
           child: Container(
             constraints: BoxConstraints(minHeight: metrics.menuItemHeight),
             margin: metrics.menuItemMargin,
-            padding: EdgeInsets.symmetric(
-              horizontal: metrics.menuItemPadding,
-              vertical: AppSpacing.xxs,
+            // The check mark's column starts a little before an unchecked
+            // label would (NSMenu: the mark 6 in, the labels 20).
+            padding: EdgeInsetsDirectional.only(
+              start:
+                  metrics.menuItemPadding -
+                  (widget.checked != null ? metrics.menuCheckPull : 0),
+              end: metrics.menuItemPadding,
+              top: AppSpacing.xxs,
+              bottom: AppSpacing.xxs,
             ),
             decoration: BoxDecoration(color: fill, borderRadius: radius),
             child: Row(
               children: [
-                if (widget.checked != null) ...[
+                if (widget.checked != null)
                   SizedBox(
-                    width: AppIconSize.md,
-                    child: widget.checked!
-                        ? Icon(
-                            AppIcons.check,
-                            size: AppIconSize.sm,
-                            color: foreground,
-                          )
-                        : widget.mixed
-                        ? Icon(
-                            AppIcons.minus,
-                            size: AppIconSize.sm,
-                            color: foreground,
-                          )
-                        : null,
+                    width: metrics.menuCheckWidth,
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: widget.checked!
+                          ? Icon(
+                              AppIcons.check,
+                              size: AppIconSize.sm,
+                              color: foreground,
+                            )
+                          : widget.mixed
+                          ? Icon(
+                              AppIcons.minus,
+                              size: AppIconSize.sm,
+                              color: foreground,
+                            )
+                          : null,
+                    ),
                   ),
-                  const SizedBox(width: AppSpacing.xs),
-                ],
                 if (widget.leading != null) ...[
                   IconTheme.merge(
                     data: IconThemeData(
@@ -301,7 +308,7 @@ class _AppMenuItemState extends State<AppMenuItem> {
                           : widget.leading,
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
+                  SizedBox(width: metrics.menuIconGap),
                 ],
                 Expanded(
                   child: switch (widget.trailing) {

@@ -90,14 +90,15 @@ void main() {
       final yes = buttonOf(tester, 'Yes');
       expect(no.top, yes.top);
       expect(no.width, yes.width);
-      expect(yes.left - no.right, AppSpacing.sm);
+      // NSAlert on macOS 15: 12 apart, 28 high.
+      expect(yes.left - no.right, AppSpacing.md);
       expect(no.height, greaterThanOrEqualTo(28));
     });
 
     testWidgets('stack when a label is wider than its share by any fraction '
         'of a pixel: a label never wraps', (tester) async {
-      // The macOS alert: 260 wide, 16 in, its buttons 8 apart.
-      const share = (260 - 2 * 16 - AppSpacing.sm) / 2;
+      // The macOS alert: 260 wide, 18 in, its buttons 12 apart.
+      const share = (260 - 2 * 18 - AppSpacing.md) / 2;
       Future<bool> sideBySide(double width) async {
         await tester.pumpWidget(
           MaterialApp(
@@ -139,10 +140,29 @@ void main() {
       final cancel = buttonOf(tester, 'Cancel');
       final confirm = buttonOf(tester, 'Move everything to trash');
       expect(confirm.bottom, lessThan(cancel.top));
-      expect(cancel.top - confirm.bottom, AppSpacing.sm);
+      expect(cancel.top - confirm.bottom, AppSpacing.md);
       expect(confirm.width, cancel.width);
       expect(confirm.left, cancel.left);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('on macOS: the other button a grey plate without a bezel, '
+        'its label 8 in', (tester) async {
+      await pumpAlert(tester, cancel: 'No', confirm: 'Yes');
+      final no = tester.widget<OutlinedButton>(find.byType(OutlinedButton));
+      final style = Theme.of(
+        tester.element(find.text('No')),
+      ).outlinedButtonTheme.style!;
+      expect(no.style, isNull);
+      expect(style.side?.resolve(const {}), BorderSide.none);
+      expect(
+        style.backgroundColor?.resolve(const {}),
+        Colors.black.withValues(alpha: 0.12),
+      );
+      expect(
+        (style.padding?.resolve(const {}) as EdgeInsets?)?.left,
+        AppSpacing.sm,
+      );
     });
 
     testWidgets('take the alert radii of libadwaita on GNOME', (tester) async {

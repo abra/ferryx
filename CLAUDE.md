@@ -130,7 +130,10 @@ See `ARCHITECTURE.md`. The rules that matter most:
   secondary text only. A name or path that may not fit goes through
   `AppMiddleEllipsis`. Selection colours are `selectionAccent` /
   `selectionMuted` through `AppFocusArea.activeOf`, never `accent` for a
-  row. Strings are never built with `join('  ·  ')` or interpolation of
+  row. A table's rows (files, results) take `metrics.tableRowInset` and
+  `radius.tableRow`; a sidebar's, picker's or menu's `rowInset` and
+  `radius.row`. A look claimed to be native is measured beside AppKit
+  first (ARCHITECTURE.md "Native look"). Strings are never built with `join('  ·  ')` or interpolation of
   separators: use an ARB template (`joinedDetails`) with placeholders.
 - A text field keeps the keys: one that submits on Return has an
   `onEditingComplete` (`() {}` keeps the focus; Flutter's default drops it,

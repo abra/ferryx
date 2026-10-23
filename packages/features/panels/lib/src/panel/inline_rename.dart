@@ -93,24 +93,37 @@ class _InlineRenameState extends State<InlineRename> {
         }
         return KeyEventResult.ignored;
       },
-      child: TextField(
-        selectAllOnFocus: false,
-        controller: _controller,
-        focusNode: _focus,
-        style: context.text.bodyMedium,
-        // Opaque over the row, whatever fill the row had.
-        decoration: InputDecoration(
-          isDense: true,
-          filled: true,
-          fillColor: context.colors.surface,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: AppSpacing.xxs,
+      // The name stays where it stood: the field's bezel opens round it,
+      // as Finder's rename does, instead of pushing it along by the
+      // outline's own inset.
+      child: Transform.translate(
+        offset: Offset(_outlineInset(context), 0),
+        child: TextField(
+          selectAllOnFocus: false,
+          controller: _controller,
+          focusNode: _focus,
+          style: context.text.bodyMedium,
+          // Opaque over the row, whatever fill the row had.
+          decoration: InputDecoration(
+            isDense: true,
+            filled: true,
+            fillColor: context.colors.surface,
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: AppSpacing.xxs,
+            ),
           ),
+          onEditingComplete: () {},
+          onSubmitted: (_) => _commit(),
         ),
-        onEditingComplete: () {},
-        onSubmitted: (_) => _commit(),
       ),
     ),
   );
+
+  /// How far the text sits in from the field's edge without padding (an
+  /// outline keeps its gap), toward the start of the line.
+  static double _outlineInset(BuildContext context) {
+    final border = Theme.of(context).inputDecorationTheme.enabledBorder;
+    final inset = border is OutlineInputBorder ? border.gapPadding : 0.0;
+    return Directionality.of(context) == TextDirection.rtl ? inset : -inset;
+  }
 }

@@ -91,6 +91,20 @@ void main() {
     },
   );
 
+  testWidgets(
+    'the name stays where it stood: the text starts at the '
+    'field\'s place, its bezel opening round it',
+    variant: desktop,
+    (
+      tester,
+    ) async {
+      await pump(tester, 'notes.txt');
+      final place = tester.getRect(find.byType(InlineRename));
+      final text = tester.getRect(find.byType(EditableText));
+      expect(text.left, place.left);
+    },
+  );
+
   testWidgets('Vim\'s I and A put the caret at an end', variant: desktop, (
     tester,
   ) async {

@@ -124,15 +124,24 @@ class _FerryxAppState extends State<FerryxApp> {
         );
         // A click beside a text field keeps its caret, on every route; the
         // selections grey while the window is not the active one; files
-        // dragged over the window reach the drop target under the pointer.
+        // dragged over the window reach the drop target under the pointer;
+        // a macOS alert shows the app's icon.
         return PlatformDropArea(
           enabled: deps.platformServices.capabilities.fileDrags,
-          child: AppWindowActivity(child: TapOutsideKeepsFocus(child: app)),
+          child: AppWindowActivity(
+            child: AppIdentity(
+              icon: const AssetImage(_appIcon),
+              child: TapOutsideKeepsFocus(child: app),
+            ),
+          ),
         );
       },
     );
   }
 }
+
+/// The macOS icon, rendered by `make icons` (brand/build_icons.py).
+const _appIcon = 'brand/ferryx-256.png';
 
 /// Applies the user's text scale on top of the system scale.
 class _TextScale extends StatelessWidget {

@@ -377,7 +377,7 @@ class AppRowListState extends State<AppRowList> {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final radius = context.metrics.radius.card;
+    final radius = context.metrics.radius.tableFrame;
     final controller = widget.controller;
     // The focus inside the area, so the area is the active one while the
     // list has the keys and the selection takes the accent.
@@ -388,8 +388,9 @@ class AppRowListState extends State<AppRowList> {
         focused: _focus.hasFocus,
         radius: radius,
         child: Container(
+          // The content colour in a hairline frame, as a bezeled table.
           decoration: BoxDecoration(
-            color: colors.surfaceSunken,
+            color: context.colors.surface,
             borderRadius: BorderRadius.circular(radius),
             border: AppBorder.all(color: colors.line),
           ),
@@ -494,11 +495,11 @@ class _RowState extends State<_Row> {
           child: Semantics(
             selected: widget.selected,
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: metrics.rowInset),
+              padding: EdgeInsets.symmetric(horizontal: metrics.tableRowInset),
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: fill,
-                  borderRadius: BorderRadius.circular(metrics.radius.row),
+                  borderRadius: BorderRadius.circular(metrics.radius.tableRow),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(

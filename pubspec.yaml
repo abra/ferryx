@@ -86,6 +86,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  # The app's icon in the interface (a macOS alert), from `make icons`.
+  assets:
+    - brand/ferryx-256.png
+
   # Fonts live in packages/component_library/fonts/ but must be declared at
   # the app level to be bundled under their short family names.
   fonts:

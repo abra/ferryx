@@ -114,7 +114,9 @@ class RowName extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appColors;
     final (icon, tint) = FileIcon.describe(entry, colors);
-    final iconColor = look.emphasized ? colors.onAccent : tint;
+    // The row drops its fill under a rename's field: the icon keeps its
+    // own colour, not the one for the accent.
+    final iconColor = look.emphasized && field == null ? colors.onAccent : tint;
     final base = context.text.bodyMedium!.copyWith(
       color: look.foreground(context),
       fontStyle: entry.isSymlink ? FontStyle.italic : null,

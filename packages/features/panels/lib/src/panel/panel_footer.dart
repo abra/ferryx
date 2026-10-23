@@ -136,7 +136,7 @@ class PanelFooter extends StatelessWidget {
     return Container(
       height: heightOf(context),
       padding: EdgeInsets.symmetric(
-        horizontal: context.metrics.rowInset + AppSpacing.sm,
+        horizontal: context.metrics.tableRowInset + AppSpacing.sm,
       ),
       decoration: BoxDecoration(
         color: colors.windowChrome,

@@ -133,7 +133,7 @@ class _RowsBriefState extends State<RowsBrief> {
   /// What a cell holds besides its name: the row's inset and padding, the
   /// icon and its gap, the check mark's slot.
   double _chrome(BuildContext context) =>
-      2 * context.metrics.rowInset +
+      2 * context.metrics.tableRowInset +
       2 * AppSpacing.sm +
       AppIconSize.md +
       AppSpacing.sm +
@@ -383,12 +383,12 @@ class _BriefCell extends StatelessWidget {
               child: Container(
                 height: height,
                 margin: EdgeInsets.symmetric(
-                  horizontal: context.metrics.rowInset,
+                  horizontal: context.metrics.tableRowInset,
                 ),
                 decoration: BoxDecoration(
                   color: renaming ? null : look.background(colors),
                   borderRadius: BorderRadius.circular(
-                    context.metrics.radius.row,
+                    context.metrics.radius.tableRow,
                   ),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),

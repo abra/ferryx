@@ -16,10 +16,16 @@ class AppRadii {
     required this.card,
     required this.popover,
     required this.dialog,
+    double? tableRow,
+    double? tableFrame,
+    double? field,
     double? search,
     double? alert,
     double? alertAction,
-  }) : search = search ?? control,
+  }) : tableRow = tableRow ?? row,
+       tableFrame = tableFrame ?? card,
+       field = field ?? control,
+       search = search ?? control,
        alert = alert ?? dialog,
        alertAction = alertAction ?? control;
 
@@ -31,6 +37,16 @@ class AppRadii {
 
   /// The highlight of a sidebar or list row.
   final double row;
+
+  /// The highlight of a table's row (a panel's files, a dialog's table of
+  /// results): a list row's unless the platform's tables draw it square
+  /// (Finder's list view up to macOS 15).
+  final double tableRow;
+
+  /// The frame of a table inside a dialog (find results, a comparison):
+  /// a card's unless the platform's bezeled scroll views are square (macOS
+  /// 15).
+  final double tableFrame;
 
   /// Context menus and the slash menu.
   final double menu;
@@ -47,7 +63,11 @@ class AppRadii {
   /// Alerts and dialogs.
   final double dialog;
 
-  /// Search fields: a text field's unless the platform rounds them more
+  /// Text fields: a push button's unless the platform squares them (an
+  /// NSTextField up to macOS 15).
+  final double field;
+
+  /// Search fields: a push button's unless the platform rounds them more
   /// (a capsule on macOS 26).
   final double search;
 
@@ -115,6 +135,7 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
     this.navLabelGap = 8,
     this.navIndent = 16,
     this.rowInset = 8,
+    double? tableRowInset,
     this.listRowHeight = 22,
     this.contentMargin = 20,
     this.menuInset = 5,
@@ -123,7 +144,17 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
     this.menuSeparatorSpace = 4,
     this.menuShortcutGap = 16,
     this.dragThreshold = 4,
-  }) : toggleKnobWidth = toggleKnobWidth ?? toggleKnob;
+    this.menuIcons = true,
+    this.menuCheckWidth = 18,
+    this.menuCheckPull = -2,
+    this.menuIconGap = 8,
+    this.sheetDim = 0,
+    this.sheetDimDark = 0,
+    this.fieldPadding = 10,
+    this.popupCap = false,
+    this.bezelShade = false,
+  }) : toggleKnobWidth = toggleKnobWidth ?? toggleKnob,
+       tableRowInset = tableRowInset ?? rowInset;
 
   /// The metrics of [style]; on macOS, of the system's [generation].
   factory AppMetrics.of(
@@ -233,9 +264,15 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
   final double contentMargin;
 
   /// A list row's highlight from the list's edge: the inset, rounded
-  /// selection of a table since macOS 11 (Finder's list and column views),
-  /// a ListView item's margin on Fluent (4), a GTK list's (6).
+  /// selection of a sidebar, a pop-up list or a picker (an NSTableView's
+  /// inset style), a ListView item's margin on Fluent (4), a GTK list's (6).
   final double rowInset;
+
+  /// A table row's highlight from the table's edge, and with
+  /// `AppSpacing.sm` its first cell's: [rowInset] unless the platform's
+  /// tables reach their edges (Finder's list view up to macOS 15: the
+  /// highlight spans the row, square).
+  final double tableRowInset;
 
   /// The menu's plate to its items (NSMenu 5, MenuFlyout 2, a GTK popover
   /// menu 6), each item's margin inside it (Fluent: 2 by 2, so the items
@@ -248,6 +285,40 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
   /// Above and below a menu separator's line: NSMenu's 11-high separator,
   /// Fluent's 1 px margins, libadwaita's 6.
   final double menuSeparatorSpace;
+
+  /// Whether a menu item shows its symbol (`AppMenuAction.icon`): menus
+  /// carry symbols on macOS 26, Windows and GNOME, not on macOS 15. A
+  /// leading widget that says something (a tag's colour) always shows.
+  final bool menuIcons;
+
+  /// The check mark's column, which a menu keeps only while an item in it
+  /// is checked (NSMenu since macOS 14): its width, the mark at its start,
+  /// and how far it starts before an unchecked label would (on macOS 15
+  /// the mark sits 6 in, the labels 20 in, 11 without one).
+  final double menuCheckWidth;
+  final double menuCheckPull;
+
+  /// Between an item's symbol and its label (NSMenu: 7 after a 16-pt
+  /// image in its 20-pt column, so 6 here).
+  final double menuIconGap;
+
+  /// A text field's text from its border, besides the 4 the outline keeps
+  /// (NSTextField on macOS 15: 3 from a 1-pt bezel).
+  final double fieldPadding;
+
+  /// Whether a pop-up button ends in the accent's cap with its chevrons
+  /// (NSPopUpButton on macOS 15) rather than in the bare chevrons.
+  final bool popupCap;
+
+  /// Whether a push button's, a pop-up's and a text field's bezel is
+  /// darker along its bottom edge (`AppBezelBorder`), as AppKit draws them
+  /// on macOS 15.
+  final bool bezelShade;
+
+  /// How much a sheet or an alert darkens the window behind it: macOS 15
+  /// lays black at about 19 % (light) and 28 % (dark) over it.
+  final double sheetDim;
+  final double sheetDimDark;
 
   /// Least room between an item's label and its key: 24 (macOS, Fluent),
   /// 12 (libadwaita).
@@ -276,6 +347,10 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
       card: 8,
       popover: 10,
       dialog: 12,
+      // Finder's list view and an NSTextField, measured on macOS 15.
+      tableRow: 0,
+      tableFrame: 0,
+      field: 0,
     ),
     topBarHeight: 52,
     navItemHeight: 28,
@@ -298,9 +373,19 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
     toggleKnob: 20,
     lengthUnit: AppLengthUnit.points,
     navIndent: 13,
+    tableRowInset: 0,
     menuItemPadding: 9,
     menuSeparatorSpace: 5,
     menuShortcutGap: 24,
+    menuIcons: false,
+    menuCheckWidth: 15,
+    menuCheckPull: 4,
+    menuIconGap: 6,
+    sheetDim: 0.19,
+    sheetDimDark: 0.28,
+    fieldPadding: 0,
+    popupCap: true,
+    bezelShade: true,
   );
 
   /// macOS 26 (Tahoe): the controls of System Settings measured on the
@@ -347,6 +432,12 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
     menuItemPadding: 9,
     menuSeparatorSpace: 5,
     menuShortcutGap: 24,
+    menuCheckWidth: 15,
+    menuCheckPull: 4,
+    menuIconGap: 6,
+    sheetDim: 0.19,
+    sheetDimDark: 0.28,
+    fieldPadding: 7,
   );
 
   static final _windows = AppMetrics(

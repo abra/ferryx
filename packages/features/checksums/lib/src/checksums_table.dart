@@ -66,7 +66,7 @@ class _Header extends StatelessWidget {
     final style = context.text.labelSmall?.copyWith(
       color: context.appColors.textMuted,
     );
-    final inset = context.metrics.rowInset + AppSpacing.sm;
+    final inset = context.metrics.tableRowInset + AppSpacing.sm;
     return Padding(
       padding: EdgeInsets.fromLTRB(inset, AppSpacing.xs, inset, AppSpacing.xs),
       child: Row(
@@ -207,7 +207,7 @@ class _Row extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.accentSoft,
-        borderRadius: BorderRadius.circular(context.metrics.radius.row),
+        borderRadius: BorderRadius.circular(context.metrics.radius.tableRow),
       ),
       child: row,
     );

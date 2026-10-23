@@ -1,4 +1,5 @@
 import 'package:component_library/component_library.dart';
+import 'package:domain_models/domain_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:panels_feature/src/panel/panel_row.dart';
@@ -84,5 +85,34 @@ void main() {
     expect(look().foreground(context), context.colors.onSurface);
     expect(look(dimmed: true).foreground(context), colors.textFaint);
     expect(look(dimmed: true).secondary(colors), colors.textFaint);
+  });
+
+  testWidgets('a renamed cursor row keeps its icon\'s own colour: the '
+      'field takes the row\'s fill away', (tester) async {
+    await pump(tester);
+    const entry = FileEntry(
+      name: 'notes.txt',
+      path: '/home/notes.txt',
+      kind: EntryKind.file,
+      isDir: false,
+    );
+    Future<Color?> iconColor({Widget? field}) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(AppPlatformStyle.macos),
+          home: Material(
+            child: RowName(
+              entry: entry,
+              look: look(cursor: true),
+              field: field,
+            ),
+          ),
+        ),
+      );
+      return tester.widget<Icon>(find.byType(Icon)).color;
+    }
+
+    expect(await iconColor(), colors.onAccent);
+    expect(await iconColor(field: const SizedBox()), isNot(colors.onAccent));
   });
 }

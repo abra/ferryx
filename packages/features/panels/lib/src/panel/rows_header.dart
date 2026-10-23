@@ -54,7 +54,7 @@ class RowsHeader extends StatelessWidget {
         border: AppBorder(bottom: BorderSide(color: colors.line)),
       ),
       padding: EdgeInsets.symmetric(
-        horizontal: context.metrics.rowInset + AppSpacing.sm,
+        horizontal: context.metrics.tableRowInset + AppSpacing.sm,
       ),
       child: Row(
         children: [

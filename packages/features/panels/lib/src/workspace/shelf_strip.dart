@@ -187,7 +187,7 @@ class _ShelfStripState extends State<ShelfStrip> {
     return Container(
       height: ShelfStrip.heightOf(context),
       padding: EdgeInsets.only(
-        left: metrics.rowInset + AppSpacing.sm,
+        left: metrics.tableRowInset + AppSpacing.sm,
         right: AppSpacing.sm,
       ),
       decoration: BoxDecoration(

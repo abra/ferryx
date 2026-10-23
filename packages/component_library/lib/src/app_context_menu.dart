@@ -7,9 +7,9 @@ import 'package:flutter/services.dart';
 import 'app_menu.dart';
 import 'popup_focus.dart';
 import 'window_decor.dart';
+import 'theme/app_platform_style.dart';
 import 'theme/extensions/build_context_ext.dart';
 import 'theme/tokens/app_motion.dart';
-import 'theme/tokens/app_icon_size.dart';
 import 'theme/tokens/app_spacing.dart';
 
 /// One line of [showAppMenu].
@@ -298,15 +298,24 @@ class _AppMenuListState<T> extends State<AppMenuList<T>> {
     return entry is AppMenuAction<T> && entry.enabled;
   }
 
-  /// Some item can carry a check mark: every item keeps room for one.
-  bool get _checks => widget.entries.any(
-    (e) => e is AppMenuAction<T> && (e.checked != null || e.mixed),
+  /// Every item keeps room for a check mark while one can show: on macOS
+  /// while an item is checked (NSMenu since macOS 14), elsewhere while one
+  /// is an option at all, so the labels stay in line.
+  bool _checks(BuildContext context) => widget.entries.any(
+    (e) =>
+        e is AppMenuAction<T> &&
+        (e.mixed ||
+            (context.metrics.style == AppPlatformStyle.macos
+                ? e.checked ?? false
+                : e.checked != null)),
   );
 
   /// A menu with an icon anywhere keeps one column for it, so the labels
-  /// line up.
-  bool get _icons => widget.entries.any(
-    (e) => e is AppMenuAction<T> && (e.icon != null || e.leading != null),
+  /// line up; symbols count only where the platform's menus show them.
+  bool _icons(BuildContext context) => widget.entries.any(
+    (e) =>
+        e is AppMenuAction<T> &&
+        (e.leading != null || (e.icon != null && context.metrics.menuIcons)),
   );
 
   /// The highlight the keys set stays while the pointer leaves the menu;
@@ -421,65 +430,67 @@ class _AppMenuListState<T> extends State<AppMenuList<T>> {
   }
 
   @override
-  Widget build(BuildContext context) => Focus(
-    autofocus: true,
-    onKeyEvent: _onKey,
-    child: Semantics(
-      container: true,
-      explicitChildNodes: true,
-      child: AppMenuPanel(
-        width: widget.width,
-        children: [
-          for (var i = 0; i < widget.entries.length; i++)
-            switch (widget.entries[i]) {
-              final AppMenuAction<T> action => MouseRegion(
-                key: _rowKeys.putIfAbsent(i, GlobalKey.new),
-                onEnter: (_) {
-                  if (action.enabled) {
-                    _litByKeys = false;
-                    setState(() => _highlight = i);
-                  }
-                },
-                onExit: (_) {
-                  if (_highlight == i && !_litByKeys) {
-                    setState(() => _highlight = -1);
-                  }
-                },
-                child: AppMenuItem(
-                  label: action.label,
-                  leading:
-                      action.leading ??
-                      (action.icon != null
-                          ? Icon(action.icon)
-                          : _icons
-                          ? const SizedBox.shrink()
-                          : null),
-                  shortcut: action.shortcut,
-                  trailing: action.detail == null ? null : Text(action.detail!),
-                  danger: action.danger,
-                  enabled: action.enabled,
-                  // A menu with a check mark anywhere keeps one column for
-                  // it, as a native menu does: the labels stay aligned;
-                  // NSMenu keeps the column always.
-                  checked: _checks || context.metrics.menuHighlightAccent
-                      ? (action.checked ?? false)
-                      : null,
-                  mixed: action.mixed,
-                  selected: i == _highlight,
-                  onTap: () => _pick(i),
+  Widget build(BuildContext context) {
+    final checks = _checks(context);
+    final icons = _icons(context);
+    final metrics = context.metrics;
+    return Focus(
+      autofocus: true,
+      onKeyEvent: _onKey,
+      child: Semantics(
+        container: true,
+        explicitChildNodes: true,
+        child: AppMenuPanel(
+          width: widget.width,
+          children: [
+            for (var i = 0; i < widget.entries.length; i++)
+              switch (widget.entries[i]) {
+                final AppMenuAction<T> action => MouseRegion(
+                  key: _rowKeys.putIfAbsent(i, GlobalKey.new),
+                  onEnter: (_) {
+                    if (action.enabled) {
+                      _litByKeys = false;
+                      setState(() => _highlight = i);
+                    }
+                  },
+                  onExit: (_) {
+                    if (_highlight == i && !_litByKeys) {
+                      setState(() => _highlight = -1);
+                    }
+                  },
+                  child: AppMenuItem(
+                    label: action.label,
+                    leading:
+                        action.leading ??
+                        (action.icon != null && metrics.menuIcons
+                            ? Icon(action.icon)
+                            : icons
+                            ? const SizedBox.shrink()
+                            : null),
+                    shortcut: action.shortcut,
+                    trailing: action.detail == null
+                        ? null
+                        : Text(action.detail!),
+                    danger: action.danger,
+                    enabled: action.enabled,
+                    checked: checks ? (action.checked ?? false) : null,
+                    mixed: action.mixed,
+                    selected: i == _highlight,
+                    onTap: () => _pick(i),
+                  ),
                 ),
-              ),
-              AppMenuSeparator<T>() => const AppMenuDivider(),
-              final AppMenuSection<T> section => AppMenuHeader(
-                section.label,
-                leadingInset: _checks || context.metrics.menuHighlightAccent
-                    ? AppIconSize.md + AppSpacing.xs
-                    : 0,
-                key: _sectionKeys.putIfAbsent(i, GlobalKey.new),
-              ),
-            },
-        ],
+                AppMenuSeparator<T>() => const AppMenuDivider(),
+                final AppMenuSection<T> section => AppMenuHeader(
+                  section.label,
+                  leadingInset: checks
+                      ? metrics.menuCheckWidth - metrics.menuCheckPull
+                      : 0,
+                  key: _sectionKeys.putIfAbsent(i, GlobalKey.new),
+                ),
+              },
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

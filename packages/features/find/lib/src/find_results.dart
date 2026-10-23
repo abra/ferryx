@@ -50,9 +50,9 @@ class FindResults extends StatelessWidget {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: colors.surfaceSunken,
+                color: context.colors.surface,
                 borderRadius: BorderRadius.circular(
-                  context.metrics.radius.card,
+                  context.metrics.radius.tableFrame,
                 ),
                 border: AppBorder.all(color: colors.line),
               ),
@@ -346,17 +346,19 @@ class _RowState extends State<_Row> {
               label: hit.path,
               child: Container(
                 key: _anchor,
-                margin: EdgeInsets.symmetric(horizontal: metrics.rowInset),
+                margin: EdgeInsets.symmetric(horizontal: metrics.tableRowInset),
                 child: FocusRing(
                   focused: _focus.hasFocus,
-                  radius: metrics.radius.row,
+                  radius: metrics.radius.tableRow,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.sm,
                     ),
                     decoration: BoxDecoration(
                       color: fill,
-                      borderRadius: BorderRadius.circular(metrics.radius.row),
+                      borderRadius: BorderRadius.circular(
+                        metrics.radius.tableRow,
+                      ),
                     ),
                     child: Row(
                       children: [

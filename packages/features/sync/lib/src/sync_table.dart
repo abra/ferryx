@@ -174,7 +174,7 @@ class _Header extends StatelessWidget {
     final style = context.text.labelSmall?.copyWith(
       color: context.appColors.textMuted,
     );
-    final inset = context.metrics.rowInset + AppSpacing.sm;
+    final inset = context.metrics.tableRowInset + AppSpacing.sm;
     return Padding(
       padding: EdgeInsets.fromLTRB(inset, AppSpacing.xs, inset, AppSpacing.xs),
       child: Row(

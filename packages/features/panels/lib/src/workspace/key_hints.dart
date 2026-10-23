@@ -223,7 +223,7 @@ class KeyHintStrip extends StatelessWidget {
     return Container(
       height: metrics.iconButtonSize.height + AppSpacing.xs,
       padding: EdgeInsets.only(
-        left: metrics.rowInset + AppSpacing.sm,
+        left: metrics.tableRowInset + AppSpacing.sm,
         right: AppSpacing.xs,
       ),
       decoration: BoxDecoration(

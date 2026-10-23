@@ -248,6 +248,47 @@ void main() {
     }
   });
 
+  testWidgets('a permanent delete asked for: the Trash offered as a plain '
+      'button, none in the accent, since Return cancels', (tester) async {
+    late Future<DeleteChoice?> result;
+    Future<void> open({required bool trashDefault}) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(AppPlatformStyle.macos),
+          localizationsDelegates: FerryxSupportedLocales.delegates,
+          supportedLocales: FerryxSupportedLocales.locales,
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => result = showDeleteDialog(
+                context,
+                names: const ['notes.txt'],
+                trashDefault: trashDefault,
+                trashAvailable: true,
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+    }
+
+    await open(trashDefault: false);
+    expect(find.byType(FilledButton), findsNothing);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(await result, isNull);
+    await open(trashDefault: true);
+    expect(
+      find.widgetWithText(FilledButton, en.deleteToTrash),
+      findsOneWidget,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(await result, DeleteChoice.trash);
+  });
+
   testWidgets('deleting on a server: no Trash, said why; Return cancels', (
     tester,
   ) async {

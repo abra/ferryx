@@ -198,7 +198,7 @@ class _RowsListState extends State<RowsList> {
   ) {
     final scale = MediaQuery.textScalerOf(context).scale(1);
     double chrome(int count) =>
-        2 * (context.metrics.rowInset + AppSpacing.sm) +
+        2 * (context.metrics.tableRowInset + AppSpacing.sm) +
         count * AppSpacing.sm +
         AppSpacing.xs +
         checkSlotWidth;
@@ -396,13 +396,13 @@ class _ListRow extends StatelessWidget {
               child: Container(
                 height: height,
                 margin: EdgeInsets.symmetric(
-                  horizontal: context.metrics.rowInset,
+                  horizontal: context.metrics.tableRowInset,
                 ),
                 decoration: BoxDecoration(
                   // The field is opaque on its own; no fill under it.
                   color: renaming ? null : look.background(colors),
                   borderRadius: BorderRadius.circular(
-                    context.metrics.radius.row,
+                    context.metrics.radius.tableRow,
                   ),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),

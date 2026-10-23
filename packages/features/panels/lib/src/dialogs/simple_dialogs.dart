@@ -308,12 +308,19 @@ class _DeleteDialog extends StatelessWidget {
       style: OutlinedButton.styleFrom(foregroundColor: colors.danger),
       child: Text(l10n.deletePermanently),
     );
-    final trash = trashAvailable
+    // Only Return's button is the accent: the Trash when it is the
+    // default, else a plain one (Return cancels a permanent delete).
+    final trash = !trashAvailable
+        ? null
+        : trashDefault
         ? FilledButton(
             onPressed: () => pop(DeleteChoice.trash),
             child: Text(l10n.deleteToTrash),
           )
-        : null;
+        : OutlinedButton(
+            onPressed: () => pop(DeleteChoice.trash),
+            child: Text(l10n.deleteToTrash),
+          );
     final cancel = OutlinedButton(
       onPressed: () => Navigator.of(context).pop(),
       child: Text(l10n.actionCancel),
