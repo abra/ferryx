@@ -241,9 +241,10 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
   /// 2 (36, 38); a source list's rows touch.
   final double navItemGap;
 
-  /// A sidebar row's fill from the sidebar's edge (NavigationView 4,
-  /// `.navigation-sidebar` 6, a source list 8), and its content from the
-  /// fill's edge (12, 8, 8): the icon lands 16, 14, 16 from the edge.
+  /// A sidebar row's fill from the sidebar's edges (NavigationView 4,
+  /// `.navigation-sidebar` 6, a source list 10 on macOS 15), and its
+  /// content from the fill's edge (12, 8, 6): the icon lands 16, 14, 16
+  /// from the edge. A sidebar's list pads its rows by the margin.
   final double navRowMargin;
   final double navRowPadding;
 
@@ -373,6 +374,9 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
     toggleKnob: 20,
     lengthUnit: AppLengthUnit.points,
     navIndent: 13,
+    // An NSOutlineView source list in a sidebar, measured on macOS 15.
+    navRowMargin: 10,
+    navRowPadding: 6,
     tableRowInset: 0,
     menuItemPadding: 9,
     menuSeparatorSpace: 5,

@@ -132,9 +132,11 @@ See `ARCHITECTURE.md`. The rules that matter most:
   `selectionMuted` through `AppFocusArea.activeOf`, never `accent` for a
   row. A table's rows (files, results) take `metrics.tableRowInset` and
   `radius.tableRow`; a sidebar's, picker's or menu's `rowInset` and
-  `radius.row`. A look claimed to be native is measured beside AppKit
-  first (ARCHITECTURE.md "Native look"). Strings are never built with `join('  ·  ')` or interpolation of
-  separators: use an ARB template (`joinedDetails`) with placeholders.
+  `radius.row`; a sidebar's list pads its rows by `metrics.navRowMargin`.
+  A look claimed to be native is measured beside AppKit first
+  (ARCHITECTURE.md "Native look"). Strings are never built with
+  `join('  ·  ')` or interpolation of separators: use an ARB template
+  (`joinedDetails`) with placeholders.
 - A text field keeps the keys: one that submits on Return has an
   `onEditingComplete` (`() {}` keeps the focus; Flutter's default drops it,
   `test/app/text_field_focus_test.dart`), one waiting on what was typed is
@@ -157,7 +159,8 @@ See `ARCHITECTURE.md`. The rules that matter most:
   fill stops inside the edge, so the corners keep it), never a
   `BoxDecoration` with a border and a radius; a `Material` with an edged
   shape does not clip (`ClipInsideEdge` clips its content instead), or the
-  edge is clipped away with the content.
+  edge is clipped away with the content. A `Dialog`'s child is a
+  `CentredOnPixels`, so the dialog lands on whole pixels.
 - Font weights: the faces may be variable, so change a weight with
   `style.weight(FontWeight.w600)`, never with a bare `copyWith(fontWeight:)`.
   Monospace goes through `context.mono`.

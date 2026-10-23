@@ -72,50 +72,57 @@ class AppDialog extends StatelessWidget {
           AppPlatformStyle.gnome => alert ? 300 : 280,
         },
       ),
-      child: ClipInsideEdge(
-        shape: shape,
-        child: _DialogKeys(
-          actions: actions,
-          destructive: destructive,
-          child: PixelSnap(
-            child: switch (style) {
-              AppPlatformStyle.macos => _Standard(
-                dialog: this,
-                centered: alert,
-                // NSAlert on macOS 15: 260 wide, the app's icon 20 from the
-                // top, its buttons large, 12 apart and 18 in, 16 from the
-                // bottom; a sheet's content 20 in, its buttons 12 apart.
-                maxWidth: alert ? 260 : width,
-                icon: alert ? AppIdentity.iconOf(context) : null,
-                padding: alert
-                    ? const EdgeInsets.fromLTRB(18, 20, 18, 16)
-                    : EdgeInsets.all(context.metrics.contentMargin),
-                titleStyle: context.text.titleSmall,
-                bodyStyle: alert
-                    ? context.text.bodySmall
-                    : context.text.bodyMedium,
-                bodyColor: context.colors.onSurface,
-                stretchActions: alert,
-                actionGap: AppSpacing.md,
-                actionHeight: alert ? context.metrics.controlHeightLarge : null,
-              ),
-              AppPlatformStyle.windows => _ContentDialog(dialog: this),
-              AppPlatformStyle.gnome => _Standard(
-                dialog: this,
-                centered: alert,
-                // AdwAlertDialog: 300–372 wide, its buttons 44 high, 12 apart.
-                maxWidth: alert ? 372 : width,
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-                titleStyle: alert
-                    ? context.text.titleLarge
-                    : context.text.titleMedium,
-                bodyStyle: context.text.bodyMedium,
-                bodyColor: context.appColors.textMuted,
-                stretchActions: alert,
-                actionGap: AppSpacing.md,
-                actionHeight: alert ? context.metrics.controlHeightLarge : null,
-              ),
-            },
+      // On whole pixels, so the edge, the fill and the clip agree.
+      child: CentredOnPixels(
+        child: ClipInsideEdge(
+          shape: shape,
+          child: _DialogKeys(
+            actions: actions,
+            destructive: destructive,
+            child: PixelSnap(
+              child: switch (style) {
+                AppPlatformStyle.macos => _Standard(
+                  dialog: this,
+                  centered: alert,
+                  // NSAlert on macOS 15: 260 wide, the app's icon 20 from the
+                  // top, its buttons large, 12 apart and 18 in, 16 from the
+                  // bottom; a sheet's content 20 in, its buttons 12 apart.
+                  maxWidth: alert ? 260 : width,
+                  icon: alert ? AppIdentity.iconOf(context) : null,
+                  padding: alert
+                      ? const EdgeInsets.fromLTRB(18, 20, 18, 16)
+                      : EdgeInsets.all(context.metrics.contentMargin),
+                  titleStyle: context.text.titleSmall,
+                  bodyStyle: alert
+                      ? context.text.bodySmall
+                      : context.text.bodyMedium,
+                  bodyColor: context.colors.onSurface,
+                  stretchActions: alert,
+                  actionGap: AppSpacing.md,
+                  actionHeight: alert
+                      ? context.metrics.controlHeightLarge
+                      : null,
+                ),
+                AppPlatformStyle.windows => _ContentDialog(dialog: this),
+                AppPlatformStyle.gnome => _Standard(
+                  dialog: this,
+                  centered: alert,
+                  // AdwAlertDialog: 300–372 wide, its buttons 44 high, 12 apart.
+                  maxWidth: alert ? 372 : width,
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+                  titleStyle: alert
+                      ? context.text.titleLarge
+                      : context.text.titleMedium,
+                  bodyStyle: context.text.bodyMedium,
+                  bodyColor: context.appColors.textMuted,
+                  stretchActions: alert,
+                  actionGap: AppSpacing.md,
+                  actionHeight: alert
+                      ? context.metrics.controlHeightLarge
+                      : null,
+                ),
+              },
+            ),
           ),
         ),
       ),

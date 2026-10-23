@@ -51,6 +51,39 @@ void main() {
     expect(find.text(en.aboutVersion('0.1.0')), findsOneWidget);
   });
 
+  testWidgets('the sidebar\'s rows and search field stand a source list\'s '
+      'margin from its edges', (tester) async {
+    await open(tester);
+    final metrics = tester.element(find.byType(AppNavItem).first).metrics;
+    final sidebar = tester.getRect(
+      find.ancestor(
+        of: find.byType(AppSearchField),
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is Container &&
+              w.constraints?.maxWidth == AppSizes.settingsNavWidth,
+        ),
+      ),
+    );
+    // Less the line at its right.
+    final inner = sidebar.left + AppSizes.settingsNavWidth - 1;
+    final search = tester.getRect(find.byType(AppSearchField));
+    expect(search.left - sidebar.left, metrics.navRowMargin);
+    expect(inner - search.right, metrics.navRowMargin);
+    for (final row in find.byType(AppNavItem).evaluate()) {
+      final rect = tester.getRect(find.byWidget(row.widget));
+      expect(rect.left - sidebar.left, metrics.navRowMargin);
+      expect(inner - rect.right, metrics.navRowMargin);
+    }
+    final icon = tester.getRect(
+      find.descendant(
+        of: find.byType(AppNavItem).first,
+        matching: find.byType(Icon),
+      ),
+    );
+    expect(icon.left - sidebar.left, 16);
+  });
+
   testWidgets('the terminal page: the shell is written when the field is '
       'done, the size and the scrollback at once', (tester) async {
     final service = await testPreferences();

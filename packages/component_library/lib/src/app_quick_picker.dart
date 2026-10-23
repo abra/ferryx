@@ -136,7 +136,10 @@ class _QuickPickerRoute<R> extends PopupRoute<R> {
     ),
     child: Align(
       alignment: Alignment.topCenter,
-      child: FocusScope(autofocus: true, child: Builder(builder: builder)),
+      // The plate on whole pixels, wherever the centring puts it.
+      child: PixelSnap(
+        child: FocusScope(autofocus: true, child: Builder(builder: builder)),
+      ),
     ),
   );
 

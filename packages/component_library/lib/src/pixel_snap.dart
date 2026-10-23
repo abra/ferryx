@@ -100,6 +100,84 @@ NullableIndexedWidgetBuilder pixelRows(NullableIndexedWidgetBuilder builder) =>
       null => null,
     };
 
+/// A surface's content, sized so that the parent centring the surface
+/// puts it on whole pixels: rounded up to a whole device pixel, and one
+/// more where the room left around it is odd. For a surface centred where
+/// no [PixelSnap] can reach (a [Dialog] centres its Material), whose fill,
+/// edge and clip would otherwise straddle a pixel at each side.
+class CentredOnPixels extends SingleChildRenderObjectWidget {
+  const CentredOnPixels({super.child, super.key});
+
+  @override
+  RenderCentredOnPixels createRenderObject(BuildContext context) =>
+      RenderCentredOnPixels(MediaQuery.devicePixelRatioOf(context));
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    RenderCentredOnPixels renderObject,
+  ) {
+    renderObject.devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+  }
+}
+
+class RenderCentredOnPixels extends RenderProxyBox {
+  RenderCentredOnPixels(this._devicePixelRatio);
+
+  double _devicePixelRatio;
+  set devicePixelRatio(double value) {
+    if (value == _devicePixelRatio) return;
+    _devicePixelRatio = value;
+    markNeedsLayout();
+  }
+
+  /// [extent] in a room of [room], both along one axis.
+  double _even(double extent, double room) {
+    if (!room.isFinite) return extent;
+    // An extent a rounding error off a pixel is on it.
+    var pixels = (extent * _devicePixelRatio - 0.01).ceil();
+    if (((room * _devicePixelRatio).round() - pixels).isOdd) pixels++;
+    return pixels / _devicePixelRatio;
+  }
+
+  Size _fit(Size size, BoxConstraints constraints) => constraints.constrain(
+    Size(
+      _even(size.width, constraints.maxWidth),
+      _even(size.height, constraints.maxHeight),
+    ),
+  );
+
+  @override
+  Size computeDryLayout(covariant BoxConstraints constraints) {
+    final child = this.child;
+    if (child == null) return constraints.smallest;
+    return _fit(child.getDryLayout(constraints), constraints);
+  }
+
+  @override
+  void performLayout() {
+    final child = this.child;
+    if (child == null) {
+      size = constraints.smallest;
+      return;
+    }
+    child.layout(constraints, parentUsesSize: true);
+    final fitted = _fit(child.size, constraints);
+    // The content fills the pixel it gained, so no strip of the surface
+    // shows beside it. A floor, not a tight size: a child laid out tight
+    // is a relayout boundary and would keep this size as its content
+    // grows or shrinks.
+    final floor = constraints.copyWith(
+      minWidth: fitted.width,
+      minHeight: fitted.height,
+    );
+    if (fitted != child.size && !floor.isTight) {
+      child.layout(floor, parentUsesSize: true);
+    }
+    size = child.size;
+  }
+}
+
 /// [child] as tall as it is, rounded up to a whole device pixel.
 class _WholePixelHeight extends SingleChildRenderObjectWidget {
   const _WholePixelHeight({

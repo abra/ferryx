@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_icons.dart';
+import 'theme/app_platform_style.dart';
 import 'theme/extensions/build_context_ext.dart';
+import 'theme/hairlines.dart';
 import 'theme/tokens/app_icon_size.dart';
 
 /// The platform's search field: a text field with the magnifier before the
@@ -11,6 +13,8 @@ import 'theme/tokens/app_icon_size.dart';
 /// corners elsewhere: `context.metrics.radius.search`).
 /// While there is text, a clear button at its end and Esc empty it, as an
 /// NSSearchField does; Esc on an empty field goes on to whatever owns it.
+/// [sidebar]: the field heads a sidebar's list, where macOS draws it as a
+/// quiet fill with a fine edge instead of a white bezel.
 class AppSearchField extends StatefulWidget {
   const AppSearchField({
     required this.hintText,
@@ -19,6 +23,7 @@ class AppSearchField extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.autofocus = false,
+    this.sidebar = false,
     super.key,
   });
 
@@ -28,6 +33,7 @@ class AppSearchField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final bool autofocus;
+  final bool sidebar;
 
   @override
   State<AppSearchField> createState() => _AppSearchFieldState();
@@ -72,15 +78,32 @@ class _AppSearchFieldState extends State<AppSearchField> {
 
   @override
   Widget build(BuildContext context) {
-    final radius = context.metrics.radius;
+    final metrics = context.metrics;
+    final radius = metrics.radius;
     final colors = context.appColors;
     final theme = Theme.of(context).inputDecorationTheme;
+    // An NSSearchField over a sidebar's vibrancy (measured on macOS 15):
+    // the fill and edge of the sidebar's own greys, no lighter bezel; in
+    // the dark its lower edge stays the lighter one.
+    final quiet = widget.sidebar && metrics.style == AppPlatformStyle.macos;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    InputBorder? onSidebar(InputBorder? border) =>
+        quiet && border is AppOutlineInputBorder
+        ? AppOutlineInputBorder(
+            borderSide: border.borderSide.copyWith(color: colors.line),
+            borderRadius: border.borderRadius,
+            gapPadding: border.gapPadding,
+            halo: border.halo,
+            shade: dark ? border.shade : null,
+          )
+        : border;
     // The theme's borders, rounded as a search field when the platform
     // rounds one otherwise than a text field.
-    InputBorder? shaped(InputBorder? border) =>
-        radius.search != radius.field && border is OutlineInputBorder
-        ? border.copyWith(borderRadius: BorderRadius.circular(radius.search))
-        : border;
+    InputBorder? shaped(InputBorder? border) => onSidebar(
+      radius.search != radius.field && border is OutlineInputBorder
+          ? border.copyWith(borderRadius: BorderRadius.circular(radius.search))
+          : border,
+    );
     return Focus(
       onKeyEvent: _onKey,
       skipTraversal: true,
@@ -93,6 +116,7 @@ class _AppSearchFieldState extends State<AppSearchField> {
           autofocus: widget.autofocus,
           decoration: InputDecoration(
             hintText: widget.hintText,
+            fillColor: quiet ? colors.hoverFill : null,
             prefixIcon: Icon(
               AppIcons.search,
               size: AppIconSize.md,

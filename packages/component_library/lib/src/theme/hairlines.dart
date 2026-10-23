@@ -639,13 +639,34 @@ class AppOutlineInputBorder extends OutlineInputBorder with SnapsToPixels {
         )
       : super.lerpTo(b, t);
 
+  bool get _edged =>
+      borderSide.style != BorderStyle.none && borderSide.width > 0;
+
   // The fill inside the outline, as a bezel's (see
   // [AppRoundedRectangleBorder.getOuterPath]).
   @override
-  Path getOuterPath(Rect rect, {TextDirection? textDirection}) =>
-      borderSide.style != BorderStyle.none && borderSide.width > 0
+  Path getOuterPath(Rect rect, {TextDirection? textDirection}) => _edged
       ? getInnerPath(rect, textDirection: textDirection)
       : super.getOuterPath(rect, textDirection: textDirection);
+
+  // The decorator fills through this one: inside the outline, on the
+  // pixels the outline is snapped to, so no fill shows under the edge
+  // and no ground between them.
+  @override
+  void paintInterior(
+    Canvas canvas,
+    Rect rect,
+    Paint paint, {
+    TextDirection? textDirection,
+  }) => _edged
+      ? canvas.drawRRect(
+          borderRadius
+              .resolve(textDirection)
+              .toRRect(snapToPixels(canvas, rect))
+              .deflate(borderSide.width),
+          paint,
+        )
+      : super.paintInterior(canvas, rect, paint, textDirection: textDirection);
 
   // The decorator moves to a new border only when the two differ: the
   // focused one differs from the enabled one by its halo alone.

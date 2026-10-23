@@ -109,42 +109,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: CommandHandlers(
           handlers: {AppCommand.dismiss: widget.onClose},
           child: Dialog(
-            // The content clipped inside the window's edge, which stays.
+            // The content clipped inside the window's edge, which stays;
+            // all of it on whole pixels.
             clipBehavior: Clip.none,
             insetPadding: const EdgeInsets.all(AppSpacing.xl),
-            child: ClipInsideEdge(
-              shape: DialogTheme.of(context).shape,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: AppSizes.settingsDialogWidth,
-                  maxHeight: AppSizes.panelDialogHeight,
-                ),
-                child: PixelSnap(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _Navigation(
-                        section: _section,
-                        groups: _groups,
-                        prefs: prefs,
-                        query: _query,
-                        controller: _search,
-                        onQuery: _onQuery,
-                        onSelect: (s) => setState(() => _section = s),
-                      ),
-                      Expanded(
-                        child: _Content(
+            child: CentredOnPixels(
+              child: ClipInsideEdge(
+                shape: DialogTheme.of(context).shape,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppSizes.settingsDialogWidth,
+                    maxHeight: AppSizes.panelDialogHeight,
+                  ),
+                  child: PixelSnap(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _Navigation(
                           section: _section,
+                          groups: _groups,
                           prefs: prefs,
-                          service: widget.preferencesService,
-                          platform: widget.platform,
-                          shortcutMap: map,
-                          version: widget.version,
-                          defaultShell: widget.defaultShell,
-                          onClose: widget.onClose,
+                          query: _query,
+                          controller: _search,
+                          onQuery: _onQuery,
+                          onSelect: (s) => setState(() => _section = s),
                         ),
-                      ),
-                    ],
+                        Expanded(
+                          child: _Content(
+                            section: _section,
+                            prefs: prefs,
+                            service: widget.preferencesService,
+                            platform: widget.platform,
+                            shortcutMap: map,
+                            version: widget.version,
+                            defaultShell: widget.defaultShell,
+                            onClose: widget.onClose,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -313,21 +316,22 @@ class _Navigation extends StatelessWidget {
             child: AppSearchField(
               hintText: l10n.settingsSearchHint,
               controller: controller,
+              sidebar: true,
               onChanged: (q) => onQuery(q, shownFor(l10n, prefs, q)),
             ),
           ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              padding: EdgeInsets.symmetric(
+                horizontal: metrics.navRowMargin,
+                vertical: AppSpacing.xs,
+              ),
               children: [
                 for (var g = 0; g < groups.length; g++) ...[
                   if (g > 0 && groups[g].any(shown.contains))
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: metrics.navRowMargin,
-                        vertical: AppSpacing.xs,
-                      ),
-                      child: const AppDivider(),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                      child: AppDivider(),
                     ),
                   for (final s in groups[g])
                     if (shown.contains(s))

@@ -39,6 +39,10 @@ void main() {
     // A sidebar, a menu and a picker keep the inset, rounded highlight.
     expect(sequoia.rowInset, greaterThan(0));
     expect(sequoia.radius.row, greaterThan(0));
+    // A source list's selection stands 10 from the sidebar's edges, its
+    // icon 16.
+    expect(sequoia.navRowMargin, 10);
+    expect(sequoia.navRowMargin + sequoia.navRowPadding, 16);
     expect(tahoe.tableRowInset, tahoe.rowInset);
     expect(tahoe.radius.tableRow, tahoe.radius.row);
     final windows = AppMetrics.of(AppPlatformStyle.windows);
@@ -77,6 +81,60 @@ void main() {
     final searchBorder =
         search.decoration!.enabledBorder! as OutlineInputBorder;
     expect(searchBorder.borderRadius, BorderRadius.circular(6));
+  });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('a search field over a sidebar is a quiet fill with a fine '
+        'edge, no white bezel (${brightness.name})', (tester) async {
+      await pump(
+        tester,
+        brightness: brightness,
+        const SizedBox(
+          width: 220,
+          child: AppSearchField(hintText: 'Search', sidebar: true),
+        ),
+      );
+      final context = tester.element(find.byType(AppSearchField));
+      final colors = context.appColors;
+      final decoration = tester
+          .widget<TextField>(
+            find.descendant(
+              of: find.byType(AppSearchField),
+              matching: find.byType(TextField),
+            ),
+          )
+          .decoration!;
+      expect(decoration.fillColor, colors.hoverFill);
+      final edge = decoration.enabledBorder! as AppOutlineInputBorder;
+      expect(edge.borderSide.color, colors.line);
+      expect(edge.borderRadius, BorderRadius.circular(6));
+      // Its lower edge is lighter in the dark only, as AppKit draws it.
+      expect(edge.shade, brightness == Brightness.dark ? isNotNull : isNull);
+      final focused = decoration.focusedBorder! as AppOutlineInputBorder;
+      expect(focused.halo, isNotNull);
+    });
+  }
+
+  testWidgets('a sidebar search field elsewhere keeps the theme\'s field', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      style: AppPlatformStyle.gnome,
+      const SizedBox(
+        width: 220,
+        child: AppSearchField(hintText: 'Search', sidebar: true),
+      ),
+    );
+    final decoration = tester
+        .widget<TextField>(
+          find.descendant(
+            of: find.byType(AppSearchField),
+            matching: find.byType(TextField),
+          ),
+        )
+        .decoration!;
+    expect(decoration.fillColor, isNull);
   });
 
   testWidgets('a focused text field takes the accent halo outside its '
@@ -198,8 +256,12 @@ void main() {
       fail('no edge on the diagonal');
     }
 
-    Future<void> pumpOnGround(WidgetTester tester, Widget child) async {
-      tester.view.physicalSize = const Size(300, 200);
+    Future<void> pumpOnGround(
+      WidgetTester tester,
+      Widget child, {
+      Size size = const Size(300, 200),
+    }) async {
+      tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
@@ -255,6 +317,32 @@ void main() {
       final button = tester.getRect(find.byType(OutlinedButton));
       expectEdgeAtCorner(grey, button.topLeft);
     });
+
+    for (final sidebar in [false, true]) {
+      testWidgets('a ${sidebar ? 'sidebar\'s search field' : 'text field'}: '
+          'its edge lies on the ground, not on its fill', (tester) async {
+        await pumpOnGround(
+          tester,
+          Material(
+            type: MaterialType.transparency,
+            child: SizedBox(
+              width: 200,
+              child: sidebar
+                  ? const AppSearchField(hintText: 'Search', sidebar: true)
+                  : const TextField(),
+            ),
+          ),
+        );
+        final grey = await pixels(tester);
+        final field = tester.getRect(find.byType(TextField));
+        final x = field.right.round() - 20;
+        final top = field.top.round();
+        // The line over the ground: the controls' edge, 0x1A black.
+        expect(grey(x, top), closeTo(0xE9 * 0.9, 2));
+        expect(grey(x, top), lessThan(grey(x, top + 3)));
+        expectEdgeAtCorner(grey, field.topLeft);
+      });
+    }
 
     testWidgets('a focused button shows its ring: the button does not '
         'clip it away', (tester) async {
@@ -315,6 +403,42 @@ void main() {
       expect(grey(x, top), lessThan(grey(x, top + 3)));
       expectEdgeAtCorner(grey, dialog.topLeft);
     });
+
+    for (final room in [const Size(300, 200), const Size(301, 201)]) {
+      testWidgets('a dialog centred in a room of ${room.width.toInt()} lands '
+          'on whole pixels: no pale column inside its edge', (tester) async {
+        await pumpOnGround(
+          tester,
+          size: room,
+          AppDialog(
+            title: 'Copy',
+            width: 240,
+            actions: [
+              OutlinedButton(onPressed: () {}, child: const Text('OK')),
+            ],
+          ),
+        );
+        final dialog = tester.getRect(
+          find
+              .descendant(
+                of: find.byType(Dialog),
+                matching: find.byType(Material),
+              )
+              .first,
+        );
+        expect(dialog.left, dialog.left.roundToDouble());
+        expect(dialog.top, dialog.top.roundToDouble());
+        final grey = await pixels(tester);
+        final y = dialog.center.dy.round();
+        final left = dialog.left.round();
+        final right = dialog.right.round() - 1;
+        // The edge, then the fill at once on both sides.
+        expect(grey(left, y), lessThan(grey(left - 2, y)));
+        expect(grey(left + 1, y), grey(left + 4, y));
+        expect(grey(right, y), lessThan(grey(right + 2, y)));
+        expect(grey(right - 1, y), grey(right - 4, y));
+      });
+    }
   });
 
   group('a menu', () {

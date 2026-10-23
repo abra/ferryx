@@ -338,4 +338,50 @@ void main() {
       expectOnPixels('scrolled by a fraction');
     });
   });
+
+  group('CentredOnPixels', () {
+    testWidgets('a centred surface lands on whole pixels, and follows its '
+        'content as it grows and shrinks', (tester) async {
+      _pixelRatio(tester, 1);
+      tester.view.physicalSize = const Size(301, 201);
+      var rows = 2;
+      late StateSetter setRows;
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(),
+          child: Center(
+            child: CentredOnPixels(
+              key: const Key('surface'),
+              child: StatefulBuilder(
+                builder: (context, setState) {
+                  setRows = setState;
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (var i = 0; i < rows; i++)
+                        const SizedBox(width: 100.4, height: 20.3),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      void expectWhole(String when, double content) {
+        final surface = tester.getRect(find.byKey(const Key('surface')));
+        expect(surface.left, surface.left.roundToDouble(), reason: when);
+        expect(surface.top, surface.top.roundToDouble(), reason: when);
+        expect(surface.height - content, inInclusiveRange(0, 2), reason: when);
+      }
+
+      expectWhole('two rows', 40.6);
+      setRows(() => rows = 5);
+      await tester.pump();
+      expectWhole('grown to five', 101.5);
+      setRows(() => rows = 1);
+      await tester.pump();
+      expectWhole('shrunk to one', 20.3);
+    });
+  });
 }

@@ -66,16 +66,28 @@ not:
   Elsewhere and on macOS 26 the two are the same. Rows sit on the content
   colour (`colors.surface`: white, or #1E1E1E), not on the window's grey;
   a table inside a dialog is framed by a hairline (`radius.tableFrame`,
-  square on macOS 15). Rows are `metrics.listRowHeight` tall.
+  square on macOS 15). Rows are `metrics.listRowHeight` tall. A sidebar
+  (the settings' pages) pads its rows and its search field by
+  `metrics.navRowMargin` from both edges — a source list's 10 on macOS
+  15, its icon 16 in — so the rounded selection never meets the window's
+  edge; its search field is `AppSearchField(sidebar: true)`, which macOS
+  draws as a quiet grey fill with a fine edge, not a white bezel.
 - Edges: a fill stops inside its edge (`insetFill`, `appEdgedBox`), as
   AppKit draws a bezel or a window: laid under a translucent edge it
   shows through the rounded corners' half-covered pixels and the edge
   seems to break there. A `Material` clips its children to its shape, the
   edge with them, so a button has no background builder (its focus ring
   is its shape's: `FocusRing.ringedShape`) and a dialog clips only its
-  content (`ClipInsideEdge`). A macOS window, sheet, alert or menu has a
-  window's edge (`AppWindowBorder.macos`): a dark line, in the dark a black
-  one with a light one inside.
+  content (`ClipInsideEdge`). A border fills through `getOuterPath` for a
+  `Material` and through `paintInterior` for a `ShapeDecoration` and a
+  text field's decorator, so an edged border overrides both. A macOS
+  window, sheet, alert or menu has a window's edge
+  (`AppWindowBorder.macos`): a dark line, in the dark a black one with a
+  light one inside. A surface lands on whole pixels, or its snapped edge
+  and its fill and clip part at a side: a `Dialog` centres its Material
+  where a `PixelSnap` cannot reach, so the Material's child is a
+  `CentredOnPixels` (a pixel wider or taller where the room around it is
+  odd); a surface placed by an `Align` takes a `PixelSnap` round it.
 - Bezels: on macOS 15 a push button, a pop-up and a text field end in a
   darker lower edge (`AppBezelBorder`, `AppOutlineInputBorder.shade`);
   a text field is square (`radius.field`) with its text 4 from the edge,
