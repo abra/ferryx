@@ -2366,8 +2366,8 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Rename $count Items',
-      one: 'Rename 1 Item',
+      other: 'Rename $count items',
+      one: 'Rename 1 item',
     );
     return '$_temp0';
   }
@@ -3072,7 +3072,7 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String syncConfirmUndo(String key) {
-    return 'Undo ($key) takes the copies back to the Trash and the deleted items out of it.';
+    return '$key undoes it: the copies go to the Trash.';
   }
 
   @override
@@ -3517,7 +3517,7 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get tagsNew => 'New Tag…';
 
   @override
-  String get tagsNewTitle => 'New Tag';
+  String get tagsNewTitle => 'New tag';
 
   @override
   String get tagsNameLabel => 'Name';
@@ -3599,7 +3599,7 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
       'The server’s certificate is not trusted';
 
   @override
-  String get networkConnectTitle => 'Connect to Server';
+  String get networkConnectTitle => 'Connect to server';
 
   @override
   String get networkAddressLabel => 'Address';
@@ -3728,17 +3728,17 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String networkPasswordForgotten(String server) {
-    return 'The saved password of $server is forgotten';
+    return 'The saved password for $server is forgotten';
   }
 
   @override
   String networkPasswordTitle(String server) {
-    return 'Log In to $server';
+    return 'Log in to $server';
   }
 
   @override
   String networkPasswordMessage(String user) {
-    return 'Enter the password of $user.';
+    return 'Enter the password for the user “$user”.';
   }
 
   @override
@@ -3752,7 +3752,7 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get networkRememberPassword => 'Remember in the system keychain';
 
   @override
-  String get networkPassphraseTitle => 'Unlock the Key';
+  String get networkPassphraseTitle => 'Unlock the key';
 
   @override
   String networkPassphraseMessage(String key) {
@@ -3768,14 +3768,14 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String networkPromptsTitle(String server) {
-    return 'Log In to $server';
+    return 'Log in to $server';
   }
 
   @override
   String get networkContinue => 'Continue';
 
   @override
-  String get networkHostKeyTitle => 'Unknown Server';
+  String get networkHostKeyTitle => 'Unknown server';
 
   @override
   String networkHostKeyMessage(String host, String algorithm) {
@@ -3794,7 +3794,7 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get networkHostKeyChangedTitle =>
-      'Warning: The Server’s Key Has Changed';
+      'Warning: the server’s key has changed';
 
   @override
   String networkHostKeyChangedMessage(String host) {
@@ -3864,4 +3864,9 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get networkCapsuleClosed => 'Not connected';
+
+  @override
+  String syncConfirmUndoDeleted(String key) {
+    return '$key undoes it: the copies go to the Trash and what went there comes back.';
+  }
 }

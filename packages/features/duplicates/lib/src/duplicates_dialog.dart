@@ -410,6 +410,7 @@ class _Conditions extends StatelessWidget {
         TextField(
           controller: root,
           style: context.mono,
+          onEditingComplete: () {},
           onSubmitted: (_) => onSubmit(),
         ),
         if (other != null) ...[
@@ -437,6 +438,7 @@ class _Conditions extends StatelessWidget {
                     controller: mask,
                     style: context.mono,
                     decoration: InputDecoration(hintText: l10n.findNameHint),
+                    onEditingComplete: () {},
                     onSubmitted: (_) => onSubmit(),
                   ),
                 ),
@@ -454,6 +456,7 @@ class _Conditions extends StatelessWidget {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     textAlign: TextAlign.end,
+                    onEditingComplete: () {},
                     onSubmitted: (_) => onSubmit(),
                   ),
                 ),

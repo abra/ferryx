@@ -220,6 +220,9 @@ class PanelCubit extends Cubit<PanelState> {
               clearFlat: true,
             ),
             focusName: focusName ?? current.pendingFocusName,
+            // Another folder: the old cursor's name and place mean nothing
+            // there (a child may even share the name of the folder left).
+            fresh: current.location != location,
           ).copyWith(clearPendingFocus: true),
         ),
       );
@@ -344,8 +347,12 @@ class PanelCubit extends Cubit<PanelState> {
 
   /// The tab with its rows rebuilt from its listing: quick search applied,
   /// folder sizes merged, the cursor kept on its name or put on
-  /// [focusName].
-  PanelTabState _withListing(PanelTabState tab, {String? focusName}) {
+  /// [focusName]; for a [fresh] folder, on [focusName] or the first row.
+  PanelTabState _withListing(
+    PanelTabState tab, {
+    String? focusName,
+    bool fresh = false,
+  }) {
     final entries = tab.listing?.entries ?? const [];
     final where = _p.quickSearchWhere;
     final onlyMatching = _p.quickSearchOnlyMatching;
@@ -367,11 +374,13 @@ class PanelCubit extends Cubit<PanelState> {
       }
       rows.add(row);
     }
-    final wanted = focusName ?? tab.focused?.key;
+    final wanted = focusName ?? (fresh ? null : tab.focused?.key);
     var cursor = wanted == null ? -1 : rows.indexWhere((r) => r.key == wanted);
     if (cursor < 0) {
       cursor = rows.isEmpty
           ? -1
+          : fresh
+          ? 0
           : math.min(math.max(tab.cursor, 0), rows.length - 1);
     }
     final names = rows.map((r) => r.key).toSet();

@@ -128,17 +128,18 @@ class _SyncDialogState extends State<SyncDialog> {
     if (summary.isEmpty) return;
     final platform = Theme.of(context).platform;
     final undo = widget.shortcutMap.labelOf(AppCommand.undo, platform) ?? '';
+    // A line each, as an alert is narrow: a line of figures joined by dots
+    // would break inside a figure.
     final message = [
-      l10n.joinedDetails(
-        l10n.joinedDetails(
-          l10n.syncToRight(l10n.count(summary.toRight)),
-          l10n.syncToLeft(l10n.count(summary.toLeft)),
-        ),
-        l10n.syncBytes(l10n.fileSize(summary.bytes)),
-      ),
+      if (summary.toRight > 0) l10n.syncToRight(l10n.count(summary.toRight)),
+      if (summary.toLeft > 0) l10n.syncToLeft(l10n.count(summary.toLeft)),
+      if (summary.bytes > 0) l10n.syncBytes(l10n.fileSize(summary.bytes)),
       if (summary.toDelete > 0) l10n.syncConfirmDelete(summary.toDelete),
       if (summary.overwrites > 0) l10n.syncConfirmOverwrite(summary.overwrites),
-      l10n.syncConfirmUndo(undo),
+      if (summary.toDelete > 0)
+        l10n.syncConfirmUndoDeleted(undo)
+      else
+        l10n.syncConfirmUndo(undo),
     ].join('\n');
     final confirmed = await AppDialog.confirm(
       context,
@@ -323,6 +324,7 @@ class _Field extends StatelessWidget {
       TextField(
         controller: controller,
         style: context.mono,
+        onEditingComplete: () {},
         onSubmitted: (_) => onSubmit(),
       ),
     ],
@@ -416,6 +418,7 @@ class _Options extends StatelessWidget {
                     controller: mask,
                     style: context.mono,
                     decoration: InputDecoration(hintText: l10n.syncMaskHint),
+                    onEditingComplete: () {},
                     onSubmitted: (_) => onSubmit(),
                   ),
                 ),

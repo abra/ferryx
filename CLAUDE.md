@@ -132,6 +132,13 @@ See `ARCHITECTURE.md`. The rules that matter most:
   `selectionMuted` through `AppFocusArea.activeOf`, never `accent` for a
   row. Strings are never built with `join('  ·  ')` or interpolation of
   separators: use an ARB template (`joinedDetails`) with placeholders.
+- A text field keeps the keys: one that submits on Return has an
+  `onEditingComplete` (`() {}` keeps the focus; Flutter's default drops it,
+  `test/app/text_field_focus_test.dart`), one waiting on what was typed is
+  `readOnly`, never disabled, and one whose code sets its selection (a
+  name's stem, a caret) turns `selectAllOnFocus` off — on the desktops it
+  is on and replaces that selection. A test of such a field runs with
+  `TargetPlatformVariant.only(TargetPlatform.macOS)`, or it cannot see it.
 - Nothing the mouse does may lack a keyboard path: a resizable edge is an
   `AppSplitter`, a right-click menu also opens on `AppCommand.contextMenu`
   (`keyboardMenuAnchor`), what a tooltip says shows on focus too
@@ -149,6 +156,9 @@ See `ARCHITECTURE.md`. The rules that matter most:
   Monospace goes through `context.mono`.
 - Key names never as literal glyphs: use `Chord.label` / `Chord.keyLabel`
   with `context.platform`, and placeholders in ARB strings.
+- English case: command labels (`cmd…`, menus) in Title Case ("New
+  Folder…"), dialog and window titles in sentence case ("New folder",
+  "Connect to server"), as every title here is.
 - Localization: add keys to `app_en.arb` (template) and `app_ru.arb`, then
   `make l10n`. File names and paths are never translated. A Russian plural
   takes `one{…}`, never `=1{…}`. Sizes and dates go through

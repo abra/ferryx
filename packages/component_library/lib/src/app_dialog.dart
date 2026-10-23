@@ -457,6 +457,7 @@ class _PromptDialogState extends State<_PromptDialog> {
     body: TextField(
       controller: _controller,
       autofocus: true,
+      onEditingComplete: () {},
       onSubmitted: (_) => _submit(),
     ),
     actions: [
@@ -560,8 +561,9 @@ class _RenderAlertButtons extends RenderBox
     final buttons = _buttons;
     final width = constraints.maxWidth;
     final share = (width - _gap * (buttons.length - 1)) / buttons.length;
+    // No slack: a label a fraction of a pixel wider than its share wraps.
     final fits = buttons.every(
-      (b) => b.getMaxIntrinsicWidth(double.infinity) <= share + 0.5,
+      (b) => b.getMaxIntrinsicWidth(double.infinity) <= share + 1e-9,
     );
     if (fits) {
       var x = 0.0;

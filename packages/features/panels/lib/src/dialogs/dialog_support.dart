@@ -22,6 +22,7 @@ class DialogField extends StatelessWidget {
     this.obscure = false,
     this.monospace = false,
     this.enabled = true,
+    this.readOnly = false,
     this.trailing,
     this.keyboardType,
     this.inputFormatters,
@@ -37,6 +38,11 @@ class DialogField extends StatelessWidget {
   final bool obscure;
   final bool monospace;
   final bool enabled;
+
+  /// Kept from edits, focus and all: a field waiting on what was typed
+  /// (a password being tried) is read-only, never disabled, as a disabled
+  /// field gives the focus away and the keys would go to the window.
+  final bool readOnly;
   final Widget? trailing;
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
@@ -48,6 +54,14 @@ class DialogField extends StatelessWidget {
       focusNode: focusNode,
       autofocus: autofocus,
       enabled: enabled,
+      readOnly: readOnly,
+      // The dialog sets the selection it wants (a name's stem, the caret
+      // after `*.`); the desktop's select-all on focus would undo it.
+      selectAllOnFocus: false,
+      // Return submits and the field keeps the keys: Flutter's default
+      // drops the focus, and a dialog that stays (a wrong password, a
+      // name taken) would leave the keys to the window behind it.
+      onEditingComplete: onSubmitted == null ? null : () {},
       obscureText: obscure,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,

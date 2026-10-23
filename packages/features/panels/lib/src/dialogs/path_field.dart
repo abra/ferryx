@@ -102,10 +102,12 @@ class _PathFieldState extends State<PathField> {
         Text(widget.label, style: context.text.labelMedium),
         const SizedBox(height: AppSpacing.xs),
         TextField(
+          selectAllOnFocus: false,
           controller: widget.controller,
           focusNode: _focus,
           autofocus: widget.autofocus,
           style: context.mono,
+          onEditingComplete: () {},
           onSubmitted: widget.onSubmitted,
         ),
         if (hint != null) ...[

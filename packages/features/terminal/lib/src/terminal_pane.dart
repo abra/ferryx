@@ -299,26 +299,35 @@ class _Screen extends StatelessWidget {
   final ValueChanged<Offset> onSecondaryTap;
 
   @override
-  Widget build(BuildContext context) => TerminalView(
-    terminal,
-    key: viewKey,
-    controller: selection,
-    focusNode: focusNode,
-    scrollController: scroll,
-    theme: look.themeOf(context, active: AppFocusArea.activeOf(context)),
-    textStyle: look.styleOf(context, fontSize),
-    // The terminal's font size is a setting of its own.
-    textScaler: TextScaler.noScaling,
-    // The text starts under the bar's icon.
-    padding: const EdgeInsets.symmetric(
-      horizontal: AppSpacing.md,
-      vertical: AppSpacing.xs,
+  Widget build(BuildContext context) => Focus(
+    // A key the emulator leaves (a letter, which comes back as text) stops
+    // here, unhandled: the desktop still types it, and no window key
+    // above (a Vim prefix such as `c` or `g`) takes it from the shell.
+    canRequestFocus: false,
+    skipTraversal: true,
+    onKeyEvent: (_, _) => KeyEventResult.skipRemainingHandlers,
+    child: TerminalView(
+      terminal,
+      key: viewKey,
+      controller: selection,
+      focusNode: focusNode,
+      scrollController: scroll,
+      theme: look.themeOf(context, active: AppFocusArea.activeOf(context)),
+      textStyle: look.styleOf(context, fontSize),
+      // The terminal's font size is a setting of its own.
+      textScaler: TextScaler.noScaling,
+      // The text starts under the bar's icon.
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
+      keyboardAppearance: Theme.of(context).brightness,
+      // Its own keys go through [onKey], so the window's map rules them.
+      shortcuts: const {},
+      onKeyEvent: onKey,
+      onSecondaryTapDown: (details, _) =>
+          onSecondaryTap(details.globalPosition),
     ),
-    keyboardAppearance: Theme.of(context).brightness,
-    // Its own keys go through [onKey], so the window's map rules them.
-    shortcuts: const {},
-    onKeyEvent: onKey,
-    onSecondaryTapDown: (details, _) => onSecondaryTap(details.globalPosition),
   );
 }
 

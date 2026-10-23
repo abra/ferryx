@@ -260,4 +260,49 @@ void main() {
     await tester.pumpAndSettle();
     expect(await result, isTrue);
   });
+
+  testWidgets('the password field keeps the keys while a password is tried '
+      'and after a wrong one, so typing again goes into it', (tester) async {
+    final tries = <Completer<FerryxException?>>[];
+    await host(
+      tester,
+      Builder(
+        builder: (context) => TextButton(
+          onPressed: () => showArchivePasswordDialog(
+            context,
+            name: 'hidden.7z',
+            submit: (password) {
+              tries.add(Completer());
+              return tries.last.future;
+            },
+          ),
+          child: const Text('open'),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    EditableTextState field() =>
+        tester.state<EditableTextState>(find.byType(EditableText));
+    expect(field().widget.focusNode.hasPrimaryFocus, isTrue);
+    await tester.enterText(find.byType(TextField), 'nope');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    expect(tries, hasLength(1));
+    // Tried: read-only meanwhile, but the focus stays.
+    expect(field().widget.readOnly, isTrue);
+    expect(field().widget.focusNode.hasPrimaryFocus, isTrue);
+    tries.last.complete(
+      const FerryxException(FerryxErrorKind.wrongPassword, ''),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(en.archiveWrongPasswordFor('hidden.7z')), findsOneWidget);
+    expect(field().widget.focusNode.hasPrimaryFocus, isTrue);
+    expect(field().widget.readOnly, isFalse);
+    // What was typed is selected, for typing over.
+    expect(
+      field().textEditingValue.selection,
+      const TextSelection(baseOffset: 0, extentOffset: 4),
+    );
+  });
 }

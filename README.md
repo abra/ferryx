@@ -88,8 +88,9 @@ files is Rust.
   panel or a folder (macOS, Windows, Linux): one volume moves, another
   copies, ⌥ copies and ⌘ moves, and the copy runs as any other operation.
 - **Integrated terminal**, as in Nimble Commander: your shell under the
-  panels (⌃⌥↑ shows it and gives it the keys, again for a taller one, ⌃⌥↓
-  hides it, the edge between them drags or takes the keys), the panels
+  panels (⌃` shows it and gives it the keys, again for a taller one, ⌃⇧`
+  hides it; Nimble Commander's ⌃⌥↑ and ⌃⌥↓ work too where no window
+  manager takes them; the edge between them drags or takes the keys), the panels
   hidden over it (⌃⌥O) or the whole window (⌥⌘O). It follows the active
   panel's folder while waiting at its prompt, and a `cd` typed in it takes
   the panel along; programs (vim, top, ssh) are left alone. Copy, paste,

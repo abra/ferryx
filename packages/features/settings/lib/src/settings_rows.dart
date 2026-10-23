@@ -326,6 +326,7 @@ class LabeledField extends StatelessWidget {
       autofocus: autofocus,
       style: monospace ? context.mono : null,
       decoration: InputDecoration(hintText: hint),
+      onEditingComplete: () {},
       onSubmitted: onSubmitted,
     );
     return LabeledControl(

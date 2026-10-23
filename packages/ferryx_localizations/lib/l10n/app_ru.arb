@@ -871,7 +871,7 @@
   "syncConfirmTitle": "Синхронизировать папки?",
   "syncConfirmDelete": "{count, plural, one{{count} объект отправится в Корзину.} few{{count} объекта отправятся в Корзину.} many{{count} объектов отправятся в Корзину.} other{{count} объекта отправятся в Корзину.}}",
   "syncConfirmOverwrite": "{count, plural, one{{count} файл будет заменён; прежняя версия утеряется.} few{{count} файла будут заменены; прежние версии утеряются.} many{{count} файлов будут заменены; прежние версии утеряются.} other{{count} файла будут заменены; прежние версии утеряются.}}",
-  "syncConfirmUndo": "Отмена ({key}) уберёт копии в Корзину и вернёт удалённое из неё.",
+  "syncConfirmUndo": "{key} отменит её: копии уйдут в Корзину.",
   "syncSynchronizeNow": "Синхронизировать",
   "syncKeysHint": "{space} меняет действие, {right} и {left} выбирают сторону",
   "checksumTitle": "Контрольные суммы",
@@ -1037,7 +1037,7 @@
   "networkForgetPassword": "Забыть сохранённый пароль",
   "networkPasswordForgotten": "Сохранённый пароль для {server} забыт",
   "networkPasswordTitle": "Вход на {server}",
-  "networkPasswordMessage": "Введите пароль пользователя {user}.",
+  "networkPasswordMessage": "Введите пароль пользователя «{user}».",
   "networkPasswordWrong": "Пароль не подошёл. Попробуйте ещё раз.",
   "networkPasswordLabel": "Пароль",
   "networkRememberPassword": "Запомнить в системной связке ключей",
@@ -1069,5 +1069,7 @@
   "networkNotRemote": "Панель не на сервере",
   "networkRecent": "Недавние",
   "networkCapsuleLost": "Связь потеряна",
-  "networkCapsuleClosed": "Не подключено"
+  "networkCapsuleClosed": "Не подключено",
+  "syncConfirmUndoDeleted": "{key} отменит её: копии уйдут в Корзину, а удалённое вернётся из неё.",
+  "@syncConfirmUndoDeleted": {"placeholders": {"key": {"type": "String"}}}
 }

@@ -150,6 +150,7 @@ class _ShellFieldState extends State<ShellField> {
     autocorrect: false,
     enableSuggestions: false,
     decoration: InputDecoration(hintText: widget.hint),
+    onEditingComplete: () {},
     onSubmitted: (_) => _commit(),
   );
 }

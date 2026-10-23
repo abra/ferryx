@@ -238,7 +238,7 @@ class _ExtractDialogState extends State<ExtractDialog> {
               controller: _password,
               focusNode: _passwordFocus,
               obscure: true,
-              enabled: !_checking,
+              readOnly: _checking,
               onSubmitted: (_) => unawaited(_submit()),
             ),
             if (wrongFor != null) ...[

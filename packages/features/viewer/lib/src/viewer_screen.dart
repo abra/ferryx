@@ -256,45 +256,49 @@ class _ViewerScreenState extends State<ViewerScreen> {
   @override
   Widget build(BuildContext context) {
     final platform = Theme.of(context).platform;
-    return BlocProvider.value(
-      value: _cubit,
-      child: BlocListener<ViewerCubit, ViewerState>(
-        listenWhen: (before, after) =>
-            before.scrollRequest != after.scrollRequest,
-        listener: (context, state) => _scrollTo(state),
-        child: CommandShortcuts(
-          shortcuts: widget.shortcutMap.toShortcuts(
-            platform,
-            scopes: const {CommandScope.viewer, CommandScope.dialogs},
-          ),
-          child: CommandHandlers(
-            handlers: _handlers(),
-            child: BlocBuilder<ViewerCubit, ViewerState>(
-              builder: (context, state) => _Frame(
-                state: state,
-                source: _cubit.source,
-                decor: widget.windowDecor,
-                shortcutMap: widget.shortcutMap,
-                fontSize: widget.preferences.current.viewerFontSize,
-                topLine: _topLine,
-                contentFocus: _contentFocus,
-                findFocus: _findFocus,
-                findController: _findController,
-                scroll: _scroll,
-                onLayout: _onLayout,
-                onContentKey: _onContentKey,
-                onMode: _setMode,
-                onToggleWrap: _toggleWrap,
-                onFind: _showFind,
-                onFindChanged: _cubit.setFindQuery,
-                onFindNext: () => _find(1),
-                onFindPrevious: () => _find(-1),
-                onFindClose: _hideFind,
-                onGoTo: () => unawaited(_goTo()),
-                onRefresh: () => unawaited(_cubit.refresh()),
-                onLoadNext: () => unawaited(_cubit.loadNext()),
-                onLoadPrevious: () => unawaited(_cubit.loadPrevious()),
-                onClose: widget.onClose,
+    // A page of its own: the Material its buttons' ink needs is here.
+    return Scaffold(
+      backgroundColor: context.appColors.window,
+      body: BlocProvider.value(
+        value: _cubit,
+        child: BlocListener<ViewerCubit, ViewerState>(
+          listenWhen: (before, after) =>
+              before.scrollRequest != after.scrollRequest,
+          listener: (context, state) => _scrollTo(state),
+          child: CommandShortcuts(
+            shortcuts: widget.shortcutMap.toShortcuts(
+              platform,
+              scopes: const {CommandScope.viewer, CommandScope.dialogs},
+            ),
+            child: CommandHandlers(
+              handlers: _handlers(),
+              child: BlocBuilder<ViewerCubit, ViewerState>(
+                builder: (context, state) => _Frame(
+                  state: state,
+                  source: _cubit.source,
+                  decor: widget.windowDecor,
+                  shortcutMap: widget.shortcutMap,
+                  fontSize: widget.preferences.current.viewerFontSize,
+                  topLine: _topLine,
+                  contentFocus: _contentFocus,
+                  findFocus: _findFocus,
+                  findController: _findController,
+                  scroll: _scroll,
+                  onLayout: _onLayout,
+                  onContentKey: _onContentKey,
+                  onMode: _setMode,
+                  onToggleWrap: _toggleWrap,
+                  onFind: _showFind,
+                  onFindChanged: _cubit.setFindQuery,
+                  onFindNext: () => _find(1),
+                  onFindPrevious: () => _find(-1),
+                  onFindClose: _hideFind,
+                  onGoTo: () => unawaited(_goTo()),
+                  onRefresh: () => unawaited(_cubit.refresh()),
+                  onLoadNext: () => unawaited(_cubit.loadNext()),
+                  onLoadPrevious: () => unawaited(_cubit.loadPrevious()),
+                  onClose: widget.onClose,
+                ),
               ),
             ),
           ),

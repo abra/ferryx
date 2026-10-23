@@ -94,6 +94,40 @@ void main() {
       expect(no.height, greaterThanOrEqualTo(28));
     });
 
+    testWidgets('stack when a label is wider than its share by any fraction '
+        'of a pixel: a label never wraps', (tester) async {
+      // The macOS alert: 260 wide, 16 in, its buttons 8 apart.
+      const share = (260 - 2 * 16 - AppSpacing.sm) / 2;
+      Future<bool> sideBySide(double width) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light(AppPlatformStyle.macos),
+            home: Scaffold(
+              body: Center(
+                child: AppDialog(
+                  title: 'Delete?',
+                  alert: true,
+                  actions: [
+                    const SizedBox(key: Key('cancel'), width: 40, height: 20),
+                    SizedBox(
+                      key: const Key('confirm'),
+                      width: width,
+                      height: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+        return tester.getRect(find.byKey(const Key('cancel'))).top ==
+            tester.getRect(find.byKey(const Key('confirm'))).top;
+      }
+
+      expect(await sideBySide(share), isTrue);
+      expect(await sideBySide(share + 0.3), isFalse);
+    });
+
     testWidgets('stack, the default on top, when a label does not fit', (
       tester,
     ) async {

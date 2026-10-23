@@ -319,6 +319,26 @@ void main() {
   });
 
   group('Terminal keys', () {
+    test('on macOS the terminal comes and goes with keys no window manager '
+        'takes; Nimble Commander\'s stay second', () {
+      final map = ShortcutMap.defaults(TargetPlatform.macOS);
+      const backquote = LogicalKeyboardKey.backquote;
+      // Rectangle and Magnet tile the window on ⌃⌥↑ and ⌃⌥↓.
+      expect(map.chordsFor(AppCommand.showTerminal), [
+        const Chord(backquote, control: true),
+        const Chord(LogicalKeyboardKey.arrowUp, control: true, alt: true),
+      ]);
+      expect(map.chordsFor(AppCommand.hideTerminal), [
+        const Chord(backquote, control: true, shift: true),
+        const Chord(LogicalKeyboardKey.arrowDown, control: true, alt: true),
+      ]);
+      expect(
+        map.labelOf(AppCommand.showTerminal, TargetPlatform.macOS),
+        const Chord(backquote, control: true).label(TargetPlatform.macOS),
+        reason: 'the hints and menus name the one that works',
+      );
+    });
+
     Set<AppCommand> commandsOf(ShortcutMap map, TargetPlatform platform) => {
       for (final intent in map.terminalShortcuts(platform).values)
         intent.command,

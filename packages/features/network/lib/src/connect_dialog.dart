@@ -68,8 +68,15 @@ class _ConnectDialogState extends State<ConnectDialog> {
   @override
   void initState() {
     super.initState();
-    _address.text = context.read<ConnectCubit>().state.address;
+    _address.value = _selected(context.read<ConnectCubit>().state.address);
   }
+
+  /// [address] in the field, all of it selected: what is typed next
+  /// replaces it, as in Finder's Connect to Server, never runs on after it.
+  static TextEditingValue _selected(String address) => TextEditingValue(
+    text: address,
+    selection: TextSelection(baseOffset: 0, extentOffset: address.length),
+  );
 
   @override
   void dispose() {
@@ -80,10 +87,7 @@ class _ConnectDialogState extends State<ConnectDialog> {
 
   void _showAddress(String address) {
     if (_address.text == address) return;
-    _address.value = TextEditingValue(
-      text: address,
-      selection: TextSelection.collapsed(offset: address.length),
-    );
+    _address.value = _selected(address);
   }
 
   /// ↑ and ↓ in the address field walk the list below it.

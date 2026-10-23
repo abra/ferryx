@@ -55,7 +55,17 @@ class _FindDialogState extends State<_FindDialog> {
   final _name = TextEditingController();
   final _content = TextEditingController();
   final _sizeValue = TextEditingController();
-  final _nameFocus = FocusNode(debugLabel: 'find name');
+  late final _nameFocus = FocusNode(
+    debugLabel: 'find name',
+    onKeyEvent: _downToHits,
+  );
+  late final _contentFocus = FocusNode(
+    debugLabel: 'find content',
+    onKeyEvent: _downToHits,
+  );
+
+  /// Asks the hit the keys rest on for the focus, each time it grows.
+  int _focusHits = 0;
   bool _regex = false;
   bool _caseSensitive = false;
   bool _wholePhrase = true;
@@ -77,7 +87,23 @@ class _FindDialogState extends State<_FindDialog> {
     _content.dispose();
     _sizeValue.dispose();
     _nameFocus.dispose();
+    _contentFocus.dispose();
     super.dispose();
+  }
+
+  /// ↓ in the name or the text field goes down into the hits, as from a
+  /// search field into its list: the hit the keys rest on, else the first.
+  KeyEventResult _downToHits(FocusNode node, KeyEvent event) {
+    if (event is KeyUpEvent ||
+        event.logicalKey != LogicalKeyboardKey.arrowDown ||
+        _cubit.state.hits.isEmpty) {
+      return KeyEventResult.ignored;
+    }
+    setState(() {
+      _selected ??= 0;
+      _focusHits++;
+    });
+    return KeyEventResult.handled;
   }
 
   FindRequest _request() {
@@ -180,6 +206,7 @@ class _FindDialogState extends State<_FindDialog> {
                 root: _root,
                 name: _name,
                 nameFocus: _nameFocus,
+                contentFocus: _contentFocus,
                 content: _content,
                 sizeValue: _sizeValue,
                 regex: _regex,
@@ -206,6 +233,7 @@ class _FindDialogState extends State<_FindDialog> {
                 child: FindResults(
                   state: state,
                   selected: _selected,
+                  focusRequest: _focusHits,
                   onSelect: (index) => setState(() => _selected = index),
                   onGoTo: _goTo,
                   onMenu: (index, anchor) => unawaited(_rowMenu(index, anchor)),
@@ -251,6 +279,7 @@ class _Form extends StatelessWidget {
     required this.root,
     required this.name,
     required this.nameFocus,
+    required this.contentFocus,
     required this.content,
     required this.sizeValue,
     required this.regex,
@@ -276,6 +305,7 @@ class _Form extends StatelessWidget {
   final TextEditingController root;
   final TextEditingController name;
   final FocusNode nameFocus;
+  final FocusNode contentFocus;
   final TextEditingController content;
   final TextEditingController sizeValue;
   final bool regex;
@@ -339,6 +369,7 @@ class _Form extends StatelessWidget {
         _Field(
           label: l10n.findContent,
           controller: content,
+          focusNode: contentFocus,
           onSubmitted: onSubmit,
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -386,6 +417,7 @@ class _Form extends StatelessWidget {
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 textAlign: TextAlign.end,
+                onEditingComplete: () {},
                 onSubmitted: (_) => onSubmit(),
               ),
             ),
@@ -502,6 +534,7 @@ class _Field extends StatelessWidget {
         autofocus: autofocus,
         style: monospace ? context.mono : null,
         decoration: InputDecoration(hintText: hint),
+        onEditingComplete: () {},
         onSubmitted: (_) => onSubmitted(),
       ),
     ],

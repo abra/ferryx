@@ -95,6 +95,28 @@ void main() {
     String field(WidgetTester tester) =>
         tester.widget<TextField>(find.byType(TextField).first).controller!.text;
 
+    testWidgets('the address shown is selected, so a new one typed replaces '
+        'it instead of running on after it', (tester) async {
+      await open(tester, recent: const ['ftp://files.lan']);
+      TextEditingValue value() => tester
+          .widget<TextField>(find.byType(TextField).first)
+          .controller!
+          .value;
+      const first = 'sftp://deploy@web.example.com';
+      expect(value().text, first);
+      expect(
+        value().selection,
+        const TextSelection(baseOffset: 0, extentOffset: first.length),
+      );
+      // Walked to with the arrows, the same.
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      expect(
+        value().selection,
+        TextSelection(baseOffset: 0, extentOffset: value().text.length),
+      );
+    });
+
     testWidgets(
       'the arrows in the field walk the list, Return connects',
       (

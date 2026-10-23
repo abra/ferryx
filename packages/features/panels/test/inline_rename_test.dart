@@ -44,42 +44,56 @@ void main() {
       .controller
       .selection;
 
-  testWidgets('the stem is selected once the field has the focus, so typing '
-      'keeps the extension', (tester) async {
-    await pump(tester, 'report.final.txt');
-    expect(
-      selection(tester),
-      const TextSelection(baseOffset: 0, extentOffset: 12),
-    );
-    // The desktop is told the same selection, so what is typed replaces
-    // the stem only.
-    expect(tester.testTextInput.editingState?['selectionBase'], 0);
-    expect(tester.testTextInput.editingState?['selectionExtent'], 12);
-    tester.testTextInput.updateEditingValue(
-      const TextEditingValue(
-        text: 'renamed.txt',
-        selection: TextSelection.collapsed(offset: 7),
-      ),
-    );
-    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    expect(committed, ['renamed.txt']);
-  });
+  // On the desktops a one-line field selects all of itself on focus,
+  // unless told not to: the tests run as on macOS so that default applies.
+  final desktop = TargetPlatformVariant.only(TargetPlatform.macOS);
 
-  testWidgets('a name without an extension, or a hidden one, is selected '
-      'whole', (tester) async {
-    await pump(tester, 'Makefile');
-    expect(
-      selection(tester),
-      const TextSelection(baseOffset: 0, extentOffset: 8),
-    );
-    await pump(tester, '.gitignore');
-    expect(
-      selection(tester),
-      const TextSelection(baseOffset: 0, extentOffset: 10),
-    );
-  });
+  testWidgets(
+    'the stem is selected once the field has the focus, so typing '
+    'keeps the extension',
+    variant: desktop,
+    (tester) async {
+      await pump(tester, 'report.final.txt');
+      expect(
+        selection(tester),
+        const TextSelection(baseOffset: 0, extentOffset: 12),
+      );
+      // The desktop is told the same selection, so what is typed replaces
+      // the stem only.
+      expect(tester.testTextInput.editingState?['selectionBase'], 0);
+      expect(tester.testTextInput.editingState?['selectionExtent'], 12);
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'renamed.txt',
+          selection: TextSelection.collapsed(offset: 7),
+        ),
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      expect(committed, ['renamed.txt']);
+    },
+  );
 
-  testWidgets('Vim\'s I and A put the caret at an end', (tester) async {
+  testWidgets(
+    'a name without an extension, or a hidden one, is selected '
+    'whole',
+    variant: desktop,
+    (tester) async {
+      await pump(tester, 'Makefile');
+      expect(
+        selection(tester),
+        const TextSelection(baseOffset: 0, extentOffset: 8),
+      );
+      await pump(tester, '.gitignore');
+      expect(
+        selection(tester),
+        const TextSelection(baseOffset: 0, extentOffset: 10),
+      );
+    },
+  );
+
+  testWidgets('Vim\'s I and A put the caret at an end', variant: desktop, (
+    tester,
+  ) async {
     await pump(tester, 'a.txt', caret: RenameCaret.start);
     expect(selection(tester), const TextSelection.collapsed(offset: 0));
     await pump(tester, 'b.txt', caret: RenameCaret.end);

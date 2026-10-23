@@ -4157,7 +4157,7 @@ abstract class FerryxLocalizations {
   /// No description provided for @namesTitle.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{Rename 1 Item} other{Rename {count} Items}}'**
+  /// **'{count, plural, =1{Rename 1 item} other{Rename {count} items}}'**
   String namesTitle(int count);
 
   /// No description provided for @namesHint.
@@ -5165,7 +5165,7 @@ abstract class FerryxLocalizations {
   /// No description provided for @syncConfirmUndo.
   ///
   /// In en, this message translates to:
-  /// **'Undo ({key}) takes the copies back to the Trash and the deleted items out of it.'**
+  /// **'{key} undoes it: the copies go to the Trash.'**
   String syncConfirmUndo(String key);
 
   /// No description provided for @syncSynchronizeNow.
@@ -5747,7 +5747,7 @@ abstract class FerryxLocalizations {
   /// No description provided for @tagsNewTitle.
   ///
   /// In en, this message translates to:
-  /// **'New Tag'**
+  /// **'New tag'**
   String get tagsNewTitle;
 
   /// No description provided for @tagsNameLabel.
@@ -5879,7 +5879,7 @@ abstract class FerryxLocalizations {
   /// No description provided for @networkConnectTitle.
   ///
   /// In en, this message translates to:
-  /// **'Connect to Server'**
+  /// **'Connect to server'**
   String get networkConnectTitle;
 
   /// No description provided for @networkAddressLabel.
@@ -6119,19 +6119,19 @@ abstract class FerryxLocalizations {
   /// No description provided for @networkPasswordForgotten.
   ///
   /// In en, this message translates to:
-  /// **'The saved password of {server} is forgotten'**
+  /// **'The saved password for {server} is forgotten'**
   String networkPasswordForgotten(String server);
 
   /// No description provided for @networkPasswordTitle.
   ///
   /// In en, this message translates to:
-  /// **'Log In to {server}'**
+  /// **'Log in to {server}'**
   String networkPasswordTitle(String server);
 
   /// No description provided for @networkPasswordMessage.
   ///
   /// In en, this message translates to:
-  /// **'Enter the password of {user}.'**
+  /// **'Enter the password for the user “{user}”.'**
   String networkPasswordMessage(String user);
 
   /// No description provided for @networkPasswordWrong.
@@ -6155,7 +6155,7 @@ abstract class FerryxLocalizations {
   /// No description provided for @networkPassphraseTitle.
   ///
   /// In en, this message translates to:
-  /// **'Unlock the Key'**
+  /// **'Unlock the key'**
   String get networkPassphraseTitle;
 
   /// No description provided for @networkPassphraseMessage.
@@ -6179,7 +6179,7 @@ abstract class FerryxLocalizations {
   /// No description provided for @networkPromptsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Log In to {server}'**
+  /// **'Log in to {server}'**
   String networkPromptsTitle(String server);
 
   /// No description provided for @networkContinue.
@@ -6191,7 +6191,7 @@ abstract class FerryxLocalizations {
   /// No description provided for @networkHostKeyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Unknown Server'**
+  /// **'Unknown server'**
   String get networkHostKeyTitle;
 
   /// No description provided for @networkHostKeyMessage.
@@ -6221,7 +6221,7 @@ abstract class FerryxLocalizations {
   /// No description provided for @networkHostKeyChangedTitle.
   ///
   /// In en, this message translates to:
-  /// **'Warning: The Server’s Key Has Changed'**
+  /// **'Warning: the server’s key has changed'**
   String get networkHostKeyChangedTitle;
 
   /// No description provided for @networkHostKeyChangedMessage.
@@ -6325,6 +6325,12 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Not connected'**
   String get networkCapsuleClosed;
+
+  /// No description provided for @syncConfirmUndoDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{key} undoes it: the copies go to the Trash and what went there comes back.'**
+  String syncConfirmUndoDeleted(String key);
 }
 
 class _FerryxLocalizationsDelegate

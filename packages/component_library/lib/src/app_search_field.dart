@@ -108,6 +108,7 @@ class _AppSearchFieldState extends State<AppSearchField> {
             focusedErrorBorder: shaped(theme.focusedErrorBorder),
           ),
           onChanged: widget.onChanged,
+          onEditingComplete: () {},
           onSubmitted: widget.onSubmitted,
         ),
       ),

@@ -153,33 +153,32 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('a tab left on a server: Reconnect in the strip and the '
-      'footer', (tester) async {
+  testWidgets('a tab left on a server: not connected yet, a state with '
+      'Connect in the strip, not a fault', (tester) async {
     build();
     await cubit.start(const SavedPanel(tabs: [SavedTab(location: srv)]), home);
     await pump(tester);
-    expect(
-      find.text(
-        en.errorMessage(
-          const FerryxException(FerryxErrorKind.notConnected, box),
-        ),
-      ),
-      findsOneWidget,
-    );
+    // What is the matter, then of what: the server's address.
+    expect(find.text(en.errorNotConnected), findsOneWidget);
+    expect(find.text(srv.display), findsOneWidget);
     expect(find.text(en.networkCapsuleClosed), findsOneWidget);
     // FTP crosses the network unencrypted: an open lock.
     expect(find.byIcon(AppIcons.unlocked), findsOneWidget);
     expect(find.text('FTP'), findsOneWidget);
     expect(
-      find.widgetWithText(OutlinedButton, en.networkReconnect),
+      find.widgetWithText(OutlinedButton, en.networkConnect),
       findsOneWidget,
     );
+    expect(find.byIcon(AppIcons.warning), findsNothing);
 
-    await tester.tap(find.widgetWithText(OutlinedButton, en.networkReconnect));
+    await tester.tap(find.widgetWithText(OutlinedButton, en.networkConnect));
     await tester.pumpAndSettle();
     expect(cubit.state.active!.rows.map((r) => r.name), ['index.html']);
     expect(find.text(en.networkCapsuleClosed), findsNothing);
-    expect(find.text(en.networkReconnect), findsNothing);
+    expect(
+      find.widgetWithText(OutlinedButton, en.networkConnect),
+      findsNothing,
+    );
   });
 
   testWidgets('the root crumb names who on which host', (tester) async {

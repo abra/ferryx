@@ -265,7 +265,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   Timer? _snapshotTimer;
   final _dismissTimers = <int, Timer>{};
   final _shownOperations = <int>{};
-  final _askedQuestions = <int>{};
+
+  /// The questions asked, as (operation, question): the core numbers each
+  /// operation's questions from 1.
+  final _askedQuestions = <(int, int)>{};
 
   /// Titles of the operations' cards that name more than their kind (an
   /// undo names its step), by operation id.
@@ -421,8 +424,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final question = progress.question;
     if (progress.state == OpState.waiting &&
         question != null &&
-        !_askedQuestions.contains(question.id)) {
-      _askedQuestions.add(question.id);
+        _askedQuestions.add((progress.id, question.id))) {
       unawaited(_ask(progress.id, question));
     }
     if (!mounted) return;
@@ -454,6 +456,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   void _dismissOperation(int id) {
     _dismissTimers.remove(id)?.cancel();
     _operationTitles.remove(id);
+    _askedQuestions.removeWhere((asked) => asked.$1 == id);
     if (!mounted) return;
     setState(() => _shownOperations.remove(id));
     unawaited(widget.operations.forget(id));
@@ -604,7 +607,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                           onAnswer: (progress) {
                                             final question = progress.question;
                                             if (question != null) {
-                                              _askedQuestions.add(question.id);
+                                              _askedQuestions.add((
+                                                progress.id,
+                                                question.id,
+                                              ));
                                               unawaited(
                                                 _ask(progress.id, question),
                                               );

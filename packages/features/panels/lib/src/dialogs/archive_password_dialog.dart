@@ -96,7 +96,7 @@ class _ArchivePasswordDialogState extends State<ArchivePasswordDialog> {
             focusNode: _focus,
             autofocus: true,
             obscure: true,
-            enabled: !_checking,
+            readOnly: _checking,
             onSubmitted: (_) => unawaited(_submit()),
           ),
           if (error != null) ...[

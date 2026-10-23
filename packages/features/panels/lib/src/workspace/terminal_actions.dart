@@ -74,7 +74,7 @@ extension _TerminalActions on _WorkspaceScreenState {
           AppCommand.toggleTerminal: _toggleTerminalWindow,
         };
 
-  /// Nimble Commander's ⌃⌥↑: reveals the terminal under the panels and
+  /// ⌃` (Nimble Commander's ⌃⌥↑): reveals the terminal under the panels and
   /// gives it the keys; pressed again there, one line taller.
   void _showTerminal() {
     final dock = _dock.state;

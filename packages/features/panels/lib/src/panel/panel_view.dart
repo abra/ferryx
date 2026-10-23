@@ -815,16 +815,10 @@ class _PanelViewState extends State<PanelView> {
                       ],
                     ),
                   ),
-                  if (tab.error != null)
+                  if (tab.error case final error?)
                     _ErrorArea(
-                      error: tab.error!,
+                      text: errorStripOf(l10n, tab, error),
                       onRetry: _retryOf(tab),
-                      retryLabel:
-                          tab.error!.kind == FerryxErrorKind.passwordRequired
-                          ? l10n.archiveEnterPassword
-                          : _reconnects(tab)
-                          ? l10n.networkReconnect
-                          : l10n.actionRetry,
                     ),
                   PanelFooter(
                     tab: tab,
@@ -845,24 +839,61 @@ class _PanelViewState extends State<PanelView> {
   );
 }
 
-/// A folder that could not be read: the message in a strip under the rows
-/// that stay, with a button to try again (the keys reach it; ⌘J labels
-/// it).
-class _ErrorArea extends StatelessWidget {
-  const _ErrorArea({
-    required this.error,
-    required this.onRetry,
-    required this.retryLabel,
-  });
+/// What the strip under the rows says of [error] in [tab]: its title,
+/// the line under it, its button's word, and whether it is a fault (a red
+/// sign) or a state to act on (a server not connected yet, an archive
+/// that waits for its password).
+ErrorStripText errorStripOf(
+  FerryxLocalizations l10n,
+  PanelTabState tab,
+  FerryxException error,
+) {
+  final archive = tab.passwordLocation?.archive;
+  // The folder shown is fine: it is the archive that waits.
+  if (error.kind == FerryxErrorKind.passwordRequired && archive != null) {
+    return (
+      title: l10n.archivePasswordTitle(Location.native(archive).name),
+      message: l10n.archivePasswordMessage,
+      action: l10n.archiveEnterPassword,
+      fault: false,
+    );
+  }
+  if (tab.location.isRemote && error.kind.needsConnection) {
+    final notYet = error.kind == FerryxErrorKind.notConnected;
+    return (
+      title: l10n.errorMessage(FerryxException(error.kind, '')),
+      message: tab.location.display,
+      action: notYet ? l10n.networkConnect : l10n.networkReconnect,
+      fault: !notYet,
+    );
+  }
+  return (
+    title: l10n.panelErrorTitle,
+    message: l10n.errorMessage(error),
+    action: l10n.actionRetry,
+    fault: true,
+  );
+}
 
-  final FerryxException error;
+typedef ErrorStripText = ({
+  String title,
+  String message,
+  String action,
+  bool fault,
+});
+
+/// A folder that could not be read, or a state to act on: the message in
+/// a strip under the rows that stay, with a button (the keys reach it; ⌘J
+/// labels it).
+class _ErrorArea extends StatelessWidget {
+  const _ErrorArea({required this.text, required this.onRetry});
+
+  final ErrorStripText text;
   final VoidCallback onRetry;
-  final String retryLabel;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final l10n = context.l10n;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: context.metrics.rowInset + AppSpacing.sm,
@@ -874,15 +905,19 @@ class _ErrorArea extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(AppIcons.warning, size: AppIconSize.md, color: colors.danger),
+          Icon(
+            text.fault ? AppIcons.warning : AppIcons.info,
+            size: AppIconSize.md,
+            color: text.fault ? colors.danger : colors.textMuted,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.panelErrorTitle, style: context.text.labelMedium),
+                Text(text.title, style: context.text.labelMedium),
                 Text(
-                  l10n.errorMessage(error),
+                  text.message,
                   style: context.text.bodySmall?.copyWith(
                     color: colors.textMuted,
                   ),
@@ -898,7 +933,7 @@ class _ErrorArea extends StatelessWidget {
             child: OutlinedButton(
               style: AppButtonStyles.small(context),
               onPressed: onRetry,
-              child: Text(retryLabel),
+              child: Text(text.action),
             ),
           ),
         ],

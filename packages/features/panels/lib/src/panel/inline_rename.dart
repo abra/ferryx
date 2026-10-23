@@ -94,6 +94,7 @@ class _InlineRenameState extends State<InlineRename> {
         return KeyEventResult.ignored;
       },
       child: TextField(
+        selectAllOnFocus: false,
         controller: _controller,
         focusNode: _focus,
         style: context.text.bodyMedium,
@@ -107,6 +108,7 @@ class _InlineRenameState extends State<InlineRename> {
             vertical: AppSpacing.xxs,
           ),
         ),
+        onEditingComplete: () {},
         onSubmitted: (_) => _commit(),
       ),
     ),

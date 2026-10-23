@@ -158,6 +158,7 @@ class _VimCommandLineState extends State<VimCommandLine> {
             Text(':', style: style.copyWith(color: colors.textMuted)),
             Expanded(
               child: TextField(
+                selectAllOnFocus: false,
                 controller: _controller,
                 focusNode: _focus,
                 style: style,

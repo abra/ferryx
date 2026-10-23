@@ -17,6 +17,7 @@ class FindResults extends StatelessWidget {
   const FindResults({
     required this.state,
     required this.selected,
+    this.focusRequest = 0,
     required this.onSelect,
     required this.onGoTo,
     required this.onMenu,
@@ -25,6 +26,10 @@ class FindResults extends StatelessWidget {
 
   final FindState state;
   final int? selected;
+
+  /// Raised by the dialog when the keys come down from a field: the
+  /// [selected] hit takes the focus.
+  final int focusRequest;
   final ValueChanged<int> onSelect;
   final ValueChanged<int> onGoTo;
   final void Function(int index, Rect anchor) onMenu;
@@ -58,6 +63,7 @@ class FindResults extends StatelessWidget {
                     : _Rows(
                         hits: state.hits,
                         selected: selected,
+                        focusRequest: focusRequest,
                         onSelect: onSelect,
                         onGoTo: onGoTo,
                         onMenu: onMenu,
@@ -155,6 +161,7 @@ class _Rows extends StatelessWidget {
   const _Rows({
     required this.hits,
     required this.selected,
+    required this.focusRequest,
     required this.onSelect,
     required this.onGoTo,
     required this.onMenu,
@@ -162,6 +169,7 @@ class _Rows extends StatelessWidget {
 
   final List<FindHit> hits;
   final int? selected;
+  final int focusRequest;
   final ValueChanged<int> onSelect;
   final ValueChanged<int> onGoTo;
   final void Function(int index, Rect anchor) onMenu;
@@ -191,6 +199,7 @@ class _Rows extends StatelessWidget {
         index: index,
         hit: hits[index],
         selected: index == selected,
+        focusRequest: focusRequest,
         onSelect: onSelect,
         onGoTo: onGoTo,
         onMenu: onMenu,
@@ -217,6 +226,7 @@ class _Row extends StatefulWidget {
     required this.index,
     required this.hit,
     required this.selected,
+    required this.focusRequest,
     required this.onSelect,
     required this.onGoTo,
     required this.onMenu,
@@ -226,6 +236,7 @@ class _Row extends StatefulWidget {
   final int index;
   final FindHit hit;
   final bool selected;
+  final int focusRequest;
   final ValueChanged<int> onSelect;
   final ValueChanged<int> onGoTo;
   final void Function(int index, Rect anchor) onMenu;
@@ -249,6 +260,9 @@ class _RowState extends State<_Row> {
   @override
   void didUpdateWidget(_Row oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.selected && widget.focusRequest != oldWidget.focusRequest) {
+      _focus.requestFocus();
+    }
     if (oldWidget.index != widget.index) {
       if (_Rows._rowKeys[oldWidget.index] == _anchor) {
         _Rows._rowKeys.remove(oldWidget.index);

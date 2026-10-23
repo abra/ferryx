@@ -3142,7 +3142,7 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String syncConfirmUndo(String key) {
-    return 'Отмена ($key) уберёт копии в Корзину и вернёт удалённое из неё.';
+    return '$key отменит её: копии уйдут в Корзину.';
   }
 
   @override
@@ -3832,7 +3832,7 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String networkPasswordMessage(String user) {
-    return 'Введите пароль пользователя $user.';
+    return 'Введите пароль пользователя «$user».';
   }
 
   @override
@@ -3956,4 +3956,9 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get networkCapsuleClosed => 'Не подключено';
+
+  @override
+  String syncConfirmUndoDeleted(String key) {
+    return '$key отменит её: копии уйдут в Корзину, а удалённое вернётся из неё.';
+  }
 }

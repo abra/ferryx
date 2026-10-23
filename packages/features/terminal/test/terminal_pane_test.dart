@@ -56,6 +56,7 @@ void main() {
     WidgetTester tester, {
     AppPlatformStyle style = AppPlatformStyle.macos,
     TerminalPlacement placement = const TerminalPlacement(),
+    bool vim = false,
   }) async {
     final theme = AppTheme.of(style, Brightness.light);
     final platform = theme.platform;
@@ -65,12 +66,21 @@ void main() {
       platform: platform,
     );
     addTearDown(cubit.close);
-    final map = ShortcutMap.defaults(platform);
+    final map = ShortcutMap.forUser(platform, vimMotions: vim);
     await tester.pumpWidget(
       MaterialApp(
         theme: theme,
         localizationsDelegates: FerryxSupportedLocales.delegates,
         supportedLocales: FerryxSupportedLocales.locales,
+        // The window's keys at the root, as the app has them: Vim's `cd`,
+        // `gj` and the like among them.
+        builder: (context, child) => CommandShortcuts(
+          shortcuts: map.toShortcuts(
+            platform,
+            scopes: const {CommandScope.global},
+          ),
+          child: child!,
+        ),
         home: Scaffold(
           body: CommandHandlers(
             // The window's commands, as the workspace and the app answer
@@ -177,6 +187,25 @@ void main() {
       AppCommand.newTab,
     ]);
     expect(session.text, '\r\x1b[A\x03\x01\t');
+  });
+
+  testWidgets('with Vim keys on, letters typed in the shell never reach the '
+      'window: `cd` and `gj` are text there', (tester) async {
+    await pump(tester, vim: true);
+    for (final key in [
+      LogicalKeyboardKey.keyC,
+      LogicalKeyboardKey.keyD,
+      LogicalKeyboardKey.keyG,
+      LogicalKeyboardKey.keyJ,
+      LogicalKeyboardKey.space,
+    ]) {
+      await chord(tester, key);
+      expect(KeySequenceState.pending, isNull, reason: '$key armed nothing');
+    }
+    expect(reached, isEmpty);
+    // Command chords still reach the window from the shell.
+    await chord(tester, LogicalKeyboardKey.keyT, meta: true);
+    expect(reached, [AppCommand.newTab]);
   });
 
   testWidgets('the terminal\'s own keys win over the window\'s: Command-C '

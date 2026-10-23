@@ -210,6 +210,29 @@ void main() {
       },
     );
 
+    test('a folder entered starts on its first row, whatever row the cursor '
+        'was on and whatever the folder holds', () async {
+      fs.folders['/home/docs']!.add(fs.dir('/home/docs', 'docs'));
+      cubit.moveCursorTo(1);
+      expect(cubit.state.active!.focused?.name, 'docs');
+      await cubit.enter();
+      expect(cubit.state.active!.location, const Location.native('/home/docs'));
+      expect(
+        cubit.state.active!.cursor,
+        0,
+        reason: 'not on its own `docs`, nor on row 1 as before',
+      );
+      await cubit.goParent();
+      cubit.moveCursorTo(4);
+      await cubit.open(const Location.native('/home/docs'));
+      expect(cubit.state.active!.cursor, 0, reason: 'nor clamped to row 4');
+      // The same folder read again keeps the cursor on its row.
+      cubit.moveCursorTo(1);
+      final focused = cubit.state.active!.focused?.name;
+      await cubit.refresh();
+      expect(cubit.state.active!.focused?.name, focused);
+    });
+
     test('goBack and goForward walk the history without growing it', () async {
       await cubit.open(const Location.native('/home/docs'));
       await cubit.goBack();

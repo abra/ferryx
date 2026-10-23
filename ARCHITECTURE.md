@@ -227,7 +227,12 @@ tar is a tar, and ⌘↓ (`detect_archive`) opens an archive of any name;
   RARLAB's UnRAR, RAR 1.5–5, solid and encrypted archives; built with
   `crypto-rust` so no C toolchain is needed — the default AWS-LC backend
   wants CMake), `lzma-rust2` (xz, the one `sevenz-rust2` uses), `bzip2` 0.6
-  (its default backend is the pure-Rust `libbz2-rs-sys`). The official
+  (its default backend is the pure-Rust `libbz2-rs-sys`). `lzma-rust2`
+  comes from `rust/vendor/lzma-rust2` through `[patch.crates-io]`: 0.16.5
+  with a progress check in its LZMA and LZMA2 read loops, which spun
+  forever on about one wrong 7z password in ten (`FERRYX.md` there; 0.23
+  has the same loop). A password is also refused when the member read
+  with it ends short, as a wrong key's garbage can (`check_password`). The official
   `unrar` crate compiles RARLAB's C++ sources: mature, but a C++ build
   through cargokit for every target; `unrar-rs` reads the same formats
   with none. Both carry the UnRAR licence: free to use for extraction,
@@ -663,9 +668,10 @@ place, or over the whole window, in step with the active panel's folder.
   in one `Stack` (the panels are unmounted while hidden, so hint mode never
   labels them), with a vertical `AppSplitter` between them (drag, or ↑ ↓,
   0, Home/End, Return, Esc; the panels keep a header, four rows and the
-  footer). ⌃⌥↑ shows the terminal and gives it the keys, and when it has
-  them, makes it a line taller; ⌃⌥↓ hides it from anywhere and gives the
-  panel the keys; ⌃⌥O hides the panels over it and brings them back; ⌥⌘O
+  footer). ⌃` (or NC's ⌃⌥↑) shows the terminal and gives it the keys, and
+  when it has them, makes it a line taller; ⌃⇧` (or ⌃⌥↓) hides it from
+  anywhere and gives the panel the keys (⌃` and ⌃⇧` come first on macOS
+  because window managers such as Rectangle take ⌃⌥↑ and ⌃⌥↓); ⌃⌥O hides the panels over it and brings them back; ⌥⌘O
   takes the whole window (no key hints, no operation cards) and goes back
   where it was. The place and the height are saved (debounced) and
   restored. The key hint strip shows the terminal's keys while it has
@@ -1067,6 +1073,10 @@ partially created resources.
   tests in the sync, checksums and duplicates features (the table's keys),
   `folder_compare_test` and `undo_dialog_test` in the panels,
   `app_row_list_test` in the component library.
+- Network: `cargo run -p ferryx_test_servers --bin serve` runs the
+  three test servers on 127.0.0.1 over folders of a few files (user `me`,
+  password `secret`) and prints the FTP commands it gets, to try the
+  network locations by hand.
 - Network: in-process servers (`ferryx_test_servers`: russh's server with
   russh-sftp's handler, an FTP server of its own with `MLSD` on or off,
   explicit TLS and connections cut or hung after so many bytes,

@@ -637,14 +637,18 @@ const _defaults = <AppCommand, List<Chord>>{
   ],
   // ─── Terminal ───
   // Nimble Commander's keys: ⌥⌘O the whole window, ⌃⌥↑ ⌃⌥↓ the terminal
-  // under the panels, ⌃⌥O the panels over it.
+  // under the panels, ⌃⌥O the panels over it. Window managers (Rectangle,
+  // Magnet) take ⌃⌥↑ and ⌃⌥↓ for halves of the screen, so ⌃` and ⌃⇧`
+  // come first, as editors' terminal keys; NC's stay for who has them.
   AppCommand.toggleTerminal: [
     Chord(LogicalKeyboardKey.keyO, primary: true, alt: true),
   ],
   AppCommand.showTerminal: [
+    Chord(LogicalKeyboardKey.backquote, control: true),
     Chord(LogicalKeyboardKey.arrowUp, control: true, alt: true),
   ],
   AppCommand.hideTerminal: [
+    Chord(LogicalKeyboardKey.backquote, control: true, shift: true),
     Chord(LogicalKeyboardKey.arrowDown, control: true, alt: true),
   ],
   AppCommand.togglePanelsOverTerminal: [

@@ -49,7 +49,7 @@ class TerminalDock extends Equatable {
 class TerminalDockCubit extends Cubit<TerminalDock> {
   TerminalDockCubit([super.initialState = const TerminalDock()]);
 
-  /// ⌃⌥↑ on a hidden terminal: under the panels.
+  /// ⌃` (⌃⌥↑) on a hidden terminal: under the panels.
   void show() {
     if (state.mode == TerminalPlace.hidden) {
       emit(state.copyWith(mode: TerminalPlace.overlapped));
