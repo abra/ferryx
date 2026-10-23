@@ -114,10 +114,13 @@ void main() {
       testWidgets('$generation $brightness: the switch\'s knob and track are '
           'AppKit\'s, on and off', (tester) async {
         Color fillOf(Finder container) {
-          final decoration =
-              tester.widget<AnimatedContainer>(container).decoration!
-                  as BoxDecoration;
-          return decoration.color!;
+          return switch (tester
+              .widget<AnimatedContainer>(container)
+              .decoration!) {
+            final BoxDecoration box => box.color!,
+            final ShapeDecoration shape => shape.color!,
+            final other => throw StateError('$other'),
+          };
         }
 
         for (final value in [true, false]) {

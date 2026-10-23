@@ -122,12 +122,10 @@ class _AppCheckboxState extends State<AppCheckbox> {
                     child: Container(
                       width: box,
                       height: box,
-                      decoration: BoxDecoration(
+                      decoration: appEdgedBox(
                         color: fill,
-                        borderRadius: BorderRadius.circular(radius),
-                        border: edge == null
-                            ? null
-                            : AppBorder.all(color: edge),
+                        edge: edge,
+                        radius: radius,
                       ),
                       child: on
                           ? Icon(

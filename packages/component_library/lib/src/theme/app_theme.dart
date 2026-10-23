@@ -102,6 +102,7 @@ abstract final class AppTheme {
       textTheme,
       foreground,
       isDark: isDark,
+      surface: surface,
     );
 
     return ThemeData(
@@ -157,10 +158,17 @@ abstract final class AppTheme {
               ? (isDark ? metrics.sheetDimDark : metrics.sheetDim)
               : 0.3,
         ),
-        shape: AppRoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(metrics.radius.dialog),
-          side: BorderSide(color: ext.line),
-        ),
+        // A macOS sheet's or alert's edge is the window's: a dark line,
+        // in the dark a black one with a light one inside.
+        shape: style == AppPlatformStyle.macos
+            ? AppWindowBorder.macos(
+                radius: metrics.radius.dialog,
+                dark: isDark,
+              )
+            : AppRoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(metrics.radius.dialog),
+                side: BorderSide(color: ext.line),
+              ),
         titleTextStyle: textTheme.titleLarge,
         contentTextStyle: textTheme.bodyMedium?.copyWith(color: ext.textMuted),
       ),
@@ -231,6 +239,7 @@ class _Controls {
     this.ramp,
     this.foreground, {
     required this.isDark,
+    required this.surface,
   });
 
   final AppPlatformStyle style;
@@ -239,6 +248,7 @@ class _Controls {
   final TextTheme ramp;
   final Color foreground;
   final bool isDark;
+  final Color surface;
 
   /// Laid over a bezel's lower edge where the platform shades it, as
   /// AppKit's bezels end in a shadow (macOS 15, light: #B9B9B9 below a
@@ -279,9 +289,11 @@ class _Controls {
         top: ext.line,
         bottom: ext.controlBorder,
       ),
+    // The fill inside the bezel, so its corners keep their edge.
     final shade? when elevated => AppBezelBorder(
       shade: shade,
       borderRadius: _radius,
+      insetFill: true,
     ),
     _ => AppRoundedRectangleBorder(borderRadius: _radius),
   };
@@ -318,7 +330,12 @@ class _Controls {
       pressed: pressed ?? Colors.transparent,
     ),
     side: side == null ? null : WidgetStatePropertyAll(side),
-    shape: WidgetStatePropertyAll(shape),
+    // The keyboard focus ring, outside the button, drawn by the shape: a
+    // builder's paint would be clipped to the button with its children.
+    shape: FocusRing.ringedShape(
+      shape,
+      FocusRing.ringOf(metrics, ext, surface),
+    ),
     minimumSize: WidgetStatePropertyAll(Size(0, metrics.controlHeight)),
     padding: WidgetStatePropertyAll(_padding),
     textStyle: WidgetStatePropertyAll(ramp.labelLarge),
@@ -330,14 +347,6 @@ class _Controls {
     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
     visualDensity: VisualDensity.standard,
     animationDuration: Duration.zero,
-    // The keyboard focus ring, outside the button, while the keys are in
-    // use (the painter draws nothing after a click).
-    backgroundBuilder: (context, states, child) => CustomPaint(
-      foregroundPainter: states.contains(WidgetState.focused)
-          ? FocusRingPainter.of(context, radius: metrics.radius.control)
-          : null,
-      child: child,
-    ),
   );
 
   /// The default (macOS), accent (Windows) or suggested (GNOME) button;
@@ -501,18 +510,18 @@ class _Controls {
   TooltipThemeData tooltip(bool isDark) {
     final Color background;
     final Color ink;
-    final BoxBorder? border;
+    final Color? border;
     final double radius;
     switch (style) {
       case AppPlatformStyle.macos:
         background = isDark ? const Color(0xF23A3A3C) : const Color(0xF7F6F6F6);
         ink = foreground;
-        border = AppBorder.all(color: ext.line);
+        border = ext.line;
         radius = 5;
       case AppPlatformStyle.windows:
         background = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF9F9F9);
         ink = foreground;
-        border = AppBorder.all(color: ext.line);
+        border = ext.line;
         radius = 4;
       case AppPlatformStyle.gnome:
         // Adwaita's tooltips are dark plates in both styles.
@@ -530,11 +539,11 @@ class _Controls {
           AppPlatformStyle.gnome => 500,
         },
       ),
-      decoration: BoxDecoration(
+      decoration: appEdgedBox(
         color: background,
-        borderRadius: BorderRadius.circular(radius),
-        border: border,
-        boxShadow: [
+        edge: border,
+        radius: radius,
+        shadows: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.14),
             blurRadius: 8,

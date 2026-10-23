@@ -380,8 +380,8 @@ void main() {
   testWidgets('the menu plate: fill, an edge that holds on a white page, a '
       'tight and a floating shadow on every style', (tester) async {
     for (final style in styles) {
-      late BoxDecoration plate;
-      late BoxDecoration onDark;
+      late ShapeDecoration plate;
+      late ShapeDecoration onDark;
       await tester.pumpWidget(
         MaterialApp(
           themeAnimationDuration: Duration.zero,
@@ -396,20 +396,23 @@ void main() {
         ),
       );
       final colors = AppTheme.light(style).extension<AppColorsExt>()!;
-      final edge = (plate.border! as Border).top.color;
+      final shape = plate.shape as AppRoundedRectangleBorder;
+      final edge = shape.side.color;
       expect(edge.a, greaterThan(colors.line.a), reason: '$style: no divider');
-      final shadows = plate.boxShadow!;
+      // The fill stops inside the edge, so its corners keep it.
+      expect(shape.insetFill, isTrue);
+      final shadows = plate.shadows!;
       expect(shadows, hasLength(2));
       expect(shadows.first.blurRadius, lessThan(8), reason: 'at the edge');
       expect(shadows.last.blurRadius, greaterThanOrEqualTo(16));
       // What lies under the plate sets the shadow: heavier on a dark one.
       expect(
-        onDark.boxShadow!.last.color.a,
+        onDark.shadows!.last.color.a,
         greaterThan(shadows.last.color.a),
       );
-      expect(onDark.border, plate.border, reason: 'the edge is the theme\'s');
+      expect(onDark.shape, plate.shape, reason: 'the edge is the theme\'s');
       expect(
-        plate.borderRadius,
+        shape.borderRadius,
         BorderRadius.circular(AppMetrics.of(style).radius.menu),
       );
     }

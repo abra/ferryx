@@ -49,12 +49,10 @@ class FindResults extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Expanded(
             child: Container(
-              decoration: BoxDecoration(
+              decoration: appEdgedBox(
                 color: context.colors.surface,
-                borderRadius: BorderRadius.circular(
-                  context.metrics.radius.tableFrame,
-                ),
-                border: AppBorder.all(color: colors.line),
+                edge: colors.line,
+                radius: context.metrics.radius.tableFrame,
               ),
               clipBehavior: Clip.antiAlias,
               child: AppFocusArea(

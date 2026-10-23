@@ -132,8 +132,9 @@ class _OperationCard extends StatelessWidget {
           AppSpacing.sm,
         ),
         // The menus' plate, rounded as a card is.
-        decoration: AppMenuPanel.plate(context).copyWith(
-          borderRadius: BorderRadius.circular(context.metrics.radius.card),
+        decoration: AppMenuPanel.plate(
+          context,
+          radius: context.metrics.radius.card,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

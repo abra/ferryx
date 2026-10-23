@@ -154,10 +154,10 @@ class _RecordChordDialogState extends State<_RecordChordDialog> {
                   horizontal: AppSpacing.md,
                   vertical: AppSpacing.xs,
                 ),
-                decoration: BoxDecoration(
+                decoration: appEdgedBox(
                   color: colors.controlFill,
-                  borderRadius: BorderRadius.circular(metrics.radius.control),
-                  border: AppBorder.all(color: colors.controlBorder),
+                  edge: colors.controlBorder,
+                  radius: metrics.radius.control,
                 ),
                 alignment: Alignment.centerLeft,
                 child: chord == null

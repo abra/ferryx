@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'theme/app_platform_style.dart';
+import 'theme/extensions/app_colors_ext.dart';
+import 'theme/extensions/app_metrics.dart';
 import 'theme/extensions/build_context_ext.dart';
+import 'theme/hairlines.dart';
 
 /// Draws the platform's keyboard focus ring around [child] while it has
 /// focus: the accent halo of macOS, Fluent's high-contrast 2 px stroke,
@@ -36,6 +39,34 @@ class FocusRing extends StatelessWidget {
   static bool showsHighlight() =>
       FocusManager.instance.highlightMode == FocusHighlightMode.traditional;
 
+  /// The platform's ring: the accent halo of [metrics]' width and gap,
+  /// with Fluent's inner line in [surface].
+  static AppRing ringOf(
+    AppMetrics metrics,
+    AppColorsExt colors,
+    Color surface,
+  ) => AppRing(
+    color: colors.focusRing,
+    width: metrics.focusRingWidth,
+    gap: metrics.focusRingGap,
+    inner: metrics.style == AppPlatformStyle.windows ? surface : null,
+  );
+
+  /// A button's [shape], with [ring] round it while the button has the
+  /// keyboard's focus. A [Material] clips whatever its children paint, so
+  /// a button's ring is its shape's to draw.
+  static WidgetStateProperty<OutlinedBorder> ringedShape(
+    OutlinedBorder shape,
+    AppRing ring,
+  ) => WidgetStateProperty.resolveWith(
+    (states) =>
+        shape is AppRoundedRectangleBorder &&
+            states.contains(WidgetState.focused) &&
+            showsHighlight()
+        ? shape.withRing(ring)
+        : shape,
+  );
+
   @override
   Widget build(BuildContext context) {
     final hasFocus = decorate && (focused ?? Focus.of(context).hasFocus);
@@ -67,20 +98,22 @@ class FocusRingPainter extends CustomPainter {
   }) : super(repaint: _HighlightMode.instance);
 
   /// The ring of the theme's platform style around a box with [radius]
-  /// corners (the control radius by default).
+  /// corners (the control radius by default). Fluent pairs the outer
+  /// stroke with a 1 px inner one in the background colour, so the ring
+  /// reads on any fill.
   factory FocusRingPainter.of(BuildContext context, {double? radius}) {
     final metrics = context.metrics;
-    final colors = context.appColors;
+    final ring = FocusRing.ringOf(
+      metrics,
+      context.appColors,
+      context.colors.surface,
+    );
     return FocusRingPainter(
-      color: colors.focusRing,
-      width: metrics.focusRingWidth,
-      gap: metrics.focusRingGap,
+      color: ring.color,
+      width: ring.width,
+      gap: ring.gap,
       radius: radius ?? metrics.radius.control,
-      // Fluent pairs the outer stroke with a 1 px inner one in the
-      // background colour, so the ring reads on any fill.
-      inner: metrics.style == AppPlatformStyle.windows
-          ? context.colors.surface
-          : null,
+      inner: ring.inner,
     );
   }
 
@@ -93,31 +126,11 @@ class FocusRingPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (!FocusRing.showsHighlight()) return;
-    final box = Offset.zero & size;
-    final outset = gap + width / 2;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        box.inflate(outset),
-        Radius.circular(radius + outset),
-      ),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = width
-        ..color = color,
+    paintRing(
+      canvas,
+      RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius)),
+      AppRing(color: color, width: width, gap: gap, inner: inner),
     );
-    final innerColor = inner;
-    if (innerColor != null && gap > 0) {
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          box.inflate(gap / 2),
-          Radius.circular(radius + gap / 2),
-        ),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = gap
-          ..color = innerColor,
-      );
-    }
   }
 
   @override

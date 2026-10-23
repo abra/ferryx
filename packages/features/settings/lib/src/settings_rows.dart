@@ -84,10 +84,10 @@ class SettingsBox extends StatelessWidget {
     final colors = context.appColors;
     return Container(
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
+      decoration: appEdgedBox(
         color: fillOf(context),
-        borderRadius: BorderRadius.circular(context.metrics.radius.card),
-        border: AppBorder.all(color: colors.line),
+        edge: colors.line,
+        radius: context.metrics.radius.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

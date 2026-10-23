@@ -414,12 +414,10 @@ class _AppQuickPickerState<T> extends State<AppQuickPicker<T>> {
     final colors = context.appColors;
     final extent = AppQuickPicker.rowExtentOf(context);
     final title = widget.title;
-    final decoration =
-        AppMenuPanel.plate(
-          context,
-        ).copyWith(
-          borderRadius: BorderRadius.circular(context.metrics.radius.dialog),
-        );
+    final decoration = AppMenuPanel.plate(
+      context,
+      radius: context.metrics.radius.dialog,
+    );
     return Material(
       type: MaterialType.transparency,
       child: Container(

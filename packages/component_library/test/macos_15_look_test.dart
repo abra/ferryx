@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:component_library/component_library.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// What macOS 15 draws, measured beside AppKit at one pixel per point:
@@ -164,6 +165,156 @@ void main() {
     ).extension<AppColorsExt>()!;
     expect(await chevrons(MacGeneration.sequoia), colors.onAccent);
     expect(await chevrons(MacGeneration.tahoe), colors.textMuted);
+  });
+
+  group('edges hold round the corners at one pixel per point', () {
+    const ground = Color(0xFFE9E9E9);
+
+    /// The grey of every pixel of the screen, read back.
+    Future<int Function(int x, int y)> pixels(WidgetTester tester) async {
+      final data = await tester.runAsync(() async {
+        final image = await captureImage(
+          find.byType(RepaintBoundary).evaluate().first,
+        );
+        return (
+          image.width,
+          (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!,
+        );
+      });
+      final (width, bytes) = data!;
+      return (x, y) => bytes.getUint8((y * width + x) * 4 + 1);
+    }
+
+    /// From outside a corner inward along its diagonal, the first pixel
+    /// off the ground is the edge's, darker; a fill laid under the edge
+    /// shows first, lighter, and the corner looks open.
+    void expectEdgeAtCorner(int Function(int, int) grey, Offset corner) {
+      for (var k = 0; k < 8; k++) {
+        final g = grey(corner.dx.round() + k, corner.dy.round() + k);
+        if (g == 0xE9) continue;
+        expect(g, lessThan(0xE9), reason: 'the first pixel in, at $k');
+        return;
+      }
+      fail('no edge on the diagonal');
+    }
+
+    Future<void> pumpOnGround(WidgetTester tester, Widget child) async {
+      tester.view.physicalSize = const Size(300, 200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          themeAnimationDuration: Duration.zero,
+          theme: AppTheme.of(AppPlatformStyle.macos, Brightness.light),
+          home: RepaintBoundary(
+            child: ColoredBox(
+              color: ground,
+              child: Center(child: child),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    for (final half in [false, true]) {
+      testWidgets('an edged box${half ? ' half a pixel off' : ''}', (
+        tester,
+      ) async {
+        await pumpOnGround(
+          tester,
+          Padding(
+            padding: EdgeInsets.only(top: half ? 1 : 0),
+            child: Container(
+              key: const Key('box'),
+              width: 120,
+              height: 41,
+              clipBehavior: Clip.antiAlias,
+              decoration: appEdgedBox(
+                color: Colors.white,
+                edge: const Color(0x1A000000),
+                radius: 8,
+              ),
+              child: const ColoredBox(color: Colors.white),
+            ),
+          ),
+        );
+        expectEdgeAtCorner(
+          await pixels(tester),
+          tester.getTopLeft(find.byKey(const Key('box'))),
+        );
+      });
+    }
+
+    testWidgets('a push button', (tester) async {
+      await pumpOnGround(
+        tester,
+        OutlinedButton(onPressed: () {}, child: const Text('Cancel')),
+      );
+      final grey = await pixels(tester);
+      final button = tester.getRect(find.byType(OutlinedButton));
+      expectEdgeAtCorner(grey, button.topLeft);
+    });
+
+    testWidgets('a focused button shows its ring: the button does not '
+        'clip it away', (tester) async {
+      final node = FocusNode();
+      addTearDown(node.dispose);
+      await pumpOnGround(
+        tester,
+        OutlinedButton(
+          focusNode: node,
+          onPressed: () {},
+          child: const Text('Cancel'),
+        ),
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      node.requestFocus();
+      await tester.pumpAndSettle();
+      final button = tester.getRect(find.byType(OutlinedButton));
+      final data = await tester.runAsync(() async {
+        final image = await captureImage(
+          find.byType(RepaintBoundary).evaluate().first,
+        );
+        return (
+          image.width,
+          (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!,
+        );
+      });
+      final (width, bytes) = data!;
+      final i =
+          ((button.top.round() - 2) * width + button.center.dx.round()) * 4;
+      // Blue two points above the bezel, on a grey ground.
+      expect(bytes.getUint8(i + 2), greaterThan(bytes.getUint8(i) + 30));
+    });
+
+    testWidgets('a dialog: its content is clipped inside the edge', (
+      tester,
+    ) async {
+      await pumpOnGround(
+        tester,
+        AppDialog(
+          title: 'Copy',
+          width: 240,
+          actions: [OutlinedButton(onPressed: () {}, child: const Text('OK'))],
+        ),
+      );
+      final grey = await pixels(tester);
+      final dialog = tester.getRect(
+        find
+            .descendant(
+              of: find.byType(Dialog),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+      final x = dialog.center.dx.round();
+      final top = dialog.top.round();
+      // The edge line, darker than the ground above it and the fill below.
+      expect(grey(x, top), lessThan(grey(x, top - 3)));
+      expect(grey(x, top), lessThan(grey(x, top + 3)));
+      expectEdgeAtCorner(grey, dialog.topLeft);
+    });
   });
 
   group('a menu', () {

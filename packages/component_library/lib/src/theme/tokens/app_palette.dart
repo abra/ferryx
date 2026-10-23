@@ -129,7 +129,9 @@ class AppPalette {
       pressedFill: Color(0x1A000000),
       selectionFill: Color(0x1A000000),
       controlFill: Color(0xFFFFFFFF),
-      controlBorder: Color(0x26000000),
+      // Laid over what is behind a control, not over its fill: #D2 on the
+      // window's grey, as AppKit's #DF on its lighter one.
+      controlBorder: Color(0x1A000000),
       line: Color(0x1A000000),
       textMuted: Color(0x8C000000),
       textFaint: Color(0x6B000000),

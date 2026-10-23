@@ -153,7 +153,11 @@ See `ARCHITECTURE.md`. The rules that matter most:
   component library's snapping ones (`AppBorder`, `AppRoundedRectangleBorder`,
   `AppOutlineInputBorder`, `AppDivider`, `AppRule`), never Flutter's own
   (`test/app/hairline_sources_test.dart`); a surface placed by centring goes
-  in a `PixelSnap`.
+  in a `PixelSnap`. A rounded box with an edge is an `appEdgedBox` (its
+  fill stops inside the edge, so the corners keep it), never a
+  `BoxDecoration` with a border and a radius; a `Material` with an edged
+  shape does not clip (`ClipInsideEdge` clips its content instead), or the
+  edge is clipped away with the content.
 - Font weights: the faces may be variable, so change a weight with
   `style.weight(FontWeight.w600)`, never with a bare `copyWith(fontWeight:)`.
   Monospace goes through `context.mono`.

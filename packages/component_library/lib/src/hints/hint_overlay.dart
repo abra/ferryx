@@ -150,12 +150,10 @@ class _HintOverlayState extends State<HintOverlay> {
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.xs,
                         ),
-                        decoration: BoxDecoration(
+                        decoration: appEdgedBox(
                           color: colors.hintBackground,
-                          border: AppBorder.all(color: colors.hintBorder),
-                          borderRadius: BorderRadius.circular(
-                            context.metrics.radius.chip,
-                          ),
+                          edge: colors.hintBorder,
+                          radius: context.metrics.radius.chip,
                         ),
                         child: Text(_labels[i], style: labelStyle),
                       ),

@@ -268,12 +268,10 @@ class _Fingerprint extends StatelessWidget {
       horizontal: AppSpacing.sm,
       vertical: AppSpacing.xs,
     ),
-    decoration: BoxDecoration(
+    decoration: appEdgedBox(
       color: context.appColors.surfaceSunken,
-      borderRadius: BorderRadius.circular(context.metrics.radius.control),
-      border: AppBorder.fromBorderSide(
-        BorderSide(color: context.appColors.line),
-      ),
+      edge: context.appColors.line,
+      radius: context.metrics.radius.control,
     ),
     // Small enough that a SHA256 fingerprint keeps to one line, to be read
     // against the one given in one go.

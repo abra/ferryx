@@ -389,10 +389,10 @@ class AppRowListState extends State<AppRowList> {
         radius: radius,
         child: Container(
           // The content colour in a hairline frame, as a bezeled table.
-          decoration: BoxDecoration(
+          decoration: appEdgedBox(
             color: context.colors.surface,
-            borderRadius: BorderRadius.circular(radius),
-            border: AppBorder.all(color: colors.line),
+            edge: colors.line,
+            radius: radius,
           ),
           clipBehavior: Clip.antiAlias,
           child: AppFocusArea(

@@ -69,14 +69,12 @@ class AppSegmentedControl<T> extends StatelessWidget {
           radius: outer,
           child: Container(
             padding: EdgeInsets.all(pad),
-            decoration: BoxDecoration(
+            decoration: appEdgedBox(
               color: style == AppPlatformStyle.windows
                   ? colors.surfaceSunken
                   : colors.selectionFill,
-              borderRadius: BorderRadius.circular(outer),
-              border: style == AppPlatformStyle.windows
-                  ? AppBorder.all(color: colors.line)
-                  : null,
+              edge: style == AppPlatformStyle.windows ? colors.line : null,
+              radius: outer,
             ),
             // Each segment takes its label's width; short of room they
             // share it and the labels end in an ellipsis, never overflow.
@@ -136,13 +134,13 @@ class _Segment extends StatelessWidget {
     final colors = context.appColors;
     final windows = context.metrics.style == AppPlatformStyle.windows;
     final raised = selected
-        ? BoxDecoration(
+        ? appEdgedBox(
             color: context.isDark && !windows
                 ? colors.controlFill
                 : context.colors.surface,
-            borderRadius: BorderRadius.circular(radius),
-            border: windows ? AppBorder.all(color: colors.line) : null,
-            boxShadow: windows
+            edge: windows ? colors.line : null,
+            radius: radius,
+            shadows: windows
                 ? null
                 : const [
                     BoxShadow(

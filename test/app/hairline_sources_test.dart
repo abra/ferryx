@@ -63,6 +63,35 @@ void main() {
     expect(offenders, isEmpty);
   });
 
+  test('a rounded box with an edge is an appEdgedBox: a BoxDecoration lays '
+      'its fill under the edge, which fades at the corners', () {
+    final box = RegExp(r'(?<![A-Za-z_])BoxDecoration\(');
+    final offenders = <String>[];
+    for (final file in _sources()) {
+      final code = file.readAsStringSync();
+      for (final match in box.allMatches(code)) {
+        final call = _call(code, match.start);
+        // A border all round (a line on one side has no corner to lose).
+        final edged = RegExp(
+          r'border:\s*(AppBorder\.all|AppBorder\.fromBorderSide|AppBorder\()',
+        ).hasMatch(call);
+        final oneSide = RegExp(
+          r'AppBorder\(\s*(top|bottom|left|right):\s*BorderSide\([^()]*(\([^()]*\))?[^()]*\),?\s*\)',
+        ).hasMatch(call);
+        if (edged && !oneSide && call.contains('borderRadius:')) {
+          final line = '\n'.allMatches(code.substring(0, match.start)).length;
+          offenders.add('${file.path}:${line + 1}');
+        }
+      }
+    }
+    // The key cap's thicker lower edge is not uniform: a ShapeBorder
+    // cannot draw it.
+    expect(
+      offenders.where((o) => !o.contains('app_key_cap.dart')),
+      isEmpty,
+    );
+  });
+
   test('a Tooltip built directly places its tip on the screen\'s pixels '
       '(AppTooltip.placeOnPixels), as AppTooltip does', () {
     final tooltip = RegExp(r'(?<![A-Za-z_])Tooltip\(');

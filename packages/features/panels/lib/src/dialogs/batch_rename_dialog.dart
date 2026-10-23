@@ -422,9 +422,9 @@ class _PreviewTable extends StatelessWidget {
     final colors = context.appColors;
     final rowHeight = context.metrics.listRowHeight;
     return Container(
-      decoration: BoxDecoration(
-        border: AppBorder.fromBorderSide(BorderSide(color: colors.line)),
-        borderRadius: BorderRadius.circular(context.metrics.radius.card),
+      decoration: appEdgedBox(
+        edge: colors.line,
+        radius: context.metrics.radius.tableFrame,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

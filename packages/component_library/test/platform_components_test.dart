@@ -658,7 +658,8 @@ void main() {
         find.byWidgetPredicate(
           (w) =>
               w is Container &&
-              (w.decoration as BoxDecoration?)?.color == accent &&
+              w.decoration is BoxDecoration &&
+              (w.decoration! as BoxDecoration).color == accent &&
               w.constraints?.maxHeight == 3,
         ),
       );

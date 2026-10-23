@@ -343,17 +343,19 @@ class _NamesBox extends StatelessWidget {
       listenable: focusNode,
       builder: (context, child) => FocusRing(
         focused: focusNode.hasFocus,
-        radius: context.metrics.radius.card,
+        radius: context.metrics.radius.tableFrame,
         child: child!,
       ),
       child: DecoratedBox(
-        decoration: BoxDecoration(
+        decoration: appEdgedBox(
           color: context.colors.surface,
-          border: AppBorder.fromBorderSide(BorderSide(color: colors.line)),
-          borderRadius: BorderRadius.circular(context.metrics.radius.card),
+          edge: colors.line,
+          radius: context.metrics.radius.tableFrame,
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(context.metrics.radius.card),
+          borderRadius: BorderRadius.circular(
+            context.metrics.radius.tableFrame,
+          ),
           child: LayoutBuilder(
             builder: (context, constraints) {
               final width = constraints.maxWidth;

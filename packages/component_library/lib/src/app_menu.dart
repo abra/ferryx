@@ -6,6 +6,7 @@ import 'app_icons.dart';
 import 'app_key_cap.dart';
 import 'app_label_row.dart';
 import 'focus_ring.dart';
+import 'theme/app_platform_style.dart';
 import 'theme/extensions/build_context_ext.dart';
 import 'theme/tokens/app_icon_size.dart';
 import 'theme/tokens/app_sizes.dart';
@@ -87,19 +88,31 @@ class AppMenuPanel extends StatelessWidget {
   /// it keeps the plate off a white page. The shadow follows what lies
   /// under the plate: [backdrop] when that is not the theme's own (a dark
   /// bar on a white PDF page).
-  static BoxDecoration plate(BuildContext context, {Brightness? backdrop}) {
+  /// [radius] rounds it as other plates are (a card, a picker); a menu's
+  /// by default. On macOS the edge is a window's ([AppWindowBorder.macos]).
+  static ShapeDecoration plate(
+    BuildContext context, {
+    Brightness? backdrop,
+    double? radius,
+  }) {
     final dark = context.isDark;
     final darkBackdrop =
         (backdrop ?? context.theme.brightness) == Brightness.dark;
-    return BoxDecoration(
+    final corner = radius ?? context.metrics.radius.menu;
+    return ShapeDecoration(
       color: menuBackground(context),
-      borderRadius: BorderRadius.circular(context.metrics.radius.menu),
-      border: AppBorder.all(
-        color: dark
-            ? context.appColors.line
-            : Colors.black.withValues(alpha: 0.18),
-      ),
-      boxShadow: [
+      shape: context.metrics.style == AppPlatformStyle.macos
+          ? AppWindowBorder.macos(radius: corner, dark: dark)
+          : AppRoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(corner),
+              insetFill: true,
+              side: BorderSide(
+                color: dark
+                    ? context.appColors.line
+                    : Colors.black.withValues(alpha: 0.18),
+              ),
+            ),
+      shadows: [
         BoxShadow(
           color: Colors.black.withValues(alpha: darkBackdrop ? 0.4 : 0.12),
           blurRadius: 3,

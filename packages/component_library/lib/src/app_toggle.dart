@@ -100,12 +100,10 @@ class AppToggle extends StatelessWidget {
                     width: size.width,
                     height: size.height,
                     padding: EdgeInsets.symmetric(horizontal: inset),
-                    decoration: BoxDecoration(
+                    decoration: appEdgedBox(
                       color: track,
-                      borderRadius: BorderRadius.circular(AppRadius.full),
-                      border: outline == null
-                          ? null
-                          : AppBorder.all(color: outline),
+                      edge: outline,
+                      radius: AppRadius.full,
                     ),
                     child: AnimatedAlign(
                       duration: context.motion(AppMotion.quick),

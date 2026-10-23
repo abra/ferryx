@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import 'app_identity.dart';
+import 'focus_ring.dart';
 import 'pixel_snap.dart';
 import 'popup_focus.dart';
 
@@ -50,14 +51,18 @@ class AppDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = context.metrics.style;
     final radius = context.metrics.radius;
+    final themed = DialogTheme.of(context).shape;
+    final shape = switch (themed) {
+      final RoundedRectangleBorder shape when alert => shape.copyWith(
+        borderRadius: BorderRadius.circular(radius.alert),
+      ),
+      _ => themed,
+    };
     return Dialog(
-      clipBehavior: Clip.antiAlias,
-      shape: switch (DialogTheme.of(context).shape) {
-        final RoundedRectangleBorder shape when alert => shape.copyWith(
-          borderRadius: BorderRadius.circular(radius.alert),
-        ),
-        _ => null,
-      },
+      // The content is clipped inside the edge, not the dialog as a whole:
+      // the dialog's own clip would take its edge away with the content.
+      clipBehavior: Clip.none,
+      shape: shape,
       // The platform's narrowest: NSAlert 260, ContentDialog 320,
       // AdwAlertDialog 300 (Material's 280 otherwise).
       constraints: BoxConstraints(
@@ -67,48 +72,51 @@ class AppDialog extends StatelessWidget {
           AppPlatformStyle.gnome => alert ? 300 : 280,
         },
       ),
-      child: _DialogKeys(
-        actions: actions,
-        destructive: destructive,
-        child: PixelSnap(
-          child: switch (style) {
-            AppPlatformStyle.macos => _Standard(
-              dialog: this,
-              centered: alert,
-              // NSAlert on macOS 15: 260 wide, the app's icon 20 from the
-              // top, its buttons large, 12 apart and 18 in, 16 from the
-              // bottom; a sheet's content 20 in, its buttons 12 apart.
-              maxWidth: alert ? 260 : width,
-              icon: alert ? AppIdentity.iconOf(context) : null,
-              padding: alert
-                  ? const EdgeInsets.fromLTRB(18, 20, 18, 16)
-                  : EdgeInsets.all(context.metrics.contentMargin),
-              titleStyle: context.text.titleSmall,
-              bodyStyle: alert
-                  ? context.text.bodySmall
-                  : context.text.bodyMedium,
-              bodyColor: context.colors.onSurface,
-              stretchActions: alert,
-              actionGap: AppSpacing.md,
-              actionHeight: alert ? context.metrics.controlHeightLarge : null,
-            ),
-            AppPlatformStyle.windows => _ContentDialog(dialog: this),
-            AppPlatformStyle.gnome => _Standard(
-              dialog: this,
-              centered: alert,
-              // AdwAlertDialog: 300–372 wide, its buttons 44 high, 12 apart.
-              maxWidth: alert ? 372 : width,
-              padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-              titleStyle: alert
-                  ? context.text.titleLarge
-                  : context.text.titleMedium,
-              bodyStyle: context.text.bodyMedium,
-              bodyColor: context.appColors.textMuted,
-              stretchActions: alert,
-              actionGap: AppSpacing.md,
-              actionHeight: alert ? context.metrics.controlHeightLarge : null,
-            ),
-          },
+      child: ClipInsideEdge(
+        shape: shape,
+        child: _DialogKeys(
+          actions: actions,
+          destructive: destructive,
+          child: PixelSnap(
+            child: switch (style) {
+              AppPlatformStyle.macos => _Standard(
+                dialog: this,
+                centered: alert,
+                // NSAlert on macOS 15: 260 wide, the app's icon 20 from the
+                // top, its buttons large, 12 apart and 18 in, 16 from the
+                // bottom; a sheet's content 20 in, its buttons 12 apart.
+                maxWidth: alert ? 260 : width,
+                icon: alert ? AppIdentity.iconOf(context) : null,
+                padding: alert
+                    ? const EdgeInsets.fromLTRB(18, 20, 18, 16)
+                    : EdgeInsets.all(context.metrics.contentMargin),
+                titleStyle: context.text.titleSmall,
+                bodyStyle: alert
+                    ? context.text.bodySmall
+                    : context.text.bodyMedium,
+                bodyColor: context.colors.onSurface,
+                stretchActions: alert,
+                actionGap: AppSpacing.md,
+                actionHeight: alert ? context.metrics.controlHeightLarge : null,
+              ),
+              AppPlatformStyle.windows => _ContentDialog(dialog: this),
+              AppPlatformStyle.gnome => _Standard(
+                dialog: this,
+                centered: alert,
+                // AdwAlertDialog: 300–372 wide, its buttons 44 high, 12 apart.
+                maxWidth: alert ? 372 : width,
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+                titleStyle: alert
+                    ? context.text.titleLarge
+                    : context.text.titleMedium,
+                bodyStyle: context.text.bodyMedium,
+                bodyColor: context.appColors.textMuted,
+                stretchActions: alert,
+                actionGap: AppSpacing.md,
+                actionHeight: alert ? context.metrics.controlHeightLarge : null,
+              ),
+            },
+          ),
         ),
       ),
     );
@@ -504,10 +512,12 @@ class _AlertActionShape extends StatelessWidget {
     final mac = metrics.style == AppPlatformStyle.macos;
     if (!mac && radius.alertAction == radius.control) return child;
     final theme = Theme.of(context);
-    final shape = WidgetStatePropertyAll<OutlinedBorder>(
+    final shape = FocusRing.ringedShape(
       AppRoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radius.alertAction),
+        insetFill: true,
       ),
+      FocusRing.ringOf(metrics, context.appColors, theme.colorScheme.surface),
     );
     // NSAlert's buttons keep 8 beside their labels, so "Move to Trash"
     // still fits beside "Cancel" in 260.
@@ -766,4 +776,27 @@ double appDialogBodyMaxHeight(BuildContext context) {
     AppSizes.pickerListMaxHeight,
     MediaQuery.sizeOf(context).height - chrome,
   );
+}
+
+/// Clips [child] to the inside of [shape]'s edge (its fill), so a surface
+/// that draws its edge round its content, as a window does, keeps it: a
+/// [Material]'s own clip covers the edge too. Without a shape, no clip.
+class ClipInsideEdge extends StatelessWidget {
+  const ClipInsideEdge({required this.shape, required this.child, super.key});
+
+  final ShapeBorder? shape;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => switch (shape) {
+    null => child,
+    final shape => ClipPath(
+      clipper: ShapeBorderClipper(
+        shape: shape,
+        textDirection: Directionality.maybeOf(context),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: child,
+    ),
+  };
 }

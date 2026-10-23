@@ -67,6 +67,15 @@ not:
   colour (`colors.surface`: white, or #1E1E1E), not on the window's grey;
   a table inside a dialog is framed by a hairline (`radius.tableFrame`,
   square on macOS 15). Rows are `metrics.listRowHeight` tall.
+- Edges: a fill stops inside its edge (`insetFill`, `appEdgedBox`), as
+  AppKit draws a bezel or a window: laid under a translucent edge it
+  shows through the rounded corners' half-covered pixels and the edge
+  seems to break there. A `Material` clips its children to its shape, the
+  edge with them, so a button has no background builder (its focus ring
+  is its shape's: `FocusRing.ringedShape`) and a dialog clips only its
+  content (`ClipInsideEdge`). A macOS window, sheet, alert or menu has a
+  window's edge (`AppWindowBorder.macos`): a dark line, in the dark a black
+  one with a light one inside.
 - Bezels: on macOS 15 a push button, a pop-up and a text field end in a
   darker lower edge (`AppBezelBorder`, `AppOutlineInputBorder.shade`);
   a text field is square (`radius.field`) with its text 4 from the edge,

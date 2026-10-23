@@ -127,14 +127,10 @@ class _SortIndicator extends StatelessWidget {
                 width: AppIconSize.md,
                 height: AppIconSize.md,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(
+                decoration: appEdgedBox(
                   color: colors.controlFill,
-                  borderRadius: BorderRadius.circular(
-                    context.metrics.radius.chip,
-                  ),
-                  border: AppBorder.fromBorderSide(
-                    BorderSide(color: colors.controlBorder),
-                  ),
+                  edge: colors.controlBorder,
+                  radius: context.metrics.radius.chip,
                 ),
                 child: Text(
                   sort.indicator,
