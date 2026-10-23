@@ -3859,4 +3859,10 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get networkRecent => 'Recent';
+
+  @override
+  String get networkCapsuleLost => 'Connection lost';
+
+  @override
+  String get networkCapsuleClosed => 'Not connected';
 }

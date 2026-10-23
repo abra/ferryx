@@ -35,6 +35,12 @@ class RecentItems {
   /// The key the palette's commands are kept under.
   static const commandsKey = 'ferryx.recentCommands';
 
+  // ─── Network ───
+
+  /// The key the addresses Connect to Server reached lately (never with
+  /// a password) are kept under.
+  static const serversKey = 'ferryx.recentServers';
+
   final SideStorage _storage;
   final String key;
   final int capacity;

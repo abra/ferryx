@@ -92,8 +92,9 @@ async fn with_stop<T>(future: impl Future<Output = VfsResult<T>>, stop: Stop<'_>
     }
 }
 
+/// Out of time; the kind says it all.
 pub fn timed_out() -> VfsError {
-    VfsError::new(VfsErrorKind::TimedOut, None, "the server did not answer in time")
+    VfsError::new(VfsErrorKind::TimedOut, None, String::new())
 }
 
 #[cfg(test)]

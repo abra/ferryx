@@ -188,9 +188,18 @@ extension _VimActions on _WorkspaceScreenState {
       case 'extract':
         await _extractTo(destination: arg.isEmpty ? null : _vimPath(arg));
       case 'flat':
-        await _active.toggleFlatView();
+        if (!_onServer()) await _active.toggleFlatView();
       case 'tag':
         await _vimTag(arg);
+      // ─── Network ───
+      case 'connect' || 'conn':
+        if (arg.isEmpty) {
+          await _connectToServer();
+        } else {
+          await _connectAddress(arg, _active);
+        }
+      case 'disconnect' || 'disc':
+        await _disconnectServer();
       default:
         showAppNotice(context, _l10n.vimUnknownCommand(name));
     }
@@ -203,6 +212,16 @@ extension _VimActions on _WorkspaceScreenState {
     }
     if (arg.isEmpty) {
       await _goStandard((f) => f.home);
+      return;
+    }
+    // ─── Network ───
+    if (arg.contains('://')) {
+      await _connectAddress(arg, _active);
+      return;
+    }
+    final here = _tab?.location;
+    if (here != null && here.isRemote && !arg.startsWith('~')) {
+      await _guarded(() => _active.open(_remoteTarget(here, arg)));
       return;
     }
     final path = _vimPath(arg);
@@ -221,6 +240,18 @@ extension _VimActions on _WorkspaceScreenState {
       return;
     }
     final tab = _tab;
+    if (tab != null && tab.location.isRemote) {
+      await _guarded(() async {
+        if (folder) {
+          await _makeFoldersOnServer(tab.location, arg);
+        } else {
+          await _makeFileOnServer(tab.location, arg);
+        }
+        final first = arg.startsWith('/') ? null : arg.split('/').first;
+        await _active.open(tab.location, focusName: first);
+      });
+      return;
+    }
     if (tab == null || !tab.location.isNative) {
       showAppNotice(context, _l10n.noticeNotInArchive);
       return;
@@ -248,6 +279,16 @@ extension _VimActions on _WorkspaceScreenState {
     final tab = _tab;
     final focused = tab?.focused;
     if (tab == null || focused == null || focused.isParent) return;
+    if (tab.location.isRemote) {
+      await _guarded(() async {
+        final renamed = await widget.files.renameAt(
+          tab.locationOf(focused),
+          arg,
+        );
+        await _active.open(tab.location, focusName: renamed.name);
+      });
+      return;
+    }
     if (!tab.location.isNative) {
       showAppNotice(context, _l10n.noticeNotInArchive);
       return;
@@ -264,6 +305,11 @@ extension _VimActions on _WorkspaceScreenState {
   Future<void> _vimCopyOrMove(String arg, {required bool move}) async {
     if (arg.isEmpty) {
       await _copyOrMove(move: move, asName: false);
+      return;
+    }
+    final tab = _tab;
+    if (tab != null && (tab.location.isRemote || arg.contains('://'))) {
+      await _vimCopyOrMoveNetwork(tab, arg, move: move);
       return;
     }
     final targets = _targetsOrNotice();
@@ -403,6 +449,8 @@ extension _VimActions on _WorkspaceScreenState {
           if (name.startsWith(line.toLowerCase())) '$name ',
       ];
     }
+    // Names on a server are not offered: each would cost a round trip.
+    if (_tab?.location.isRemote ?? false) return const [];
     final head = line.substring(0, space + 1);
     final arg = line.substring(space + 1).trimLeft();
     final slash = arg.lastIndexOf('/');
@@ -467,5 +515,8 @@ extension _VimActions on _WorkspaceScreenState {
     'extract',
     'flat',
     'tag',
+    // ─── Network ───
+    'connect',
+    'disconnect',
   ];
 }

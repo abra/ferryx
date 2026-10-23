@@ -181,11 +181,7 @@ impl FtpFs {
                 Err(error) => return Err(self.failed(error, None, stop)),
             }
         }
-        Err(VfsError::new(
-            VfsErrorKind::AuthFailed,
-            None,
-            format!("{}@{} did not accept the login", self.user, self.address.host),
-        ))
+        Err(VfsError::new(VfsErrorKind::AuthFailed, None, format!("{}@{}", self.user, self.address.host)))
     }
 
     /// The password from the user; `(password, Some(remember))`.
@@ -735,11 +731,7 @@ impl Data {
         }
         *waited += POLL;
         if self.0.is_none() || *waited >= REQUEST_TIMEOUT {
-            return Err(VfsError::remote(
-                VfsErrorKind::TimedOut,
-                Some(path),
-                format!("{path}: the server did not answer in time"),
-            ));
+            return Err(VfsError::remote(VfsErrorKind::TimedOut, Some(path), path.to_string()));
         }
         Ok(())
     }
@@ -758,11 +750,7 @@ impl Data {
 // ─── Errors ───
 
 fn lost(path: &str) -> VfsError {
-    VfsError::remote(
-        VfsErrorKind::ConnectionLost,
-        Some(path),
-        format!("{path}: the connection to the server dropped"),
-    )
+    VfsError::remote(VfsErrorKind::ConnectionLost, Some(path), path.to_string())
 }
 
 fn io_error(error: &std::io::Error, path: &str) -> VfsError {

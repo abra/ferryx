@@ -24,7 +24,9 @@ PACKAGES = \
 	packages/features/terminal \
 	packages/features/sync \
 	packages/features/checksums \
-	packages/features/duplicates
+	packages/features/duplicates \
+	packages/network_service \
+	packages/features/network
 
 ROOT_ANALYZE_PATHS = lib test
 

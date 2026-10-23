@@ -734,11 +734,8 @@ impl client::Handler for Client {
                 return Ok(false);
             }
             HostKeyCheck::Revoked { file, line } => {
-                *self.refusal.lock() = Some(VfsError::new(
-                    VfsErrorKind::HostKeyChanged,
-                    None,
-                    format!("the key of {} is revoked in {}:{line}", self.host, file.display()),
-                ));
+                // Revoked is refused as a changed key is: the file says why.
+                *self.refusal.lock() = Some(changed_key(&self.host, Some((&file, line))));
                 return Ok(false);
             }
             HostKeyCheck::Unknown => {
@@ -753,11 +750,8 @@ impl client::Handler for Client {
                 .await;
                 self.prompting.store(false, Ordering::SeqCst);
                 if !answer.accept {
-                    *self.refusal.lock() = Some(VfsError::new(
-                        VfsErrorKind::HostKeyUnknown,
-                        None,
-                        format!("the key of {} was not trusted", self.host),
-                    ));
+                    *self.refusal.lock() =
+                        Some(VfsError::new(VfsErrorKind::HostKeyUnknown, None, self.host.clone()));
                     return Ok(false);
                 }
                 if answer.remember {
@@ -786,13 +780,13 @@ impl client::Handler for Client {
     }
 }
 
+/// The host's key is not the one on record: the message names where the
+/// record is (`~/.ssh/known_hosts:12`), else the host (a key trusted this
+/// run and then another shown).
 fn changed_key(host: &str, at: Option<(&Path, usize)>) -> VfsError {
     let message = match at {
-        Some((file, line)) => format!(
-            "the key of {host} is not the one recorded in {}:{line}; someone may be listening in",
-            file.display()
-        ),
-        None => format!("the key of {host} changed since it was trusted; someone may be listening in"),
+        Some((file, line)) => format!("{}:{line}", file.display()),
+        None => host.to_string(),
     };
     VfsError::new(VfsErrorKind::HostKeyChanged, None, message)
 }
@@ -847,11 +841,7 @@ async fn connect_and_log_in(
             return Ok(link);
         }
     }
-    Err(VfsError::new(
-        VfsErrorKind::AuthFailed,
-        None,
-        format!("{} did not accept the login", spec.address.display_root()),
-    ))
+    Err(VfsError::new(VfsErrorKind::AuthFailed, None, spec.address.display_root()))
 }
 
 /// One connection and login; `None` when a password was refused and the
@@ -974,7 +964,7 @@ impl Login<'_> {
             Err(VfsError::new(
                 VfsErrorKind::AuthFailed,
                 None,
-                format!("{}@{} did not accept the login", self.user, self.spec.address.host),
+                format!("{}@{}", self.user, self.spec.address.host),
             ))
         }
     }
@@ -1288,8 +1278,9 @@ async fn load(path: PathBuf, passphrase: Option<String>) -> Result<PrivateKey, r
 
 // ─── Errors ───
 
+/// The connection ended; its kind says it all.
 fn lost() -> VfsError {
-    VfsError::new(VfsErrorKind::ConnectionLost, None, "the connection to the server dropped")
+    VfsError::new(VfsErrorKind::ConnectionLost, None, String::new())
 }
 
 /// A failure to reach the server at all.

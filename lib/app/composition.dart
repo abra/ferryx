@@ -13,6 +13,7 @@ import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:file_repository/file_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:monitoring/monitoring.dart';
+import 'package:network_service/network_service.dart';
 import 'package:operations_service/operations_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:platform_services/platform_services.dart';
@@ -86,6 +87,13 @@ Future<DependenciesContainer> composeDependencies({
     // ─── Terminal ───
     final terminal = TerminalService();
     resources.add('terminal.dispose', terminal.dispose);
+    // ─── Network ───
+    final network = CoreNetworkService(backend: backend, logger: logger);
+    resources.add('network.dispose', network.dispose);
+    final recentServers = await RecentItems.load(
+      sideStorage,
+      key: RecentItems.serversKey,
+    );
 
     stopwatch.stop();
     logger.info('Dependencies ready in ${stopwatch.elapsedMilliseconds} ms');
@@ -106,6 +114,8 @@ Future<DependenciesContainer> composeDependencies({
       folderSync: folderSync,
       checksums: checksums,
       duplicates: duplicates,
+      network: network,
+      recentServers: recentServers,
       resourceDisposer: resources,
       windowFrame: windowFrame,
     );

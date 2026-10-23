@@ -30,11 +30,12 @@ abstract final class PathText {
   }
 
   /// Whether [path] names a folder from the root: `/a`, `~`, `C:\a`,
-  /// `\\server\share`.
+  /// `\\server\share`, a server's address (`sftp://me@host/srv`).
   static bool isAbsolute(String path) =>
       path.startsWith('/') ||
       path.startsWith('~') ||
       path.startsWith(r'\\') ||
+      path.contains('://') ||
       RegExp(r'^[A-Za-z]:[/\\]').hasMatch(path);
 
   /// [name] under [folder], with the folder's own separator.

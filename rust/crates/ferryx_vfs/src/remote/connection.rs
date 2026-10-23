@@ -189,8 +189,10 @@ pub fn get(key: &str) -> VfsResult<Arc<Server>> {
     REGISTRY.lock().servers.get(key).cloned().ok_or_else(|| not_connected(key))
 }
 
+/// No connection to `key`; the message names the server as it reads.
 pub fn not_connected(key: &str) -> VfsError {
-    VfsError::new(VfsErrorKind::NotConnected, None, format!("not connected to {key}"))
+    let shown = super::address::parse_key(key).map(|a| a.display_root()).unwrap_or_else(|_| key.to_string());
+    VfsError::new(VfsErrorKind::NotConnected, None, shown)
 }
 
 /// Closes every connection to the server `key`. Operations under way on

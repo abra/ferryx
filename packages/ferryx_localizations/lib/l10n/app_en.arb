@@ -1253,5 +1253,7 @@
   "@networkNotAnAddress": {"placeholders": {"text": {"type": "String"}}},
   "networkGoToServers": "Servers",
   "networkNotRemote": "The panel is not on a server",
-  "networkRecent": "Recent"
+  "networkRecent": "Recent",
+  "networkCapsuleLost": "Connection lost",
+  "networkCapsuleClosed": "Not connected"
 }

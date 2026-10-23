@@ -91,7 +91,7 @@ class DragSource {
     );
   }
 
-  /// On disk, or members of [folder]'s archive.
+  /// On disk, members of [folder]'s archive, or on [folder]'s server.
   final List<String> paths;
 
   /// The folder the items are in; `null` while another application's
@@ -99,12 +99,17 @@ class DragSource {
   final Location? folder;
   final PanelDragPayload? payload;
 
-  bool get fromArchive => folder != null && !folder!.isNative;
+  bool get fromArchive => folder?.kind == LocationKind.archive;
+
+  /// The items are on a server.
+  bool get fromServer => folder?.isRemote ?? false;
 }
 
 /// What a drop of [source] into [destination] does, Finder's way:
 ///
 /// - into an archive (read-only): refused;
+/// - between a server and the disk, or two servers: a copy, unless a key
+///   forces a move; within one server a move (a rename there);
 /// - a folder onto itself or into a folder of its own: refused;
 /// - into the folder the items are in: nothing;
 /// - out of an archive: a copy (an extraction), refused when a move is
@@ -121,8 +126,13 @@ FileDropOperation planDrop({
   required Set<FileDropOperation> allowed,
   required bool? sameVolume,
 }) {
-  if (!destination.isNative) return FileDropOperation.forbidden;
+  if (!destination.isNative && !destination.isRemote) {
+    return FileDropOperation.forbidden;
+  }
+  // A server's paths and the disk's never hold each other.
+  final sameSpace = source.folder?.server == destination.server;
   if (!source.fromArchive &&
+      sameSpace &&
       source.paths.any((path) => _within(destination.path, path))) {
     return FileDropOperation.forbidden;
   }

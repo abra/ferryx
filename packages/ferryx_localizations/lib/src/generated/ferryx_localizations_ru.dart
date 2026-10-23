@@ -3951,4 +3951,10 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get networkRecent => 'Недавние';
+
+  @override
+  String get networkCapsuleLost => 'Связь потеряна';
+
+  @override
+  String get networkCapsuleClosed => 'Не подключено';
 }

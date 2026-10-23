@@ -5,6 +5,7 @@ import 'package:ferryx_backend/ferryx_backend.dart';
 import 'package:file_repository/file_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:monitoring/monitoring.dart';
+import 'package:network_service/network_service.dart';
 import 'package:operations_service/operations_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:platform_services/platform_services.dart';
@@ -31,6 +32,8 @@ class DependenciesContainer {
     required this.folderSync,
     required this.checksums,
     required this.duplicates,
+    required this.network,
+    required this.recentServers,
     required this._resourceDisposer,
     TargetPlatform? platform,
     WindowFrame? windowFrame,
@@ -63,6 +66,12 @@ class DependenciesContainer {
   final FolderSyncService folderSync;
   final ChecksumService checksums;
   final DuplicatesService duplicates;
+
+  // ─── Network ───
+  final NetworkService network;
+
+  /// Addresses Connect to Server reached lately, never with a password.
+  final RecentItems recentServers;
 
   /// The desktop the app runs on; the default chords follow its
   /// conventions.

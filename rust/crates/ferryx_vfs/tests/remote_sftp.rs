@@ -95,7 +95,9 @@ fn a_changed_key_is_refused_without_asking() {
 
     let error = connection::connect(spec(&server, AuthMethod::Password), &never).err().unwrap();
     assert_eq!(error.kind, VfsErrorKind::HostKeyChanged);
-    assert!(error.message.contains("someone may be listening in"), "{}", error.message);
+    // The message names the record the key differs from, for the alarm.
+    let recorded = path.display().to_string();
+    assert!(error.message.starts_with(&recorded) && error.message.contains(':'), "{}", error.message);
     assert!(asked(&key).is_empty());
 }
 

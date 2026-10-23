@@ -579,7 +579,7 @@ class _PanelViewState extends State<PanelView> {
           AppMenuAction(
             value: t.id,
             label: t.location.display,
-            icon: t.location.isNative ? AppIcons.folder : AppIcons.fileArchive,
+            icon: _tabIcon(t.location),
             checked: t.id == state.active?.id,
           ),
         if (state.closedTabs.isNotEmpty) ...[
@@ -647,15 +647,26 @@ class _PanelViewState extends State<PanelView> {
   }
 
   /// The error strip's button: the password again for an archive that
-  /// asked for one, else another read.
+  /// asked for one, the connection again for a server out of reach, else
+  /// another read.
   VoidCallback _retryOf(PanelTabState tab) {
     final location = tab.passwordLocation;
     if (location != null &&
         tab.error?.kind == FerryxErrorKind.passwordRequired) {
       return () => widget.hooks.onArchivePassword?.call(location);
     }
+    if (_reconnects(tab)) return () => unawaited(_cubit.reconnect());
     return () => unawaited(_cubit.refresh());
   }
+
+  static bool _reconnects(PanelTabState tab) =>
+      tab.location.isRemote && (tab.error?.kind.needsConnection ?? false);
+
+  static IconData _tabIcon(Location location) => location.isRemote
+      ? AppIcons.server
+      : location.isNative
+      ? AppIcons.folder
+      : AppIcons.fileArchive;
 
   @override
   Widget build(BuildContext context) => BlocConsumer<PanelCubit, PanelState>(
@@ -727,9 +738,7 @@ class _PanelViewState extends State<PanelView> {
                             id: t.id,
                             label: t.location.name,
                             tooltip: t.location.display,
-                            icon: t.location.isNative
-                                ? AppIcons.folder
-                                : AppIcons.fileArchive,
+                            icon: _tabIcon(t.location),
                           ),
                       ],
                       active: state.activeIndex,
@@ -807,13 +816,24 @@ class _PanelViewState extends State<PanelView> {
                     ),
                   ),
                   if (tab.error != null)
-                    _ErrorArea(error: tab.error!, onRetry: _retryOf(tab)),
+                    _ErrorArea(
+                      error: tab.error!,
+                      onRetry: _retryOf(tab),
+                      retryLabel:
+                          tab.error!.kind == FerryxErrorKind.passwordRequired
+                          ? l10n.archiveEnterPassword
+                          : _reconnects(tab)
+                          ? l10n.networkReconnect
+                          : l10n.actionRetry,
+                    ),
                   PanelFooter(
                     tab: tab,
                     active: widget.active,
                     vim: _vimLine(tab),
                     shelfNote: widget.registerNote,
                     onLeaveFlat: () => unawaited(_cubit.leaveFlatView()),
+                    serverState: state.serverStateOf(tab),
+                    onReconnect: () => unawaited(_cubit.reconnect()),
                   ),
                 ],
               ),
@@ -829,10 +849,15 @@ class _PanelViewState extends State<PanelView> {
 /// that stay, with a button to try again (the keys reach it; ⌘J labels
 /// it).
 class _ErrorArea extends StatelessWidget {
-  const _ErrorArea({required this.error, required this.onRetry});
+  const _ErrorArea({
+    required this.error,
+    required this.onRetry,
+    required this.retryLabel,
+  });
 
   final FerryxException error;
   final VoidCallback onRetry;
+  final String retryLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -873,11 +898,7 @@ class _ErrorArea extends StatelessWidget {
             child: OutlinedButton(
               style: AppButtonStyles.small(context),
               onPressed: onRetry,
-              child: Text(
-                error.kind == FerryxErrorKind.passwordRequired
-                    ? l10n.archiveEnterPassword
-                    : l10n.actionRetry,
-              ),
+              child: Text(retryLabel),
             ),
           ),
         ],

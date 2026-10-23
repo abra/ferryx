@@ -16,12 +16,13 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     return targets;
   }
 
-  /// The paths on disk of [targets]; a notice inside an archive.
+  /// The paths on disk of [targets]; a notice inside an archive or on a
+  /// server.
   List<String>? _nativePaths(List<FileEntry> targets) {
     final tab = _tab;
     if (tab == null) return null;
     if (!tab.location.isNative) {
-      showAppNotice(context, _l10n.noticeNotInArchive);
+      showAppNotice(context, _notHere(tab.location));
       return null;
     }
     return [for (final t in targets) t.path];
@@ -168,9 +169,10 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     AppCommand.fileAttributes: () => unawaited(_attributes()),
     AppCommand.copyItemName: () =>
         unawaited(_copyText((t) => t.name, single: true)),
-    AppCommand.copyItemPath: () => unawaited(_copyText((t) => t.path)),
+    AppCommand.copyItemPath: () =>
+        unawaited(_copyText((t) => _shownPath(t.path))),
     AppCommand.copyItemDirectory: () =>
-        unawaited(_copyText((t) => t.parentPath, single: true)),
+        unawaited(_copyText((t) => _shownPath(t.parentPath), single: true)),
     AppCommand.preview: () => unawaited(_preview()),
     AppCommand.internalViewer: () => unawaited(_view(preview: false)),
     AppCommand.externalEditor: () => unawaited(_externalEditor()),
@@ -220,14 +222,22 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     ..._operationsHandlers(),
     // ─── Files core ───
     AppCommand.extractTo: () => unawaited(_extractTo()),
-    AppCommand.toggleFlatView: () => unawaited(_active.toggleFlatView()),
+    AppCommand.toggleFlatView: () {
+      if (!_onServer()) unawaited(_active.toggleFlatView());
+    },
     AppCommand.editTags: () => unawaited(_editTags()),
+    // ─── Network ───
+    ..._networkHandlers(),
   };
 
   // ─── Opening ───
 
   Future<void> _openFile(OpenFileRequest request) => _guarded(() async {
     final location = request.location;
+    if (location.isRemote) {
+      await _openFromServer(request);
+      return;
+    }
     if (location.isNative) {
       await widget.files.openDefault(request.entry.path);
     } else {
@@ -253,6 +263,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
   }
 
   Future<void> _openWith() => _guarded(() async {
+    if (_onServer()) return;
     final tab = _tab;
     final focused = tab?.focused;
     if (tab == null ||
@@ -296,6 +307,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
   }
 
   Future<void> _externalEditor() => _guarded(() async {
+    if (_onServer()) return;
     final tab = _tab;
     final focused = tab?.focused;
     if (tab == null ||
@@ -344,6 +356,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
   Future<void> _preview() => _view(preview: true);
 
   Future<void> _revealInFileManager() => _guarded(() async {
+    if (_onServer()) return;
     final tab = _tab;
     if (tab == null || !tab.location.isNative) return;
     final focused = tab.focused;
@@ -386,11 +399,23 @@ extension _WorkspaceActions on _WorkspaceScreenState {
 
   Future<void> _goToFolder() async {
     final tab = _tab;
+    final location = tab?.location;
     final path = await showGoToFolderDialog(
       context,
-      initial: tab?.location.isNative == true ? tab!.location.path : '',
+      initial: location == null
+          ? ''
+          : location.isNative
+          ? location.path
+          : location.isRemote
+          ? location.display
+          : '',
     );
     if (path == null || !mounted) return;
+    if (path.contains('://')) {
+      // A server's address: connected to, and gone to.
+      await _connectAddress(path.trim(), _active);
+      return;
+    }
     final home = widget.files.standardFolders().home;
     final resolved = path == '~'
         ? home
@@ -422,6 +447,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
       volumes: volumes,
       otherPanel: [for (final t in other.state.tabs) t.location],
       history: panel.state.active?.history.reversed.toList() ?? const [],
+      servers: widget.network == null ? null : _prefs.servers,
     );
     await _followPick(pick, panel: panel, side: side);
   }
@@ -479,6 +505,13 @@ extension _WorkspaceActions on _WorkspaceScreenState {
           await widget.files.eject(mountPoint);
           if (mounted) showAppNotice(context, _l10n.noticeEjected(mountPoint));
         });
+      // ─── Network ───
+      case GoToServer(:final server):
+        _focusPanel(side);
+        await _connectProfile(server, panel);
+      case GoToConnect():
+        _focusPanel(side);
+        await _connectToServer();
     }
   }
 
@@ -682,6 +715,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         map: widget.shortcutMap,
         journal: widget.operations.currentJournal,
         flat: tab?.isFlat ?? false,
+        remote: tab?.location.isRemote ?? false,
       ),
     );
     if (picked == null || !mounted) return;
@@ -692,6 +726,10 @@ extension _WorkspaceActions on _WorkspaceScreenState {
 
   Future<void> _newItem({required bool folder}) => _guarded(() async {
     final tab = _tab;
+    if (tab != null && tab.location.isRemote) {
+      await _newOnServer(tab, folder: folder);
+      return;
+    }
     if (tab == null || !tab.location.isNative) {
       showAppNotice(context, _l10n.noticeNotInArchive);
       return;
@@ -730,12 +768,18 @@ extension _WorkspaceActions on _WorkspaceScreenState {
   Future<void> _createDirectory({required bool opposite}) => _guarded(() async {
     final panel = opposite ? _opposite : _active;
     final tab = panel.state.active;
-    if (tab == null || !tab.location.isNative) {
+    if (tab == null || !(tab.location.isNative || tab.location.isRemote)) {
       showAppNotice(context, _l10n.noticeNotInArchive);
       return;
     }
     final name = await showCreateDirectoryDialog(context, opposite: opposite);
     if (name == null) return;
+    if (tab.location.isRemote) {
+      await _makeFoldersOnServer(tab.location, name);
+      final first = name.startsWith('/') ? null : name.split('/').first;
+      await panel.open(tab.location, focusName: first);
+      return;
+    }
     final path = name.startsWith('/') ? name : '${tab.location.path}/$name';
     await widget.files.createDirectory(path);
     final first = name.startsWith('/') ? null : name.split('/').first;
@@ -774,7 +818,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     final tab = _tab;
     final focused = tab?.focused;
     if (tab == null || !tab.location.isNative) {
-      showAppNotice(context, _l10n.noticeNotInArchive);
+      if (tab != null) showAppNotice(context, _notHere(tab.location));
       return;
     }
     var target = focused == null || focused.isParent ? '' : focused.path;
@@ -824,10 +868,16 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     final targets = _targetsOrNotice();
     if (tab == null || targets.isEmpty) return;
     final oppositeTab = _opposite.state.active;
+    final home = widget.files.standardFolders().home;
     final defaultDestination = oppositeTab?.location.isNative == true
         ? oppositeTab!.location.path
-        : widget.files.standardFolders().home;
-    if (!tab.location.isNative) {
+        : home;
+    // The other panel's folder, on disk or on a server.
+    final opposite = oppositeTab?.location;
+    final offered = opposite != null && (opposite.isNative || opposite.isRemote)
+        ? opposite
+        : Location.native(home);
+    if (!tab.location.isNative && !tab.location.isRemote) {
       // Out of an archive: an extraction into the destination.
       if (move) {
         showAppNotice(context, _l10n.noticeNotInArchive);
@@ -852,26 +902,34 @@ extension _WorkspaceActions on _WorkspaceScreenState {
       move: move,
       asName: asName && targets.length == 1,
       names: [for (final t in targets) t.name],
-      currentFolder: tab.location.path,
-      defaultDestination: defaultDestination,
+      currentFolder: tab.location.isRemote
+          ? tab.location.display
+          : tab.location.path,
+      defaultDestination: offered.isRemote ? offered.display : offered.path,
       preserveAttributes: _prefs.preserveAttributes,
       verify: _prefs.verifyCopies,
+      // A copy over the network is not read back.
+      canVerify: !tab.location.isRemote && !offered.isRemote,
     );
     if (choice == null || !mounted) return;
-    final home = widget.files.standardFolders().home;
-    final destination = choice.destination.startsWith('~')
-        ? '$home${choice.destination.substring(1)}'
-        : choice.destination;
+    final destination = await _destinationOf(
+      choice.destination,
+      known: [tab.location, offered],
+    );
+    if (destination == null || !mounted) return;
+    final local = !tab.location.isRemote && !destination.isRemote;
     await _guarded(() async {
       await widget.operations.start(
         OperationRequest(
           kind: move ? OpKind.move : OpKind.copy,
           sources: [for (final t in targets) t.path],
-          destination: destination,
+          destination: destination.path,
           newName: choice.newName,
           conflicts: choice.conflicts,
           preserveAttributes: choice.preserveAttributes,
-          verify: choice.verify,
+          verify: choice.verify && local,
+          sourceServer: tab.location.server,
+          destinationServer: destination.server,
         ),
       );
       _active.clearSelection();
@@ -893,6 +951,10 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         final tab = _tab;
         final targets = _targetsOrNotice();
         if (tab == null || targets.isEmpty) return;
+        if (tab.location.isRemote) {
+          await _deleteOnServer(tab, targets);
+          return;
+        }
         final paths = _nativePaths(targets);
         if (paths == null) return;
         var choice = trashDefault ? DeleteChoice.trash : DeleteChoice.permanent;
@@ -954,7 +1016,9 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     final targets = _targetsOrNotice();
     if (targets.isEmpty) return;
     await Clipboard.setData(
-      ClipboardData(text: [for (final t in targets) t.path].join('\n')),
+      ClipboardData(
+        text: [for (final t in targets) _shownPath(t.path)].join('\n'),
+      ),
     );
     if (mounted) {
       showAppNotice(context, _l10n.noticePathsCopied(targets.length));
@@ -979,7 +1043,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
 
   Future<void> _pasteItems({required bool move}) => _guarded(() async {
     final tab = _tab;
-    if (tab == null || !tab.location.isNative) {
+    if (tab == null || !(tab.location.isNative || tab.location.isRemote)) {
       showAppNotice(context, _l10n.noticeNotInArchive);
       return;
     }
@@ -1008,7 +1072,8 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         sources: paths,
         destination: tab.location.path,
         preserveAttributes: _prefs.preserveAttributes,
-        verify: _prefs.verifyCopies,
+        verify: _prefs.verifyCopies && !tab.location.isRemote,
+        destinationServer: tab.location.server,
       ),
     );
   });
@@ -1100,6 +1165,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
   }
 
   Future<void> _findFiles() async {
+    if (_onServer()) return;
     final tab = _tab;
     final root = tab?.location.isNative == true
         ? tab!.location.path

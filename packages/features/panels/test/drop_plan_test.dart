@@ -118,6 +118,54 @@ void main() {
       expect(plan(docs, source, sameVolume: null), copy);
       expect(plan(docs, source, allowed: {}), move);
     });
+
+    // ─── Network ───
+
+    group('with a server', () {
+      const box = 'sftp://me@box.lan:22';
+      const srv = Location.remote(server: box, path: '/srv');
+      const www = Location.remote(server: box, path: '/srv/www');
+      const other = Location.remote(server: 'ftp://files.lan:21', path: '/');
+
+      test('to and from the disk: a copy, a move when a key forces it', () {
+        final down = fromPanel(srv, ['/srv/a.txt']);
+        expect(down.fromServer, isTrue);
+        expect(down.fromArchive, isFalse);
+        expect(plan(docs, down, sameVolume: false), copy);
+        expect(plan(docs, down, allowed: {move}, sameVolume: false), move);
+        final up = fromApp(['/home/a.txt']);
+        expect(plan(srv, up, sameVolume: false), copy);
+        expect(plan(srv, up, allowed: {}, sameVolume: false), move);
+      });
+
+      test('within one server a move, between two a copy', () {
+        final source = fromPanel(srv, ['/srv/a.txt']);
+        expect(plan(www, source), move);
+        expect(plan(other, source, sameVolume: false), copy);
+        expect(plan(srv, source), none);
+      });
+
+      test('a folder of the server never into itself; the disk is apart', () {
+        final source = fromPanel(srv, ['/srv/www']);
+        expect(plan(www, source), forbidden);
+        // The same path on disk, or on another server, is another place.
+        expect(
+          plan(const Location.native('/srv/www'), source, sameVolume: false),
+          copy,
+        );
+        expect(
+          plan(
+            const Location.remote(
+              server: 'ftp://files.lan:21',
+              path: '/srv/www',
+            ),
+            source,
+            sameVolume: false,
+          ),
+          copy,
+        );
+      });
+    });
   });
 
   group('DragSource', () {

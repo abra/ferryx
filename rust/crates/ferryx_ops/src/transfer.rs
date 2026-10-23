@@ -1026,7 +1026,8 @@ impl<'a> Work<'a> {
         for source in self.transfer.sources.clone() {
             self.ctx.check()?;
             let (bytes, _) = self.walk(&source, 0)?;
-            let shown = PathBuf::from(&source);
+            // Named as the progress names the sources: with the server.
+            let shown = PathBuf::from(self.transfer.from.display(&source));
             self.ctx.update(|p| {
                 p.sizes.push(FolderSize { path: shown, bytes });
                 p.items_done += 1;

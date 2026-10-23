@@ -390,7 +390,11 @@ fn deletes_trees_and_sizes_folders() {
         },
         vec![],
     );
-    assert_eq!(sizes.sizes, vec![FolderSize { path: PathBuf::from("/a"), bytes: 4096 + 300 * 1024 }]);
+    // Named with the server, as the sources are.
+    assert_eq!(
+        sizes.sizes,
+        vec![FolderSize { path: PathBuf::from(format!("{}/a", over_sftp.key())), bytes: 4096 + 300 * 1024 }]
+    );
 
     for (server, root) in [(over_sftp.clone(), sftp.root.path()), (over_dav.clone(), dav.root.path())] {
         let (gone, _) = run(

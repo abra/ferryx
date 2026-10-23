@@ -152,7 +152,7 @@ extension _InterfaceActions on _WorkspaceScreenState {
   Future<void> _putShelf({bool? move}) async {
     final tab = _tab;
     if (tab == null || !tab.location.isNative) {
-      showAppNotice(context, _l10n.noticeNotInArchive);
+      if (tab != null) showAppNotice(context, _notHere(tab.location));
       return;
     }
     final here = tab.location.path;
@@ -249,7 +249,7 @@ extension _InterfaceActions on _WorkspaceScreenState {
     final tab = _tab;
     if (tab == null) return;
     if (!tab.location.isNative) {
-      showAppNotice(context, _l10n.noticeNotInArchive);
+      showAppNotice(context, _notHere(tab.location));
       return;
     }
     // Its checks are one folder's: a name taken there, the same new name

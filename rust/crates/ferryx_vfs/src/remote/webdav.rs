@@ -120,7 +120,7 @@ impl DavFs {
         Err(VfsError::new(
             VfsErrorKind::AuthFailed,
             None,
-            format!("{}@{} did not accept the login", self.address.user, self.address.host),
+            format!("{}@{}", self.address.user, self.address.host),
         ))
     }
 
@@ -481,11 +481,7 @@ impl DavWriter {
             async move {
                 match task.await {
                     Ok(result) => result,
-                    Err(_) => Err(VfsError::remote(
-                        VfsErrorKind::ConnectionLost,
-                        Some(&path),
-                        format!("{path}: the upload stopped"),
-                    )),
+                    Err(_) => Err(VfsError::remote(VfsErrorKind::ConnectionLost, Some(&path), path.clone())),
                 }
             },
             REQUEST_TIMEOUT,
@@ -502,11 +498,7 @@ impl RemoteWrite for DavWriter {
         if !sent {
             self.sender = None;
             self.outcome(stop)?;
-            return Err(VfsError::remote(
-                VfsErrorKind::ConnectionLost,
-                Some(&self.path),
-                format!("{}: the upload stopped", self.path),
-            ));
+            return Err(VfsError::remote(VfsErrorKind::ConnectionLost, Some(&self.path), self.path.clone()));
         }
         Ok(())
     }

@@ -6313,6 +6313,18 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Recent'**
   String get networkRecent;
+
+  /// No description provided for @networkCapsuleLost.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection lost'**
+  String get networkCapsuleLost;
+
+  /// No description provided for @networkCapsuleClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected'**
+  String get networkCapsuleClosed;
 }
 
 class _FerryxLocalizationsDelegate
