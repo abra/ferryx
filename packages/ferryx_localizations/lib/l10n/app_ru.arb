@@ -1066,5 +1066,6 @@
   "networkOpenedCopy": "Открыта копия «{name}»: изменения в ней не отправляются на сервер",
   "networkNotAnAddress": "Это не адрес сервера: {text}",
   "networkGoToServers": "Серверы",
-  "networkNotRemote": "Панель не на сервере"
+  "networkNotRemote": "Панель не на сервере",
+  "networkRecent": "Недавние"
 }

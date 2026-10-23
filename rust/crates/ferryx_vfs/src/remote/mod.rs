@@ -17,6 +17,7 @@
 //! `HostUnreachable`, `TimedOut`, `HostKeyChanged`…).
 
 pub mod address;
+mod blocking;
 pub mod connection;
 mod entries;
 pub mod ftp;

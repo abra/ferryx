@@ -1,11 +1,13 @@
 //! FTP and FTPS against an in-process server: `MLSD` and the `LIST`
 //! fallback of a server without it, names in many scripts, passwords asked
 //! again, certificates checked, transfers both ways, a transfer cut short,
-//! two transfers at once, a large folder.
+//! two transfers at once, a large folder, a stop that ends a wait on a
+//! server gone silent.
 
 mod common;
 
-use std::sync::atomic::Ordering;
+use std::net::TcpListener;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
 use common::*;
@@ -218,4 +220,73 @@ fn lists_ten_thousand_items() {
         assert!(took < Duration::from_secs(20), "{took:?}");
         connection::disconnect(&key);
     }
+}
+
+/// A stop that says yes `after` from now.
+fn stop_after(after: Duration) -> impl Fn() -> bool + Sync {
+    let at = Instant::now() + after;
+    move || Instant::now() >= at
+}
+
+#[test]
+fn a_stop_ends_the_wait_for_a_greeting_that_never_comes() {
+    setup();
+    let silent = TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = silent.local_addr().unwrap().port();
+    let held = std::thread::spawn(move || silent.accept().map(|(socket, _)| socket));
+    let mut address = ServerAddress::new(Protocol::Ftp, "127.0.0.1", "me");
+    address.port = port;
+    address.password = Some("secret".into());
+    let started = Instant::now();
+    let stop = stop_after(Duration::from_millis(200));
+    let error = connection::connect(ConnectSpec { address, auth: AuthMethod::Password }, &stop)
+        .err()
+        .expect("stopped");
+    assert_eq!(error.kind, VfsErrorKind::Cancelled);
+    // Long before the request timeout would have ended it.
+    assert!(started.elapsed() < Duration::from_secs(3), "{:?}", started.elapsed());
+    drop(held.join());
+}
+
+#[test]
+fn a_stop_ends_a_read_from_a_server_that_hangs() {
+    setup();
+    let server = FtpServer::start(FtpOptions { stall_after_bytes: Some(100_000), ..FtpOptions::default() });
+    std::fs::write(server.path("big.bin"), pattern(1_000_000)).unwrap();
+    let spec = spec(&server, Protocol::Ftp, "127.0.0.1");
+    let key = spec.address.key();
+    script(&key, vec![text("secret", false)]);
+    let connected = connection::connect(spec, &never).unwrap();
+    let mut reader = connected.fs().open_read("/big.bin", &never).unwrap();
+    let mut buffer = vec![0u8; 16_384];
+    let stopped = AtomicBool::new(false);
+    let stop = || stopped.load(Ordering::SeqCst);
+    let mut read = 0;
+    let begun = Instant::now();
+    let started = std::thread::scope(|scope| {
+        // What the server sends comes at once; then it hangs, and the
+        // stop comes while the read waits.
+        scope.spawn(|| {
+            std::thread::sleep(Duration::from_millis(300));
+            stopped.store(true, Ordering::SeqCst);
+        });
+        let error = loop {
+            match reader.read(&mut buffer, &stop) {
+                Ok(0) => panic!("the server hangs; the file does not end"),
+                Ok(n) => read += n,
+                Err(error) => break error,
+            }
+        };
+        assert_eq!(error.kind, VfsErrorKind::Cancelled);
+        // Seen within a poll of the stop, not at the request timeout.
+        assert!(begun.elapsed() < Duration::from_secs(2), "{:?}", begun.elapsed());
+        assert!(read > 0 && read < 1_000_000, "{read}");
+        Instant::now()
+    });
+    drop(reader);
+    // Letting go of the hung transfer does not wait on the server either.
+    assert!(started.elapsed() < Duration::from_secs(1));
+    // The server is still there for the next call.
+    assert_eq!(connected.fs().list("/", &never).unwrap().len(), 1);
+    connection::disconnect(&key);
 }

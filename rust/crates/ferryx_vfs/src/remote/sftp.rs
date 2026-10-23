@@ -25,6 +25,7 @@ use russh::MethodKind;
 use russh_sftp::client::error::Error as SftpError;
 use russh_sftp::client::RawSftpSession;
 use russh_sftp::protocol::{Data, File, FileAttributes, OpenFlags, Status, StatusCode};
+use tokio::sync::watch;
 use tokio::task::JoinHandle;
 
 use super::address::{join, ServerAddress};
@@ -81,11 +82,24 @@ struct Link {
     handle: Handle<Client>,
     sftp: Arc<RawSftpSession>,
     closed: Arc<AtomicBool>,
+    /// Turns `true`, or loses its sender, when the connection ends.
+    gone: watch::Receiver<bool>,
 }
 
 impl Link {
     fn alive(&self) -> bool {
         !self.closed.load(Ordering::SeqCst) && !self.handle.is_closed()
+    }
+
+    /// `work` on this connection, failed as soon as the connection ends:
+    /// requests it left unanswered would wait for their timeout.
+    async fn on<T>(&self, work: impl Future<Output = VfsResult<T>>) -> VfsResult<T> {
+        let mut gone = self.gone.clone();
+        tokio::select! {
+            biased;
+            result = work => result,
+            _ = gone.wait_for(|gone| *gone) => Err(lost()),
+        }
     }
 }
 
@@ -99,10 +113,10 @@ impl SftpFs {
         }));
         let link = run_unbounded(open_link(spec, credentials.clone(), notifier.clone()), stop)?;
         let home = run(
-            async {
+            link.on(async {
                 let name = link.sftp.realpath(".").await.map_err(|e| sftp_error(e, Some(".")))?;
                 Ok(name.files.first().map(|f| f.filename.clone()).unwrap_or_else(|| "/".to_string()))
-            },
+            }),
             REQUEST_TIMEOUT,
             stop,
         )?;
@@ -151,7 +165,7 @@ impl SftpFs {
         loop {
             let link = self.link(stop)?;
             let result = run(
-                async { call(link.sftp.clone()).await.map_err(|e| sftp_error(e, path)) },
+                link.on(async { call(link.sftp.clone()).await.map_err(|e| sftp_error(e, path)) }),
                 REQUEST_TIMEOUT,
                 stop,
             );
@@ -172,13 +186,13 @@ impl SftpFs {
     fn reads(&self, path: &str, offset: u64, stop: Stop) -> VfsResult<SftpReader<'_>> {
         let link = self.link(stop)?;
         let handle = run(
-            async {
+            link.on(async {
                 link.sftp
                     .open(path, OpenFlags::READ, FileAttributes::empty())
                     .await
                     .map(|h| h.handle)
                     .map_err(|e| sftp_error(e, Some(path)))
-            },
+            }),
             REQUEST_TIMEOUT,
             stop,
         )
@@ -485,7 +499,7 @@ impl RemoteRead for SftpReader<'_> {
             let Some((offset, len, task)) = self.queue.pop_front() else { return Ok(0) };
             let path = self.path.clone();
             let answer = run(
-                async move {
+                self.link.on(async move {
                     match task.await {
                         Ok(Ok(data)) => Ok(Some(data.data)),
                         Ok(Err(SftpError::Status(status))) if status.status_code == StatusCode::Eof => {
@@ -494,7 +508,7 @@ impl RemoteRead for SftpReader<'_> {
                         Ok(Err(error)) => Err(sftp_error(error, Some(&path))),
                         Err(_) => Err(lost()),
                     }
-                },
+                }),
                 REQUEST_TIMEOUT,
                 stop,
             );
@@ -573,13 +587,13 @@ impl SftpWriter<'_> {
         let Some(task) = self.pending.pop_front() else { return Ok(()) };
         let path = self.path.clone();
         let outcome = run(
-            async move {
+            self.link.on(async move {
                 match task.await {
                     Ok(Ok(_)) => Ok(()),
                     Ok(Err(error)) => Err(sftp_error(error, Some(&path))),
                     Err(_) => Err(lost()),
                 }
-            },
+            }),
             REQUEST_TIMEOUT,
             stop,
         );
@@ -615,7 +629,9 @@ impl RemoteWrite for SftpWriter<'_> {
         let sftp = self.link.sftp.clone();
         let path = self.path.clone();
         run(
-            async move { sftp.close(handle).await.map(|_| ()).map_err(|e| sftp_error(e, Some(&path))) },
+            self.link.on(async move {
+                sftp.close(handle).await.map(|_| ()).map_err(|e| sftp_error(e, Some(&path)))
+            }),
             REQUEST_TIMEOUT,
             stop,
         )
@@ -680,6 +696,9 @@ struct Client {
     refusal: Arc<Mutex<Option<VfsError>>>,
     prompting: Arc<AtomicBool>,
     closed: Arc<AtomicBool>,
+    /// Told when the connection ends; dropped with the session, it tells
+    /// that too.
+    gone: watch::Sender<bool>,
     notifier: Notifier,
 }
 
@@ -762,6 +781,7 @@ impl client::Handler for Client {
         if !self.closed.swap(true, Ordering::SeqCst) {
             self.notifier.lost();
         }
+        self.gone.send_replace(true);
         Ok(())
     }
 }
@@ -856,6 +876,7 @@ async fn connect_once(
     });
     let refusal = Arc::new(Mutex::new(None));
     let closed = Arc::new(AtomicBool::new(false));
+    let (gone, gone_seen) = watch::channel(false);
     let client = Client {
         server: address.key(),
         host: address.host.clone(),
@@ -864,6 +885,7 @@ async fn connect_once(
         refusal: refusal.clone(),
         prompting: prompting.clone(),
         closed: closed.clone(),
+        gone,
         notifier,
     };
     let mut handle = match client::connect_stream(config, socket, client).await {
@@ -892,7 +914,7 @@ async fn connect_once(
         russh_sftp::client::Config { request_timeout_secs: REQUEST_TIMEOUT.as_secs(), ..Default::default() };
     let sftp = RawSftpSession::new_with_config(channel.into_stream(), config);
     sftp.init().await.map_err(|e| sftp_error(e, None))?;
-    Ok(Some(Link { handle, sftp: Arc::new(sftp), closed }))
+    Ok(Some(Link { handle, sftp: Arc::new(sftp), closed, gone: gone_seen }))
 }
 
 /// Where a password came from, so a refused one is not offered again and

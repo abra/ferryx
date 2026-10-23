@@ -113,4 +113,9 @@ abstract final class AppSizes {
 
   /// A field for a short mask (`*.jpg;*.png`) beside other options.
   static const double maskFieldWidth = 220;
+
+  // ─── Network ───
+
+  /// A port number's field beside its host's (five figures and room).
+  static const double portFieldWidth = 96;
 }

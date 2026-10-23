@@ -1252,5 +1252,6 @@
   "networkNotAnAddress": "Not a server address: {text}",
   "@networkNotAnAddress": {"placeholders": {"text": {"type": "String"}}},
   "networkGoToServers": "Servers",
-  "networkNotRemote": "The panel is not on a server"
+  "networkNotRemote": "The panel is not on a server",
+  "networkRecent": "Recent"
 }

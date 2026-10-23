@@ -29,6 +29,9 @@ pub struct FtpOptions {
     pub tls: Option<Arc<ServerConfig>>,
     /// Every connection is cut once this many bytes were sent by `RETR`.
     pub drop_after_bytes: Option<u64>,
+    /// `RETR` goes silent after this many bytes, the connections left
+    /// open (a server that hangs).
+    pub stall_after_bytes: Option<u64>,
 }
 
 impl Default for FtpOptions {
@@ -39,6 +42,7 @@ impl Default for FtpOptions {
             mlsd: true,
             tls: None,
             drop_after_bytes: None,
+            stall_after_bytes: None,
         }
     }
 }
@@ -380,6 +384,13 @@ impl Session {
                                 if let Some(control) = self.control.take() {
                                     let _ = control.tcp().shutdown(Shutdown::Both);
                                 }
+                                return Ok(false);
+                            }
+                            if self.shared.options.stall_after_bytes.is_some_and(|limit| total >= limit) {
+                                // Hangs, until the client gives up on it.
+                                let mut probe = [0u8; 1];
+                                let _ = data.tcp().set_read_timeout(None);
+                                let _ = std::io::Read::read(&mut data.tcp(), &mut probe);
                                 return Ok(false);
                             }
                             if data.write_all(&buffer[..n]).is_err() {

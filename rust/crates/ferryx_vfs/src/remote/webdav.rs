@@ -110,7 +110,7 @@ impl DavFs {
                             keychain_had = true;
                             stored
                         }
-                        None => self.ask(refused, &mut asked)?,
+                        None => self.ask(refused, &mut asked, stop)?,
                     };
                     *self.password.lock() = Some(next);
                 }
@@ -124,12 +124,14 @@ impl DavFs {
         ))
     }
 
-    fn ask(&self, retry: bool, asked: &mut Option<(String, bool)>) -> VfsResult<String> {
-        let answer = prompt::ask_blocking(Question::Password {
-            server: self.address.key(),
-            user: self.address.user.clone(),
-            retry,
-        });
+    fn ask(&self, retry: bool, asked: &mut Option<(String, bool)>, stop: Stop) -> VfsResult<String> {
+        let answer = prompt::ask_blocking(
+            Question::Password { server: self.address.key(), user: self.address.user.clone(), retry },
+            stop,
+        );
+        if stop() {
+            return Err(VfsError::cancelled());
+        }
         match (answer.accept, answer.text()) {
             (true, Some(text)) => {
                 *asked = Some((text.to_string(), answer.remember));

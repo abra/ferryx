@@ -3948,4 +3948,7 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get networkNotRemote => 'Панель не на сервере';
+
+  @override
+  String get networkRecent => 'Недавние';
 }

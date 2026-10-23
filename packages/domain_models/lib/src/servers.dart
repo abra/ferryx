@@ -155,6 +155,15 @@ class ServerProfile extends Equatable {
     user: user.trim(),
   ).displayRoot;
 
+  /// The address with its folder, as typed: `sftp://me@host/srv`.
+  String get address {
+    final folder = path.trim();
+    if (folder.isEmpty) return displayRoot;
+    return folder.startsWith('/')
+        ? '$displayRoot$folder'
+        : '$displayRoot/$folder';
+  }
+
   ServerProfile copyWith({
     String? name,
     ServerProtocol? protocol,

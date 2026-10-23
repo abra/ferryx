@@ -3856,4 +3856,7 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get networkNotRemote => 'The panel is not on a server';
+
+  @override
+  String get networkRecent => 'Recent';
 }

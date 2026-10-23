@@ -6307,6 +6307,12 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'The panel is not on a server'**
   String get networkNotRemote;
+
+  /// No description provided for @networkRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get networkRecent;
 }
 
 class _FerryxLocalizationsDelegate

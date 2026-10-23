@@ -19,6 +19,7 @@ use suppaftp::types::FileType;
 use suppaftp::{FtpError, Mode, RustlsConnector, RustlsFtpStream, Status};
 
 use super::address::{join, name, parent, ServerAddress};
+use super::blocking::{self, watched, POLL};
 use super::connection::{ConnectSpec, Notifier};
 use super::entries::{entry, RemoteMeta};
 use super::ftp_list::{mfmt_time, parse_list, parse_mlsx, Row};
@@ -87,7 +88,7 @@ impl FtpFs {
             home: String::new(),
         };
         let mut conn = fs.log_in(stop)?;
-        let features = match conn.feat() {
+        let features = match watched(control_socket(&conn), stop, || conn.feat()) {
             Ok(feat) => {
                 let has = |name: &str| feat.keys().any(|k| k.eq_ignore_ascii_case(name));
                 Features { mlsd: has("MLST"), mfmt: has("MFMT"), utf8: has("UTF8") }
@@ -95,10 +96,11 @@ impl FtpFs {
             Err(_) => Features::default(),
         };
         if features.utf8 {
-            let _ = conn.opts("UTF8", Some("ON"));
+            let _ = watched(control_socket(&conn), stop, || conn.opts("UTF8", Some("ON")));
         }
         *fs.features.lock() = features;
-        let home = conn.pwd().map_err(|e| ftp_error(e, None))?;
+        let home =
+            watched(control_socket(&conn), stop, || conn.pwd()).map_err(|e| fs.failed(e, None, stop))?;
         let fs = FtpFs { home: if home.starts_with('/') { home } else { "/".to_string() }, ..fs };
         fs.pool.lock().open = 1;
         fs.check_in(conn);
@@ -130,16 +132,19 @@ impl FtpFs {
                         keychain_had = true;
                         (stored, None)
                     }
-                    None => self.ask_password(retry)?,
+                    None => self.ask_password(retry, stop)?,
                 }
             } else {
-                self.ask_password(retry)?
+                self.ask_password(retry, stop)?
             };
-            if asked.is_some() && conn.noop().is_err() {
+            if asked.is_some() && watched(control_socket(&conn), stop, || conn.noop()).is_err() {
                 // The server gave up waiting while the user typed.
+                if stop() {
+                    return Err(VfsError::cancelled());
+                }
                 conn = self.open_socket(stop)?;
             }
-            match conn.login(self.user.as_str(), password.as_str()) {
+            match watched(control_socket(&conn), stop, || conn.login(self.user.as_str(), password.as_str())) {
                 Ok(()) => {
                     if let Some(remember) = asked {
                         if remember {
@@ -151,11 +156,15 @@ impl FtpFs {
                         }
                     }
                     *self.password.lock() = Some(password);
-                    let _ = conn.transfer_type(FileType::Binary);
-                    if self.features.lock().utf8 {
-                        let _ = conn.opts("UTF8", Some("ON"));
-                    }
-                    return Ok(conn);
+                    let utf8 = self.features.lock().utf8;
+                    let set_up = watched(control_socket(&conn), stop, || {
+                        conn.transfer_type(FileType::Binary)?;
+                        if utf8 {
+                            let _ = conn.opts("UTF8", Some("ON"));
+                        }
+                        Ok(())
+                    });
+                    return set_up.map(|()| conn).map_err(|e| self.failed(e, None, stop));
                 }
                 Err(FtpError::UnexpectedResponse(response))
                     if matches!(
@@ -169,7 +178,7 @@ impl FtpFs {
                     }
                     retry = true;
                 }
-                Err(error) => return Err(ftp_error(error, None)),
+                Err(error) => return Err(self.failed(error, None, stop)),
             }
         }
         Err(VfsError::new(
@@ -180,12 +189,14 @@ impl FtpFs {
     }
 
     /// The password from the user; `(password, Some(remember))`.
-    fn ask_password(&self, retry: bool) -> VfsResult<(String, Option<bool>)> {
-        let answer = prompt::ask_blocking(Question::Password {
-            server: self.address.key(),
-            user: self.user.clone(),
-            retry,
-        });
+    fn ask_password(&self, retry: bool, stop: Stop) -> VfsResult<(String, Option<bool>)> {
+        let answer = prompt::ask_blocking(
+            Question::Password { server: self.address.key(), user: self.user.clone(), retry },
+            stop,
+        );
+        if stop() {
+            return Err(VfsError::cancelled());
+        }
         match (answer.accept, answer.text()) {
             (true, Some(text)) => Ok((text.to_string(), Some(answer.remember))),
             _ => Err(VfsError::cancelled()),
@@ -206,11 +217,12 @@ impl FtpFs {
             if stop() {
                 return Err(VfsError::cancelled());
             }
-            match TcpStream::connect_timeout(target, CONNECT_TIMEOUT) {
+            match blocking::connect(*target, CONNECT_TIMEOUT, stop) {
                 Ok(socket) => {
                     conn = Some((socket, *target));
                     break;
                 }
+                Err(_) if stop() => return Err(VfsError::cancelled()),
                 Err(e) => last = Some(e),
             }
         }
@@ -221,15 +233,21 @@ impl FtpFs {
         let _ = socket.set_read_timeout(Some(REQUEST_TIMEOUT));
         let _ = socket.set_write_timeout(Some(REQUEST_TIMEOUT));
         let _ = socket.set_nodelay(true);
-        let mut conn = Conn::connect_with_stream(socket)
-            .map_err(|e| ftp_error(e, None))?
-            .passive_stream_builder(|addr| {
-                let socket =
-                    TcpStream::connect_timeout(&addr, CONNECT_TIMEOUT).map_err(FtpError::ConnectionError)?;
-                let _ = socket.set_read_timeout(Some(REQUEST_TIMEOUT));
-                let _ = socket.set_write_timeout(Some(REQUEST_TIMEOUT));
-                Ok(socket)
-            });
+        // The greeting and the TLS handshake wait on the server.
+        watched(socket.try_clone().ok(), stop, || self.greet(socket, target))
+            .map_err(|e| self.failed(e, None, stop))
+    }
+
+    /// The server's greeting read, passive mode set, TLS started for FTPS.
+    fn greet(&self, socket: TcpStream, target: SocketAddr) -> Result<Conn, FtpError> {
+        let address = &self.address;
+        let mut conn = Conn::connect_with_stream(socket)?.passive_stream_builder(|addr| {
+            let socket =
+                TcpStream::connect_timeout(&addr, CONNECT_TIMEOUT).map_err(FtpError::ConnectionError)?;
+            let _ = socket.set_read_timeout(Some(REQUEST_TIMEOUT));
+            let _ = socket.set_write_timeout(Some(REQUEST_TIMEOUT));
+            Ok(socket)
+        });
         if target.is_ipv6() {
             conn.set_mode(Mode::ExtendedPassive);
         } else {
@@ -237,12 +255,20 @@ impl FtpFs {
             conn.set_passive_nat_workaround(true);
         }
         if address.protocol == Protocol::Ftps {
-            let config = tls::client_config()?;
-            conn = conn
-                .into_secure(RustlsConnector::from(config), &address.host)
-                .map_err(|e| ftp_error(e, None))?;
+            let config = tls::client_config().map_err(|e| FtpError::SecureError(e.message))?;
+            conn = conn.into_secure(RustlsConnector::from(config), &address.host)?;
         }
         Ok(conn)
+    }
+
+    /// `error` from a call a stop may have cut short: then
+    /// [`VfsErrorKind::Cancelled`].
+    fn failed(&self, error: FtpError, path: Option<&str>, stop: Stop) -> VfsError {
+        if stop() {
+            VfsError::cancelled()
+        } else {
+            ftp_error(error, path)
+        }
     }
 
     /// A connection to work on: an idle one (checked when it sat a
@@ -256,7 +282,7 @@ impl FtpFs {
             let mut pool = self.pool.lock();
             if let Some((since, mut conn)) = pool.idle.pop() {
                 drop(pool);
-                if since.elapsed() < STALE || conn.noop().is_ok() {
+                if since.elapsed() < STALE || watched(control_socket(&conn), stop, || conn.noop()).is_ok() {
                     return Ok(conn);
                 }
                 self.pool.lock().open -= 1;
@@ -311,10 +337,15 @@ impl FtpFs {
         let mut tried = false;
         loop {
             let mut conn = self.check_out(stop)?;
-            match work(&mut conn) {
+            match watched(control_socket(&conn), stop, || work(&mut conn)) {
                 Ok(value) => {
                     self.check_in(conn);
                     return Ok(value);
+                }
+                Err(_) if stop() => {
+                    // Shut under the call: of no use any more.
+                    self.release();
+                    return Err(VfsError::cancelled());
                 }
                 Err(error) => {
                     let error = ftp_error(error, path);
@@ -352,19 +383,27 @@ impl FtpFs {
 
     fn reader(&self, path: &str, offset: u64, stop: Stop) -> VfsResult<FtpReader<'_>> {
         let mut conn = self.check_out(stop)?;
-        let opened = (|| {
+        let opened = watched(control_socket(&conn), stop, || {
             if offset > 0 {
                 conn.resume_transfer(offset as usize)?;
             }
             conn.retr_as_stream(path)
-        })();
+        });
         match opened {
-            Ok(stream) => Ok(FtpReader {
-                fs: self,
-                conn: Some(conn),
-                stream: Some(Box::new(stream)),
-                path: path.to_string(),
-            }),
+            Ok(stream) => {
+                let data = Data::polled(stream.get_ref());
+                Ok(FtpReader {
+                    fs: self,
+                    conn: Some(conn),
+                    stream: Some(Box::new(stream)),
+                    data,
+                    path: path.to_string(),
+                })
+            }
+            Err(_) if stop() => {
+                self.release();
+                Err(VfsError::cancelled())
+            }
             Err(error) => {
                 let error = ftp_error(error, Some(path));
                 if error.is_connection_error() {
@@ -440,13 +479,21 @@ impl RemoteFs for FtpFs {
         stop: Stop,
     ) -> VfsResult<Box<dyn RemoteWrite + 'a>> {
         let mut conn = self.check_out(stop)?;
-        match conn.put_with_stream(path) {
-            Ok(stream) => Ok(Box::new(FtpWriter {
-                fs: self,
-                conn: Some(conn),
-                stream: Some(Box::new(stream)),
-                path: path.to_string(),
-            })),
+        match watched(control_socket(&conn), stop, || conn.put_with_stream(path)) {
+            Ok(stream) => {
+                let data = Data::polled(stream.get_ref());
+                Ok(Box::new(FtpWriter {
+                    fs: self,
+                    conn: Some(conn),
+                    stream: Some(Box::new(stream)),
+                    data,
+                    path: path.to_string(),
+                }))
+            }
+            Err(_) if stop() => {
+                self.release();
+                Err(VfsError::cancelled())
+            }
             Err(error) => {
                 let error = ftp_error(error, Some(path));
                 if error.is_connection_error() {
@@ -547,6 +594,7 @@ struct FtpReader<'a> {
     fs: &'a FtpFs,
     conn: Option<Conn>,
     stream: Option<Box<dyn std::io::Read + Send>>,
+    data: Data,
     path: String,
 }
 
@@ -556,17 +604,20 @@ impl RemoteRead for FtpReader<'_> {
             return Err(VfsError::cancelled());
         }
         let Some(stream) = self.stream.as_mut() else { return Ok(0) };
+        let mut waited = Duration::ZERO;
         let n = loop {
             match std::io::Read::read(stream, buf) {
                 Ok(n) => break n,
                 Err(e) if e.kind() == std::io::ErrorKind::Interrupted => continue,
+                Err(e) if Data::is_wait(&e) => self.data.waited(&mut waited, stop, &self.path)?,
                 Err(e) => return Err(io_error(&e, &self.path)),
             }
         };
         if n == 0 {
             let stream = self.stream.take().expect("checked above");
             let mut conn = self.conn.take().expect("a stream has its connection");
-            match conn.finalize_retr_stream(stream) {
+            self.data.settle();
+            match watched(control_socket(&conn), stop, || conn.finalize_retr_stream(stream)) {
                 Ok(()) => self.fs.check_in(conn),
                 Err(error) => {
                     self.fs.release();
@@ -592,6 +643,7 @@ struct FtpWriter<'a> {
     fs: &'a FtpFs,
     conn: Option<Conn>,
     stream: Option<Box<dyn std::io::Write + Send>>,
+    data: Data,
     path: String,
 }
 
@@ -601,14 +653,30 @@ impl RemoteWrite for FtpWriter<'_> {
             return Err(VfsError::cancelled());
         }
         let Some(stream) = self.stream.as_mut() else { return Err(lost(&self.path)) };
-        std::io::Write::write_all(stream, data).map_err(|e| io_error(&e, &self.path))
+        let mut written = 0;
+        let mut waited = Duration::ZERO;
+        while written < data.len() {
+            match std::io::Write::write(stream, &data[written..]) {
+                Ok(0) => return Err(lost(&self.path)),
+                Ok(n) => {
+                    written += n;
+                    waited = Duration::ZERO;
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::Interrupted => {}
+                Err(e) if Data::is_wait(&e) => self.data.waited(&mut waited, stop, &self.path)?,
+                Err(e) => return Err(io_error(&e, &self.path)),
+            }
+        }
+        Ok(())
     }
 
-    fn finish(mut self: Box<Self>, _stop: Stop) -> VfsResult<()> {
+    fn finish(mut self: Box<Self>, stop: Stop) -> VfsResult<()> {
         let (Some(stream), Some(mut conn)) = (self.stream.take(), self.conn.take()) else {
             return Err(lost(&self.path));
         };
-        match conn.finalize_put_stream(stream) {
+        // The last bytes and the server's word on them may take a while.
+        self.data.settle();
+        match watched(control_socket(&conn), stop, || conn.finalize_put_stream(stream)) {
             Ok(()) => {
                 self.fs.check_in(conn);
                 Ok(())
@@ -631,6 +699,58 @@ impl Drop for FtpWriter<'_> {
         if self.conn.take().is_some() {
             self.stream.take();
             self.fs.release();
+        }
+    }
+}
+
+/// A handle on the control connection's socket, for [`watched`] calls.
+fn control_socket(conn: &Conn) -> Option<TcpStream> {
+    conn.get_ref().try_clone().ok()
+}
+
+/// A data connection's socket: once the transfer is under way it waits in
+/// slices of [`POLL`], so a stop is seen between them, and gives up after
+/// [`REQUEST_TIMEOUT`] without a byte.
+struct Data(Option<TcpStream>);
+
+impl Data {
+    fn polled(socket: &TcpStream) -> Data {
+        let socket = socket.try_clone().ok();
+        if let Some(socket) = &socket {
+            let _ = socket.set_read_timeout(Some(POLL));
+            let _ = socket.set_write_timeout(Some(POLL));
+        }
+        Data(socket)
+    }
+
+    /// A read or write that ran out of its slice.
+    fn is_wait(error: &std::io::Error) -> bool {
+        matches!(error.kind(), std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut)
+    }
+
+    /// One more slice waited: stopped, or out of time, or wait on.
+    fn waited(&self, waited: &mut Duration, stop: Stop, path: &str) -> VfsResult<()> {
+        if stop() {
+            return Err(VfsError::cancelled());
+        }
+        *waited += POLL;
+        if self.0.is_none() || *waited >= REQUEST_TIMEOUT {
+            return Err(VfsError::remote(
+                VfsErrorKind::TimedOut,
+                Some(path),
+                format!("{path}: the server did not answer in time"),
+            ));
+        }
+        Ok(())
+    }
+
+    /// The transfer's last words: back to the whole timeout, and the
+    /// handle let go, so the socket closes with its stream (the server
+    /// waits for that to answer).
+    fn settle(&mut self) {
+        if let Some(socket) = self.0.take() {
+            let _ = socket.set_read_timeout(Some(REQUEST_TIMEOUT));
+            let _ = socket.set_write_timeout(Some(REQUEST_TIMEOUT));
         }
     }
 }

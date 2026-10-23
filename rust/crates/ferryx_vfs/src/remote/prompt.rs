@@ -11,6 +11,8 @@ use std::sync::{Arc, LazyLock};
 use parking_lot::Mutex;
 use tokio::sync::oneshot;
 
+use super::runtime::{self, Stop};
+
 /// What a connection needs to know from the user.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Question {
@@ -126,14 +128,8 @@ impl Drop for Pending {
 }
 
 /// [`ask`] from a thread outside the runtime (an FTP connection).
-pub fn ask_blocking(question: Question) -> Answer {
-    let (id, receiver) = match post(&question) {
-        Some(posted) => posted,
-        None => return Answer::default(),
-    };
-    let answer = receiver.blocking_recv().unwrap_or_default();
-    PROMPTS.lock().pending.remove(&id);
-    answer
+pub fn ask_blocking(question: Question, stop: Stop) -> Answer {
+    runtime::run_unbounded(async { Ok(ask(question).await) }, stop).unwrap_or_default()
 }
 
 fn post(question: &Question) -> Option<(u64, oneshot::Receiver<Answer>)> {
@@ -187,13 +183,19 @@ pub fn pending() -> Vec<u64> {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::atomic::AtomicBool;
+
     use super::*;
 
     #[test]
     fn nobody_listening_is_a_no_and_an_answer_reaches_its_question() {
         set_listener(None, None);
         assert!(
-            !ask_blocking(Question::Password { server: "s".into(), user: "u".into(), retry: false }).accept
+            !ask_blocking(
+                Question::Password { server: "s".into(), user: "u".into(), retry: false },
+                &runtime::never
+            )
+            .accept
         );
 
         set_listener(
@@ -206,10 +208,31 @@ mod tests {
             })),
             None,
         );
-        let got = ask_blocking(Question::Password { server: "s".into(), user: "u".into(), retry: false });
+        let got = ask_blocking(
+            Question::Password { server: "s".into(), user: "u".into(), retry: false },
+            &runtime::never,
+        );
         assert!(got.accept);
         assert_eq!(got.text(), Some("secret"));
         assert!(got.remember);
+
+        // Nobody answers; the caller stops waiting and the question is
+        // withdrawn.
+        let withdrawn = Arc::new(Mutex::new(Vec::new()));
+        let seen = withdrawn.clone();
+        let asked = Arc::new(AtomicBool::new(false));
+        let posted = asked.clone();
+        set_listener(
+            Some(Arc::new(move |_, _| posted.store(true, Ordering::SeqCst))),
+            Some(Arc::new(move |id| seen.lock().push(id))),
+        );
+        let got =
+            ask_blocking(Question::Password { server: "s".into(), user: "u".into(), retry: false }, &|| {
+                asked.load(Ordering::SeqCst)
+            });
+        assert!(!got.accept);
+        assert_eq!(withdrawn.lock().len(), 1);
+        assert!(pending().is_empty());
         set_listener(None, None);
     }
 }

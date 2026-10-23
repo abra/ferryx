@@ -217,4 +217,12 @@ abstract final class AppIcons {
   static const IconData duplicates = LucideIcons.files;
   static const IconData equal = LucideIcons.equal;
   static const IconData notEqual = LucideIcons.equalNot;
+  // ─── Network ───
+  static const IconData server = LucideIcons.server;
+  static const IconData serverOff = LucideIcons.serverOff;
+  static const IconData globe = LucideIcons.globe;
+  static const IconData unlocked = LucideIcons.lockOpen;
+  static const IconData disconnect = LucideIcons.unplug;
+  static const IconData keyFile = LucideIcons.keyRound;
+  static const IconData shieldAlert = LucideIcons.shieldAlert;
 }

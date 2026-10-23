@@ -45,6 +45,7 @@ class Preferences extends Equatable {
     this.vimMarks = const {},
     this.terminal = const TerminalPreferences(),
     this.compareOptions = const CompareOptions(),
+    this.servers = const [],
   });
 
   static const int schemaVersion = 1;
@@ -118,6 +119,12 @@ class Preferences extends Equatable {
   /// Compare Folders and Synchronize Folders, as last used.
   final CompareOptions compareOptions;
 
+  // ─── Network ───
+
+  /// The servers the user saved for Connect to Server, in the order they
+  /// keep them; never a password (only the system's keychain keeps those).
+  final List<ServerProfile> servers;
+
   /// The sort options a new panel starts with.
   SortOptions get defaultSort => SortOptions(
     foldersFirst: foldersFirst,
@@ -161,6 +168,7 @@ class Preferences extends Equatable {
     Map<String, String>? vimMarks,
     TerminalPreferences? terminal,
     CompareOptions? compareOptions,
+    List<ServerProfile>? servers,
   }) => Preferences(
     themeMode: themeMode ?? this.themeMode,
     localeCode: clearLocale ? null : (localeCode ?? this.localeCode),
@@ -197,6 +205,7 @@ class Preferences extends Equatable {
     vimMarks: vimMarks ?? this.vimMarks,
     terminal: terminal ?? this.terminal,
     compareOptions: compareOptions ?? this.compareOptions,
+    servers: servers ?? this.servers,
   );
 
   Map<String, Object?> toJson() => {
@@ -235,6 +244,7 @@ class Preferences extends Equatable {
     'vimMarks': vimMarks,
     'terminal': terminal.toJson(),
     'compareOptions': compareOptions.toJson(),
+    'servers': [for (final s in servers) s.toJson()],
   };
 
   /// Tolerant decoding: unknown or malformed fields fall back to defaults so
@@ -354,6 +364,12 @@ class Preferences extends Equatable {
           : defaults.vimMarks,
       terminal: TerminalPreferences.fromJson(json['terminal']),
       compareOptions: CompareOptions.fromJson(json['compareOptions']),
+      servers: json['servers'] is List
+          ? [
+              for (final item in json['servers'] as List)
+                ?ServerProfile.fromJson(item),
+            ]
+          : defaults.servers,
     );
   }
 
@@ -407,6 +423,7 @@ class Preferences extends Equatable {
     vimMarks,
     terminal,
     compareOptions,
+    servers,
   ];
 }
 
