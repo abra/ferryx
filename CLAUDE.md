@@ -73,6 +73,13 @@ See `ARCHITECTURE.md`. The rules that matter most:
   `record`); a bridge call that changes files itself records through
   `tasks::record`. Trash through `ferryx_vfs::trash` (it keeps receipts);
   permanent deletion is never recorded.
+- A tab may be on a server (`Location.isRemote`; its `server` is a key the
+  core makes, never Dart). A command that works on this computer only
+  checks the location and says `networkNotOnServer` (`_onServer()`,
+  `_notHere` in the workspace); nothing from a server reaches the
+  terminal, Jump to Folder or the undo journal. Server waits take a
+  `Stop` and a deadline (`remote::runtime`, `remote::blocking`); secrets
+  go to the keychain only on Remember, never to preferences or logs.
 - A panel's cursor and selection are separate (orthodox manager rules,
   `PanelCubit`): moving the cursor never changes the selection; a command
   works on the selection, else on the focused row, never on `..`.

@@ -104,8 +104,8 @@ impl ServerAddressView {
     }
 }
 
-/// What to connect to.
-#[derive(Clone, Debug, PartialEq, Eq)]
+/// What to connect to. Its `Debug` leaves the password out.
+#[derive(Clone, PartialEq, Eq)]
 pub struct ConnectRequestView {
     pub protocol: ProtocolView,
     pub host: String,
@@ -118,6 +118,21 @@ pub struct ConnectRequestView {
     pub password: Option<String>,
     pub auth: AuthMethodView,
     pub key_path: Option<String>,
+}
+
+impl std::fmt::Debug for ConnectRequestView {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ConnectRequestView")
+            .field("protocol", &self.protocol)
+            .field("host", &self.host)
+            .field("port", &self.port)
+            .field("user", &self.user)
+            .field("path", &self.path)
+            .field("password", &self.password.as_ref().map(|_| "…"))
+            .field("auth", &self.auth)
+            .field("key_path", &self.key_path)
+            .finish()
+    }
 }
 
 impl ConnectRequestView {

@@ -317,17 +317,23 @@ String rowSemanticsLabel(BuildContext context, FileEntry entry) {
 
 /// A folder with nothing to show, in either view.
 class EmptyRows extends StatelessWidget {
-  const EmptyRows({super.key});
+  const EmptyRows({this.read = true, super.key});
+
+  /// The folder was read; nothing is said of one not read yet (on its way,
+  /// or on a server out of reach).
+  final bool read;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Text(
-      context.l10n.panelEmptyFolder,
-      style: context.text.bodyMedium?.copyWith(
-        color: context.appColors.textFaint,
-      ),
-    ),
-  );
+  Widget build(BuildContext context) => !read
+      ? const SizedBox.expand()
+      : Center(
+          child: Text(
+            context.l10n.panelEmptyFolder,
+            style: context.text.bodyMedium?.copyWith(
+              color: context.appColors.textFaint,
+            ),
+          ),
+        );
 }
 
 /// The text of a list column for [entry].

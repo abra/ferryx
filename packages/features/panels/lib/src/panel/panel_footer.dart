@@ -112,7 +112,8 @@ class PanelFooter extends StatelessWidget {
           Flexible(child: AppMiddleEllipsis(focused.key, style: strong)),
           if (details != null) ...[
             const SizedBox(width: AppSpacing.md),
-            _Line(details, strong),
+            // Cut too when the footer is narrow (a server's capsule, Vim's).
+            Flexible(child: _Line(details, strong)),
           ],
         ],
       );
@@ -217,7 +218,10 @@ class _ServerCap extends StatelessWidget {
     final style = context.text.labelSmall!
         .copyWith(color: ink)
         .weight(FontWeight.w700);
-    final size = style.fontSize ?? AppIconSize.xs;
+    // The glyphs grow with the text beside them.
+    final size = MediaQuery.textScalerOf(
+      context,
+    ).scale(style.fontSize ?? AppIconSize.xs);
     final said = l10n.serverStateLabel(
       state,
       server.displayRoot,

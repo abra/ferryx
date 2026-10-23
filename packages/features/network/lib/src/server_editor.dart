@@ -165,6 +165,7 @@ class _ServerEditorState extends State<ServerEditor> {
             label: l10n.networkFieldFolder,
             controller: _path,
             hint: l10n.networkFieldFolderHint,
+            monospace: true,
             onSubmitted: (_) => _save(),
           ),
           if (_protocol.hasKeys) ...[

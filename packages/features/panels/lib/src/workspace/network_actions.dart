@@ -94,9 +94,10 @@ extension _NetworkActions on _WorkspaceScreenState {
   // ─── Opening ───
 
   /// A file on a server, opened: a copy comes to a folder of its own
-  /// (with its card, as any copy), and the desktop opens that. What is
-  /// changed in it stays there, as the notice says.
-  Future<void> _openFromServer(OpenFileRequest request) async {
+  /// (with its card, as any copy), and the desktop opens that, in [app]
+  /// when given (F4's editor). What is changed in it stays there, as the
+  /// notice says.
+  Future<void> _openFromServer(OpenFileRequest request, {String? app}) async {
     final server = request.location.server;
     final network = _network;
     if (server == null || network == null) return;
@@ -113,7 +114,12 @@ extension _NetworkActions on _WorkspaceScreenState {
       );
       final done = await _whenFinished(id);
       if (!mounted || done.state != OpState.done) return;
-      await widget.files.openDefault('$folder/${request.entry.name}');
+      final copy = '$folder/${request.entry.name}';
+      if (app == null) {
+        await widget.files.openDefault(copy);
+      } else {
+        await widget.files.openWith(copy, app);
+      }
       if (mounted) {
         showAppNotice(context, _l10n.networkOpenedCopy(request.entry.name));
       }

@@ -3798,7 +3798,7 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String networkHostKeyChangedMessage(String host) {
-    return 'The key $host shows is not the one on record. Someone may be intercepting the connection — or the server was reinstalled. Ferryx will not connect.';
+    return 'The key that $host presented is not the one on record. Someone may be intercepting the connection — or the server was reinstalled. Ferryx will not connect.';
   }
 
   @override
@@ -3838,8 +3838,7 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
       'This works with files on this computer only';
 
   @override
-  String get networkNoTrash =>
-      'Items on a server are deleted for good: servers have no trash.';
+  String get networkNoTrash => 'A server has no Trash to put them in.';
 
   @override
   String networkOpenedCopy(String name) {

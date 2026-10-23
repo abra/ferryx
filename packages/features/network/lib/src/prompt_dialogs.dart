@@ -274,7 +274,12 @@ class _Fingerprint extends StatelessWidget {
         BorderSide(color: context.appColors.line),
       ),
     ),
-    child: SelectableText(text, style: context.mono),
+    // Small enough that a SHA256 fingerprint keeps to one line, to be read
+    // against the one given in one go.
+    child: SelectableText(
+      text,
+      style: context.mono.copyWith(fontSize: context.text.bodySmall?.fontSize),
+    ),
   );
 }
 

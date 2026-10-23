@@ -57,8 +57,9 @@ impl Question {
     }
 }
 
-/// The user's answer.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+/// The user's answer. Its `Debug` counts the texts and shows none: they
+/// are passwords, passphrases, codes.
+#[derive(Clone, Default, PartialEq, Eq)]
 pub struct Answer {
     /// Go on (trust the key, use the text); `false` is Cancel.
     pub accept: bool,
@@ -67,6 +68,16 @@ pub struct Answer {
     /// Keep the password in the system's keychain; for a host key, keep it
     /// in Ferryx's known_hosts (else trusted for this run only).
     pub remember: bool,
+}
+
+impl std::fmt::Debug for Answer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Answer")
+            .field("accept", &self.accept)
+            .field("texts", &self.texts.len())
+            .field("remember", &self.remember)
+            .finish()
+    }
 }
 
 impl Answer {

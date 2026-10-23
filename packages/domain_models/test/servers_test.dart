@@ -107,6 +107,22 @@ void main() {
     });
   });
 
+  test('what is typed for a login never shows when printed', () {
+    const address = ServerAddress(
+      protocol: ServerProtocol.ftp,
+      host: 'files.lan',
+      port: 21,
+      key: 'ftp://me@files.lan:21',
+      display: 'ftp://me@files.lan',
+      user: 'me',
+      password: 'hunter2',
+    );
+    expect('$address', isNot(contains('hunter2')));
+    expect('$address', contains('files.lan'));
+    const answer = NetworkAnswer(accept: true, texts: ['hunter2']);
+    expect('$answer', isNot(contains('hunter2')));
+  });
+
   test('errors that a connection may cure', () {
     expect(FerryxErrorKind.notConnected.needsConnection, isTrue);
     expect(FerryxErrorKind.connectionLost.needsConnection, isTrue);

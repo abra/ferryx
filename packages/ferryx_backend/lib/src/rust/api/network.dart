@@ -150,7 +150,7 @@ enum AuthMethodView {
   agent,
 }
 
-/// What to connect to.
+/// What to connect to. Its `Debug` leaves the password out.
 class ConnectRequestView {
   final ProtocolView protocol;
   final String host;

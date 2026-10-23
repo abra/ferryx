@@ -58,6 +58,7 @@ class ConnectDialog extends StatefulWidget {
 class _ConnectDialogState extends State<ConnectDialog> {
   final _address = TextEditingController();
   final _addressFocus = FocusNode(debugLabel: 'server address');
+  final _listKey = GlobalKey(debugLabel: 'servers');
   int? _lastTapIndex;
   DateTime? _lastTapAt;
   int _nextId = DateTime.now().microsecondsSinceEpoch;
@@ -215,7 +216,10 @@ class _ConnectDialogState extends State<ConnectDialog> {
       unawaited(
         showHostKeyChangedDialog(
           context,
-          server: state.connectingTo ?? state.parsed?.key ?? '',
+          server:
+              state.parsed?.display ??
+              state.selectedServer?.displayRoot ??
+              state.address,
           detail: error.message,
         ),
       );
@@ -233,71 +237,84 @@ class _ConnectDialogState extends State<ConnectDialog> {
       listener: _onState,
       builder: (context, state) => AppDialog(
         title: l10n.networkConnectTitle,
-        body: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Focus(
-              onKeyEvent: _onFieldKey,
-              canRequestFocus: false,
-              skipTraversal: true,
-              child: NetworkField(
-                label: l10n.networkAddressLabel,
-                controller: _address,
-                focusNode: _addressFocus,
-                autofocus: true,
-                hint: l10n.networkAddressHint,
-                monospace: true,
-                readOnly: state.connecting,
-                onChanged: _cubit.typeAddress,
-                onSubmitted: (_) => unawaited(_cubit.connect()),
+        // The menu key opens the cursor row's menu, from the field too.
+        body: CommandHandlers(
+          handlers: {
+            AppCommand.contextMenu: () {
+              final list = _listKey.currentContext;
+              if (state.cursor < 0 || list == null) return;
+              unawaited(_menu(state.cursor, keyboardMenuAnchor(list)));
+            },
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Focus(
+                onKeyEvent: _onFieldKey,
+                canRequestFocus: false,
+                skipTraversal: true,
+                child: NetworkField(
+                  label: l10n.networkAddressLabel,
+                  controller: _address,
+                  focusNode: _addressFocus,
+                  autofocus: true,
+                  hint: l10n.networkAddressHint,
+                  monospace: true,
+                  readOnly: state.connecting,
+                  onChanged: _cubit.typeAddress,
+                  onSubmitted: (_) => unawaited(_cubit.connect()),
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            _Status(state: state),
-            _ServerList(
-              state: state,
-              shortcutMap: widget.shortcutMap,
-              onTap: _tap,
-              onFocused: _cubit.select,
-              onConnect: (index) {
-                _cubit.select(index);
-                unawaited(_cubit.connect());
-              },
-              onMenu: (index, anchor) => unawaited(_menu(index, anchor)),
-              onEdit: () => unawaited(_edit()),
-              onRemove: () => unawaited(_remove()),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Wrap(
-              spacing: context.metrics.toolbarSpacing,
-              runSpacing: AppSpacing.xs,
-              children: [
-                OutlinedButton.icon(
-                  style: AppButtonStyles.small(context),
-                  onPressed: state.connecting ? null : () => unawaited(_add()),
-                  icon: const Icon(AppIcons.add, size: AppIconSize.sm),
-                  label: Text(l10n.networkAddServer),
-                ),
-                OutlinedButton.icon(
-                  style: AppButtonStyles.small(context),
-                  onPressed: state.connecting || state.selectedServer == null
-                      ? null
-                      : () => unawaited(_edit()),
-                  icon: const Icon(AppIcons.edit, size: AppIconSize.sm),
-                  label: Text(l10n.networkEditServer),
-                ),
-                OutlinedButton.icon(
-                  style: AppButtonStyles.small(context),
-                  onPressed: state.connecting || state.selectedServer == null
-                      ? null
-                      : () => unawaited(_remove()),
-                  icon: const Icon(AppIcons.trash, size: AppIconSize.sm),
-                  label: Text(l10n.networkRemoveServer),
-                ),
-              ],
-            ),
-          ],
+              const SizedBox(height: AppSpacing.xs),
+              _Status(state: state),
+              _ServerList(
+                key: _listKey,
+                state: state,
+                shortcutMap: widget.shortcutMap,
+                onTap: _tap,
+                onFocused: _cubit.select,
+                onConnect: (index) {
+                  _cubit.select(index);
+                  unawaited(_cubit.connect());
+                },
+                onMenu: (index, anchor) => unawaited(_menu(index, anchor)),
+                onEdit: () => unawaited(_edit()),
+                onRemove: () => unawaited(_remove()),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Wrap(
+                spacing: context.metrics.toolbarSpacing,
+                runSpacing: AppSpacing.xs,
+                children: [
+                  OutlinedButton.icon(
+                    style: AppButtonStyles.small(context),
+                    onPressed: state.connecting
+                        ? null
+                        : () => unawaited(_add()),
+                    icon: const Icon(AppIcons.add, size: AppIconSize.sm),
+                    label: Text(l10n.networkAddServer),
+                  ),
+                  OutlinedButton.icon(
+                    style: AppButtonStyles.small(context),
+                    onPressed: state.connecting || state.selectedServer == null
+                        ? null
+                        : () => unawaited(_edit()),
+                    icon: const Icon(AppIcons.edit, size: AppIconSize.sm),
+                    label: Text(l10n.networkEditServer),
+                  ),
+                  OutlinedButton.icon(
+                    style: AppButtonStyles.small(context),
+                    onPressed: state.connecting || state.selectedServer == null
+                        ? null
+                        : () => unawaited(_remove()),
+                    icon: const Icon(AppIcons.trash, size: AppIconSize.sm),
+                    label: Text(l10n.networkRemoveServer),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
         actions: [
           OutlinedButton(
@@ -378,6 +395,7 @@ class _Status extends StatelessWidget {
 class _ServerList extends StatelessWidget {
   const _ServerList({
     required this.state,
+    super.key,
     required this.shortcutMap,
     required this.onTap,
     required this.onFocused,

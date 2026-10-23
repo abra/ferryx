@@ -66,8 +66,9 @@ impl Protocol {
     }
 }
 
-/// A server and the folder to open on it.
-#[derive(Clone, Debug, PartialEq, Eq)]
+/// A server and the folder to open on it. Its `Debug` leaves the password
+/// out: an address may end up in a log or a panic message.
+#[derive(Clone, PartialEq, Eq)]
 pub struct ServerAddress {
     pub protocol: Protocol,
     /// Lower case; an IPv6 address without its brackets.
@@ -99,6 +100,19 @@ const COMPONENT: &AsciiSet = &CONTROLS
 
 /// A path keeps its slashes.
 const PATH: &AsciiSet = &CONTROLS.add(b' ').add(b'"').add(b'#').add(b'%').add(b'?');
+
+impl std::fmt::Debug for ServerAddress {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ServerAddress")
+            .field("protocol", &self.protocol)
+            .field("host", &self.host)
+            .field("port", &self.port)
+            .field("user", &self.user)
+            .field("path", &self.path)
+            .field("password", &self.password.as_ref().map(|_| "…"))
+            .finish()
+    }
+}
 
 impl ServerAddress {
     pub fn new(protocol: Protocol, host: &str, user: &str) -> ServerAddress {
@@ -330,6 +344,17 @@ pub fn name(path: &str) -> &str {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_password_never_shows_in_debug_output() {
+        let a = ServerAddress::parse("ftp://me:hunter2@host/pub", Protocol::Sftp).unwrap();
+        assert_eq!(a.password.as_deref(), Some("hunter2"));
+        let shown = format!("{a:?}");
+        assert!(!shown.contains("hunter2") && shown.contains("host"), "{shown}");
+        let answer =
+            super::super::prompt::Answer { accept: true, texts: vec!["hunter2".into()], remember: false };
+        assert!(!format!("{answer:?}").contains("hunter2"));
+    }
 
     #[test]
     fn reads_addresses() {

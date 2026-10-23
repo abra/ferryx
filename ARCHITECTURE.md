@@ -113,6 +113,14 @@ flags and event batching of the dialogs' work). `Runner::start_job` runs a
 module's own job as an operation, with how its changes go on record
 (`Journaling`). See "Operations stream" below.
 
+The Network stream adds to `ferryx_vfs` the module `remote` (servers over
+SFTP, FTP/FTPS and WebDAV behind one trait, their connections, host keys,
+the keychain), to `ferryx_ops` the module `transfer` (copy, move, delete
+and folder sizes with a server on a side), to `ferryx_api` the file
+`api/network.rs`, and the crate `ferryx_test_servers` (in-process SFTP,
+FTP and WebDAV servers for the tests; never shipped). See "Network
+locations" below.
+
 Rules:
 
 - A panel's listing lives in Rust while the panel shows it
@@ -121,9 +129,10 @@ Rules:
   reading the disk again; a change of hidden items reads again. The
   folder is watched and `DirectoryChanged` names the listing; the panel
   then calls `refresh_listing`, keeping its cursor and selection by name.
-- Locations are native paths or `(archive, inner path)`; a listing inside
-  an archive comes from the archive's index and is not watched (the
-  archive's folder is).
+- Locations are native paths, `(archive, inner path)` or `(server key,
+  path)`; a listing inside an archive comes from the archive's index and
+  is not watched (the archive's folder is); one on a server is read over
+  the network and not watched either (see Network locations).
 - Operations never block the bridge: `start_operation` answers an id at
   once and every change comes as an `OperationProgress` event (throttled
   to one report per 100 ms while bytes flow, at once on a state change).
@@ -264,6 +273,8 @@ that `ferryx_backend` loads, as part of the Flutter build.
 | `features/sync` | Synchronize Folders (`showSyncDialog`, `SyncCubit`): two trees compared in the core, a virtual table with an action per row, the synchronization as an operation. |
 | `features/checksums` | Checksums (`showChecksumsDialog`, `ChecksumsCubit`): hashes of files or the check of a checksum file. |
 | `features/duplicates` | Find Duplicates (`showDuplicatesDialog`, `DuplicatesCubit`): groups of identical files, marks, Move to Trash. |
+| `network_service` | `NetworkService` over the core (`CoreNetworkService`): addresses read and keyed by Rust, connections made (cancellable) and closed, their state (`serverChanges`), the questions a connection asks and their answers, a saved password forgotten, a temporary folder per server; `FakeNetworkService` for tests (`testing.dart`). |
+| `features/network` | Connect to Server (`showConnectDialog`, `ConnectCubit`: the address field, the saved and recent servers), the server editor, the host key, password, passphrase and prompts dialogs and the changed-key alarm, `NetworkPromptHost` (shows a connection's questions one at a time, closes the ones withdrawn), `ServerConnector` (a server connected to again with its saved way of logging in, an address typed). |
 
 ### Feature wiring
 
@@ -863,6 +874,146 @@ settled. Rows are grouped (size × copies, space to free); Space marks,
 Move to Trash goes through the operations runner, so ⌘Z puts the files
 back; a group with every copy marked is warned about.
 
+## Network locations
+
+A panel's tab can be a folder on a server: SFTP, FTP and FTPS (explicit
+TLS, `AUTH TLS` and `PROT P`), WebDAV over HTTP and HTTPS. Connect to
+Server (⌘K; in the terminal ⌘K stays Clear) takes an address
+(`sftp://user@host:port/folder`, `ftp://`, `ftps://`, `dav://`, `davs://`,
+`http://`, `https://`) or a saved server (name, protocol, host, port,
+user, start folder, how SFTP logs in); Go To (F1/F2) lists the saved
+servers, Go to Folder and `:connect`/`:cd` take an address, Disconnect
+(the panel menu, `:disconnect`) closes the active tab's server.
+
+### Crates
+
+Pure Rust, no OpenSSL and no libssh2; `ring` is the one C and assembly
+dependency (rustls's and russh's crypto), built by cargo for every target.
+
+| Crate | Why | Licence |
+|-------|-----|---------|
+| `russh` 0.63, `russh-sftp` 2 | SSH and SFTP v3 in Rust (the client side of Warp's and many servers'), async on tokio; `ring` and `rsa` features only, so no aws-lc. Maintained, frequent releases. | Apache-2.0 |
+| `suppaftp` 6.3 | FTP and explicit FTPS, sync API, rustls through `RustlsConnector`; `MLSD`/`MLST`/`FEAT`. The sync API is wrapped so a stop cuts it short (`remote::blocking`). | MIT or Apache-2.0 |
+| `reqwest` 0.12, `quick-xml` 0.38 | WebDAV's HTTP (streamed bodies, rustls, no native-tls) and its `PROPFIND` XML. | MIT or Apache-2.0; MIT |
+| `rustls` 0.23 + `rustls-platform-verifier` 0.6 | TLS for FTPS and HTTPS, certificates checked against the system's roots and policy (Keychain, CryptoAPI, the distribution's store). | Apache-2.0, ISC or MIT |
+| `keyring` 3.6 | Passwords in the macOS Keychain, Windows Credential Manager, the Secret Service (pure-Rust `zbus`, no libdbus). | MIT or Apache-2.0 |
+| `tokio` 1 | The runtime of russh and reqwest: two workers owned by the core (`remote::runtime`). | MIT |
+| `dav-server`, `rcgen`, `hyper` (tests only) | The in-process WebDAV server and the test certificate authority. | Apache-2.0; MIT or Apache-2.0 |
+
+The workspace MSRV (1.85) still builds: the new dependencies were chosen
+with `CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback`.
+
+### Locations and keys
+
+`Location.remote(server:, path:)`: `server` is the server's key,
+`scheme://user@host:port` (the user percent-encoded, the port always
+there), made by the core (`server_key`, `parse_server_address`), never
+by Dart, so both sides agree on it; `path` is absolute on the server. It
+saves as `remote:<key>#<path>`, shows as `sftp://user@host/path`
+(`Location.display`), its root crumb as `user@host` with the server's
+icon. Native-only features check the location: a command that works on
+this computer alone says so (`networkNotOnServer`) or is hidden from the
+row and panel menus. A folder on a server never reaches the terminal (it
+does not follow), Jump to Folder (not counted) or the undo journal
+(network operations run with `Journaling::Off`).
+
+### The core (`ferryx_vfs::remote`)
+
+- `RemoteFs` is the one trait (list, stat, byte ranges, streamed reads and
+  writes with a `Stop`, mkdir, rename, delete, set a file's time where the
+  protocol can, a server-side copy for WebDAV, reconnect, close, reap
+  idle): `SftpFs` (one SSH connection with one SFTP session that every
+  call shares; 16 requests of 64 KiB in flight both ways; keepalive every
+  30 s), `FtpFs` (a pool of up to 3 control connections, one transfer
+  each; idle ones closed after a minute; `MLSD`, else `LIST` read as Unix,
+  DOS or MLSx lines; passive mode with the NAT workaround, `EPSV` over
+  IPv6), `DavFs` (`PROPFIND` depth 1, ranged `GET`, streamed `PUT`,
+  `MKCOL`, `MOVE`/`COPY` without overwrite, `DELETE`).
+- `connection` keeps the servers open by key; one connection attempt per
+  key at a time; a server is `Connected`, `Lost` (the next call opens it
+  again with the credentials kept for the run, no question) or `Closed`;
+  the changes go out as `ConnectionChanged` events. A reaper closes idle
+  FTP connections.
+- Every wait has a deadline (connect 20 s, a request 30 s) and a `Stop`
+  asked every 40–50 ms, so a cancel ends it at once: async calls through
+  `runtime::run`; FTP's blocking calls through `blocking` (connection
+  attempts on a thread of their own, a call watched by a thread that
+  shuts its socket on a stop, data sockets read in 50 ms slices); SFTP
+  requests fail as soon as the SSH connection ends instead of at their
+  deadline.
+- Errors are `VfsError` kinds the interface words (`AuthFailed`,
+  `HostUnreachable`, `TimedOut`, `HostKeyUnknown`, `HostKeyChanged`,
+  `ConnectionLost`, `NotConnected`, `CertificateInvalid`, and the file
+  kinds); the message carries the detail only (the server, the path, the
+  known_hosts line).
+
+### Security
+
+- Host keys are checked against `~/.ssh/known_hosts` and Ferryx's own
+  file (`~/Library/Application Support/Ferryx/known_hosts`,
+  `%APPDATA%\Ferryx\known_hosts`, `$XDG_CONFIG_HOME/ferryx/known_hosts`):
+  hashed names, `[host]:port`, patterns and negations; a `@revoked` key is
+  refused, `@cert-authority` lines are left aside (host certificates are
+  not checked against them). An unknown key asks the
+  user with its SHA256 fingerprint (Return is Cancel, never Trust); a
+  trusted one may be remembered in Ferryx's file only. A changed or
+  revoked key is refused before any password goes out, with an alarm that
+  names the known_hosts line and offers no way past it: the old line must
+  be removed by hand.
+- Passwords and key passphrases go to the system keychain (service
+  `Ferryx`; the account is the server key, or `passphrase:<key path>`)
+  only when the user ticks Remember; a refused one kept there is asked
+  again and replaced. They never go into the preferences (a saved server
+  has no password field; recent addresses are kept without one), the
+  logs or an event; a password typed into an address is used once. For
+  the run, a connection keeps its password in memory to log in again
+  after a drop.
+- SFTP logs in as OpenSSH does: the agent's keys (`SSH_AUTH_SOCK`, the
+  OpenSSH agent's pipe on Windows), the default key files (a passphrase
+  asked), the server's prompts (keyboard-interactive), a password.
+- FTPS and HTTPS verify certificates with the system's roots; a failure is
+  `CertificateInvalid`, never a prompt to accept. Plain FTP and HTTP work
+  but say they are not encrypted: a note in Connect to Server and the
+  editor, an open lock in an orange capsule in the panel's footer.
+
+### Listings, questions, operations
+
+- `open_listing` reads a server's folder like a disk's (sorted in the
+  core, the `..` row, hidden items filtered); nothing watches it: a panel
+  reads it again on ⌘R, after an operation that touched the server, and
+  on Reconnect. A newer read of a tab replaces an older one still waiting
+  (`Cancelled`, which the panel ignores). A tab restored on a server at
+  start waits, not connected, with Reconnect in its error strip and its
+  footer: nothing asks for a password at start. Going to a server that is
+  not connected connects first (with its saved way of logging in); a
+  disconnected server sends its tabs back to their last folder on disk.
+- A connection's questions (`NetworkQuestion` events: host key, password,
+  passphrase, the server's prompts) wait in the core for
+  `answer_network_question`; `NetworkPromptHost` shows them one at a time.
+  A question its connection gave up on (cancelled, disconnected) is
+  withdrawn (`NetworkQuestionWithdrawn`) and its dialog closes.
+- `start_network_operation` runs `ferryx_ops::transfer` as an operation
+  with its card, pause, cancel and questions: copy and move between the
+  disk and a server or two servers (streams, no temporary file; a file cut
+  short is removed; modification times kept where the protocol can set
+  them: SFTP, FTP with `MFMT`), a move within one server is a rename, a
+  copy within WebDAV is the server's own; delete (a server has no trash:
+  F8 always asks, and says so); folder sizes. Its sources and destination
+  are named `<server key><path>`, so a panel knows which of its tabs to
+  read again.
+- Opening a file on a server (Return, Open) copies it to a temporary
+  folder of its own and opens that copy; a notice says that changes stay
+  in the copy (nothing is sent back). F3 reads byte ranges from the
+  server.
+
+What works on a server: browsing, the viewer, open (a copy), copy, move,
+rename, new folder and file, delete, folder sizes, Compare Folders (by
+names, sizes and dates), drag and drop between the panels, favorites and
+marks. What does not (a notice says so): the terminal, Quick Look, Share,
+Open With, Show in Finder, the trash, attributes, links, compress and
+extract, checksums, duplicates, synchronize, flat view, Finder tags,
+batch rename and the names editor, the shelf, Find Files.
+
 ## Start-up
 
 `main.dart` → `starter()` (error zone, bloc observer; `configureWindow()`
@@ -916,12 +1067,43 @@ partially created resources.
   tests in the sync, checksums and duplicates features (the table's keys),
   `folder_compare_test` and `undo_dialog_test` in the panels,
   `app_row_list_test` in the component library.
+- Network: in-process servers (`ferryx_test_servers`: russh's server with
+  russh-sftp's handler, an FTP server of its own with `MLSD` on or off,
+  explicit TLS and connections cut or hung after so many bytes,
+  dav-server over hyper with Basic auth and TLS from an rcgen CA), so no
+  test needs a network. `ferryx_vfs/tests/remote_*.rs`: host keys
+  unknown, trusted, remembered, changed (refused without a question),
+  wrong passwords asked again and kept in a keychain stand-in, key files
+  with and without a passphrase, keyboard-interactive, certificates not
+  trusted, names in many scripts, a server without `MLSD`, a connection
+  dropped mid-read (reconnected after), a stop during a silent greeting
+  and a hung transfer (ended within a poll), 10 000 items listed (≈60 ms
+  over SFTP and FTP, ≈110 ms over WebDAV on loopback);
+  `ferryx_ops/tests/transfer_flow.rs`: a tree both ways with its times,
+  server to server and moves, conflicts, a drop mid-copy tried again, a
+  cancel that takes the part away, deletes and sizes, a WebDAV copy made
+  on the server; `ferryx_api/tests/network_flow.rs`
+  the bridge end to end. Dart: `ConnectCubit`, the dialogs and the prompt
+  host (Return never trusts a key; a withdrawn question closes), the
+  panel on a server (`network_panel_test`, `network_panel_view_test`:
+  waiting at start, Reconnect, given up quietly, a replaced read, a
+  disconnect, refresh after an operation, sizes, rename), the drop rules,
+  the bridge mapping, and `network_service` against the host library
+  (addresses, keys, an unreachable port, a cancel).
 
 ## Known gaps
 
-- No SFTP/FTP/WebDAV, no extended-attributes or process-list virtual file
-  systems; archives are read-only, and a rar set of several volumes lists
-  its first volume's members only.
+- No extended-attributes or process-list virtual file systems; archives
+  are read-only, and a rar set of several volumes lists its first
+  volume's members only.
+- Servers: a file opened from a server is a copy (edits are not sent
+  back); nothing on a server is undone; no flat view, Find Files,
+  checksums or synchronize there; WebDAV logs in with Basic auth only (no
+  Digest, NTLM or OAuth) and keeps no modification times; FTP's viewer
+  opens a transfer per window it reads; SFTP's agent on Windows is the
+  OpenSSH agent's pipe only (not Pageant); no SSH jump hosts, no
+  `~/.ssh/config` aliases, no client certificates for FTPS or HTTPS; the
+  panels poll no server for changes (⌘R reads again).
 - The terminal: one session per window; no search in its scrollback;
   NC's "paste the file name into the terminal" (⌃⌥↩) is not there yet; on
   Windows the folder is not synchronised (see above).

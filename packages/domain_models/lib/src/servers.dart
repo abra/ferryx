@@ -269,6 +269,10 @@ class ServerAddress extends Equatable {
     key,
     display,
   ];
+
+  /// Without the password: an address may end up in a log or a failure.
+  @override
+  String toString() => 'ServerAddress($display$path)';
 }
 
 /// A connection made.
@@ -448,4 +452,10 @@ class NetworkAnswer extends Equatable {
 
   @override
   List<Object?> get props => [accept, texts, remember];
+
+  /// Without what was typed: it is a password, a passphrase or a code.
+  @override
+  String toString() =>
+      'NetworkAnswer(accept: $accept, ${texts.length} texts, '
+      'remember: $remember)';
 }

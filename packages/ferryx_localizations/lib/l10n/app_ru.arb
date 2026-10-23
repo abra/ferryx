@@ -1062,7 +1062,7 @@
   "networkReconnect": "Подключиться снова",
   "networkDisconnected": "Отключено от {server}",
   "networkNotOnServer": "Это работает только с файлами на этом компьютере",
-  "networkNoTrash": "С сервера объекты удаляются насовсем: корзины там нет.",
+  "networkNoTrash": "На сервере нет корзины, куда их можно убрать.",
   "networkOpenedCopy": "Открыта копия «{name}»: изменения в ней не отправляются на сервер",
   "networkNotAnAddress": "Это не адрес сервера: {text}",
   "networkGoToServers": "Серверы",

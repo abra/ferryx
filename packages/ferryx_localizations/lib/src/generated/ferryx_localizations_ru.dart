@@ -3930,8 +3930,7 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
       'Это работает только с файлами на этом компьютере';
 
   @override
-  String get networkNoTrash =>
-      'С сервера объекты удаляются насовсем: корзины там нет.';
+  String get networkNoTrash => 'На сервере нет корзины, куда их можно убрать.';
 
   @override
   String networkOpenedCopy(String name) {

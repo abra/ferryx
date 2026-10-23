@@ -6227,7 +6227,7 @@ abstract class FerryxLocalizations {
   /// No description provided for @networkHostKeyChangedMessage.
   ///
   /// In en, this message translates to:
-  /// **'The key {host} shows is not the one on record. Someone may be intercepting the connection — or the server was reinstalled. Ferryx will not connect.'**
+  /// **'The key that {host} presented is not the one on record. Someone may be intercepting the connection — or the server was reinstalled. Ferryx will not connect.'**
   String networkHostKeyChangedMessage(String host);
 
   /// No description provided for @networkHostKeyChangedAdvice.
@@ -6281,7 +6281,7 @@ abstract class FerryxLocalizations {
   /// No description provided for @networkNoTrash.
   ///
   /// In en, this message translates to:
-  /// **'Items on a server are deleted for good: servers have no trash.'**
+  /// **'A server has no Trash to put them in.'**
   String get networkNoTrash;
 
   /// No description provided for @networkOpenedCopy.

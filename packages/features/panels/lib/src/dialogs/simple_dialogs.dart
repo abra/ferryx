@@ -324,7 +324,8 @@ class _DeleteDialog extends StatelessWidget {
       destructive: !trashDefault,
       body: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        // Each line as wide as the alert, aligned as the alert aligns.
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             trashDefault

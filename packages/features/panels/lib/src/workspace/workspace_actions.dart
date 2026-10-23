@@ -307,18 +307,25 @@ extension _WorkspaceActions on _WorkspaceScreenState {
   }
 
   Future<void> _externalEditor() => _guarded(() async {
-    if (_onServer()) return;
     final tab = _tab;
     final focused = tab?.focused;
     if (tab == null ||
         focused == null ||
         focused.isParent ||
-        !tab.location.isNative) {
+        !(tab.location.isNative || tab.location.isRemote)) {
       return;
     }
     for (final editor in _prefs.editors) {
       if (_maskMatches(editor.mask, focused.name)) {
-        await widget.files.openWith(focused.path, editor.path);
+        if (tab.location.isRemote) {
+          // A copy in the editor; what is saved there stays there.
+          await _openFromServer(
+            OpenFileRequest(focused, tab.locationOf(focused)),
+            app: editor.path,
+          );
+        } else {
+          await widget.files.openWith(focused.path, editor.path);
+        }
         return;
       }
     }
