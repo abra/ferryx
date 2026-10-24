@@ -217,6 +217,7 @@ void main() {
               context,
               showHidden: false,
               singlePane: false,
+              stacked: false,
               native: true,
               map: ShortcutMap.defaults(TargetPlatform.macOS),
               journal: const JournalSummary(undo: _step),

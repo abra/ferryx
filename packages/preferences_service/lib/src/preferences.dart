@@ -19,6 +19,7 @@ class Preferences extends Equatable {
     this.windowMaximized = false,
     this.splitFraction = 0.5,
     this.singlePane = false,
+    this.panelArrangement = PanelArrangement.byWindowShape,
     this.panelState = const {},
     this.layouts = PanelLayout.defaults,
     this.showHiddenFiles = false,
@@ -68,6 +69,7 @@ class Preferences extends Equatable {
   /// The left panel's share of the window.
   final double splitFraction;
   final bool singlePane;
+  final PanelArrangement panelArrangement;
 
   /// Each panel's tabs, their locations, sort and layout, as the panels
   /// write them (opaque here), by panel id (`left`, `right`, `active`).
@@ -142,6 +144,7 @@ class Preferences extends Equatable {
     bool? windowMaximized,
     double? splitFraction,
     bool? singlePane,
+    PanelArrangement? panelArrangement,
     Map<String, String>? panelState,
     List<PanelLayout>? layouts,
     bool? showHiddenFiles,
@@ -178,6 +181,7 @@ class Preferences extends Equatable {
     windowMaximized: windowMaximized ?? this.windowMaximized,
     splitFraction: splitFraction ?? this.splitFraction,
     singlePane: singlePane ?? this.singlePane,
+    panelArrangement: panelArrangement ?? this.panelArrangement,
     panelState: panelState ?? this.panelState,
     layouts: layouts ?? this.layouts,
     showHiddenFiles: showHiddenFiles ?? this.showHiddenFiles,
@@ -218,6 +222,7 @@ class Preferences extends Equatable {
     'windowMaximized': windowMaximized,
     'splitFraction': splitFraction,
     'singlePane': singlePane,
+    'panelArrangement': panelArrangement.name,
     'panelState': panelState,
     'layouts': [for (final l in layouts) l.toJson()],
     'showHiddenFiles': showHiddenFiles,
@@ -293,6 +298,9 @@ class Preferences extends Equatable {
         defaults.splitFraction,
       ).clamp(0.1, 0.9),
       singlePane: _boolOr(json['singlePane'], defaults.singlePane),
+      panelArrangement:
+          _enumByName(PanelArrangement.values, json['panelArrangement']) ??
+          defaults.panelArrangement,
       panelState: json['panelState'] is Map<String, Object?>
           ? Map.unmodifiable({
               for (final entry
@@ -397,6 +405,7 @@ class Preferences extends Equatable {
     windowMaximized,
     splitFraction,
     singlePane,
+    panelArrangement,
     panelState,
     layouts,
     showHiddenFiles,

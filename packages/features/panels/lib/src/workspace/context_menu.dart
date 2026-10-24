@@ -145,6 +145,7 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
   BuildContext context, {
   required bool showHidden,
   required bool singlePane,
+  required bool stacked,
   required bool native,
   required ShortcutMap map,
   JournalSummary journal = JournalSummary.empty,
@@ -261,6 +262,14 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
       icon: AppIcons.singlePane,
       shortcut: chord(AppCommand.toggleSinglePane),
       checked: singlePane,
+    ),
+    AppMenuAction(
+      value: AppCommand.togglePanelsStacked,
+      label: l10n.cmdTogglePanelsStacked,
+      icon: AppIcons.stackedPanes,
+      shortcut: chord(AppCommand.togglePanelsStacked),
+      checked: stacked,
+      enabled: !singlePane,
     ),
     const AppMenuSeparator(),
     AppMenuAction(

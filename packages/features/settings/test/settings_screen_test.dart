@@ -161,7 +161,23 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(service.current.showHiddenFiles, isTrue);
+    // How the panels stand: by the window's shape until chosen.
+    expect(
+      service.current.panelArrangement,
+      PanelArrangement.byWindowShape,
+    );
+    await tester.tap(find.text(en.panelsArrangementByWindowShape));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.panelsArrangementStacked).last);
+    await tester.pumpAndSettle();
+    expect(service.current.panelArrangement, PanelArrangement.stacked);
     expect(service.current.layouts, PanelLayout.defaults);
+    // The view modes stand below the panels' options, out of view.
+    await tester.scrollUntilVisible(
+      find.text('1. Short'),
+      100,
+      scrollable: find.byType(Scrollable).last,
+    );
     expect(find.text('1. Short'), findsOneWidget);
   });
 
@@ -188,6 +204,11 @@ void main() {
         initialSection: SettingsSection.panels,
         onClose: () {},
       ),
+    );
+    await tester.scrollUntilVisible(
+      find.text('6. Photos'),
+      100,
+      scrollable: find.byType(Scrollable).last,
     );
     expect(find.text('1. ${ru.layoutShort}'), findsOneWidget);
     expect(find.text('5. ${ru.layoutDetails}'), findsOneWidget);

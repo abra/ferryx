@@ -36,6 +36,7 @@ extension CommandLabels on FerryxLocalizations {
     AppCommand.selectWithExtension => cmdSelectWithExtension,
     AppCommand.deselectWithExtension => cmdDeselectWithExtension,
     AppCommand.toggleSinglePane => cmdToggleSinglePane,
+    AppCommand.togglePanelsStacked => cmdTogglePanelsStacked,
     AppCommand.swapPanels => cmdSwapPanels,
     AppCommand.syncPanels => cmdSyncPanels,
     AppCommand.viewMode1 => cmdViewMode(1),

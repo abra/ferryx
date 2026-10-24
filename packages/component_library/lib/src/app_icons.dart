@@ -183,6 +183,7 @@ abstract final class AppIcons {
   static const IconData swap = LucideIcons.arrowLeftRight;
   static const IconData singlePane = LucideIcons.square;
   static const IconData dualPane = LucideIcons.columns2;
+  static const IconData stackedPanes = LucideIcons.rows2;
   static const IconData operations = LucideIcons.activity;
   static const IconData checkCircle = LucideIcons.circleCheck;
   static const IconData wrench = LucideIcons.wrench;

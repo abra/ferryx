@@ -87,6 +87,21 @@ class PanelsPage extends StatelessWidget {
               onChanged: (v) =>
                   service.update((p) => p.copyWith(showTabBarAlways: v)),
             ),
+            ChoiceRow<PanelArrangement>(
+              label: l10n.panelsArrangement,
+              note: l10n.panelsArrangementHint,
+              value: prefs.panelArrangement,
+              items: [
+                (
+                  PanelArrangement.byWindowShape,
+                  l10n.panelsArrangementByWindowShape,
+                ),
+                (PanelArrangement.sideBySide, l10n.panelsArrangementSideBySide),
+                (PanelArrangement.stacked, l10n.panelsArrangementStacked),
+              ],
+              onChanged: (a) =>
+                  service.update((p) => p.copyWith(panelArrangement: a)),
+            ),
           ],
         ),
         SettingsGroup(

@@ -447,6 +447,9 @@ const _defaults = <AppCommand, List<Chord>>{
   AppCommand.toggleSinglePane: [
     Chord(LogicalKeyboardKey.keyP, primary: true, shift: true),
   ],
+  AppCommand.togglePanelsStacked: [
+    Chord(LogicalKeyboardKey.keyP, primary: true, alt: true),
+  ],
   AppCommand.swapPanels: [Chord(LogicalKeyboardKey.keyU, primary: true)],
   AppCommand.syncPanels: [
     Chord(LogicalKeyboardKey.keyU, primary: true, alt: true),

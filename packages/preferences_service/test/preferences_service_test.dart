@@ -16,6 +16,7 @@ void main() {
         windowMaximized: true,
         splitFraction: 0.4,
         singlePane: true,
+        panelArrangement: PanelArrangement.stacked,
         panelState: {'left': '{}'},
         showHiddenFiles: true,
         showParentEntry: false,

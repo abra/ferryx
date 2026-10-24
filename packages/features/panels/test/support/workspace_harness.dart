@@ -224,7 +224,10 @@ class WorkspaceHarness {
   Future<void> tearDown() async {
     await frecency.dispose();
     await desktop.dispose();
-    await preferences.dispose();
+    // Not awaited: a panel's cubit closes in the test's fake time, so its
+    // listener may still be on the stream, and a broadcast close would
+    // wait for it forever once a test changed a preference.
+    unawaited(preferences.dispose());
     await changes.close();
     await progress.close();
   }
@@ -242,6 +245,7 @@ class WorkspaceHarness {
     double textScale = 1,
     Brightness brightness = Brightness.light,
     AppPlatformStyle style = AppPlatformStyle.macos,
+    WindowDecor decor = WindowDecor.none,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -277,7 +281,7 @@ class WorkspaceHarness {
           preferences: preferences,
           logger: Logger(),
           shortcutMap: map,
-          windowDecor: WindowDecor.none,
+          windowDecor: decor,
           platformServices: desktop,
           folderSync: _MockFolderSync(),
           navigation: WorkspaceNavigation(

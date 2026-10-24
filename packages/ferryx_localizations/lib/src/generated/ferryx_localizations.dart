@@ -2342,6 +2342,36 @@ abstract class FerryxLocalizations {
   /// **'Always show the tab bar'**
   String get panelsTabBarAlways;
 
+  /// No description provided for @panelsArrangement.
+  ///
+  /// In en, this message translates to:
+  /// **'Panel arrangement'**
+  String get panelsArrangement;
+
+  /// No description provided for @panelsArrangementByWindowShape.
+  ///
+  /// In en, this message translates to:
+  /// **'By the window’s shape'**
+  String get panelsArrangementByWindowShape;
+
+  /// No description provided for @panelsArrangementSideBySide.
+  ///
+  /// In en, this message translates to:
+  /// **'Side by side'**
+  String get panelsArrangementSideBySide;
+
+  /// No description provided for @panelsArrangementStacked.
+  ///
+  /// In en, this message translates to:
+  /// **'One above the other'**
+  String get panelsArrangementStacked;
+
+  /// No description provided for @panelsArrangementHint.
+  ///
+  /// In en, this message translates to:
+  /// **'By the window’s shape: one above the other in a window taller than it is wide, as on a monitor turned upright'**
+  String get panelsArrangementHint;
+
   /// No description provided for @quickSearchTitle.
   ///
   /// In en, this message translates to:
@@ -3031,6 +3061,12 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Toggle Single-Panel Mode'**
   String get cmdToggleSinglePane;
+
+  /// No description provided for @cmdTogglePanelsStacked.
+  ///
+  /// In en, this message translates to:
+  /// **'Panels One Above the Other'**
+  String get cmdTogglePanelsStacked;
 
   /// No description provided for @cmdSwapPanels.
   ///

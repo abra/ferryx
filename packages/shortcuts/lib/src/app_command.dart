@@ -57,6 +57,7 @@ enum AppCommand {
 
   // ─── View ───
   toggleSinglePane(CommandScope.global),
+  togglePanelsStacked(CommandScope.global),
   swapPanels(CommandScope.global),
   syncPanels(CommandScope.global),
   viewMode1(CommandScope.global),

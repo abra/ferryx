@@ -1413,6 +1413,22 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get panelsTabBarAlways => 'Always show the tab bar';
 
   @override
+  String get panelsArrangement => 'Panel arrangement';
+
+  @override
+  String get panelsArrangementByWindowShape => 'By the window’s shape';
+
+  @override
+  String get panelsArrangementSideBySide => 'Side by side';
+
+  @override
+  String get panelsArrangementStacked => 'One above the other';
+
+  @override
+  String get panelsArrangementHint =>
+      'By the window’s shape: one above the other in a window taller than it is wide, as on a monitor turned upright';
+
+  @override
   String get quickSearchTitle => 'Quick search';
 
   @override
@@ -1767,6 +1783,9 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get cmdToggleSinglePane => 'Toggle Single-Panel Mode';
+
+  @override
+  String get cmdTogglePanelsStacked => 'Panels One Above the Other';
 
   @override
   String get cmdSwapPanels => 'Swap Panels';

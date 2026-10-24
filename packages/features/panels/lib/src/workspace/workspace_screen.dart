@@ -275,7 +275,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   /// undo names its step), by operation id.
   final _operationTitles = <int, String>{};
   double _splitBeforeKeys = 0.5;
-  double _panelsWidth = 0;
+
+  /// The panels' room along the line between them: their width side by
+  /// side, their height one above the other.
+  double _panelsExtent = 0;
   final _native = _NativeState();
 
   // ─── Terminal ───
@@ -516,9 +519,16 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                     ),
                                     child: LayoutBuilder(
                                       builder: (context, constraints) {
-                                        _panelsWidth = constraints.maxWidth;
+                                        final stacked = _panelsStacked(
+                                          prefs,
+                                          MediaQuery.sizeOf(context),
+                                        );
+                                        _panelsExtent = stacked
+                                            ? constraints.maxHeight
+                                            : constraints.maxWidth;
                                         return _Panels(
                                           workspace: workspace,
+                                          stacked: stacked,
                                           prefs: prefs,
                                           cubitOf: _cubitOf,
                                           decor: widget.windowDecor,
@@ -539,17 +549,18 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                           ),
                                           splitterHints: _splitterHints(
                                             context,
+                                            stacked: stacked,
                                           ),
                                           onSplitterAction: _onSplitterAction,
                                           onSplitterDrag: (delta) {
-                                            if (_panelsWidth > 0) {
+                                            if (_panelsExtent > 0) {
                                               _workspace.moveSplit(
-                                                delta / _panelsWidth,
+                                                delta / _panelsExtent,
                                               );
                                             }
                                           },
                                           onSplitterDragEnd: _scheduleSnapshot,
-                                          width: constraints.maxWidth,
+                                          extent: _panelsExtent,
                                         );
                                       },
                                     ),
@@ -730,13 +741,24 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         unawaited(_passwordForPanel(side, location)),
   );
 
-  List<AppKeyHint> _splitterHints(BuildContext context) {
+  List<AppKeyHint> _splitterHints(
+    BuildContext context, {
+    required bool stacked,
+  }) {
     final l10n = context.l10n;
     final platform = Theme.of(context).platform;
     String key(LogicalKeyboardKey k) => Chord.keyLabel(k, platform);
     return [
       AppKeyHint(
-        [key(LogicalKeyboardKey.arrowLeft), key(LogicalKeyboardKey.arrowRight)],
+        stacked
+            ? [
+                key(LogicalKeyboardKey.arrowUp),
+                key(LogicalKeyboardKey.arrowDown),
+              ]
+            : [
+                key(LogicalKeyboardKey.arrowLeft),
+                key(LogicalKeyboardKey.arrowRight),
+              ],
         l10n.splitterHintArrows,
       ),
       AppKeyHint([key(LogicalKeyboardKey.digit0)], l10n.splitterHintZero),
@@ -835,6 +857,7 @@ class _KeyHintsLine extends StatelessWidget {
 class _Panels extends StatelessWidget {
   const _Panels({
     required this.workspace,
+    required this.stacked,
     required this.prefs,
     required this.cubitOf,
     required this.decor,
@@ -851,13 +874,16 @@ class _Panels extends StatelessWidget {
     required this.onSplitterAction,
     required this.onSplitterDrag,
     required this.onSplitterDragEnd,
-    required this.width,
+    required this.extent,
   });
 
   /// The line the splitter draws down the middle of its handle.
   static const double splitterLineWidth = 1;
 
   final WorkspaceState workspace;
+
+  /// The left panel above the right one, not beside it.
+  final bool stacked;
   final Preferences prefs;
   final PanelCubit Function(PanelSide side) cubitOf;
   final WindowDecor decor;
@@ -874,7 +900,9 @@ class _Panels extends StatelessWidget {
   final ValueChanged<AppSplitterAction> onSplitterAction;
   final ValueChanged<double> onSplitterDrag;
   final VoidCallback onSplitterDragEnd;
-  final double width;
+
+  /// The room along the line between the panels.
+  final double extent;
 
   @override
   Widget build(BuildContext context) {
@@ -883,7 +911,8 @@ class _Panels extends StatelessWidget {
       final left = workspace.active == PanelSide.left;
       return _SidePanel(
         side: workspace.active,
-        only: true,
+        leading: true,
+        trailing: true,
         cubit: cubitOf(workspace.active),
         focusNode: left ? leftFocus : rightFocus,
         cursorKey: left ? leftCursor : rightCursor,
@@ -895,16 +924,22 @@ class _Panels extends StatelessWidget {
         registerNote: registerNote,
       );
     }
-    final leftWidth = (width * workspace.splitFraction).roundToDouble();
+    final first = (extent * workspace.splitFraction).roundToDouble();
+    // One Flex either way, so the panels keep their state as it turns.
     return Stack(
       children: [
-        Row(
+        Flex(
+          direction: stacked ? Axis.vertical : Axis.horizontal,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SizedBox(
-              width: leftWidth,
+              width: stacked ? null : first,
+              height: stacked ? first : null,
               child: _SidePanel(
                 side: PanelSide.left,
-                only: false,
+                // Above, it has the window's top row to itself.
+                leading: true,
+                trailing: stacked,
                 cubit: cubitOf(PanelSide.left),
                 focusNode: leftFocus,
                 cursorKey: leftCursor,
@@ -916,17 +951,23 @@ class _Panels extends StatelessWidget {
                 registerNote: registerNote,
               ),
             ),
-            AppRule(axis: Axis.vertical, color: colors.line),
+            AppRule(
+              axis: stacked ? Axis.horizontal : Axis.vertical,
+              color: colors.line,
+            ),
             Expanded(
               child: _SidePanel(
                 side: PanelSide.right,
-                only: false,
+                // Below, its bar is not the window's: no buttons beside
+                // it, and it does not move the window.
+                leading: false,
+                trailing: !stacked,
                 cubit: cubitOf(PanelSide.right),
                 focusNode: rightFocus,
                 cursorKey: rightCursor,
                 active: workspace.active == PanelSide.right,
                 prefs: prefs,
-                decor: decor,
+                decor: stacked ? WindowDecor.none : decor,
                 shortcutMap: shortcutMap,
                 hooks: hooksFor(PanelSide.right),
                 registerNote: registerNote,
@@ -935,12 +976,19 @@ class _Panels extends StatelessWidget {
           ],
         ),
         Positioned(
-          left: leftWidth - AppSizes.resizeHandleWidth / 2,
-          top: 0,
-          bottom: 0,
-          width: AppSizes.resizeHandleWidth + splitterLineWidth,
+          left: stacked ? 0 : first - AppSizes.resizeHandleWidth / 2,
+          top: stacked ? first - AppSizes.resizeHandleWidth / 2 : 0,
+          right: stacked ? 0 : null,
+          bottom: stacked ? null : 0,
+          width: stacked
+              ? null
+              : AppSizes.resizeHandleWidth + splitterLineWidth,
+          height: stacked
+              ? AppSizes.resizeHandleWidth + splitterLineWidth
+              : null,
           child: AppSplitter(
             focusNode: splitterFocus,
+            axis: stacked ? Axis.vertical : Axis.horizontal,
             title: context.l10n.splitterTitle,
             value: splitterValue,
             hints: splitterHints,
@@ -956,12 +1004,22 @@ class _Panels extends StatelessWidget {
   }
 }
 
+/// Whether the panels stand one above the other: as [prefs] has them, or,
+/// by the window's shape, where the window is taller than it is wide.
+bool _panelsStacked(Preferences prefs, Size window) =>
+    switch (prefs.panelArrangement) {
+      PanelArrangement.sideBySide => false,
+      PanelArrangement.stacked => true,
+      PanelArrangement.byWindowShape => window.height > window.width,
+    };
+
 /// One side's panel with its own cubit in scope. Keyed by its side, so a
 /// switch to single-pane mode keeps the panel's subtree alive.
 class _SidePanel extends StatelessWidget {
   const _SidePanel({
     required this.side,
-    required this.only,
+    required this.leading,
+    required this.trailing,
     required this.cubit,
     required this.focusNode,
     required this.cursorKey,
@@ -975,8 +1033,9 @@ class _SidePanel extends StatelessWidget {
 
   final PanelSide side;
 
-  /// The only panel shown: it takes both window insets.
-  final bool only;
+  /// The panel's bar meets the window's buttons at its start, at its end.
+  final bool leading;
+  final bool trailing;
   final PanelCubit cubit;
   final FocusNode focusNode;
   final GlobalKey cursorKey;
@@ -1000,12 +1059,8 @@ class _SidePanel extends StatelessWidget {
       vimMode: prefs.vimMode,
       registerNote: registerNote,
       // The window's buttons, then the bar's own margin at each edge.
-      leftInset:
-          (side == PanelSide.left || only ? decor.leadingInset : 0) +
-          AppSpacing.md,
-      rightInset:
-          (side == PanelSide.right || only ? decor.trailingInset : 0) +
-          AppSpacing.sm,
+      leftInset: (leading ? decor.leadingInset : 0) + AppSpacing.md,
+      rightInset: (trailing ? decor.trailingInset : 0) + AppSpacing.sm,
       shortcutMap: shortcutMap,
       hooks: hooks,
       windowDecor: decor,

@@ -87,6 +87,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         _active.selectByExtension(select: false),
     // View
     AppCommand.toggleSinglePane: _toggleSinglePane,
+    AppCommand.togglePanelsStacked: _togglePanelsStacked,
     AppCommand.swapPanels: () => unawaited(_swapPanels()),
     AppCommand.syncPanels: () => unawaited(_syncPanels()),
     for (var i = 0; i < 5; i++)
@@ -578,6 +579,21 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     );
   }
 
+  /// The panels the other way from how they stand now, kept so: whatever
+  /// the window's shape, until Settings gives it back the choice.
+  void _togglePanelsStacked() {
+    final stacked = _panelsStacked(_prefs, MediaQuery.sizeOf(context));
+    unawaited(
+      widget.preferences.update(
+        (p) => p.copyWith(
+          panelArrangement: stacked
+              ? PanelArrangement.sideBySide
+              : PanelArrangement.stacked,
+        ),
+      ),
+    );
+  }
+
   void _moveSplit(double delta) {
     _workspace.moveSplit(delta);
     unawaited(
@@ -718,6 +734,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         context,
         showHidden: _prefs.showHiddenFiles,
         singlePane: _workspace.state.singlePane,
+        stacked: _panelsStacked(_prefs, MediaQuery.sizeOf(context)),
         native: tab?.location.isNative ?? false,
         map: widget.shortcutMap,
         journal: widget.operations.currentJournal,

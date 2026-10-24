@@ -424,6 +424,17 @@ fills from the terminal feature. The workspace reports its state (`WorkspaceSnap
 active side, the split) and the routing writes it to the preferences,
 debounced, and names the active folder in the window title.
 
+The two panels stand side by side, or one above the other
+(`PanelArrangement`): by default by the window's shape, one above the
+other in a window taller than it is wide (a monitor turned upright), so
+the panels turn as the window is moved or resized; Settings → Panels or
+⌥⌘P (and the panel's menu) fix one way, kept whatever the shape. The
+left panel is the upper one. One `Flex` turns, so the panels keep their
+state and the keys; the edge between them (`AppSplitter`) moves along the
+same axis with the same share; the upper bar keeps clear of the window's
+buttons at both ends, and the lower one is not the window's top row (no
+inset, it does not move the window).
+
 ### The panels
 
 `PanelCubit` (one per side) keeps `PanelState`: the tabs, each a

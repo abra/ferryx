@@ -136,5 +136,10 @@ enum IconSize { none, small, large }
 /// Where Quick Search looks for the typed letters.
 enum QuickSearchWhere { fuzzy, anywhere, beginning, ending, beginningOrEnding }
 
+/// How the two panels stand in the window: one above the other where
+/// the window is taller than it is wide (a monitor turned on its side),
+/// else side by side; or always one way.
+enum PanelArrangement { byWindowShape, sideBySide, stacked }
+
 /// The modifier Quick Search wants held, or none, or off.
 enum QuickSearchModifier { none, alt, controlAlt, shiftAlt, disabled }

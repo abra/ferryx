@@ -1449,6 +1449,22 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String get panelsTabBarAlways => 'Всегда показывать панель вкладок';
 
   @override
+  String get panelsArrangement => 'Расположение панелей';
+
+  @override
+  String get panelsArrangementByWindowShape => 'По форме окна';
+
+  @override
+  String get panelsArrangementSideBySide => 'Рядом';
+
+  @override
+  String get panelsArrangementStacked => 'Одна над другой';
+
+  @override
+  String get panelsArrangementHint =>
+      'По форме окна: одна над другой, когда окно выше, чем шире, — как на мониторе, повёрнутом вертикально';
+
+  @override
   String get quickSearchTitle => 'Быстрый поиск';
 
   @override
@@ -1803,6 +1819,9 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get cmdToggleSinglePane => 'Одна или две панели';
+
+  @override
+  String get cmdTogglePanelsStacked => 'Панели одна над другой';
 
   @override
   String get cmdSwapPanels => 'Поменять панели местами';
