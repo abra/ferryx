@@ -1,10 +1,11 @@
 //! Streamed hashing of files (SHA-256, SHA-1, MD5, BLAKE3) through big
 //! buffers, and a small pool of workers that hashes many files at once:
 //! reading is the slow part, and a few reads in flight keep a fast disk
-//! busy.
+//! busy. A big file's BLAKE3 is hashed on every core while the next part
+//! is read.
 
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::mpsc;
@@ -15,6 +16,14 @@ use sha1::Digest;
 
 /// What a file is read in.
 pub const BUFFER: usize = 1024 * 1024;
+
+/// Ranges at least this long are hashed with BLAKE3 on every core.
+const BLAKE3_PARALLEL: u64 = 64 * 1024 * 1024;
+
+/// What a parallel BLAKE3 hash reads at a time (twice: one part is read
+/// while the other is hashed), between progress reports and looks at the
+/// cancel flag.
+const BLAKE3_STEP: usize = 16 * 1024 * 1024;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Algorithm {
@@ -126,7 +135,30 @@ pub fn hash_file(
     cancel: &AtomicBool,
     on_bytes: &mut dyn FnMut(u64),
 ) -> Result<String, HashError> {
-    let mut file = File::open(path).map_err(|e| HashError::Io(VfsError::io(&e, path)))?;
+    hash_range(path, algorithm, 0, limit, buffer, cancel, on_bytes)
+}
+
+/// The hash of the file's bytes from `start` on, `limit` of them at most;
+/// as [`hash_file`].
+pub fn hash_range(
+    path: &Path,
+    algorithm: Algorithm,
+    start: u64,
+    limit: Option<u64>,
+    buffer: &mut [u8],
+    cancel: &AtomicBool,
+    on_bytes: &mut dyn FnMut(u64),
+) -> Result<String, HashError> {
+    let io = |e: std::io::Error| HashError::Io(VfsError::io(&e, path));
+    let mut file = File::open(path).map_err(io)?;
+    if start > 0 {
+        file.seek(SeekFrom::Start(start)).map_err(io)?;
+    }
+    if algorithm == Algorithm::Blake3 {
+        if let Some(hash) = blake3_parallel(&mut file, path, start, limit, cancel, on_bytes)? {
+            return Ok(hash);
+        }
+    }
     let mut hasher = Hasher::new(algorithm);
     let mut left = limit.unwrap_or(u64::MAX);
     while left > 0 {
@@ -145,6 +177,75 @@ pub fn hash_file(
         on_bytes(read as u64);
     }
     Ok(hasher.finish())
+}
+
+/// BLAKE3 of a long range of a regular file (read from where `file`
+/// stands) on every core, the next part read while one is hashed; `None`
+/// for a short range or a special file, which are read as any other.
+/// Never mapped into memory: a file cut short by another program while
+/// mapped would bring the process down, while a read only ends early.
+fn blake3_parallel(
+    file: &mut File,
+    path: &Path,
+    start: u64,
+    limit: Option<u64>,
+    cancel: &AtomicBool,
+    on_bytes: &mut dyn FnMut(u64),
+) -> Result<Option<String>, HashError> {
+    if limit.is_some_and(|limit| limit < BLAKE3_PARALLEL) {
+        return Ok(None);
+    }
+    let Ok(meta) = file.metadata() else { return Ok(None) };
+    if !meta.is_file() || meta.len().saturating_sub(start) < BLAKE3_PARALLEL {
+        return Ok(None);
+    }
+    let mut hasher = blake3::Hasher::new();
+    std::thread::scope(|scope| {
+        let (full_tx, full) = mpsc::sync_channel::<(Vec<u8>, usize)>(1);
+        let (empty, empty_rx) = mpsc::sync_channel::<Vec<u8>>(2);
+        for _ in 0..2 {
+            let _ = empty.send(vec![0u8; BLAKE3_STEP]);
+        }
+        let reader = scope.spawn(move || -> std::io::Result<()> {
+            let mut left = limit.unwrap_or(u64::MAX);
+            while let Ok(mut buffer) = empty_rx.recv() {
+                let want = BLAKE3_STEP.min(usize::try_from(left).unwrap_or(usize::MAX));
+                let mut filled = 0;
+                while filled < want {
+                    match file.read(&mut buffer[filled..want]) {
+                        Ok(0) => break,
+                        Ok(n) => filled += n,
+                        Err(e) if e.kind() == std::io::ErrorKind::Interrupted => continue,
+                        Err(e) => return Err(e),
+                    }
+                }
+                left -= filled as u64;
+                if filled == 0 || full_tx.send((buffer, filled)).is_err() || filled < want || left == 0 {
+                    return Ok(());
+                }
+            }
+            Ok(())
+        });
+        for (buffer, filled) in full.iter() {
+            if cancel.load(Ordering::Relaxed) {
+                // Dropping the channels ends the reader.
+                return Err(HashError::Cancelled);
+            }
+            hasher.update_rayon(&buffer[..filled]);
+            on_bytes(filled as u64);
+            let _ = empty.send(buffer);
+        }
+        match reader.join() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(e)) => Err(HashError::Io(VfsError::io(&e, path))),
+            Err(_) => Err(HashError::Io(VfsError::new(
+                ferryx_vfs::VfsErrorKind::Io,
+                Some(path),
+                "the reader stopped",
+            ))),
+        }
+    })?;
+    Ok(Some(hex(hasher.finalize().as_bytes())))
 }
 
 /// Workers for reading many files at once: a few, as the reads, not the
@@ -247,6 +348,31 @@ mod tests {
             hash_file(&path, Algorithm::Md5, Some(3), &mut buffer, &AtomicBool::new(false), &mut |_| {})
                 .unwrap();
         assert_eq!(start, "900150983cd24fb0d6963f7d28e17f72");
+    }
+
+    #[test]
+    fn a_long_blake3_is_hashed_on_every_core_with_the_same_answer() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("big");
+        let data: Vec<u8> = (0..BLAKE3_PARALLEL + 4097).map(|i| (i % 251) as u8).collect();
+        std::fs::write(&path, &data).unwrap();
+        let expected = |bytes: &[u8]| hex(blake3::hash(bytes).as_bytes());
+        let mut buffer = vec![0u8; BUFFER];
+        let never = AtomicBool::new(false);
+        let mut seen = 0u64;
+        let whole =
+            hash_file(&path, Algorithm::Blake3, None, &mut buffer, &never, &mut |n| seen += n).unwrap();
+        assert_eq!(whole, expected(&data));
+        assert_eq!(seen, data.len() as u64);
+        let rest = hash_range(&path, Algorithm::Blake3, 3, None, &mut buffer, &never, &mut |_| {}).unwrap();
+        assert_eq!(rest, expected(&data[3..]));
+        // Short of the threshold: read, the same hash.
+        let part =
+            hash_range(&path, Algorithm::Blake3, 3, Some(1000), &mut buffer, &never, &mut |_| {}).unwrap();
+        assert_eq!(part, expected(&data[3..1003]));
+        let cancelled =
+            hash_file(&path, Algorithm::Blake3, None, &mut buffer, &AtomicBool::new(true), &mut |_| {});
+        assert_eq!(cancelled, Err(HashError::Cancelled));
     }
 
     #[test]

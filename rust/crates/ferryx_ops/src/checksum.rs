@@ -505,6 +505,60 @@ nothinghex  x
         assert_eq!(statuses, [ChecksumStatus::Ok, ChecksumStatus::Mismatch, ChecksumStatus::Missing]);
     }
 
+    /// Times the hash of one big file (`FERRYX_CHECKSUM_BENCH_GB`, 2 by
+    /// default), warm in the cache: `cargo test --release -p ferryx_ops
+    /// checksum_bench -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn checksum_bench() {
+        use std::io::Write;
+        let gigabytes: u64 =
+            std::env::var("FERRYX_CHECKSUM_BENCH_GB").ok().and_then(|g| g.parse().ok()).unwrap_or(2);
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("big.bin");
+        let mut out = std::io::BufWriter::new(fs::File::create(&path).unwrap());
+        let mut block = vec![0u8; 1 << 20];
+        let mut seed = 0x9e37_79b9_7f4a_7c15u64;
+        for _ in 0..gigabytes * 1024 {
+            for chunk in block.chunks_mut(8) {
+                seed ^= seed << 13;
+                seed ^= seed >> 7;
+                seed ^= seed << 17;
+                chunk.copy_from_slice(&seed.to_le_bytes());
+            }
+            out.write_all(&block).unwrap();
+        }
+        out.flush().unwrap();
+        drop(out);
+        let files = vec![ChecksumFile {
+            size: fs::metadata(&path).unwrap().len(),
+            path,
+            name: "big.bin".into(),
+            expected: None,
+        }];
+        for algorithm in [Algorithm::Blake3, Algorithm::Sha256] {
+            let mut best = Duration::MAX;
+            let mut hash = None;
+            for _ in 0..3 {
+                let start = Instant::now();
+                hash_all(
+                    &files,
+                    algorithm,
+                    &AtomicBool::new(false),
+                    Duration::from_millis(50),
+                    &mut |o| hash = o.hash,
+                    &mut |_| {},
+                );
+                best = best.min(start.elapsed());
+            }
+            let rate = files[0].size as f64 / best.as_secs_f64() / 1e9;
+            println!(
+                "{algorithm:?} of {gigabytes} GiB: {best:?} ({rate:.2} GB/s), {}",
+                hash.unwrap_or_default()
+            );
+        }
+    }
+
     #[test]
     fn without_recursion_a_folder_gives_its_own_files() {
         let dir = tempfile::tempdir().unwrap();

@@ -13,7 +13,7 @@
 
 use std::collections::{BTreeSet, HashMap};
 use std::fs::{self, File};
-use std::io::Read;
+use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
@@ -30,8 +30,9 @@ use crate::journal::Change;
 use crate::runner::OpContext;
 use crate::types::*;
 
-/// What a comparison reads of each file.
-const COMPARE_BUFFER: usize = 256 * 1024;
+/// What a comparison reads of each file at a time: long runs, so two
+/// files on one spinning disk are not read a seek at a time.
+const COMPARE_BUFFER: usize = 1024 * 1024;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CompareRequest {
@@ -354,7 +355,8 @@ impl TreeWalk<'_> {
 /// `case_sensitive`) ignoring case; Unicode composed and decomposed forms
 /// are one name. In natural name order.
 fn pair(left: Vec<Item>, right: Vec<Item>, case_sensitive: bool) -> Vec<(Option<Item>, Option<Item>)> {
-    let key = |name: &str| name.nfc().collect::<String>();
+    // ASCII has one form only.
+    let key = |name: &str| if name.is_ascii() { name.to_string() } else { name.nfc().collect::<String>() };
     let mut right_slots: Vec<Option<Item>> = right.into_iter().map(Some).collect();
     let mut exact: HashMap<String, usize> = HashMap::new();
     for (i, item) in right_slots.iter().enumerate() {
@@ -389,10 +391,10 @@ fn pair(left: Vec<Item>, right: Vec<Item>, case_sensitive: bool) -> Vec<(Option<
     }
     out.extend(unmatched.into_iter().map(|item| (Some(item), None)));
     out.extend(right_slots.into_iter().flatten().map(|item| (None, Some(item))));
-    out.sort_by(|a, b| {
-        let name = |p: &(Option<Item>, Option<Item>)| p.0.as_ref().or(p.1.as_ref()).map(|i| i.name.clone());
-        natural_cmp(&name(a).unwrap_or_default(), &name(b).unwrap_or_default())
-    });
+    fn name(pair: &(Option<Item>, Option<Item>)) -> &str {
+        pair.0.as_ref().or(pair.1.as_ref()).map_or("", |i| i.name.as_str())
+    }
+    out.sort_by(|a, b| natural_cmp(name(a), name(b)));
     out
 }
 
@@ -406,10 +408,28 @@ pub fn contents_equal(
     cancel: &AtomicBool,
     on_bytes: &mut dyn FnMut(u64),
 ) -> Result<Option<bool>, VfsError> {
+    contents_equal_from(a, b, 0, ba, bb, cancel, on_bytes)
+}
+
+/// As [`contents_equal`], from `offset` on: the bytes before are known to
+/// agree.
+pub(crate) fn contents_equal_from(
+    a: &Path,
+    b: &Path,
+    offset: u64,
+    ba: &mut [u8],
+    bb: &mut [u8],
+    cancel: &AtomicBool,
+    on_bytes: &mut dyn FnMut(u64),
+) -> Result<Option<bool>, VfsError> {
     let mut fa = File::open(a).map_err(|e| VfsError::io(&e, a))?;
     let mut fb = File::open(b).map_err(|e| VfsError::io(&e, b))?;
     if fa.metadata().map(|m| m.len()).ok() != fb.metadata().map(|m| m.len()).ok() {
         return Ok(Some(false));
+    }
+    if offset > 0 {
+        fa.seek(SeekFrom::Start(offset)).map_err(|e| VfsError::io(&e, a))?;
+        fb.seek(SeekFrom::Start(offset)).map_err(|e| VfsError::io(&e, b))?;
     }
     loop {
         if cancel.load(Ordering::Relaxed) {
@@ -1013,6 +1033,76 @@ mod tests {
             if let Change::Trashed { receipt } = change {
                 let _ = ferryx_vfs::trash::put_back(&receipt);
             }
+        }
+    }
+
+    #[test]
+    fn names_pair_across_unicode_forms_in_natural_order() {
+        let item = |name: &str| Item {
+            name: name.to_string(),
+            side: SideInfo { size: 0, modified_ms: None, is_dir: false, is_symlink: false },
+        };
+        let left = vec![item("file10"), item("Caf\u{e9}.txt"), item("file2"), item("only left")];
+        let right = vec![item("Cafe\u{301}.txt"), item("FILE2"), item("file10")];
+        let pairs = pair(left, right, false);
+        let names: Vec<(Option<&str>, Option<&str>)> = pairs
+            .iter()
+            .map(|(l, r)| (l.as_ref().map(|i| i.name.as_str()), r.as_ref().map(|i| i.name.as_str())))
+            .collect();
+        assert_eq!(
+            names,
+            [
+                (Some("Caf\u{e9}.txt"), Some("Cafe\u{301}.txt")),
+                (Some("file2"), Some("FILE2")),
+                (Some("file10"), Some("file10")),
+                (Some("only left"), None),
+            ]
+        );
+        let apart = pair(vec![item("file2")], vec![item("FILE2")], true);
+        assert_eq!(apart.len(), 2);
+    }
+
+    /// Times comparing two generated trees, names only and with the
+    /// contents of big files, warm in the cache: `cargo test --release -p
+    /// ferryx_ops sync_bench -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn sync_bench() {
+        let dir = tempfile::tempdir().unwrap();
+        let (left, right) = (dir.path().join("L"), dir.path().join("R"));
+        for side in [&left, &right] {
+            for d in 0..20 {
+                let folder = side.join(format!("folder {d}"));
+                fs::create_dir_all(&folder).unwrap();
+                for f in 0..2_000 {
+                    let name =
+                        if f % 3 == 0 { format!("Фото {f}.jpg") } else { format!("file {f} v2.txt") };
+                    fs::write(folder.join(name), b"").unwrap();
+                }
+            }
+        }
+        let big = vec![7u8; 64 << 20];
+        let (big_left, big_right) = (dir.path().join("BL"), dir.path().join("BR"));
+        for side in [&big_left, &big_right] {
+            fs::create_dir_all(side).unwrap();
+            for i in 0..16 {
+                fs::write(side.join(format!("big{i}.bin")), &big).unwrap();
+            }
+        }
+        for (label, l, r, contents) in [
+            ("names, 40 000 files a side", &left, &right, false),
+            ("contents, 16 × 64 MB", &big_left, &big_right, true),
+        ] {
+            let mut req = request(l, r);
+            req.compare_content = contents;
+            let mut best = Duration::MAX;
+            let mut count = 0;
+            for _ in 0..3 {
+                let start = Instant::now();
+                count = rows(&req).len();
+                best = best.min(start.elapsed());
+            }
+            println!("{label}: {count} rows in {best:?}");
         }
     }
 

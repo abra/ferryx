@@ -14,12 +14,14 @@ ferryx_vfs = { path = "crates/ferryx_vfs" }
 ferryx_ops = { path = "crates/ferryx_ops" }
 ferryx_term = { path = "crates/ferryx_term" }
 
+aho-corasick = "1.1"
 anyhow = "1"
 chrono = "0.4"
 crossbeam-channel = "0.5"
 flate2 = "1"
 flutter_rust_bridge = "=2.13.0"
 libc = "0.2"
+memchr = "2.8"
 notify = "6"
 open = "5"
 parking_lot = "0.12"
@@ -89,6 +91,7 @@ opt-level = 3
 
 # lzma-rust2 0.16.5 with a progress check in its LZMA and LZMA2 readers: on
 # corrupt input (a 7z read with a wrong password) their loops could spin
-# forever. See vendor/lzma-rust2/FERRYX.md; drop once upstream has it.
+# forever; and a bound on what its multithreaded LZMA2 reader holds. See
+# vendor/lzma-rust2/FERRYX.md; drop once upstream has both.
 [patch.crates-io]
 lzma-rust2 = { path = "vendor/lzma-rust2" }

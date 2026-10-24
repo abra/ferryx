@@ -9,12 +9,17 @@ rust-version.workspace = true
 [dependencies]
 ferryx_core.workspace = true
 ferryx_vfs.workspace = true
+aho-corasick.workspace = true
+crossbeam-channel.workspace = true
 filetime.workspace = true
+memchr.workspace = true
 parking_lot.workspace = true
+regex.workspace = true
 serde.workspace = true
 walkdir.workspace = true
 zip.workspace = true
-blake3.workspace = true
+# Every core for one big file's BLAKE3.
+blake3 = { workspace = true, features = ["rayon"] }
 md-5.workspace = true
 sha1.workspace = true
 sha2.workspace = true

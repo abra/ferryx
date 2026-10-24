@@ -451,6 +451,116 @@ fn wrong_passwords_always_end_refused() {
     }
 }
 
+/// LZMA2 written in independent parts (7-Zip's way on several threads)
+/// decodes on several threads once enough is to be read; one stream
+/// longer than a part may be is decoded as it is read; a wrong password
+/// ends refused either way.
+#[test]
+fn seven_zip_lzma2_in_parts_and_in_one_stream() {
+    use sevenz_rust2::encoder_options::{AesEncoderOptions, Lzma2Options};
+    use sevenz_rust2::{ArchiveEntry, ArchiveWriter, EncoderConfiguration, Password, SourceReader};
+    let dir = tempfile::tempdir().unwrap();
+    let write = |name: &str, data: &[u8], parts: bool, password: Option<&str>| {
+        let path = dir.path().join(name);
+        let mut writer = ArchiveWriter::create(&path).unwrap();
+        let mut methods: Vec<EncoderConfiguration> = Vec::new();
+        if let Some(password) = password {
+            methods.push(AesEncoderOptions::new(Password::new(password)).into());
+        }
+        methods.push(
+            if parts { Lzma2Options::from_level_mt(1, 4, 1 << 20) } else { Lzma2Options::from_level(1) }
+                .into(),
+        );
+        writer.set_content_methods(methods);
+        writer.set_encrypt_header(false);
+        let entries = vec![ArchiveEntry::new_file("a.bin"), ArchiveEntry::new_file("b.bin")];
+        writer
+            .push_archive_entries(entries, vec![SourceReader::new(data), SourceReader::new(&data[..1000])])
+            .unwrap();
+        writer.finish().unwrap();
+        path
+    };
+    // Past the 128 MiB from which a block is read on several threads.
+    let parts: Vec<u8> = (0..136u32 << 20).map(|i| ((i % 251) ^ (i >> 16)) as u8).collect();
+    for password in [None, Some("pw")] {
+        let index = ArchiveIndex::open(&write("parts.7z", &parts, true, password)).unwrap();
+        assert!(index.read_with("a.bin", password).unwrap() == parts);
+        assert_eq!(index.read_with("b.bin", password).unwrap(), parts[..1000]);
+    }
+    let long: Vec<u8> = (0..130u32 << 20).map(|i| (i % 253) as u8).collect();
+    let index = ArchiveIndex::open(&write("stream.7z", &long, false, None)).unwrap();
+    assert!(index.read("a.bin").unwrap() == long);
+    assert_eq!(index.read("b.bin").unwrap(), long[..1000]);
+
+    // The smallest member, the one a password is tried on, lies past the
+    // big one: the block is read on several threads.
+    for i in 0..4 {
+        let path = write(&format!("locked-{i}.7z"), &parts, true, Some("secret"));
+        let (sent, got) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let refused = ArchiveIndex::open(&path).and_then(|index| index.check_password("wrong"));
+            let _ = sent.send(refused.err().map(|e| e.kind));
+        });
+        let kind = got
+            .recv_timeout(std::time::Duration::from_secs(10))
+            .unwrap_or_else(|_| panic!("try {i} with a wrong password did not end"));
+        assert_eq!(kind, Some(VfsErrorKind::WrongPassword), "try {i}");
+    }
+}
+
+/// The viewer's windows over a small member of a stream: decoded once,
+/// kept for the archive's version and the password it was read with.
+#[test]
+fn small_members_of_streams_are_decoded_once_per_version() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = make_tar(&dir.path().join("t.tar.gz"), Compression::Gzip);
+    let index = ArchiveIndex::open(&path).unwrap();
+    assert_eq!(index.read_range("d/y.txt", 1, 10, None).unwrap(), b"y");
+    assert_eq!(index.read_range("x.txt", 0, 1, None).unwrap(), b"x");
+    assert_eq!(index.read_range("d/y.txt", 0, 10, None).unwrap(), b"yy");
+    assert_eq!(index.read_range("d/y.txt", u64::MAX, usize::MAX, None).unwrap(), b"");
+    // The archive written again: its new bytes.
+    std::thread::sleep(std::time::Duration::from_millis(20));
+    let mut tar_bytes = Vec::new();
+    {
+        let mut tar = tar::Builder::new(&mut tar_bytes);
+        let mut header = tar::Header::new_gnu();
+        header.set_size(5);
+        header.set_mode(0o644);
+        header.set_cksum();
+        tar.append_data(&mut header, "d/y.txt", &b"fresh"[..]).unwrap();
+        tar.finish().unwrap();
+    }
+    fs::write(&path, compress(&tar_bytes, Compression::Gzip)).unwrap();
+    let fresh = ArchiveIndex::open(&path).unwrap();
+    assert_eq!(fresh.read_range("d/y.txt", 0, 10, None).unwrap(), b"fresh");
+
+    // A member read with the password is not given to another.
+    let locked = make_7z(&dir.path().join("locked.7z"), Some("secret"), false);
+    let index = ArchiveIndex::open(&locked).unwrap();
+    assert_eq!(index.read_range("a.txt", 0, 10, Some("secret")).unwrap(), b"alpha");
+    assert!(index.read_range("a.txt", 0, 10, Some("wrong")).is_err());
+    assert_eq!(index.read_range("a.txt", 0, 10, None).unwrap_err().kind, VfsErrorKind::PasswordRequired);
+}
+
+#[test]
+fn zip_members_come_in_the_archives_order() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("o.zip");
+    let mut zip = zip::ZipWriter::new(File::create(&path).unwrap());
+    for name in ["z.txt", "a.txt", "m/b.txt"] {
+        zip.start_file(name, zip::write::SimpleFileOptions::default()).unwrap();
+        zip.write_all(name.as_bytes()).unwrap();
+    }
+    zip.finish().unwrap();
+    let index = ArchiveIndex::open(&path).unwrap();
+    let mut sink = Collect::default();
+    index.extract_members(&["a.txt".into(), "m/b.txt".into(), "z.txt".into()], None, &mut sink).unwrap();
+    let got: Vec<&str> = sink.got.iter().map(|(name, _)| name.as_str()).collect();
+    assert_eq!(got, ["z.txt", "a.txt", "m/b.txt"]);
+    assert!(sink.got.iter().all(|(name, bytes)| bytes == name.as_bytes()));
+}
+
 #[test]
 fn rar_lists_and_reads() {
     let dir = tempfile::tempdir().unwrap();
@@ -571,5 +681,191 @@ fn large_archives_open_fast() {
             flat.len()
         );
         assert!(opened.as_secs() < 5);
+    }
+}
+
+/// A sink that counts what it is given.
+#[derive(Default)]
+struct Count {
+    members: usize,
+    bytes: u64,
+}
+
+impl MemberSink for Count {
+    fn begin(&mut self, _: &Member) -> Result<bool, Stop> {
+        Ok(true)
+    }
+
+    fn write(&mut self, bytes: &[u8]) -> io::Result<()> {
+        self.bytes += bytes.len() as u64;
+        Ok(())
+    }
+
+    fn end(&mut self, _: &Member, outcome: VfsResult<u64>) -> Result<(), Stop> {
+        outcome.unwrap();
+        self.members += 1;
+        Ok(())
+    }
+}
+
+/// Bytes that compress about three to one, as text does.
+fn compressible(len: usize, seed: &mut u64) -> Vec<u8> {
+    let mut out = Vec::with_capacity(len + 8);
+    while out.len() < len {
+        *seed ^= *seed << 13;
+        *seed ^= *seed >> 7;
+        *seed ^= *seed << 17;
+        out.extend_from_slice(format!("w{} ", *seed % 4096).as_bytes());
+    }
+    out.truncate(len);
+    out
+}
+
+/// Times reading archives the ways the viewer and an extraction do:
+/// `cargo test --release -p ferryx_vfs archive_bench -- --ignored
+/// --nocapture` (7z and iso need `7zz` and `hdiutil`). With
+/// `FERRYX_ARCHIVE_BENCH` naming an archive, times extracting all of it.
+#[test]
+#[ignore]
+fn archive_bench() {
+    use std::time::{Duration, Instant};
+    if let Ok(path) = std::env::var("FERRYX_ARCHIVE_BENCH") {
+        let index = ArchiveIndex::open(Path::new(&path)).unwrap();
+        let all: Vec<String> = index.files_under("").into_iter().map(|(m, _)| m).collect();
+        let mut best = Duration::MAX;
+        let mut bytes = 0;
+        for _ in 0..3 {
+            let start = Instant::now();
+            let mut sink = Count::default();
+            index.extract_members(&all, None, &mut sink).unwrap();
+            best = best.min(start.elapsed());
+            bytes = sink.bytes;
+        }
+        println!("{path}: {} members, {} MB, in {best:?}", all.len(), bytes >> 20);
+        return;
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let mut seed = 0x9e37_79b9_7f4a_7c15u64;
+    let src = dir.path().join("src");
+    fs::create_dir_all(&src).unwrap();
+    for i in 0..64 {
+        fs::write(src.join(format!("part{i:02}.txt")), compressible(2 << 20, &mut seed)).unwrap();
+    }
+
+    // The viewer's windows over the last small member of a tar.gz.
+    let tgz = dir.path().join("a.tar.gz");
+    {
+        let gz = flate2::write::GzEncoder::new(File::create(&tgz).unwrap(), flate2::Compression::fast());
+        let mut tar = tar::Builder::new(gz);
+        tar.append_dir_all("src", &src).unwrap();
+        tar.into_inner().unwrap().finish().unwrap();
+    }
+    let index = ArchiveIndex::open(&tgz).unwrap();
+    let start = Instant::now();
+    for window in 0..32u64 {
+        let bytes = index.read_range("src/part63.txt", window * 64 * 1024, 64 * 1024, None).unwrap();
+        assert_eq!(bytes.len(), 64 * 1024);
+    }
+    println!("tar.gz, 32 viewer windows of a 2 MB member behind 126 MB: {:?}", start.elapsed());
+
+    // The last two members of a plain tar of 1 GB.
+    let tar_path = dir.path().join("big.tar");
+    {
+        let mut tar = tar::Builder::new(io::BufWriter::new(File::create(&tar_path).unwrap()));
+        let block = compressible(16 << 20, &mut seed);
+        for i in 0..64 {
+            let mut header = tar::Header::new_gnu();
+            header.set_size(block.len() as u64);
+            header.set_mode(0o644);
+            header.set_cksum();
+            tar.append_data(&mut header, format!("m{i:02}.bin"), &block[..]).unwrap();
+        }
+        tar.into_inner().unwrap().flush().unwrap();
+    }
+    let index = ArchiveIndex::open(&tar_path).unwrap();
+    let mut best = Duration::MAX;
+    for _ in 0..3 {
+        let start = Instant::now();
+        let mut sink = Count::default();
+        index.extract_members(&["m62.bin".into(), "m63.bin".into()], None, &mut sink).unwrap();
+        assert_eq!(sink.members, 2);
+        best = best.min(start.elapsed());
+    }
+    println!("tar, the last 2 of 64 members of 16 MB: {best:?}");
+
+    // A zip whose names sort apart from the order of its members.
+    let zip_path = dir.path().join("shuffled.zip");
+    {
+        let mut zip = zip::ZipWriter::new(io::BufWriter::new(File::create(&zip_path).unwrap()));
+        let opts =
+            zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+        let data = compressible(64 << 10, &mut seed);
+        for i in 0..8_000u64 {
+            let name = (i * 7_919) % 8_000;
+            zip.start_file(format!("d{}/f{name:05}.txt", name % 20), opts).unwrap();
+            zip.write_all(&data).unwrap();
+        }
+        zip.finish().unwrap();
+    }
+    let index = ArchiveIndex::open(&zip_path).unwrap();
+    let all: Vec<String> = index.files_under("").into_iter().map(|(m, _)| m).collect();
+    let mut best = Duration::MAX;
+    for _ in 0..3 {
+        let start = Instant::now();
+        let mut sink = Count::default();
+        index.extract_members(&all, None, &mut sink).unwrap();
+        assert_eq!(sink.members, 8_000);
+        best = best.min(start.elapsed());
+    }
+    println!("zip, 8 000 stored members of 64 KB: {best:?}");
+
+    // 7z with LZMA2 in blocks (7-Zip's multithreaded way) and in one stream.
+    for (label, threads) in [("blocks", "-mmt=8"), ("one stream", "-mmt=1")] {
+        let seven = dir.path().join(format!("a{}.7z", &threads[5..]));
+        let made = std::process::Command::new("7zz")
+            .args(["a", "-bd", "-bso0", "-t7z", "-m0=lzma2", "-mx=5", threads])
+            .arg(&seven)
+            .arg(&src)
+            .status();
+        if !made.is_ok_and(|s| s.success()) {
+            println!("7z: no 7zz");
+            break;
+        }
+        let index = ArchiveIndex::open(&seven).unwrap();
+        let all: Vec<String> = index.files_under("").into_iter().map(|(m, _)| m).collect();
+        let mut best = Duration::MAX;
+        for _ in 0..3 {
+            let start = Instant::now();
+            let mut sink = Count::default();
+            index.extract_members(&all, None, &mut sink).unwrap();
+            assert_eq!(sink.bytes, 128 << 20);
+            best = best.min(start.elapsed());
+        }
+        println!("7z LZMA2 {label}, 128 MB: {best:?}");
+        let start = Instant::now();
+        for window in 0..32u64 {
+            index.read_range("src/part62.txt", window * 64 * 1024, 64 * 1024, None).unwrap();
+        }
+        println!("7z LZMA2 {label}, 32 viewer windows near the end: {:?}", start.elapsed());
+    }
+
+    // An iso of the same files, read whole.
+    let iso = dir.path().join("disc.iso");
+    let made = std::process::Command::new("hdiutil")
+        .args(["makehybrid", "-quiet", "-iso", "-joliet", "-o"])
+        .arg(&iso)
+        .arg(&src)
+        .status();
+    if made.is_ok_and(|s| s.success()) {
+        let index = ArchiveIndex::open(&iso).unwrap();
+        let all: Vec<String> = index.files_under("").into_iter().map(|(m, _)| m).collect();
+        let mut best = Duration::MAX;
+        for _ in 0..3 {
+            let start = Instant::now();
+            let mut sink = Count::default();
+            index.extract_members(&all, None, &mut sink).unwrap();
+            best = best.min(start.elapsed());
+        }
+        println!("iso, 64 files of 2 MB: {best:?}");
     }
 }

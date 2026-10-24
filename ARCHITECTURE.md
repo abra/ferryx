@@ -165,7 +165,7 @@ buttons'. The window is shown only after the preferences are read
 |-------|----------------|
 | `ferryx_core` | Pure logic: the `Entry` of a panel row, natural / case-insensitive / case-sensitive collation (`collation`), sorting by field with folders first and extensionless folders (`sorting`), file masks and regular expressions (`mask`), quick-search matching with the ranges to underline (`quick_search`), and the batch-rename language (`batch_rename`: placeholders, substrings, dates, counters, case commands, then search and replace and a case change). No I/O. |
 | `ferryx_vfs` | The file system: a folder's rows with their metadata (size, times, the macOS added time through `getattrlist`, mode, owner and group names, BSD flags, hidden), one entry, byte ranges of a file (`native`); archives as read-only folders (`archive`: zip, tar with any compression, 7z, rar, iso, single compressed files; see Archives below); a folder watched for changes reported once per burst (`watch`, `notify`); the volumes (`volumes`, `sysinfo`) and the free space; the standard folders, opening with the desktop or an application, revealing in the file manager, the trash, ejecting (`system`); permissions, flags, owners and times read and written (`attrs`); symbolic and hard links (`links`). Every error is a `VfsError` with a kind the interface words. |
-| `ferryx_ops` | Operations on threads with progress, pause, cancellation and questions: copy and move (a rename on the same volume, else a copy and a delete; folders merge; conflicts ask or follow the policy; attributes preserved; optional verification), duplicate (`name copy.ext`), extract out of an archive, delete and trash, compress to zip (deflate, optional AES-256), folder sizes, plus Find Files (`find`: name, contents in overlapping windows, size, streamed hits) and the application of a batch rename (`rename`: staged through temporary names when names swap). `Runner` holds every operation; `OpContext` is what an operation checks, reports and asks through. |
+| `ferryx_ops` | Operations on threads with progress, pause, cancellation and questions: copy and move (a rename on the same volume, else a copy and a delete; folders merge; conflicts ask or follow the policy; attributes preserved; optional verification), duplicate (`name copy.ext`), extract out of an archive, delete and trash, compress to zip (deflate, kinds compressed already stored; optional AES-256), folder sizes, plus Find Files (`find`: name, size, contents searched as bytes on a few workers in overlapping windows — `memmem`, Aho-Corasick for words and ASCII ignoring case, a regular expression for Unicode case folding — streamed hits in the walk's order) and the application of a batch rename (`rename`: staged through temporary names when names swap). `Runner` holds every operation; `OpContext` is what an operation checks, reports and asks through. |
 | `ferryx_term` | The integrated terminal's shell: a `Session` runs the user's shell as a login shell in a pseudo-terminal (`portable-pty`: openpty, ConPTY on Windows), sends its output in batches with flow control, probes whether it waits at its prompt (`tcgetpgrp`) and its folder (`proc_pidinfo`, `/proc/<pid>/cwd`), types `cd` when asked, and hangs up and reaps it on close. No emulation: that is the interface's. |
 | `ferryx_api` | `flutter_rust_bridge` surface. Holds the open listings (`app.rs`: one per panel tab, with its raw rows for resorting and its watcher), the archive indexes, the operations runner (whose listener forwards progress as events) and the searches; converts to plain DTOs (`api/types.rs`, `…View` types, enums without payloads so Dart sees enums, `i64` counts so Dart sees `int`); `volume_id` names a path's volume for a drop to tell a move from a copy. Its `Cargo.toml` uses literal fields because cargokit parses it without workspace inheritance. |
 
@@ -214,10 +214,14 @@ Rules:
   the mask's parts as file-name matches (`?` and `[…]` widened to `*`),
   each word of the contents as a word prefix and the size as a bound; the
   paths stream from a reader thread, so a cancel kills `mdfind` within a
-  tenth of a second. Every hit is then checked here as a walk would check
-  it (`find::Matcher`: the exact mask or the regular expression, hidden
-  items, folders, size, the contents read for case, a whole phrase or "not
-  containing"), so Spotlight only narrows the candidates. When `mdfind`
+  tenth of a second. Every hit is then checked here (`find::Matcher`): the
+  exact mask or the regular expression, hidden items, folders and size as
+  a walk would. Its contents are taken at the index's word when the
+  search ignores case word by word, as the query does; they are read
+  only for case or a whole phrase, and then only in files whose first
+  8 KiB look like plain text (no NUL, UTF-8) — the text of a PDF, an
+  Office or Pages document is not its bytes, and Spotlight read it
+  there — and always for "not containing". When `mdfind`
   cannot run or fails without a hit, the folders are walked instead and
   `FindDone` says so (`find_spotlight_failed`, a notice in the dialog).
   Spotlight skips system folders, hidden folders and the folders excluded
@@ -261,9 +265,16 @@ tar is a tar, and ⌘↓ (`detect_archive`) opens an archive of any name;
   (begin, write, end) in the archive's own order: a tar stream once
   whatever the number of members, a 7z block decoded once for all the
   members it holds (members of a solid block passed by are drained, never
-  kept), rar in member order, iso extents read straight from the image. No
+  kept; when 128 MiB or more of it is read, its LZMA2 parts are decoded
+  on up to four threads where 7-Zip wrote them so, each held unpacked
+  until its turn: a 512 MB block of 7-Zip's normal level in 3.6 s
+  instead of 12 s, at about 1 GB of memory instead of 40 MB), rar in
+  member order, zip members and iso extents forward through the file. No
   member is held whole in memory; the viewer's ranges of a member over
-  4 MiB come from a copy unpacked once to the temporary folder.
+  4 MiB come from a copy unpacked once to the temporary folder, and a
+  smaller member whose reading decodes what lies before it (a compressed
+  tar, a 7z or rar block, a compressed file) is kept decoded for the
+  next window (the last two such).
 - **Passwords.** An encrypted member list (7z `-mhe`, rar `-hp`) answers
   `PasswordRequired` until `set_archive_password` gives one that opens it;
   encrypted members (zip AES and ZipCrypto, 7z AES, rar) are read with the
@@ -296,8 +307,11 @@ tar is a tar, and ⌘↓ (`detect_archive`) opens an archive of any name;
   comes from `rust/vendor/lzma-rust2` through `[patch.crates-io]`: 0.16.5
   with a progress check in its LZMA and LZMA2 read loops, which spun
   forever on about one wrong 7z password in ten (`FERRYX.md` there; 0.23
-  has the same loop). A password is also refused when the member read
-  with it ends short, as a wrong key's garbage can (`check_password`). The official
+  has the same loop), and a bound on its multithreaded LZMA2 reader: a
+  part over 128 MiB unpacked (a stream written on one thread is one part)
+  is decoded on the caller's thread as it is read, never gathered whole
+  in memory. A password is also refused when the member read with it
+  ends short, as a wrong key's garbage can (`check_password`). The official
   `unrar` crate compiles RARLAB's C++ sources: mature, but a C++ build
   through cargokit for every target; `unrar-rs` reads the same formats
   with none. Both carry the UnRAR licence: free to use for extraction,
@@ -937,11 +951,15 @@ overwritten blindly. The step is undoable. The options are kept in
 
 `checksums_feature`: the targets (folders walked, optionally into
 subfolders) are listed first, then hashed on a few workers
-(`hashing::parallel`, 1 MiB buffers, cancellable) as `ChecksumProgress`
-events; the table shows the hash in monospace, a pasted expected hash
-lights its row, ⌘C copies the selected hashes, "Save Checksum File…"
-writes the GNU form (`hash  name`, names relative to the folder, escaped
-when they hold a backslash or a line break) and is undoable. A single
+(`hashing::parallel`, 1 MiB buffers, cancellable; a BLAKE3 of 64 MiB or
+more is read 16 MiB at a time, the next part while one is hashed on every
+core: 2 GiB in 0.39 s against 1.37 s on one. Never mapped into memory: a
+file cut short by another program meanwhile would bring the app down) as
+`ChecksumProgress` events; the table shows the hash in monospace, a
+pasted expected hash lights its row, ⌘C copies the selected hashes,
+"Save Checksum File…" writes the GNU form (`hash  name`, names relative
+to the folder, escaped when they hold a backslash or a line break) and
+is undoable. A single
 checksum file (`*.sha256`, `SHA256SUMS`, `*.md5`, `*.b3`…, GNU and BSD
 lines) is checked instead: OK, mismatch, missing, with a summary.
 
@@ -952,11 +970,13 @@ request), a minimum size, a mask, hidden files. `ferryx_ops::duplicates`
 walks without following links, keeps sizes seen twice, folds hard links to
 one inode (and overlapping folders) into one file, then settles the
 candidates a chunk at a time, the largest first: the first 16 KB hashed,
-what still matches hashed whole (BLAKE3), each group sent as it is
-settled. Rows are grouped (size × copies, space to free); Space marks,
-"Mark" keeps the newest, the oldest or the shortest path of each group;
-Move to Trash goes through the operations runner, so ⌘Z puts the files
-back; a group with every copy marked is warned about.
+then the last 16 KB of files over 32 KB, and what still matches read on
+past its start (two files compared byte for byte up to the first
+difference, more hashed with BLAKE3), each group sent as it is settled.
+Rows are grouped (size × copies, space to free); Space marks, "Mark"
+keeps the newest, the oldest or the shortest path of each group; Move to
+Trash goes through the operations runner, so ⌘Z puts the files back; a
+group with every copy marked is warned about.
 
 ## Network locations
 

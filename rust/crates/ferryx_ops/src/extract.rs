@@ -4,7 +4,7 @@
 //! [`ArchiveIndex::extract_members`]: a tar is read once, a 7z block
 //! decoded once, and no member is held in memory whole.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::{self, File};
 use std::io::{self, BufWriter, Write};
 use std::path::{Path, PathBuf};
@@ -131,7 +131,8 @@ fn extract_job(
     password: Option<&str>,
     options: &OpOptions,
 ) -> Result<bool, Abort> {
-    if let Err(e) = make_folders(ctx, &job.base) {
+    let mut folders = Folders::default();
+    if let Err(e) = folders.make(ctx, &job.base) {
         ctx.ask_skip(&job.base, &VfsError::io(&e, &job.base))?;
         return Ok(false);
     }
@@ -139,7 +140,7 @@ fn extract_job(
     for inner in &job.inners {
         for folder in index.folders_under(inner) {
             let path = job.base.join(&folder);
-            if let Err(e) = make_folders(ctx, &path) {
+            if let Err(e) = folders.make(ctx, &path) {
                 ctx.ask_skip(&path, &VfsError::io(&e, &path))?;
             }
         }
@@ -148,7 +149,7 @@ fn extract_job(
         }
     }
     let wanted: Vec<String> = targets.keys().cloned().collect();
-    let mut sink = OpSink { ctx, targets, options, open: None, abort: None, archive_failed: None };
+    let mut sink = OpSink { ctx, targets, folders, options, open: None, abort: None, archive_failed: None };
     let outcome = index.extract_members(&wanted, password, &mut sink);
     if let Some(abort) = sink.abort {
         return Err(abort);
@@ -179,6 +180,27 @@ fn make_folders(ctx: &OpContext, folder: &Path) -> io::Result<()> {
     Ok(())
 }
 
+/// The folders one archive's extraction made or found, so each is made
+/// once rather than for every file in it.
+#[derive(Default)]
+struct Folders(HashSet<PathBuf>);
+
+impl Folders {
+    fn make(&mut self, ctx: &OpContext, folder: &Path) -> io::Result<()> {
+        if !self.0.contains(folder) {
+            make_folders(ctx, folder)?;
+            self.0.insert(folder.to_path_buf());
+        }
+        Ok(())
+    }
+
+    /// The folder is gone since (something else took it away): made again.
+    fn make_again(&mut self, ctx: &OpContext, folder: &Path) -> io::Result<()> {
+        self.0.remove(folder);
+        self.make(ctx, folder)
+    }
+}
+
 /// The file being written: its writer, where it goes, and a symbolic
 /// link's target gathered from its data.
 enum Open {
@@ -191,6 +213,7 @@ enum Open {
 struct OpSink<'a> {
     ctx: &'a OpContext,
     targets: HashMap<String, PathBuf>,
+    folders: Folders,
     options: &'a OpOptions,
     open: Option<Open>,
     /// Why the whole operation stops (cancelled, or the user stopped it).
@@ -214,7 +237,7 @@ impl MemberSink for OpSink<'_> {
         let Some(target) = self.targets.get(&member.path).cloned() else { return Ok(false) };
         self.ctx.set_current(&target);
         if let Some(parent) = target.parent() {
-            let _ = make_folders(self.ctx, parent);
+            let _ = self.folders.make(self.ctx, parent);
         }
         let resolved =
             match resolve_conflict(self.ctx, &target, Some(member.size), member.modified_ms, self.options) {
@@ -239,7 +262,14 @@ impl MemberSink for OpSink<'_> {
             self.open = Some(Open::Link { target: Vec::new(), path });
             return Ok(true);
         }
-        match File::create(&path) {
+        let created = File::create(&path).or_else(|e| match path.parent() {
+            Some(parent) if e.kind() == io::ErrorKind::NotFound => {
+                self.folders.make_again(self.ctx, parent)?;
+                File::create(&path)
+            }
+            _ => Err(e),
+        });
+        match created {
             Ok(file) => {
                 self.open = Some(Open::File { writer: BufWriter::with_capacity(1 << 20, file), path });
                 Ok(true)
@@ -393,6 +423,34 @@ mod tests {
         req.options.conflicts = ConflictPolicy::KeepBoth;
         run(&OpContext::detached(&req), &req).unwrap();
         assert_eq!(fs::read(flat.join("a 2.txt")).unwrap(), b"a");
+    }
+
+    /// Times extracting a zip of 20 000 small files in 400 folders:
+    /// `cargo test --release -p ferryx_ops extract_bench -- --ignored
+    /// --nocapture`.
+    #[test]
+    #[ignore]
+    fn extract_bench() {
+        let dir = tempfile::tempdir().unwrap();
+        let archive = dir.path().join("many.zip");
+        {
+            let mut zip = zip::ZipWriter::new(io::BufWriter::new(File::create(&archive).unwrap()));
+            let opts = zip::write::SimpleFileOptions::default();
+            for i in 0..20_000 {
+                zip.start_file(format!("top/d{}/e{}/f{i}.txt", i % 20, i % 400), opts).unwrap();
+                zip.write_all(b"a small file").unwrap();
+            }
+            zip.finish().unwrap();
+        }
+        let mut best = std::time::Duration::MAX;
+        for round in 0..3 {
+            let dest = dir.path().join(format!("out{round}"));
+            let req = request(vec![archive.clone()], None, &dest);
+            let start = std::time::Instant::now();
+            run(&OpContext::detached(&req), &req).unwrap();
+            best = best.min(start.elapsed());
+        }
+        println!("20 000 files in 400 folders: {best:?}");
     }
 
     #[test]

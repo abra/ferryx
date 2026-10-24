@@ -1,7 +1,9 @@
-//! Compress to a zip archive, optionally with an AES-256 password.
+//! Compress to a zip archive, optionally with an AES-256 password. Files
+//! whose kind is compressed already (photos, music, video, archives) are
+//! stored as they are: deflating them again costs time and saves nothing.
 
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::{BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
 
 use ferryx_vfs::error::{IoAt, VfsError};
@@ -14,6 +16,26 @@ use crate::runner::{free_name, OpContext};
 use crate::types::*;
 
 const BUFFER: usize = 1024 * 1024;
+
+/// Extensions of kinds compressed already, stored without deflate. PDF is
+/// left out: its streams may or may not be compressed.
+const STORED: &[&str] = &[
+    "jpg", "jpeg", "png", "gif", "heic", "heif", "webp", "avif", "mp3", "m4a", "aac", "flac", "ogg", "opus",
+    "mp4", "m4v", "mov", "mkv", "webm", "zip", "7z", "rar", "gz", "tgz", "bz2", "xz", "zst",
+];
+
+/// How a file goes into the archive.
+fn method_for(path: &Path) -> CompressionMethod {
+    let stored = path
+        .extension()
+        .and_then(|e| e.to_str())
+        .is_some_and(|e| STORED.iter().any(|kind| e.eq_ignore_ascii_case(kind)));
+    if stored {
+        CompressionMethod::Stored
+    } else {
+        CompressionMethod::Deflated
+    }
+}
 
 /// The archive's name for these sources: the single source's name, else
 /// the folder they are in, with `.zip`.
@@ -72,16 +94,20 @@ pub fn run(ctx: &OpContext, request: &OpRequest) -> Result<(), Abort> {
             return Err(Abort::Stopped);
         }
     };
-    let mut zip = ZipWriter::new(file);
+    let mut zip = ZipWriter::new(BufWriter::with_capacity(BUFFER, file));
     let outcome = write_all(ctx, &mut zip, &files, request.options.password.as_deref());
     match outcome {
-        Ok(()) => match zip.finish() {
-            Ok(_) => {
+        Ok(()) => match zip
+            .finish()
+            .map_err(|e| e.to_string())
+            .and_then(|written| written.into_inner().map(drop).map_err(|e| e.error().to_string()))
+        {
+            Ok(()) => {
                 ctx.record_created(&target);
                 Ok(())
             }
-            Err(e) => {
-                ctx.record_error(&target, e.to_string());
+            Err(message) => {
+                ctx.record_error(&target, message);
                 let _ = std::fs::remove_file(&target);
                 Err(Abort::Stopped)
             }
@@ -96,7 +122,7 @@ pub fn run(ctx: &OpContext, request: &OpRequest) -> Result<(), Abort> {
 
 fn write_all(
     ctx: &OpContext,
-    zip: &mut ZipWriter<File>,
+    zip: &mut ZipWriter<BufWriter<File>>,
     files: &[(PathBuf, String, bool)],
     password: Option<&str>,
 ) -> Result<(), Abort> {
@@ -112,7 +138,7 @@ fn write_all(
             }
         };
         let mut options = SimpleFileOptions::default()
-            .compression_method(CompressionMethod::Deflated)
+            .compression_method(method_for(path))
             .large_file(meta.len() >= u32::MAX as u64);
         if let Some(mode) = unix_mode(&meta) {
             options = options.unix_permissions(mode);
@@ -248,6 +274,93 @@ mod tests {
         let index = ferryx_vfs::archive::ArchiveIndex::open(&dir.path().join("locked.zip")).unwrap();
         assert!(index.member("s.txt").unwrap().encrypted);
         assert!(index.read("s.txt").is_err());
+    }
+
+    #[test]
+    fn stores_what_is_compressed_already() {
+        let dir = tempfile::tempdir().unwrap();
+        let src = dir.path().join("media");
+        fs::create_dir_all(&src).unwrap();
+        let text = b"words words words words ".repeat(200);
+        fs::write(src.join("notes.txt"), &text).unwrap();
+        fs::write(src.join("photo.JPG"), &text).unwrap();
+        fs::write(src.join("report.pdf"), &text).unwrap();
+        for password in [None, Some("pw")] {
+            let req = OpRequest {
+                kind: OpKind::Compress,
+                sources: vec![src.clone()],
+                archive: None,
+                destination: Some(dir.path().to_path_buf()),
+                new_name: Some(format!("media-{}", password.is_some())),
+                options: OpOptions { password: password.map(str::to_string), ..Default::default() },
+            };
+            let ctx = OpContext::detached(&req);
+            run(&ctx, &req).unwrap();
+            let archive = ctx.snapshot().result_path.unwrap();
+            let mut zip = zip::ZipArchive::new(File::open(&archive).unwrap()).unwrap();
+            let mut method = |name: &str| {
+                let at = zip.index_for_name(name).unwrap();
+                zip.by_index_raw(at).unwrap().compression()
+            };
+            assert_eq!(method("media/notes.txt"), CompressionMethod::Deflated);
+            assert_eq!(method("media/photo.JPG"), CompressionMethod::Stored);
+            assert_eq!(method("media/report.pdf"), CompressionMethod::Deflated);
+            let index = ferryx_vfs::archive::ArchiveIndex::open(&archive).unwrap();
+            for name in ["media/notes.txt", "media/photo.JPG", "media/report.pdf"] {
+                assert_eq!(index.member(name).unwrap().encrypted, password.is_some());
+                assert_eq!(index.read_with(name, password).unwrap(), text, "{name}");
+            }
+        }
+    }
+
+    /// Times compressing a generated folder of text and of media already
+    /// compressed (random bytes as `.jpg` and `.mp4`), with and without a
+    /// password: `cargo test --release -p ferryx_ops compress_bench --
+    /// --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn compress_bench() {
+        let dir = tempfile::tempdir().unwrap();
+        let src = dir.path().join("src");
+        fs::create_dir_all(&src).unwrap();
+        let mut seed = 0x9e37_79b9_7f4a_7c15u64;
+        let mut random = |len: usize| {
+            let mut out = vec![0u8; len];
+            for chunk in out.chunks_mut(8) {
+                seed ^= seed << 13;
+                seed ^= seed >> 7;
+                seed ^= seed << 17;
+                chunk.copy_from_slice(&seed.to_le_bytes()[..chunk.len()]);
+            }
+            out
+        };
+        let line = "fn main() { println!(\"a line of source text, repeated\"); }\n";
+        for i in 0..100 {
+            fs::write(src.join(format!("text{i}.rs")), line.repeat((1 << 20) / line.len())).unwrap();
+        }
+        for i in 0..50 {
+            fs::write(src.join(format!("photo{i}.jpg")), random(4 << 20)).unwrap();
+        }
+        for i in 0..10 {
+            fs::write(src.join(format!("clip{i}.mp4")), random(16 << 20)).unwrap();
+        }
+        for password in [None, Some("pw")] {
+            let start = std::time::Instant::now();
+            let req = OpRequest {
+                kind: OpKind::Compress,
+                sources: vec![src.clone()],
+                archive: None,
+                destination: Some(dir.path().to_path_buf()),
+                new_name: Some(if password.is_some() { "locked" } else { "open" }.to_string()),
+                options: OpOptions { password: password.map(str::to_string), ..Default::default() },
+            };
+            let ctx = OpContext::detached(&req);
+            run(&ctx, &req).unwrap();
+            let elapsed = start.elapsed();
+            let archive = ctx.snapshot().result_path.unwrap();
+            let size = fs::metadata(&archive).unwrap().len();
+            println!("password {}: {elapsed:?}, {} MB", password.is_some(), size >> 20);
+        }
     }
 
     #[test]

@@ -405,6 +405,7 @@ dependencies = [
  "cfg-if",
  "constant_time_eq 0.4.2",
  "cpufeatures 0.3.1",
+ "rayon-core",
 ]
 
 [[package]]
@@ -1291,14 +1292,18 @@ dependencies = [
 name = "ferryx_ops"
 version = "0.1.0"
 dependencies = [
+ "aho-corasick",
  "blake3",
+ "crossbeam-channel",
  "ferryx_core",
  "ferryx_test_servers",
  "ferryx_vfs",
  "filetime",
  "flate2",
  "md-5",
+ "memchr",
  "parking_lot",
+ "regex",
  "serde",
  "sha1 0.10.7",
  "sha2 0.10.9",

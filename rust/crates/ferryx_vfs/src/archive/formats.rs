@@ -139,9 +139,13 @@ pub(crate) fn extract_zip(job: &Job, sink: &mut dyn MemberSink) -> Result<(), Ex
     let archive = job.path();
     let file = File::open(archive).at(archive)?;
     let mut zip = zip::ZipArchive::new(BufReader::new(file)).map_err(|e| zip_error(archive, e))?;
-    for &at in job.picked {
+    // In the central directory's order, which is the data's: the reads go
+    // forward through the file.
+    let mut picked: Vec<(u64, usize)> =
+        job.picked.iter().filter_map(|&at| job.member(at).native.map(|n| (n, at))).collect();
+    picked.sort_unstable();
+    for (native, at) in picked {
         let member = job.member(at);
-        let Some(native) = member.native else { continue };
         deliver(sink, member, |sink| {
             let entry = match (member.encrypted, job.password) {
                 (true, None) => return Err(VfsError::password_required(archive)),
@@ -224,14 +228,30 @@ pub(crate) fn extract_tar(
 ) -> Result<(), ExtractError> {
     let archive = job.path();
     let file = File::open(archive).at(archive)?;
+    if compression == Compression::None {
+        // A plain tar seeks past the members not wanted.
+        let mut tar = tar::Archive::new(BufReader::new(file));
+        let entries = tar.entries_with_seek().map_err(|e| read_error(archive, e))?;
+        return deliver_tar(job, entries, sink);
+    }
     let reader = decoder(BufReader::new(file), compression).at(archive)?;
     let mut tar = tar::Archive::new(reader);
+    let entries = tar.entries().map_err(|e| read_error(archive, e))?;
+    deliver_tar(job, entries, sink)
+}
+
+fn deliver_tar<R: Read>(
+    job: &Job,
+    entries: tar::Entries<'_, R>,
+    sink: &mut dyn MemberSink,
+) -> Result<(), ExtractError> {
+    let archive = job.path();
     let mut wanted = vec![false; job.index.members.len()];
     for &at in job.picked {
         wanted[at] = true;
     }
     let mut remaining = job.picked.len();
-    for entry in tar.entries().map_err(|e| read_error(archive, e))? {
+    for entry in entries {
         let mut entry = entry.map_err(|e| read_error(archive, e))?;
         let path = entry.path().map(|p| normalize(&p.to_string_lossy())).unwrap_or_default();
         let Some(at) = job.index.position(&path) else { continue };
@@ -252,6 +272,20 @@ pub(crate) fn extract_tar(
 }
 
 // ─── 7z ───
+
+/// Threads for a block's LZMA2 when `needed` bytes of it are to be
+/// decoded: a stream 7-Zip wrote on several threads starts afresh every
+/// four dictionaries, and those parts decode at once. A part comes out
+/// only when decoded whole, so a read of less than one (a password tried,
+/// a small member near the start) streams on one thread; else a few, as
+/// each holds its part unpacked (128 MiB at most).
+fn sevenz_threads(needed: u64) -> u32 {
+    const WORTH_IT: u64 = 128 * 1024 * 1024;
+    if needed < WORTH_IT {
+        return 1;
+    }
+    std::thread::available_parallelism().map_or(1, |n| n.get()).clamp(1, 4) as u32
+}
 
 fn sevenz_error(archive: &Path, error: sevenz_rust2::Error, encrypted: bool) -> VfsError {
     use sevenz_rust2::Error;
@@ -360,10 +394,13 @@ pub(crate) fn extract_7z(job: &Job, sink: &mut dyn MemberSink) -> Result<(), Ext
         }
         let mut remaining = wanted.len();
         let mut native = headers.stream_map.block_first_file_index[block];
+        let last = wanted.keys().max().copied().unwrap_or(native);
+        let needed: u64 =
+            headers.files.get(native..=last).map_or(0, |files| files.iter().map(|f| f.size).sum());
         let mut done: HashSet<usize> = HashSet::new();
         let mut stopped = false;
-        let decoded =
-            BlockDecoder::new(1, block, headers, &password, &mut file).for_each_entries(&mut |_, reader| {
+        let decoded = BlockDecoder::new(sevenz_threads(needed), block, headers, &password, &mut file)
+            .for_each_entries(&mut |_, reader| {
                 let this = native;
                 native += 1;
                 let Some(&at) = wanted.get(&this) else {

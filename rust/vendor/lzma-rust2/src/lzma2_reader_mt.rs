@@ -14,6 +14,14 @@ use std::{
 /// Interval for checking worker errors while waiting for results.
 const ERROR_CHECK_INTERVAL: Duration = Duration::from_millis(100);
 
+/// Ferryx: the most uncompressed bytes a work unit may grow to: 7-Zip's
+/// parts at its normal level (four dictionaries of 32 MiB). A stream
+/// without independent chunks (one written on one thread) would otherwise
+/// be read into memory whole, and decoded into memory whole, before its
+/// first byte comes out; past this the rest is decoded on the caller's
+/// thread as it is read.
+const MAX_UNIT_UNPACKED: u64 = 128 * 1024 * 1024;
+
 use crate::{
     Lzma2Reader, set_error,
     work_queue::{WorkStealingQueue, WorkerHandle},
@@ -21,7 +29,8 @@ use crate::{
 
 /// A work unit for a worker thread.
 /// Contains the sequence number and the raw compressed bytes for a series of chunks.
-type WorkUnit = (u64, Vec<u8>);
+/// Ferryx: and their uncompressed size, so the output is allocated once.
+type WorkUnit = (u64, Vec<u8>, usize);
 
 /// A result unit from a worker thread.
 /// Contains the sequence number and the decompressed data.
@@ -41,7 +50,13 @@ enum State {
 
 /// A multi-threaded LZMA2 decompressor.
 pub struct Lzma2ReaderMt<R: Read> {
-    inner: R,
+    /// Ferryx: `None` once handed to `serial`.
+    inner: Option<R>,
+    /// Ferryx: the uncompressed bytes of the work unit being gathered.
+    unit_unpacked: u64,
+    /// Ferryx: the rest of a stream whose unit grew too big, decoded here
+    /// once the units sent before it are returned.
+    serial: Option<Box<Lzma2Reader<io::Chain<Cursor<Vec<u8>>, R>>>>,
     result_rx: Receiver<ResultUnit>,
     result_tx: SyncSender<ResultUnit>,
     current_work_unit: Vec<u8>,
@@ -79,7 +94,9 @@ impl<R: Read> Lzma2ReaderMt<R> {
         let preset_dict = preset_dict.map(|s| s.to_vec()).map(Arc::new);
 
         let mut reader = Self {
-            inner,
+            inner: Some(inner),
+            unit_unpacked: 0,
+            serial: None,
             result_rx,
             result_tx,
             current_work_unit: Vec::with_capacity(1024 * 1024),
@@ -134,13 +151,31 @@ impl<R: Read> Lzma2ReaderMt<R> {
         self.next_sequence_to_return
     }
 
+    fn inner(&mut self) -> &mut R {
+        self.inner.as_mut().expect("Ferryx: no chunk is read after the switch to one thread")
+    }
+
+    /// Ferryx: decodes the work unit being gathered and the rest of the
+    /// stream on the caller's thread, after the units sent before it.
+    fn go_serial(&mut self) {
+        let head = core::mem::take(&mut self.current_work_unit);
+        let inner = self.inner.take().expect("Ferryx: the switch to one thread happens once");
+        self.serial = Some(Box::new(Lzma2Reader::new(
+            Cursor::new(head).chain(inner),
+            self.dict_size,
+            self.preset_dict.as_deref().map(|v| v.as_slice()),
+        )));
+        self.last_sequence_id = self.next_sequence_to_dispatch.checked_sub(1);
+        self.state = State::Draining;
+    }
+
     /// Reads one LZMA2 chunk from the inner reader and appends it to the current work unit.
     /// If the chunk is an independent block, it dispatches the current work unit.
     ///
     /// Returns `Ok(false)` on clean EOF, `Ok(true)` on success, and `Err` on I/O error.
     fn read_and_dispatch_chunk(&mut self) -> io::Result<bool> {
         let mut control_buf = [0u8; 1];
-        match self.inner.read_exact(&mut control_buf) {
+        match self.inner().read_exact(&mut control_buf) {
             Ok(_) => (),
             Err(error) if error.kind() == io::ErrorKind::UnexpectedEof => {
                 // Clean end of stream.
@@ -172,15 +207,19 @@ impl<R: Read> Lzma2ReaderMt<R> {
             // Compressed chunk. Read header to find size.
             let header_len = if control >= 0xC0 { 5 } else { 4 };
             let mut header_buf = [0; 5];
-            self.inner.read_exact(&mut header_buf[..header_len])?;
+            self.inner().read_exact(&mut header_buf[..header_len])?;
             self.current_work_unit
                 .extend_from_slice(&header_buf[..header_len]);
+            self.unit_unpacked += ((control as u64 & 0x1F) << 16)
+                + u16::from_be_bytes([header_buf[0], header_buf[1]]) as u64
+                + 1;
             u16::from_be_bytes([header_buf[2], header_buf[3]]) as usize + 1
         } else if control == 0x01 || control == 0x02 {
             // Uncompressed chunk.
             let mut size_buf = [0u8; 2];
-            self.inner.read_exact(&mut size_buf)?;
+            self.inner().read_exact(&mut size_buf)?;
             self.current_work_unit.extend_from_slice(&size_buf);
+            self.unit_unpacked += u16::from_be_bytes(size_buf) as u64 + 1;
             u16::from_be_bytes(size_buf) as usize + 1
         } else {
             return Err(io::Error::new(
@@ -194,8 +233,8 @@ impl<R: Read> Lzma2ReaderMt<R> {
             let start_len = self.current_work_unit.len();
             self.current_work_unit
                 .resize(start_len + chunk_data_size, 0);
-            self.inner
-                .read_exact(&mut self.current_work_unit[start_len..])?;
+            let inner = self.inner.as_mut().expect("Ferryx: read before the switch");
+            inner.read_exact(&mut self.current_work_unit[start_len..])?;
         }
 
         Ok(true)
@@ -209,10 +248,11 @@ impl<R: Read> Lzma2ReaderMt<R> {
 
         let work_unit =
             core::mem::replace(&mut self.current_work_unit, Vec::with_capacity(1024 * 1024));
+        let unpacked = core::mem::take(&mut self.unit_unpacked) as usize;
 
         if !self
             .work_queue
-            .push((self.next_sequence_to_dispatch, work_unit))
+            .push((self.next_sequence_to_dispatch, work_unit, unpacked))
         {
             // Queue is closed, this indicates shutdown.
             self.state = State::Error;
@@ -278,9 +318,17 @@ impl<R: Read> Lzma2ReaderMt<R> {
                         }
                     }
 
-                    // If the work queue has capacity, try to read more from the source.
-                    if self.work_queue.is_empty() {
+                    // Ferryx (from 0.23): read ahead while fewer units are queued
+                    // than there are workers. Waiting as soon as the queue is not
+                    // empty left one worker decoding at a time.
+                    if self.work_queue.len() < self.max_workers as usize {
                         match self.read_and_dispatch_chunk() {
+                            Ok(true) if self.unit_unpacked > MAX_UNIT_UNPACKED => {
+                                self.go_serial();
+                                // Ferryx: an empty chunk sends `read` on to the
+                                // units still due, then to `serial`.
+                                return Ok(Some(Vec::new()));
+                            }
                             Ok(true) => {
                                 // Successfully read and dispatched a chunk, loop to continue.
                                 continue;
@@ -289,9 +337,14 @@ impl<R: Read> Lzma2ReaderMt<R> {
                                 // Clean EOF from inner reader.
                                 // Send any remaining data as the final work unit.
                                 self.send_work_unit();
+                                // Ferryx (from 0.23): input without a chunk
+                                // dispatches nothing to wait for.
                                 self.last_sequence_id =
-                                    Some(self.next_sequence_to_dispatch.saturating_sub(1));
-                                self.state = State::Draining;
+                                    self.next_sequence_to_dispatch.checked_sub(1);
+                                self.state = match self.last_sequence_id {
+                                    Some(_) => State::Draining,
+                                    None => State::Finished,
+                                };
                                 continue;
                             }
                             Err(error) => {
@@ -388,7 +441,7 @@ fn worker_thread_logic(
     active_workers: Arc<AtomicU32>,
 ) {
     while !shutdown_flag.load(Ordering::Acquire) {
-        let (seq, work_unit_data) = match worker_handle.steal() {
+        let (seq, work_unit_data, unpacked) = match worker_handle.steal() {
             Some(work) => {
                 active_workers.fetch_add(1, Ordering::Release);
                 work
@@ -405,7 +458,7 @@ fn worker_thread_logic(
             preset_dict.as_deref().map(|v| v.as_slice()),
         );
 
-        let mut decompressed_data = Vec::with_capacity(work_unit_data.len());
+        let mut decompressed_data = Vec::with_capacity(unpacked);
         let result = match reader.read_to_end(&mut decompressed_data) {
             Ok(_) => decompressed_data,
             Err(error) => {
@@ -434,6 +487,13 @@ impl<R: Read> Read for Lzma2ReaderMt<R> {
 
         if bytes_read > 0 {
             return Ok(bytes_read);
+        }
+
+        // Ferryx: once the units sent before the switch are returned.
+        if self.next_sequence_to_return == self.next_sequence_to_dispatch {
+            if let Some(serial) = self.serial.as_mut() {
+                return serial.read(buf);
+            }
         }
 
         let chunk_data = self.get_next_uncompressed_chunk()?;

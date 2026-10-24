@@ -21,13 +21,16 @@ mod formats;
 mod iso;
 pub mod shared;
 
-use std::collections::HashMap;
+use std::cell::RefCell;
+use std::collections::{HashMap, VecDeque};
 use std::fs::{self, File};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, LazyLock};
 use std::time::SystemTime;
 
 use ferryx_core::entry::{extension_of, split_name, Entry, EntryKind};
+use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{IoAt, VfsError, VfsErrorKind, VfsResult};
@@ -464,7 +467,8 @@ impl ArchiveIndex {
 
     /// Streams the files among `wanted` (member paths) to `sink`, in the
     /// archive's own order: a tar stream is read once, a 7z block decoded
-    /// once for all its members, a rar archive in member order.
+    /// once for all its members, a rar archive in member order, zip
+    /// members and iso extents forward through the file.
     pub fn extract_members(
         &self,
         wanted: &[String],
@@ -517,7 +521,8 @@ impl ArchiveIndex {
     }
 
     /// Up to `len` bytes of the member from `offset`. A small member is
-    /// decoded whole; a large one is unpacked once to the temporary
+    /// decoded whole (and kept for the next window where that decodes what
+    /// comes before it too); a large one is unpacked once to the temporary
     /// folder and read from there, so the viewer's windows do not decode
     /// it from the start each time.
     pub fn read_range(
@@ -533,10 +538,42 @@ impl ArchiveIndex {
             let unpacked = self.unpacked_copy(inner, password)?;
             return crate::native::read_range(&unpacked, offset, len);
         }
-        let all = self.read_with(inner, password)?;
-        let start = (offset as usize).min(all.len());
-        let end = (start + len).min(all.len());
+        let all = self.decoded(inner, password)?;
+        let start = usize::try_from(offset).unwrap_or(usize::MAX).min(all.len());
+        let end = start.saturating_add(len).min(all.len());
         Ok(all[start..end].to_vec())
+    }
+
+    /// A small member's bytes. Where reading one decodes everything before
+    /// it (a compressed tar, a 7z or rar block, a compressed file), the
+    /// last few are kept, keyed by the archive's version and the password.
+    fn decoded(&self, inner: &str, password: Option<&str>) -> VfsResult<Arc<Vec<u8>>> {
+        let streamed = match self.format {
+            ArchiveFormat::Tar(compression) => compression != Compression::None,
+            ArchiveFormat::SevenZip | ArchiveFormat::Rar | ArchiveFormat::Single(_) => true,
+            ArchiveFormat::Zip | ArchiveFormat::Iso => false,
+        };
+        if !streamed {
+            return self.read_with(inner, password).map(Arc::new);
+        }
+        let key = DecodedKey {
+            archive: self.archive.clone(),
+            modified: self.file_modified,
+            len: self.file_len,
+            inner: inner.to_string(),
+            password: password.map(str::to_string),
+        };
+        if let Some((_, bytes)) = DECODED.lock().iter().find(|(k, _)| *k == key) {
+            return Ok(bytes.clone());
+        }
+        let bytes = Arc::new(self.read_with(inner, password)?);
+        let mut kept = DECODED.lock();
+        kept.retain(|(k, _)| *k != key);
+        kept.push_back((key, bytes.clone()));
+        while kept.len() > DECODED_KEPT {
+            kept.pop_front();
+        }
+        Ok(bytes)
     }
 
     /// The member's size: the index's, or the unpacked copy's when the
@@ -608,6 +645,24 @@ impl ArchiveIndex {
         }
     }
 }
+
+/// Which small member, decoded, [`ArchiveIndex::decoded`] keeps.
+#[derive(PartialEq, Eq)]
+struct DecodedKey {
+    archive: PathBuf,
+    modified: Option<SystemTime>,
+    len: u64,
+    inner: String,
+    password: Option<String>,
+}
+
+/// How many decoded members stay in memory (4 MiB each at most).
+const DECODED_KEPT: usize = 2;
+
+/// The small members decoded lately, the most recent last.
+type DecodedMembers = VecDeque<(DecodedKey, Arc<Vec<u8>>)>;
+
+static DECODED: LazyLock<Mutex<DecodedMembers>> = LazyLock::new(|| Mutex::new(VecDeque::new()));
 
 fn not_in_archive(inner: &str) -> VfsError {
     VfsError::new(VfsErrorKind::NotFound, None, format!("{inner} is not in the archive"))
@@ -862,20 +917,34 @@ pub fn temp_dir_for(archive: &Path) -> PathBuf {
     std::env::temp_dir().join("Ferryx").join(format!("{stem}-{hash:x}"))
 }
 
-/// Copies `reader` into `writer` in large steps; answers the bytes.
+/// Copies `reader` into `writer` in large steps; answers the bytes. The
+/// buffer is the thread's own, kept: an archive of many small members
+/// would otherwise take a fresh one from the system for each.
 pub(crate) fn pump(reader: &mut dyn Read, writer: &mut dyn Write) -> io::Result<u64> {
-    let mut buffer = vec![0u8; 256 * 1024];
-    let mut total = 0u64;
-    loop {
-        let n = match reader.read(&mut buffer) {
-            Ok(0) => return Ok(total),
-            Ok(n) => n,
-            Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
-            Err(e) => return Err(e),
-        };
-        writer.write_all(&buffer[..n])?;
-        total += n as u64;
+    thread_local! {
+        static BUFFER: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
     }
+    BUFFER.with(|cell| {
+        // A writer that pumps again in turn gets a buffer of its own.
+        let mut owned = Vec::new();
+        let mut borrowed = cell.try_borrow_mut();
+        let buffer = match borrowed.as_deref_mut() {
+            Ok(buffer) => buffer,
+            Err(_) => &mut owned,
+        };
+        buffer.resize(256 * 1024, 0);
+        let mut total = 0u64;
+        loop {
+            let n = match reader.read(buffer) {
+                Ok(0) => return Ok(total),
+                Ok(n) => n,
+                Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
+                Err(e) => return Err(e),
+            };
+            writer.write_all(&buffer[..n])?;
+            total += n as u64;
+        }
+    })
 }
 
 #[cfg(test)]

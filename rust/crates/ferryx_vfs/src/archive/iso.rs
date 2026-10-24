@@ -377,9 +377,18 @@ pub(crate) fn extract(job: &Job, sink: &mut dyn MemberSink) -> Result<(), Extrac
         return Err(ExtractError::Failed(VfsError::unsupported("not an ISO image")));
     };
     let mut file = File::open(archive).at(archive)?;
-    for &at in job.picked {
+    // In the order the data lies in the image.
+    let mut picked: Vec<_> = job
+        .picked
+        .iter()
+        .filter_map(|&at| {
+            let parts = job.index.members[at].native.and_then(|n| extents.get(n as usize))?.as_slice();
+            Some((parts.first().map_or(0, |part| part.0), at, parts))
+        })
+        .collect();
+    picked.sort_unstable_by_key(|&(offset, at, _)| (offset, at));
+    for (_, at, parts) in picked {
         let member = &job.index.members[at];
-        let Some(parts) = member.native.and_then(|n| extents.get(n as usize)) else { continue };
         if !sink.begin(member)? {
             continue;
         }

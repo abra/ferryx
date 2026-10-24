@@ -1,20 +1,21 @@
 //! Find Files through the Spotlight index (macOS): `mdfind -onlyin` with a
 //! query built from the request's name mask, contents and size, its hits
-//! streamed as `mdfind` prints them and checked against the request here,
-//! so what Spotlight cannot express (a regular expression, case, a whole
-//! phrase, "not containing", hidden items) gives the same answers a walk
-//! would. Spotlight skips system folders, hidden folders and the ones
-//! excluded in System Settings; a failure to run it is the caller's cue to
-//! walk instead.
+//! streamed as `mdfind` prints them and checked against the request here
+//! ([`Matcher`]): a regular expression, the exact mask, hidden items and
+//! "not containing" as a walk would; contents only where Spotlight's
+//! word-by-word clause cannot say (case, a whole phrase), in files that
+//! look like plain text. Spotlight skips system folders, hidden folders
+//! and the ones excluded in System Settings; a failure to run it is the
+//! caller's cue to walk instead.
 
-use std::io::{BufReader, Read};
+use std::io::{BufRead, BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc;
 use std::time::Duration;
 
-use crate::find::{FindHit, FindRequest, Matcher, SizeOp};
+use crate::find::{self, FindHit, FindRequest, Matcher, SizeOp};
 
 /// Where macOS keeps the Spotlight command line.
 pub const MDFIND: &str = "/usr/bin/mdfind";
@@ -127,7 +128,7 @@ pub fn run(
         .map_err(|e| SpotlightError::Unavailable(e.to_string()))?;
     let mut offered = 0u64;
     let mut cancelled = false;
-    loop {
+    let mut offer = |submit: &mut dyn FnMut(FindHit)| loop {
         if cancel.load(Ordering::SeqCst) {
             cancelled = true;
             stop(&mut child);
@@ -139,13 +140,17 @@ pub fn run(
                 if offered % 64 == 0 {
                     on_progress(path.parent().unwrap_or(&request.root), offered);
                 }
-                if let Some(hit) = matcher.check(&path) {
-                    on_hit(hit);
+                if let Some(hit) = matcher.candidate(&path) {
+                    submit(hit);
                 }
             }
             Err(mpsc::RecvTimeoutError::Timeout) => continue,
             Err(mpsc::RecvTimeoutError::Disconnected) => break,
         }
+    };
+    match matcher.reads_contents() {
+        Some((search, check)) => find::check_contents(search, check, cancel, on_hit, offer),
+        None => offer(on_hit),
     }
     let _ = reader.join();
     let status = child.wait().map_err(|e| SpotlightError::Unavailable(e.to_string()))?;
@@ -159,23 +164,21 @@ fn stop(child: &mut Child) {
     let _ = child.kill();
 }
 
-/// The NUL-separated paths `mdfind -0` prints.
+/// The NUL-separated paths `mdfind -0` prints; a last one without its NUL
+/// was cut short and is dropped.
 fn read_paths(stdout: impl Read, tx: &mpsc::Sender<PathBuf>) {
-    let mut reader = BufReader::new(stdout);
-    let mut buffer = Vec::new();
-    let mut chunk = [0u8; 16 * 1024];
+    let mut reader = BufReader::with_capacity(64 * 1024, stdout);
+    let mut raw = Vec::new();
     loop {
-        let n = match reader.read(&mut chunk) {
+        raw.clear();
+        match reader.read_until(0, &mut raw) {
             Ok(0) | Err(_) => break,
-            Ok(n) => n,
-        };
-        buffer.extend_from_slice(&chunk[..n]);
-        while let Some(end) = buffer.iter().position(|&b| b == 0) {
-            let raw: Vec<u8> = buffer.drain(..=end).collect();
-            let text = String::from_utf8_lossy(&raw[..raw.len() - 1]).into_owned();
-            if !text.is_empty() && tx.send(PathBuf::from(text)).is_err() {
-                return;
-            }
+            Ok(_) if raw.last() != Some(&0) => break,
+            Ok(_) => {}
+        }
+        let text = String::from_utf8_lossy(&raw[..raw.len() - 1]).into_owned();
+        if !text.is_empty() && tx.send(PathBuf::from(text)).is_err() {
+            return;
         }
     }
 }
