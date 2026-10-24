@@ -21,7 +21,7 @@ use ferryx_vfs::flat::{self, Batcher, FlatEnd, FlatOptions, FlatRow};
 use ferryx_vfs::{native, Location};
 use parking_lot::Mutex;
 
-use crate::api::listing::{build_view, watcher_for};
+use crate::api::listing::{header_view, watcher_for};
 use crate::api::types::{
     ApiResult, EntryView, FerryxError, FerryxErrorKind, ListingOptionsView, ListingView, LocationView,
 };
@@ -92,16 +92,15 @@ pub fn open_flat_listing(
         }
     };
     let generation = app::next_generation();
-    let header = build_view(&location, &[], &options, watcher.is_some());
     let flat = FlatListing {
         generation,
         cancel: Arc::new(AtomicBool::new(false)),
         rows: Arc::new(Mutex::new(FlatRows::default())),
     };
-    app::state()
-        .lock()
-        .listings
-        .insert(listing_id, OpenListing { location, options, raw: Vec::new(), watcher, flat: Some(flat) });
+    let watched = watcher.is_some();
+    let open = OpenListing::new(location, options, Vec::new(), watcher, Some(flat));
+    let header = header_view(&open.location, open.version, watched);
+    app::state().lock().listings.insert(listing_id, open);
     Ok(FlatStartView { listing: header, generation })
 }
 

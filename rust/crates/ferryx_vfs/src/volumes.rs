@@ -1,7 +1,9 @@
 //! The mounted volumes, for the Volumes quick list and the footer.
 
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
+use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -18,7 +20,19 @@ pub struct Volume {
 
 /// Every mounted volume a user may want to browse: the system's own
 /// hidden ones (`/dev`, snapshots, `/System/Volumes/…`) are left out.
+/// Listed afresh, they are found afresh for footers too (a volume renamed).
 pub fn list() -> Vec<Volume> {
+    let volumes = read_all();
+    *KNOWN.lock() = None;
+    volumes
+}
+
+#[cfg(test)]
+static READS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+fn read_all() -> Vec<Volume> {
+    #[cfg(test)]
+    READS.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
     let disks = sysinfo::Disks::new_with_refreshed_list();
     let mut out: Vec<Volume> = Vec::new();
     for disk in disks.iter() {
@@ -79,17 +93,54 @@ pub fn volume_of(path: &Path, volumes: &[Volume]) -> Option<Volume> {
         .cloned()
 }
 
+/// The volume holding each device seen since the volumes were last
+/// listed: listing them takes tens of milliseconds, a footer asks often.
+static KNOWN: Mutex<Option<HashMap<u64, Option<Volume>>>> = parking_lot::const_mutex(None);
+
+/// The volume holding `path` (as [`volume_of`] finds it), for a listing's
+/// footer. The volumes are listed again only for a device not seen since
+/// they were last: a volume mounted meanwhile.
+pub fn volume_holding(path: &Path) -> Option<Volume> {
+    let Some(device) = crate::native::device_of(path) else {
+        return volume_of(path, &read_all());
+    };
+    let mut known = KNOWN.lock();
+    let by_device = known.get_or_insert_with(HashMap::new);
+    if let Some(found) = by_device.get(&device) {
+        return found.clone();
+    }
+    let found = volume_of(path, &read_all());
+    by_device.insert(device, found.clone());
+    found
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::atomic::Ordering;
 
+    // One test: `list` forgets what `volume_holding` found.
     #[test]
-    fn the_root_volume_is_listed_first() {
+    fn the_root_volume_is_listed_first_and_found_again_without_a_listing() {
         let volumes = list();
         assert!(!volumes.is_empty());
         assert!(volumes[0].is_root);
         assert!(volumes[0].total_bytes > 0);
         let here = volume_of(Path::new("/usr/bin"), &volumes).unwrap();
         assert!(here.is_root);
+
+        let listed = READS.load(Ordering::SeqCst);
+        let first = volume_holding(Path::new("/usr/bin")).unwrap();
+        assert_eq!(first.mount_point, here.mount_point);
+        for _ in 0..100 {
+            assert_eq!(
+                volume_holding(Path::new("/usr/lib")).map(|v| v.mount_point),
+                Some(first.mount_point.clone())
+            );
+        }
+        assert_eq!(READS.load(Ordering::SeqCst) - listed, 1);
+        list();
+        volume_holding(Path::new("/usr/lib"));
+        assert_eq!(READS.load(Ordering::SeqCst) - listed, 3);
     }
 }

@@ -5,9 +5,10 @@
 
 use std::fs;
 use std::sync::{Mutex, MutexGuard};
+use std::time::{Duration, Instant};
 
 use ferryx_api::api::capabilities::capabilities;
-use ferryx_api::api::events::reset_for_tests;
+use ferryx_api::api::events::{record_events, reset_for_tests, take_recorded_events};
 use ferryx_api::api::tags::{read_listing_tags, set_tags, TagView};
 use ferryx_api::api::types::*;
 use ferryx_api::api::{files, listing};
@@ -73,6 +74,27 @@ fn tags_are_written_and_read_apart_from_the_listing() {
     assert_eq!(found[1].tags, [tag("work", 0)]);
     // One item reads its own.
     assert_eq!(files::stat(s(&a)).unwrap().tags.len(), 2);
+    // Read once, the rows are not read again until they change.
+    assert!(read_listing_tags("t".into()).unwrap().is_empty());
+
+    // Tags taken off elsewhere: the item the watcher named is read again
+    // alone and sent with none, so the panel drops its dots.
+    record_events();
+    set_tags(vec![s(&a)], vec![], vec!["red".into(), "work".into()]);
+    let start = Instant::now();
+    while !take_recorded_events().iter().any(|e| e.kind == AppEventKind::DirectoryChanged) {
+        assert!(start.elapsed() < Duration::from_secs(10), "no change reported");
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    listing::refresh_listing("t".into()).unwrap();
+    let found = read_listing_tags("t".into()).unwrap();
+    assert_eq!(found.len(), 1);
+    assert_eq!(found[0].path, s(&a));
+    assert!(found[0].tags.is_empty());
+    // ⌘R reads every row's again.
+    listing::refresh_listing("t".into()).unwrap();
+    let found = read_listing_tags("t".into()).unwrap();
+    assert_eq!(found.iter().map(|f| f.path.clone()).collect::<Vec<_>>(), [s(&b)]);
 
     // A missing item fails alone, typed.
     let missing = set_tags(vec![s(&dir.path().join("gone"))], vec![tag("Red", 6)], vec![]);

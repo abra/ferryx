@@ -72,34 +72,88 @@ fn listings_sort_resort_and_follow_changes() {
 
     let view = listing::open_listing("left".into(), LocationView::native(dir.path()), options()).unwrap();
     assert_eq!(names(&view), ["..", "zdir", "b2.txt", "b10.txt"]);
+    assert_eq!(view.order, None);
     assert!(view.watched);
     assert!(view.free_bytes.unwrap() > 0);
+    let mut shown = Shown::from(view);
 
     let mut by_size = options();
     by_size.sort.field = SortFieldView::Size;
     by_size.sort.descending = true;
     by_size.sort.folders_first = false;
     let view = listing::resort_listing("left".into(), by_size).unwrap();
-    assert_eq!(names(&view), ["..", "b10.txt", "b2.txt", "zdir"]);
+    // A sort sends the order alone.
+    assert!(view.entries.is_empty());
+    assert_eq!(shown.apply(view), ["..", "b10.txt", "b2.txt", "zdir"]);
 
     let mut hidden = options();
     hidden.show_hidden = true;
     let view = listing::resort_listing("left".into(), hidden).unwrap();
-    assert!(names(&view).contains(&".dot"));
+    assert_eq!(names(&view), [".dot"]);
+    assert_eq!(shown.apply(view), ["..", "zdir", ".dot", "b2.txt", "b10.txt"]);
 
     record_events();
     fs::write(dir.path().join("new.txt"), b"n").unwrap();
+    fs::remove_file(dir.path().join("b2.txt")).unwrap();
+    fs::write(dir.path().join("b10.txt"), b"bigger").unwrap();
     wait_for(|| {
         take_recorded_events()
             .iter()
             .any(|e| e.kind == AppEventKind::DirectoryChanged && e.listing_id.as_deref() == Some("left"))
     });
+    // The watcher named the items: only they are read, only they sent.
     let view = listing::refresh_listing("left".into()).unwrap();
-    assert!(names(&view).contains(&"new.txt"));
+    let mut sent = names(&view);
+    sent.sort();
+    assert_eq!(sent, ["b10.txt", "new.txt"]);
+    assert_eq!(shown.apply(view), ["..", "zdir", ".dot", "b10.txt", "new.txt"]);
+    assert_eq!(shown.rows[3].size, Some(6));
+
+    // Nothing named (⌘R): the whole folder, and nothing sent of it.
+    let view = listing::refresh_listing("left".into()).unwrap();
+    assert!(view.entries.is_empty());
+    assert_eq!(shown.apply(view), ["..", "zdir", ".dot", "b10.txt", "new.txt"]);
+
+    // Each update names the rows it changes.
+    let stale = shown.version;
+    let mut by_name = options();
+    by_name.show_hidden = true;
+    by_name.sort.descending = true;
+    let view = listing::resort_listing("left".into(), by_name).unwrap();
+    assert_eq!(view.base, stale);
+    assert_eq!(shown.apply(view), ["..", "zdir", "new.txt", "b10.txt", ".dot"]);
+
+    // A panel that missed an update asks for every row.
+    let all = listing::listing_rows("left".into()).unwrap();
+    assert_eq!(all.order, None);
+    assert_eq!(all.version, shown.version);
+    assert_eq!(names(&all), ["..", "zdir", "new.txt", "b10.txt", ".dot"]);
+
     listing::close_listing("left".into());
     assert!(listing::refresh_listing("left".into()).is_err());
     assert!(listing::open_listing("x".into(), LocationView::native(&dir.path().join("b2.txt")), options())
         .is_err());
+}
+
+/// What a panel holds of a listing, as the interface keeps it.
+struct Shown {
+    version: i64,
+    rows: Vec<EntryView>,
+}
+
+impl Shown {
+    fn from(view: ListingView) -> Shown {
+        assert_eq!(view.order, None);
+        Shown { version: view.version, rows: view.entries }
+    }
+
+    /// Applies an update of the rows held and answers their names.
+    fn apply(&mut self, view: ListingView) -> Vec<&str> {
+        assert_eq!(view.base, self.version, "an update of other rows");
+        self.rows = view.rows_after(&self.rows);
+        self.version = view.version;
+        self.rows.iter().map(|e| e.name.as_str()).collect()
+    }
 }
 
 #[test]

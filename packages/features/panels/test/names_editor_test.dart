@@ -79,6 +79,32 @@ void main() {
     ]);
   });
 
+  testWidgets('thousands of names are checked once the typing pauses; '
+      '⌘Return checks the text as it is', (tester) async {
+    h.folders['/home/docs'] = [
+      for (var i = 0; i < 2500; i++) h.file('/home/docs', 'IMG_$i.jpg'),
+    ];
+    await h.pump(tester);
+    await open(tester);
+    final start = text(tester);
+    await tester.enterText(field(), 'IMG_1.jpg${start.substring(9)}');
+    await tester.pump();
+    expect(find.text('repeated'), findsNothing, reason: 'still typing');
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.text('repeated'), findsNWidgets(2));
+    expect(renameButton(tester).onPressed, isNull);
+    await tester.enterText(field(), 'first.jpg${start.substring(9)}');
+    await tester.pump();
+    await applyKey(tester);
+    expect(applied.single, const [
+      RenameOutcome(
+        path: '/home/docs/IMG_0.jpg',
+        oldName: 'IMG_0.jpg',
+        newName: 'first.jpg',
+      ),
+    ]);
+  });
+
   testWidgets('a selection: only its names', (tester) async {
     await h.pump(tester);
     await h.press(tester, LogicalKeyboardKey.arrowDown);

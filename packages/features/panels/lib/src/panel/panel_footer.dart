@@ -124,7 +124,10 @@ class PanelFooter extends StatelessWidget {
     } else {
       left = const SizedBox.shrink();
     }
-    final count = tab.rows.where((r) => !r.isParent).length;
+    // `..` leads the rows when it is there.
+    final rows = tab.rows;
+    final count =
+        rows.length - (rows.isNotEmpty && rows.first.isParent ? 1 : 0);
     final free = tab.listing?.freeBytes;
     final flat = tab.flat;
     final right = [

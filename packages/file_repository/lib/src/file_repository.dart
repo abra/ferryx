@@ -30,6 +30,10 @@ class FileRepository {
 
   // ─── Listings ───
 
+  /// The rows each open listing was last sent, under their number: the
+  /// core sends a read again or a resort as an update of them.
+  final _shown = <String, ({int version, List<FileEntry> entries})>{};
+
   Future<Listing> openListing(
     String listingId,
     Location location,
@@ -40,14 +44,14 @@ class FileRepository {
       location: rust.locationToView(location),
       options: rust.listingOptionsToView(options),
     );
-    return rust.listingFromView(view);
+    return _received(listingId, view);
   });
 
   /// Reads the listing's folder again (after a change on disk, or ⌘R).
   Future<Listing> refreshListing(String listingId) =>
       rust.FerryxBackend.guard(() async {
         final view = await rust.refreshListing(listingId: listingId);
-        return rust.listingFromView(view);
+        return _received(listingId, view);
       });
 
   /// Sorts or filters the rows already read, under new [options].
@@ -57,10 +61,35 @@ class FileRepository {
           listingId: listingId,
           options: rust.listingOptionsToView(options),
         );
-        return rust.listingFromView(view);
+        return _received(listingId, view);
       });
 
+  /// [view]'s rows, all of them or an update of those last sent. An
+  /// answer older than one taken already is dropped (`cancelled`); an
+  /// update of rows not taken yet (answers out of turn) asks for all.
+  Future<Listing> _received(String listingId, rust.ListingView view) async {
+    final shown = _shown[listingId];
+    if (shown != null && view.version <= shown.version) {
+      throw const FerryxException(
+        FerryxErrorKind.cancelled,
+        'a later answer of the listing came first',
+      );
+    }
+    if (view.order != null && shown?.version != view.base) {
+      return _received(
+        listingId,
+        await rust.listingRows(listingId: listingId),
+      );
+    }
+    final entries = view.order == null
+        ? view.entries.map(rust.entryFromView).toList(growable: false)
+        : rust.rowsAfter(view, shown!.entries);
+    _shown[listingId] = (version: view.version, entries: entries);
+    return rust.listingFromView(view, entries: entries);
+  }
+
   Future<void> closeListing(String listingId) async {
+    _shown.remove(listingId);
     try {
       await rust.closeListing(listingId: listingId);
     } on Object catch (error, stackTrace) {
@@ -82,6 +111,7 @@ class FileRepository {
     Location location,
     ListingOptions options,
   ) => rust.FerryxBackend.guard(() async {
+    _shown.remove(listingId);
     final start = await rust.openFlatListing(
       listingId: listingId,
       location: rust.locationToView(location),

@@ -205,7 +205,12 @@ fn connects_lists_reads_and_makes_items() {
     );
     assert!(remote_stat(connection.server.clone(), "/sub/renamed.txt".into()).unwrap().is_some());
     let again = listing::refresh_listing("t1".into()).unwrap();
-    assert_eq!(names(&again), ["..", "made", "renamed.txt", "Ünï.txt"]);
+    assert_eq!(again.base, sub.version);
+    let rows = again.rows_after(&sub.entries);
+    assert_eq!(
+        rows.iter().map(|e| e.name.as_str()).collect::<Vec<_>>(),
+        ["..", "made", "renamed.txt", "Ünï.txt"]
+    );
 
     // A download into a folder on disk, as an operation.
     let temp = remote_temp_folder(connection.server.clone()).unwrap();

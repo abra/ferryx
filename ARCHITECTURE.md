@@ -163,11 +163,11 @@ buttons'. The window is shown only after the preferences are read
 
 | Crate | Responsibility |
 |-------|----------------|
-| `ferryx_core` | Pure logic: the `Entry` of a panel row, natural / case-insensitive / case-sensitive collation (`collation`), sorting by field with folders first and extensionless folders (`sorting`), file masks and regular expressions (`mask`), quick-search matching with the ranges to underline (`quick_search`), and the batch-rename language (`batch_rename`: placeholders, substrings, dates, counters, case commands, then search and replace and a case change). No I/O. |
-| `ferryx_vfs` | The file system: a folder's rows with their metadata (size, times, the macOS added time through `getattrlist`, mode, owner and group names, BSD flags, hidden), one entry, byte ranges of a file (`native`); archives as read-only folders (`archive`: zip, tar with any compression, 7z, rar, iso, single compressed files; see Archives below); a folder watched for changes reported once per burst (`watch`, `notify`); the volumes (`volumes`, `sysinfo`) and the free space; the standard folders, opening with the desktop or an application, revealing in the file manager, the trash, ejecting (`system`); permissions, flags, owners and times read and written (`attrs`); symbolic and hard links (`links`). Every error is a `VfsError` with a kind the interface words. |
+| `ferryx_core` | Pure logic: the `Entry` of a panel row, natural / case-insensitive / case-sensitive collation (`collation`), sorting by field with folders first and extensionless folders (`sorting`), file masks and regular expressions (`mask`), and the batch-rename language (`batch_rename`: placeholders, substrings, dates, counters, case commands, then search and replace and a case change). No I/O. |
+| `ferryx_vfs` | The file system: a folder's rows with their metadata (size, times, the macOS added time, mode, owner and group names, BSD flags, hidden; read in bulk with `getattrlistbulk` on macOS), one entry, byte ranges of a file (`native`); archives as read-only folders (`archive`: zip, tar with any compression, 7z, rar, iso, single compressed files; see Archives below); a folder watched for changes reported once per burst with the names that changed (`watch`, `notify`); the volumes (`volumes`, `sysinfo`) and the free space; the standard folders, opening with the desktop or an application, revealing in the file manager, the trash, ejecting (`system`); permissions, flags, owners and times read and written (`attrs`); symbolic and hard links (`links`). Every error is a `VfsError` with a kind the interface words. |
 | `ferryx_ops` | Operations on threads with progress, pause, cancellation and questions: copy and move (a rename on the same volume, else a copy and a delete; folders merge; conflicts ask or follow the policy; attributes preserved; optional verification), duplicate (`name copy.ext`), extract out of an archive, delete and trash, compress to zip (deflate, kinds compressed already stored; optional AES-256), folder sizes, plus Find Files (`find`: name, size, contents searched as bytes on a few workers in overlapping windows — `memmem`, Aho-Corasick for words and ASCII ignoring case, a regular expression for Unicode case folding — streamed hits in the walk's order) and the application of a batch rename (`rename`: staged through temporary names when names swap). `Runner` holds every operation; `OpContext` is what an operation checks, reports and asks through. |
 | `ferryx_term` | The integrated terminal's shell: a `Session` runs the user's shell as a login shell in a pseudo-terminal (`portable-pty`: openpty, ConPTY on Windows), sends its output in batches with flow control, probes whether it waits at its prompt (`tcgetpgrp`) and its folder (`proc_pidinfo`, `/proc/<pid>/cwd`), types `cd` when asked, and hangs up and reaps it on close. No emulation: that is the interface's. |
-| `ferryx_api` | `flutter_rust_bridge` surface. Holds the open listings (`app.rs`: one per panel tab, with its raw rows for resorting and its watcher), the archive indexes, the operations runner (whose listener forwards progress as events) and the searches; converts to plain DTOs (`api/types.rs`, `…View` types, enums without payloads so Dart sees enums, `i64` counts so Dart sees `int`); `volume_id` names a path's volume for a drop to tell a move from a copy. Its `Cargo.toml` uses literal fields because cargokit parses it without workspace inheritance. |
+| `ferryx_api` | `flutter_rust_bridge` surface. Holds the open listings (`app.rs`: one per panel tab, with its rows in the order last sent and their number, what the watcher named since, the rows whose tags are still to be read, and its watcher), the archive indexes, the operations runner (whose listener forwards progress as events) and the searches; converts to plain DTOs (`api/types.rs`, `…View` types, enums without payloads so Dart sees enums, `i64` counts so Dart sees `int`); `volume_id` names a path's volume for a drop to tell a move from a copy. Its `Cargo.toml` uses literal fields because cargokit parses it without workspace inheritance. |
 
 The Operations stream adds to `ferryx_ops` the undo journal (`journal`,
 `undo`), folder comparison and synchronization (`sync`), checksums
@@ -194,6 +194,39 @@ Rules:
   reading the disk again; a change of hidden items reads again. The
   folder is watched and `DirectoryChanged` names the listing; the panel
   then calls `refresh_listing`, keeping its cursor and selection by name.
+- **Updates, not lists.** The core keeps a listing's rows in the order
+  last sent, under a number (`ListingView.version`). `open_listing`
+  sends every row; `refresh_listing` and `resort_listing` send an update
+  of the rows numbered `base`: `order` gives each row's place as its
+  index among those rows, or `-1 - i` for `entries[i]`, the rows new or
+  changed (a resort sends none). `FileRepository` keeps each listing's
+  last rows and builds the next from an update, so a kept row is the same
+  `FileEntry` (its quick-search folding stays with it); an answer older
+  than one taken is dropped as `cancelled`, an update of rows it has not
+  got asks `listing_rows` for all. One read again or resort of a listing
+  runs at a time in the core (`OpenListing.turn`).
+- **What changed is read, not the folder.** The watcher names the items
+  of each burst (`watch::Changes`: names, or everything when the folder
+  itself changed, the system dropped events or more than 2 048 changed);
+  a burst is reported after 250 ms of quiet or at most a second after it
+  began, so a folder written without a pause still updates. The names are
+  kept on the listing (`app::note_changes`) until `refresh_listing`, which
+  stats only them and merges them into the order; nothing named (⌘R, a
+  server) reads the whole folder and sends the rows that differ. A tab
+  not shown is only marked (`PanelCubit._stale`) and read once it shows;
+  changes during a read again ask for one more after it, not one each.
+- A folder is read with `getattrlistbulk` on macOS (names and every
+  attribute a row shows, hundreds of items a call, where a stat and a
+  `getattrlist` per item cost five times as much), through the folder's
+  handle elsewhere; a read stops when the panel moved on. The footer's
+  volume is found by the folder's device among the volumes listed last
+  (`volumes::volume_holding`), listed again only for a device not seen.
+  Measured (`tests/listing_bench.rs`, release, 100 000 files): open
+  0.85 → 0.33 s, a change of one file 0.85 → 0.03–0.06 s with one row
+  sent, a whole read again 0.85 → 0.27 s with none sent, a resort
+  0.18 → 0.05 s; through `FileRepository` (`core_listing_test`, decoding
+  included) open 1.11 → 0.65 s, one change 1.12 → 0.08 s, resort
+  0.57 → 0.08 s.
 - Locations are native paths, `(archive, inner path)` or `(server key,
   path)`; a listing inside an archive comes from the archive's index and
   is not watched (the archive's folder is); one on a server is read over
@@ -423,9 +456,23 @@ match ranges, the sort options and the layout index. Rules:
   by the preferences) filter or underline; the cursor goes to the first
   match; Backspace takes a letter back while a search is on, Esc clears.
   Space, `/` and `~` are keys of their own until a search is on.
+  Matching lives in Dart (`quick_search.dart`): each name is folded once
+  (`FoldedText`, kept per row), plain ASCII is matched by code units and
+  only other names cut into grapheme clusters, and a query typed on
+  tries only the last query's matches where every match of it is one of
+  them (fuzzy, anywhere, beginning): 100 000 names went from 0.3–0.5 s a
+  key to 20–60 ms.
 - The view measures itself (`PanelGeometry`: rows per page and per brief
   column) and tells the cubit, so PageUp/Down and ←/→ in brief mode move
-  by what fits.
+  by what fits. Brief columns sized to their names are measured once per
+  rows and width, not per frame, and the list is told each column's width
+  (`itemExtentBuilder`), so End in 20 000 names lays out the columns in
+  view, not the 1 400 before them.
+- Large states compare in linear time: a tab's selection compares as a
+  set with a hash (Equatable compares sets pairwise), the selected bytes
+  are summed once per selection and rows, number and date formats are
+  made once per pattern and locale, and a name fitted with a middle
+  ellipsis is measured once per text, style and width.
 - Tabs: a new tab opens after the active one at the same place; closing
   shows the neighbour and remembers the location for ⇧⌘R; the last tab of
   a panel never closes; each tab's listing is closed in the core with it.
@@ -506,8 +553,11 @@ elsewhere — features never ask the platform.
   them. `PanelCubit` (`readTags`) asks `read_listing_tags` once a listing
   or a flat view shows — read on up to four threads, only the tagged
   items come back — and merges them in by path; a listing read again keeps
-  the dots it showed until the new read answers, so they never blink. One
-  item (`stat`) reads its own.
+  the dots it showed until the new read answers, so they never blink. The
+  core reads only the rows not read since they were (`Untagged`): all
+  after a whole read, the items the watcher named after a read of those
+  (a tag edited elsewhere is such a change), and sends an item whose tags
+  are gone with none, so its dots go. One item (`stat`) reads its own.
 - **Shown** as Finder does: up to three dots right after the name in List
   and Brief (`AppTagDots`, Finder's colours in light and dark from
   `AppTagColors`, each ringed with the row's background so they stay

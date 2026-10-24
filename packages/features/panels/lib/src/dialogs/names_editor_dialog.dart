@@ -75,6 +75,10 @@ class _NamesEditorDialogState extends State<NamesEditorDialog> {
   final _names = ScrollController();
   final _status = ScrollController();
   late NamesCheck _check;
+
+  /// The text [_check] was made of; another while a check waits.
+  late String _checked = _start;
+  Timer? _checkLater;
   late String _text = _start;
   int _caretLine = 0;
   int _editorLines = 1;
@@ -91,6 +95,7 @@ class _NamesEditorDialogState extends State<NamesEditorDialog> {
 
   @override
   void dispose() {
+    _checkLater?.cancel();
     _controller.dispose();
     _editor.dispose();
     for (final scroll in [_vertical, _horizontal, _numbers, _names, _status]) {
@@ -109,6 +114,10 @@ class _NamesEditorDialogState extends State<NamesEditorDialog> {
 
   bool get _dirty => _controller.text != _start;
 
+  /// More names than this are checked once the typing pauses, not on
+  /// each key: a check reads every line.
+  static const _checkedEachKey = 2000;
+
   /// The text or the caret moved: check again when the text changed, and
   /// follow the caret's line for the summary.
   void _onEdit() {
@@ -116,14 +125,29 @@ class _NamesEditorDialogState extends State<NamesEditorDialog> {
     final offset = _controller.selection.baseOffset.clamp(0, text.length);
     final caretLine = '\n'.allMatches(text.substring(0, offset)).length;
     if (text == _text && caretLine == _caretLine) return;
+    final changed = text != _text;
     setState(() {
-      if (text != _text) {
+      if (changed) {
         _text = text;
-        _check = _checkOf(text);
         _editorLines = _linesIn(text);
+        if (_originals.length <= _checkedEachKey) _checkNow();
       }
       _caretLine = caretLine;
     });
+    if (changed && _originals.length > _checkedEachKey) {
+      _checkLater?.cancel();
+      _checkLater = Timer(const Duration(milliseconds: 150), () {
+        if (mounted) setState(_checkNow);
+      });
+    }
+  }
+
+  /// [_check] of the text as it is.
+  void _checkNow() {
+    _checkLater?.cancel();
+    if (_checked == _text) return;
+    _checked = _text;
+    _check = _checkOf(_text);
   }
 
   /// The numbers, the names now and the problems scroll with the text.
@@ -149,6 +173,7 @@ class _NamesEditorDialogState extends State<NamesEditorDialog> {
   }
 
   Future<void> _apply() async {
+    if (_checked != _text) setState(_checkNow);
     final check = _check;
     if (!check.canApply || _applying) return;
     final l10n = context.l10n;

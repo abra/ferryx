@@ -107,6 +107,45 @@ class AppMiddleEllipsis extends StatelessWidget {
   (TextSpan, TextOverflow) _fit(BuildContext context, double maxWidth) {
     final whole = _span(text);
     if (!maxWidth.isFinite) return (whole, TextOverflow.clip);
+    final key = (
+      text,
+      style,
+      maxWidth,
+      MediaQuery.textScalerOf(context),
+      Directionality.of(context),
+      tail,
+      _highlighted ? (highlights, highlightStyle) : null,
+    );
+    final int? head;
+    if (_fits.containsKey(key)) {
+      head = _fits.remove(key);
+    } else {
+      head = _measure(context, whole, maxWidth);
+    }
+    // Last used at the end, so the first is the one to forget.
+    _fits[key] = head;
+    if (_fits.length > _fitsAtMost) _fits.remove(_fits.keys.first);
+    if (head == null) return (whole, TextOverflow.clip);
+    if (head == 0) return (whole, TextOverflow.ellipsis);
+    return (_cut(head), TextOverflow.clip);
+  }
+
+  /// [text] with its first [head] characters, the ellipsis and the tail.
+  TextSpan _cut(int head) {
+    final chars = text.characters.toList();
+    final keep = (tail ?? defaultTail(text)).clamp(0, chars.length);
+    final end = chars.sublist(chars.length - keep).join();
+    final start = chars.sublist(0, head).join();
+    return _span(
+      '$start…$end',
+      headLength: start.length,
+      tailStart: text.length - end.length,
+    );
+  }
+
+  /// How many characters of the head fit with the ellipsis and the tail:
+  /// `null` when the whole text fits, 0 when not even the tail does.
+  int? _measure(BuildContext context, TextSpan whole, double maxWidth) {
     final painter = TextPainter(
       text: TextSpan(style: style, children: [whole]),
       textDirection: Directionality.of(context),
@@ -114,29 +153,18 @@ class AppMiddleEllipsis extends StatelessWidget {
       maxLines: 1,
     )..layout();
     try {
-      if (painter.width <= maxWidth) return (whole, TextOverflow.clip);
-      final chars = text.characters.toList();
-      final keep = (tail ?? defaultTail(text)).clamp(0, chars.length);
-      final end = chars.sublist(chars.length - keep).join();
-      final tailStart = text.length - end.length;
-      TextSpan cut(int head) {
-        final start = chars.sublist(0, head).join();
-        return _span(
-          '$start…$end',
-          headLength: start.length,
-          tailStart: tailStart,
-        );
-      }
-
+      if (painter.width <= maxWidth) return null;
+      final chars = text.characters.length;
+      final keep = (tail ?? defaultTail(text)).clamp(0, chars);
       double widthOf(int head) {
-        painter.text = TextSpan(style: style, children: [cut(head)]);
+        painter.text = TextSpan(style: style, children: [_cut(head)]);
         painter.layout();
         return painter.width;
       }
 
       // The longest head that fits with the ellipsis and the tail.
       var low = 0;
-      var high = chars.length - keep;
+      var high = chars - keep;
       while (low < high) {
         final mid = (low + high + 1) ~/ 2;
         if (widthOf(mid) <= maxWidth) {
@@ -145,10 +173,14 @@ class AppMiddleEllipsis extends StatelessWidget {
           high = mid - 1;
         }
       }
-      if (low == 0) return (whole, TextOverflow.ellipsis);
-      return (cut(low), TextOverflow.clip);
+      return low;
     } finally {
       painter.dispose();
     }
   }
 }
+
+/// How texts were last fitted, by all that decides it: a list builds its
+/// rows again on every move of its cursor, and a fit costs layouts.
+final _fits = <Object, int?>{};
+const _fitsAtMost = 4096;

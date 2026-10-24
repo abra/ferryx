@@ -49,4 +49,29 @@ void main() {
     ]);
     expect(quickMatch('x', 'Readme.md', QuickSearchWhere.anywhere), isNull);
   });
+
+  test('plain ASCII names match as their clusters do, in every mode', () {
+    const names = ['Readme.md', 'a.txt', 'abcabc', 'x', 'ReadMe-Final.TXT'];
+    const queries = ['r', 'md', 'abc', 'rf', 'txt', 'x', 'READ', 'eme'];
+    for (final where in QuickSearchWhere.values) {
+      for (final name in names) {
+        // A cluster path: the same text with a non-ASCII rune after it.
+        final wide = FoldedText('$name\u00e9');
+        final narrow = FoldedText(name);
+        expect(narrow.ascii, isTrue);
+        expect(wide.ascii, isFalse);
+        for (final q in queries) {
+          final query = FoldedText(q);
+          final ascii = quickMatchFolded(query, narrow, where);
+          final clusters = switch (where) {
+            // Over the same clusters but for the one appended.
+            QuickSearchWhere.ending ||
+            QuickSearchWhere.beginningOrEnding => quickMatch(q, name, where),
+            _ => quickMatchFolded(query, wide, where),
+          };
+          expect(ascii, clusters, reason: '$where "$q" in "$name"');
+        }
+      }
+    }
+  });
 }

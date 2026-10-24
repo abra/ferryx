@@ -12,6 +12,9 @@ use parking_lot::Mutex;
 
 use crate::error::{IoAt, VfsError, VfsErrorKind, VfsResult};
 
+#[cfg(target_os = "macos")]
+mod bulk;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ListOptions {
     pub show_hidden: bool,
@@ -28,7 +31,12 @@ impl Default for ListOptions {
 /// The rows of the folder at `dir`, unsorted. Names the file system
 /// cannot spell in Unicode are read lossily.
 pub fn list_dir(dir: &Path, opts: &ListOptions) -> VfsResult<Vec<Entry>> {
-    let read = fs::read_dir(dir).at(dir)?;
+    list_dir_until(dir, opts, &|| false)
+}
+
+/// [`list_dir`] that gives up with `Cancelled` once `stop` says so: a
+/// panel that moved on leaves a large folder unread.
+pub fn list_dir_until(dir: &Path, opts: &ListOptions, stop: &dyn Fn() -> bool) -> VfsResult<Vec<Entry>> {
     let mut names = Names::default();
     let mut entries = Vec::new();
     if opts.show_parent {
@@ -36,18 +44,23 @@ pub fn list_dir(dir: &Path, opts: &ListOptions) -> VfsResult<Vec<Entry>> {
             entries.push(Entry::parent(parent.to_path_buf()));
         }
     }
-    for item in read {
-        let item = match item {
-            Ok(item) => item,
-            Err(_) => continue,
-        };
-        let path = item.path();
+    #[cfg(target_os = "macos")]
+    if bulk::read(dir, opts, stop, &mut names, &mut entries)? {
+        return Ok(entries);
+    }
+    let read = fs::read_dir(dir).at(dir)?;
+    for (n, item) in read.enumerate() {
+        if n % 1024 == 1023 && stop() {
+            return Err(VfsError::new(VfsErrorKind::Cancelled, Some(dir), "the read was stopped"));
+        }
+        let Ok(item) = item else { continue };
         let name = item.file_name().to_string_lossy().into_owned();
-        let meta = match fs::symlink_metadata(&path) {
-            Ok(meta) => meta,
-            Err(_) => continue,
-        };
-        let entry = build_entry(name, path, &meta, &mut names);
+        if !opts.show_hidden && name.starts_with('.') {
+            continue;
+        }
+        // Read beside the folder's handle, not by the whole path.
+        let Ok(meta) = item.metadata() else { continue };
+        let entry = build_entry(name, item.path(), &meta, &mut names);
         if !opts.show_hidden && entry.is_hidden {
             continue;
         }
@@ -87,11 +100,8 @@ pub fn entry_from_metadata(name: String, path: PathBuf, meta: &Metadata, names: 
 
 fn build_entry(name: String, path: PathBuf, meta: &Metadata, names: &mut Names) -> Entry {
     let file_type = meta.file_type();
-    let is_symlink = file_type.is_symlink();
-    let (kind, is_dir, target) = if is_symlink {
-        let target = fs::read_link(&path).ok().map(|t| t.to_string_lossy().into_owned());
-        let points_to_dir = fs::metadata(&path).map(|m| m.is_dir()).unwrap_or(false);
-        (EntryKind::Symlink, points_to_dir, target)
+    let (kind, is_dir, target) = if file_type.is_symlink() {
+        symlink_entry(&path)
     } else if file_type.is_dir() {
         (EntryKind::Directory, true, None)
     } else if file_type.is_file() {
@@ -124,6 +134,13 @@ fn build_entry(name: String, path: PathBuf, meta: &Metadata, names: &mut Names) 
         tags: Vec::new(),
         path,
     }
+}
+
+/// A symbolic link's kind, whether it leads to a folder, and its target.
+fn symlink_entry(path: &Path) -> (EntryKind, bool, Option<String>) {
+    let target = fs::read_link(path).ok().map(|t| t.to_string_lossy().into_owned());
+    let points_to_dir = fs::metadata(path).map(|m| m.is_dir()).unwrap_or(false);
+    (EntryKind::Symlink, points_to_dir, target)
 }
 
 pub fn system_time_ms(time: SystemTime) -> Option<i64> {
@@ -409,6 +426,67 @@ mod tests {
         assert_eq!(create_dir_all(&dir.path().join("n1")).unwrap_err().kind, VfsErrorKind::AlreadyExists);
         assert!(create_file(&dir.path().join("new")).is_ok());
         assert_eq!(create_file(&dir.path().join("new")).unwrap_err().kind, VfsErrorKind::AlreadyExists);
+    }
+
+    /// Each kind of item reads the same from the bulk read as from a stat
+    /// of its own: kinds, sizes, times (before 1970 too), ids, mode, flags.
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn the_bulk_read_answers_what_a_stat_does() {
+        use std::time::{Duration, UNIX_EPOCH};
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        fs::write(root.join("a.txt"), b"hello").unwrap();
+        fs::write(root.join("empty"), b"").unwrap();
+        fs::write(root.join(".dot"), b"x").unwrap();
+        fs::write(root.join("cafe\u{301}.md"), b"decomposed").unwrap();
+        fs::write(root.join(format!("{}.long", "n".repeat(240))), b"").unwrap();
+        fs::create_dir(root.join("sub")).unwrap();
+        std::os::unix::fs::symlink("sub", root.join("to dir")).unwrap();
+        std::os::unix::fs::symlink("a.txt", root.join("to file")).unwrap();
+        std::os::unix::fs::symlink("nowhere", root.join("dangling")).unwrap();
+        let fifo = std::ffi::CString::new(root.join("pipe").as_os_str().as_encoded_bytes()).unwrap();
+        assert_eq!(unsafe { libc::mkfifo(fifo.as_ptr(), 0o640) }, 0);
+        let hidden = root.join("flagged");
+        fs::write(&hidden, b"").unwrap();
+        let c = std::ffi::CString::new(hidden.as_os_str().as_encoded_bytes()).unwrap();
+        assert_eq!(unsafe { libc::chflags(c.as_ptr(), UF_HIDDEN) }, 0);
+        let old = fs::File::options().write(true).open(root.join("empty")).unwrap();
+        old.set_modified(UNIX_EPOCH - Duration::from_millis(1500)).unwrap();
+        let mut perms = fs::metadata(root.join("a.txt")).unwrap().permissions();
+        std::os::unix::fs::PermissionsExt::set_mode(&mut perms, 0o4751);
+        fs::set_permissions(root.join("a.txt"), perms).unwrap();
+
+        let opts = ListOptions { show_hidden: true, show_parent: false };
+        let mut bulk = list_dir(root, &opts).unwrap();
+        bulk.sort_by(|a, b| a.name.cmp(&b.name));
+        let mut names = Names::default();
+        let mut each: Vec<Entry> = fs::read_dir(root)
+            .unwrap()
+            .map(|item| {
+                let item = item.unwrap();
+                let name = item.file_name().to_string_lossy().into_owned();
+                build_entry(name, item.path(), &item.metadata().unwrap(), &mut names)
+            })
+            .collect();
+        each.sort_by(|a, b| a.name.cmp(&b.name));
+        assert_eq!(bulk.len(), 11);
+        assert_eq!(bulk, each);
+        let empty = bulk.iter().find(|e| e.name == "empty").unwrap();
+        assert_eq!(empty.modified_ms, Some(-1500));
+        assert!(bulk.iter().any(|e| e.name == "flagged" && e.is_hidden));
+
+        let shown = list_dir(root, &ListOptions { show_hidden: false, show_parent: false }).unwrap();
+        assert_eq!(shown.len(), 9);
+        assert!(!shown.iter().any(|e| e.is_hidden));
+    }
+
+    #[test]
+    fn a_read_told_to_stop_stops() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("a"), b"").unwrap();
+        let error = list_dir_until(dir.path(), &ListOptions::default(), &|| true).unwrap_err();
+        assert_eq!(error.kind, VfsErrorKind::Cancelled);
     }
 
     #[cfg(unix)]

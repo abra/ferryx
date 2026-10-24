@@ -63,11 +63,13 @@ class Shelf extends Equatable {
   /// keeps its place and takes the newer mark.
   Shelf add(Iterable<ShelfItem> added) {
     final next = [...items];
+    final at = {for (final (i, item) in next.indexed) item.path: i};
     for (final item in added) {
-      final at = next.indexWhere((i) => i.path == item.path);
-      if (at >= 0) {
-        next[at] = item;
+      final place = at[item.path];
+      if (place != null) {
+        next[place] = item;
       } else {
+        at[item.path] = next.length;
         next.add(item);
       }
     }

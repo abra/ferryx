@@ -13,9 +13,12 @@ import 'types.dart';
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `from`
 // These functions are ignored (category: IgnoreBecauseExplicitAttribute): `to_core`
 
-/// The tags of the listing's items that have any. A listing does not read
-/// tags (each item costs a system call); the panel asks once it shows,
-/// and this reads them on a few threads.
+/// The tags of the listing's items that have any, and an empty list for
+/// an item whose tags are gone. A listing does not read tags (each item
+/// costs a system call); the panel asks once it shows, and this reads the
+/// rows not read since they were: all after the folder was read whole,
+/// the items the watcher named after it read only those. Read on a few
+/// threads.
 Future<List<ItemTagsView>> readListingTags({required String listingId}) =>
     FerryxRustLib.instance.api.crateApiTagsReadListingTags(
       listingId: listingId,

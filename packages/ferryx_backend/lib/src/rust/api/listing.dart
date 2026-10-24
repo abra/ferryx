@@ -10,10 +10,11 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'tags.dart';
 import 'types.dart';
 
-// These functions are ignored because they are not marked as `pub`: `build_view`, `flat_elsewhere`, `not_open`, `read`, `superseded`, `watcher_for`
+// These functions are ignored because they are not marked as `pub`: `commit`, `diff`, `flat_elsewhere`, `fresh`, `header_view`, `kept`, `listing_mut`, `merge`, `not_open`, `of`, `read_names`, `read`, `sort_rows`, `superseded`, `turn_of`, `view`, `watcher_for`, `with_capacity`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Footer`, `Update`
 
 /// Opens `location` as the listing `listing_id` (a panel's tab), replacing
-/// whatever that id showed, and answers its rows sorted by `options`.
+/// whatever that id showed, and answers all its rows sorted by `options`.
 Future<ListingView> openListing({
   required String listingId,
   required LocationView location,
@@ -24,14 +25,17 @@ Future<ListingView> openListing({
   options: options,
 );
 
-/// Reads the listing's folder again (after a change on disk, or ⌘R).
+/// Reads the listing's folder again and answers an update of its rows:
+/// the items the watcher named since the last read, or, when it named
+/// none (⌘R, a folder not watched) or could not, the whole folder.
 Future<ListingView> refreshListing({required String listingId}) => FerryxRustLib
     .instance
     .api
     .crateApiListingRefreshListing(listingId: listingId);
 
-/// Sorts or filters the rows already read, under new `options`. A change
-/// of hidden items reads the folder again.
+/// Sorts or filters the rows already read, under new `options`, and
+/// answers their new order. A change of hidden items reads the folder
+/// again.
 Future<ListingView> resortListing({
   required String listingId,
   required ListingOptionsView options,
@@ -40,14 +44,19 @@ Future<ListingView> resortListing({
   options: options,
 );
 
+/// All the rows of the listing as last sent, under their number: for a
+/// panel that missed an update (its answers came out of turn).
+Future<ListingView> listingRows({required String listingId}) =>
+    FerryxRustLib.instance.api.crateApiListingListingRows(listingId: listingId);
+
 /// Forgets the listing and stops watching its folder (and reading it).
 Future<void> closeListing({required String listingId}) => FerryxRustLib
     .instance
     .api
     .crateApiListingCloseListing(listingId: listingId);
 
-/// The rows of `location` once, unsorted and unwatched: for a dialog
-/// that needs a folder's names (the Go To folder's completion).
+/// The rows of `location` once, unwatched: for a dialog that needs a
+/// folder's names (the Go To folder's completion).
 Future<List<EntryView>> peekListing({
   required LocationView location,
   required bool showHidden,

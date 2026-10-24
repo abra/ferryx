@@ -135,8 +135,9 @@ extension _InterfaceActions on _WorkspaceScreenState {
   /// Takes [paths] off the shelf; the keys go back to the panel when the
   /// strip they were in hides with the last item.
   void _unshelve(List<String> paths) {
+    final gone = paths.toSet();
     final emptied = !_workspace.state.shelf.items.any(
-      (i) => !paths.contains(i.path),
+      (i) => !gone.contains(i.path),
     );
     if (emptied && _shelfFocus.hasFocus) {
       _focusOf(_workspace.state.active).requestFocus();

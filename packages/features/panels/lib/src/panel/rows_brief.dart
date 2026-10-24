@@ -56,6 +56,13 @@ class RowsBrief extends StatefulWidget {
   /// list takes thirds of the panel.
   static const int measuredRowsAtMost = 2000;
 
+  /// How many times names were measured, and columns built, for the
+  /// tests.
+  @visibleForTesting
+  static int debugMeasures = 0;
+  @visibleForTesting
+  static int debugColumnsBuilt = 0;
+
   @override
   State<RowsBrief> createState() => _RowsBriefState();
 }
@@ -66,6 +73,11 @@ class _RowsBriefState extends State<RowsBrief> {
   int _rowsPerColumn = 1;
   int _visibleColumns = RowsBrief.fixedColumns;
   List<double> _columnWidths = const [];
+
+  /// What the names were last measured for, and the widths they gave: a
+  /// move of the cursor builds the list again, its names and room stay.
+  _Measure? _measured;
+  List<double> _measuredWidths = const [];
 
   @override
   void initState() {
@@ -159,19 +171,33 @@ class _RowsBriefState extends State<RowsBrief> {
     }
     final style = context.text.bodyMedium!;
     final scaler = MediaQuery.textScalerOf(context);
+    final measure = (
+      rows: rows,
+      rowsPerColumn: rowsPerColumn,
+      available: available,
+      style: style,
+      scaler: scaler,
+      chrome: _chrome(context),
+    );
+    if (measure == _measured) return _measuredWidths;
+    assert(() {
+      RowsBrief.debugMeasures++;
+      return true;
+    }());
     final painter = TextPainter(
       textDirection: Directionality.of(context),
       textScaler: scaler,
       maxLines: 1,
     );
     try {
-      final chrome = _chrome(context);
+      final chrome = measure.chrome;
       final max = (available / 2).floorToDouble();
       final min = math.min(
         available,
         RowsBrief.minColumnWidth * scaler.scale(1),
       );
-      return [
+      _measured = measure;
+      return _measuredWidths = [
         for (var c = 0; c < columns; c++)
           () {
             var widest = 0.0;
@@ -241,25 +267,34 @@ class _RowsBriefState extends State<RowsBrief> {
                   controller: _scroll,
                   scrollDirection: Axis.horizontal,
                   itemCount: widths.length,
+                  // The widths are known: a jump to the end lays out only
+                  // the columns it lands on, and the extent is exact.
+                  itemExtentBuilder: (column, _) => widths[column],
                   addRepaintBoundaries: false,
-                  itemBuilder: (context, column) => SizedBox(
-                    width: widths[column],
-                    child: _BriefColumn(
-                      tab: widget.tab,
-                      active: active,
-                      start: column * rowsPerColumn,
-                      count: math.min(
-                        rowsPerColumn,
-                        widget.tab.rows.length - column * rowsPerColumn,
+                  itemBuilder: (context, column) {
+                    assert(() {
+                      RowsBrief.debugColumnsBuilt++;
+                      return true;
+                    }());
+                    return SizedBox(
+                      width: widths[column],
+                      child: _BriefColumn(
+                        tab: widget.tab,
+                        active: active,
+                        start: column * rowsPerColumn,
+                        count: math.min(
+                          rowsPerColumn,
+                          widget.tab.rows.length - column * rowsPerColumn,
+                        ),
+                        height: height,
+                        callbacks: widget.callbacks,
+                        rename: widget.rename,
+                        cursorKey: widget.cursorKey,
+                        dropRow: widget.dropRow,
+                        last: column == widths.length - 1,
                       ),
-                      height: height,
-                      callbacks: widget.callbacks,
-                      rename: widget.rename,
-                      cursorKey: widget.cursorKey,
-                      dropRow: widget.dropRow,
-                      last: column == widths.length - 1,
-                    ),
-                  ),
+                    );
+                  },
                 ),
               );
             },
@@ -430,3 +465,14 @@ class _BriefCell extends StatelessWidget {
     );
   }
 }
+
+/// What brief mode measured its names for ([_RowsBriefState._measured]):
+/// the rows by identity, the room and the face.
+typedef _Measure = ({
+  List<FileEntry> rows,
+  int rowsPerColumn,
+  double available,
+  TextStyle style,
+  TextScaler scaler,
+  double chrome,
+});

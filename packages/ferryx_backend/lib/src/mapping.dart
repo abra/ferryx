@@ -105,14 +105,31 @@ d.FileEntry entryFromView(rust.EntryView view, {String folder = ''}) =>
       folder: folder,
     );
 
-d.Listing listingFromView(rust.ListingView view) => d.Listing(
+/// [view] as a listing: of its own rows, or of [entries] when they were
+/// made from it already ([rowsAfter]).
+d.Listing listingFromView(
+  rust.ListingView view, {
+  List<d.FileEntry>? entries,
+}) => d.Listing(
   location: locationFromView(view.location),
-  entries: view.entries.map(entryFromView).toList(growable: false),
+  entries: entries ?? view.entries.map(entryFromView).toList(growable: false),
   freeBytes: view.freeBytes,
   totalBytes: view.totalBytes,
   volumeName: view.volumeName,
   watched: view.watched,
 );
+
+/// The rows after an update ([view] with an `order`) of [before], the
+/// rows it names by `base`: a row kept is the same object, only the rows
+/// new or changed are made.
+List<d.FileEntry> rowsAfter(rust.ListingView view, List<d.FileEntry> before) {
+  final order = view.order!;
+  final fresh = view.entries.map(entryFromView).toList(growable: false);
+  return List<d.FileEntry>.generate(order.length, (at) {
+    final i = order[at];
+    return i >= 0 ? before[i] : fresh[-1 - i];
+  }, growable: false);
+}
 
 // ─── Sorting ───
 

@@ -39,6 +39,7 @@ void main() {
   late PreferencesService preferences;
   late FolderFrecency frecency;
   late FakePlatformServices desktop;
+  late StreamController<String> changes;
   late List<OperationRequest> started;
   late List<Location> viewed;
   late Map<String, int?> volumes;
@@ -104,9 +105,8 @@ void main() {
     );
     frecency = await FolderFrecency.load(InMemorySideStorage());
     final listings = <String, Location>{};
-    when(
-      () => files.directoryChanges,
-    ).thenAnswer((_) => const Stream<String>.empty());
+    changes = StreamController<String>.broadcast();
+    when(() => files.directoryChanges).thenAnswer((_) => changes.stream);
     when(() => files.openListing(any(), any(), any())).thenAnswer((call) async {
       final location = call.positionalArguments[1] as Location;
       listings[call.positionalArguments[0] as String] = location;
@@ -138,6 +138,7 @@ void main() {
 
   tearDown(() async {
     await desktop.dispose();
+    await changes.close();
     await frecency.dispose();
     await preferences.dispose();
   });
@@ -262,6 +263,30 @@ void main() {
       await down(tester);
       await key(tester, LogicalKeyboardKey.space);
       expect(viewed, [home.join('b.txt')]);
+    });
+
+    testWidgets('a folder read again with the same items is not sent '
+        'again; one with another item is', (tester) async {
+      await pump(tester);
+      await down(tester, 2);
+      await quickLook(tester);
+      expect(desktop.quickLooks, hasLength(1));
+      // A size changed: the same paths.
+      changes.add('left-1');
+      await tester.pumpAndSettle();
+      expect(desktop.quickLooks, hasLength(1));
+      expect(desktop.selections, isEmpty);
+      when(() => files.refreshListing(any())).thenAnswer(
+        (_) async => listingOf(home).copyWith(
+          entries: [...listingOf(home).entries, entry('/home', 'd.txt')],
+        ),
+      );
+      changes.add('left-1');
+      await tester.pumpAndSettle();
+      expect(
+        desktop.quickLooks.last,
+        QuickLookItems([...homeItems, '/home/d.txt'], index: 1),
+      );
     });
 
     testWidgets('⌘Y again and Esc close it; the panel keeps the keys', (

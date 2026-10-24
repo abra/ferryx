@@ -1,12 +1,13 @@
 //! Finder tags (macOS): a listing's read apart from it, and edits.
 
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
 use ferryx_core::entry::Tag;
 use ferryx_vfs::{tags, Location};
 
 use crate::api::types::{ApiResult, FerryxError, FerryxErrorKind};
-use crate::app;
+use crate::app::{self, Untagged};
 
 /// A Finder tag: its name and its colour in Finder's numbering (0 none,
 /// 1 grey, 2 green, 3 purple, 4 blue, 5 yellow, 6 red, 7 orange).
@@ -45,29 +46,77 @@ pub struct TagOutcomeView {
     pub message: String,
 }
 
-/// The tags of the listing's items that have any. A listing does not read
-/// tags (each item costs a system call); the panel asks once it shows,
-/// and this reads them on a few threads.
+/// The tags of the listing's items that have any, and an empty list for
+/// an item whose tags are gone. A listing does not read tags (each item
+/// costs a system call); the panel asks once it shows, and this reads the
+/// rows not read since they were: all after the folder was read whole,
+/// the items the watcher named after it read only those. Read on a few
+/// threads.
 pub fn read_listing_tags(listing_id: String) -> ApiResult<Vec<ItemTagsView>> {
     if !tags::supported() {
         return Ok(Vec::new());
     }
-    let paths: Vec<PathBuf> = {
-        let state = app::state().lock();
-        let open = state.listings.get(&listing_id).ok_or_else(|| {
+    let (rows, tagged): (Vec<(String, PathBuf)>, Option<HashSet<String>>) = {
+        let mut state = app::state().lock();
+        let open = state.listings.get_mut(&listing_id).ok_or_else(|| {
             FerryxError::new(FerryxErrorKind::NotFound, format!("listing {listing_id} is not open"))
         })?;
         if !matches!(open.location, Location::Native(_)) {
             return Ok(Vec::new());
         }
         match &open.flat {
-            Some(flat) => {
-                flat.rows.lock().entries.iter().filter(|e| !e.is_parent).map(|e| e.path.clone()).collect()
+            Some(flat) => (
+                flat.rows
+                    .lock()
+                    .entries
+                    .iter()
+                    .filter(|e| !e.is_parent)
+                    .map(|e| (String::new(), e.path.clone()))
+                    .collect(),
+                None,
+            ),
+            None => {
+                let wanted = std::mem::replace(&mut open.untagged, Untagged::Names(HashSet::new()));
+                let rows = open
+                    .rows
+                    .iter()
+                    .filter(|e| {
+                        !e.is_parent
+                            && match &wanted {
+                                Untagged::All => true,
+                                Untagged::Names(names) => names.contains(&e.name),
+                            }
+                    })
+                    .map(|e| (e.name.clone(), e.path.clone()))
+                    .collect();
+                (rows, Some(open.tagged.clone()))
             }
-            None => open.raw.iter().filter(|e| !e.is_parent).map(|e| e.path.clone()).collect(),
         }
     };
-    Ok(read_many(&paths))
+    let paths: Vec<PathBuf> = rows.iter().map(|(_, path)| path.clone()).collect();
+    let mut found = read_many(&paths);
+    let Some(tagged) = tagged else {
+        return Ok(found);
+    };
+    let with_tags: HashSet<&str> = found.iter().map(|item| item.path.as_str()).collect();
+    let mut now_tagged = Vec::new();
+    let mut lost = Vec::new();
+    for (name, path) in &rows {
+        let path = path.to_string_lossy();
+        if with_tags.contains(path.as_ref()) {
+            now_tagged.push(name.clone());
+        } else if tagged.contains(name) {
+            lost.push(ItemTagsView { path: path.into_owned(), tags: Vec::new() });
+        }
+    }
+    if let Some(open) = app::state().lock().listings.get_mut(&listing_id) {
+        for (name, _) in &rows {
+            open.tagged.remove(name);
+        }
+        open.tagged.extend(now_tagged);
+    }
+    found.extend(lost);
+    Ok(found)
 }
 
 /// The tags of `paths` that have any, read on up to four threads.

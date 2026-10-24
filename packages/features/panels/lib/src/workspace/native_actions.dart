@@ -26,6 +26,10 @@ class _NativeState {
   String? member;
   int index = -1;
 
+  /// The paths the panel was last sent: a folder read again with the
+  /// same items (a size changed) is not sent again.
+  List<String> paths = const [];
+
   /// Bumped by every list sent, so a slow extraction cannot overtake a
   /// later move.
   int generation = 0;
@@ -49,6 +53,7 @@ class _NativeState {
     pick = QuickLookPick.empty;
     member = null;
     index = -1;
+    paths = const [];
     generation++;
   }
 
@@ -172,6 +177,7 @@ extension _NativeActions on _WorkspaceScreenState {
       return false;
     }
     final pick = quickLookPick(tab);
+    final shownAt = _native.index;
     final native = _native
       ..location = tab.location
       ..rows = tab.rows
@@ -201,10 +207,19 @@ extension _NativeActions on _WorkspaceScreenState {
       }
       return false;
     }
+    final at = index < 0 ? 0 : index;
+    if (_quickLookOpen && listEquals(paths, native.paths)) {
+      native.index = at;
+      if (at != shownAt) {
+        await _platformGuarded(() => _platform.selectQuickLookItem(at));
+      }
+      return true;
+    }
+    native
+      ..paths = paths
+      ..index = at;
     await _platformGuarded(
-      () => _platform.showQuickLook(
-        QuickLookItems(paths, index: index < 0 ? 0 : index),
-      ),
+      () => _platform.showQuickLook(QuickLookItems(paths, index: at)),
     );
     return _quickLookOpen;
   }

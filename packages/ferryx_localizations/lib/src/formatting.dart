@@ -3,6 +3,23 @@ import 'package:intl/intl.dart';
 
 import 'generated/ferryx_localizations.dart';
 
+/// Formats by pattern and locale: a panel formats a size or a date for
+/// every cell it builds, and making a format costs more than using it.
+final _numbers = <(String, String), NumberFormat>{};
+final _dates = <(String, String), DateFormat>{};
+
+NumberFormat _number(
+  String pattern,
+  String locale,
+  NumberFormat Function() make,
+) => _numbers[(pattern, locale)] ??= make();
+
+DateFormat _date(
+  String pattern,
+  String locale,
+  DateFormat Function(String locale) make,
+) => _dates[(pattern, locale)] ??= make(locale);
+
 /// Human formatting of sizes, dates, durations and error kinds.
 extension FerryxFormatting on FerryxLocalizations {
   /// `3.4 MB`, `12 KB`, `512 B`, in the locale's digits.
@@ -22,33 +39,43 @@ extension FerryxFormatting on FerryxLocalizations {
   String fileSizeCompact(int bytes) => fileSize(bytes);
 
   String _short(double value) {
-    final format = NumberFormat(value < 10 ? '0.0' : '0', localeName);
-    return format.format(value);
+    final pattern = value < 10 ? '0.0' : '0';
+    return _number(
+      pattern,
+      localeName,
+      () => NumberFormat(pattern, localeName),
+    ).format(value);
   }
 
   /// `1 284`, with the locale's grouping.
-  String count(int value) =>
-      NumberFormat.decimalPattern(localeName).format(value);
+  String count(int value) => _number(
+    'decimal',
+    localeName,
+    () => NumberFormat.decimalPattern(localeName),
+  ).format(value);
 
   /// `14 Oct 2026, 13:58` or, for today, `Today, 13:58`.
   String dateTime(DateTime time, {DateTime? now}) {
     final reference = now ?? DateTime.now();
     final today = DateTime(reference.year, reference.month, reference.day);
     final day = DateTime(time.year, time.month, time.day);
-    final clock = DateFormat.Hm(localeName).format(time);
+    final clock = _date('Hm', localeName, DateFormat.Hm).format(time);
     if (day == today) return relativeToday(clock);
     if (day == today.subtract(const Duration(days: 1))) {
       return relativeYesterday(clock);
     }
     final date = time.year == reference.year
-        ? DateFormat.MMMd(localeName).format(time)
-        : DateFormat.yMMMd(localeName).format(time);
+        ? _date('MMMd', localeName, DateFormat.MMMd).format(time)
+        : _date('yMMMd', localeName, DateFormat.yMMMd).format(time);
     return '$date, $clock';
   }
 
   /// `2026-10-14 13:58`, for fields that are edited.
-  String dateTimeField(DateTime time) =>
-      DateFormat('yyyy-MM-dd HH:mm', localeName).format(time);
+  String dateTimeField(DateTime time) => _date(
+    'yyyy-MM-dd HH:mm',
+    localeName,
+    (locale) => DateFormat('yyyy-MM-dd HH:mm', locale),
+  ).format(time);
 
   /// `1:02:03`, `2:03`, `0:07`.
   String duration(Duration duration) {

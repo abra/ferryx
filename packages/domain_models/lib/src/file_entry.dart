@@ -30,7 +30,7 @@ class FileEntry extends Equatable {
     this.extension = '',
     this.tags = const [],
     this.folder = '',
-  });
+  }) : key = folder.length == 0 ? name : '$folder/$name';
 
   final String name;
 
@@ -78,7 +78,8 @@ class FileEntry extends Equatable {
 
   /// The row's identity in its listing: the name, or in a flat view the
   /// path relative to the root, as two folders may hold the same name.
-  String get key => folder.isEmpty ? name : '$folder/$name';
+  /// Made once: the hot loops of a panel ask for it many times a row.
+  final String key;
 
   bool get isSymlink => kind == EntryKind.symlink;
 

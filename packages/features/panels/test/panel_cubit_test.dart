@@ -392,6 +392,30 @@ void main() {
       expect(cubit.state.active!.matches, isEmpty);
     });
 
+    test('a query typed on tries only the last matches; after a refresh or '
+        'with a shorter query every row is tried again', () async {
+      cubit.quickSearchType('t');
+      expect(
+        cubit.state.active!.matches.keys,
+        unorderedEquals(['a.txt', 'b.txt']),
+      );
+      // A new file comes in while the search is on.
+      fs.folders['/home']!.add(fs.file('/home', 'tt.md'));
+      changes.add('left-1');
+      await settle();
+      expect(
+        cubit.state.active!.matches.keys,
+        unorderedEquals(['a.txt', 'b.txt', 'tt.md']),
+      );
+      cubit.quickSearchType('t');
+      expect(cubit.state.active!.matches.keys, ['tt.md']);
+      cubit.quickSearchBackspace();
+      expect(
+        cubit.state.active!.matches.keys,
+        unorderedEquals(['a.txt', 'b.txt', 'tt.md']),
+      );
+    });
+
     test('with only matching rows shown the rows shrink', () async {
       await preferences.update(
         (p) => p.copyWith(quickSearchOnlyMatching: true),
@@ -455,6 +479,57 @@ void main() {
         '/home',
         '/home/docs',
       ]);
+    });
+
+    test('a folder that changes under a tab not shown is read once the '
+        'tab shows, not on every change', () async {
+      final first = cubit.state.active!.id;
+      await cubit.newTab(location: const Location.native('/home/docs'));
+      clearInteractions(files);
+      fs.folders['/home']!.add(fs.file('/home', 'new.txt'));
+      changes
+        ..add(first)
+        ..add(first);
+      await settle();
+      verifyNever(() => files.refreshListing(any()));
+      cubit.showTab(0);
+      await settle();
+      verify(() => files.refreshListing(first)).called(1);
+      expect(cubit.state.active!.rows.map((e) => e.name), contains('new.txt'));
+      cubit.showTab(1);
+      cubit.showTab(0);
+      await settle();
+      verifyNever(() => files.refreshListing(any()));
+    });
+
+    test('changes during a read again read once more after it, not once '
+        'each', () async {
+      final id = cubit.state.active!.id;
+      final gate = Completer<void>();
+      var reads = 0;
+      when(() => files.refreshListing(any())).thenAnswer((inv) async {
+        reads++;
+        if (reads == 1) await gate.future;
+        final (location, options) = fs.opened[id]!;
+        return fs.list(location, options);
+      });
+      changes.add(id);
+      await settle();
+      fs.folders['/home']!.add(fs.file('/home', 'late.txt'));
+      changes
+        ..add(id)
+        ..add(id)
+        ..add(id);
+      await settle();
+      expect(reads, 1);
+      gate.complete();
+      await settle();
+      expect(reads, 2);
+      expect(cubit.state.active!.rows.map((e) => e.name), contains('late.txt'));
+      // Done: the next change reads again at once.
+      changes.add(id);
+      await settle();
+      expect(reads, 3);
     });
 
     test('saved round-trips through SavedPanel', () async {

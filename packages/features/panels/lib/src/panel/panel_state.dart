@@ -5,6 +5,14 @@ import 'package:meta/meta.dart';
 import 'flat_view.dart';
 import 'panel_side.dart';
 
+/// [PanelTabState.selectedBytes] by the selection it was summed for: the
+/// footer asks on every emit, and a move of the cursor changes neither the
+/// selection nor the rows.
+final _selectedBytes =
+    Expando<({List<FileEntry> rows, Map<String, int> sizes, int bytes})>(
+      'selected bytes',
+    );
+
 /// One tab of a panel: where it is, what it shows, where its cursor and
 /// selection are.
 @immutable
@@ -129,9 +137,20 @@ class PanelTabState extends Equatable {
     return focused == null || focused.isParent ? const [] : [focused];
   }
 
-  int get selectedBytes => rows
-      .where((r) => selected.contains(r.key))
-      .fold(0, (sum, r) => sum + (r.size ?? folderSizes[r.name] ?? 0));
+  int get selectedBytes {
+    if (selected.isEmpty) return 0;
+    final memo = _selectedBytes[selected];
+    if (memo != null &&
+        identical(memo.rows, rows) &&
+        identical(memo.sizes, folderSizes)) {
+      return memo.bytes;
+    }
+    final bytes = rows
+        .where((r) => selected.contains(r.key))
+        .fold(0, (sum, r) => sum + (r.size ?? folderSizes[r.name] ?? 0));
+    _selectedBytes[selected] = (rows: rows, sizes: folderSizes, bytes: bytes);
+    return bytes;
+  }
 
   /// Visual mode is on.
   bool get visual => visualAnchor != null;
@@ -228,7 +247,7 @@ class PanelTabState extends Equatable {
     error,
     rows,
     cursor,
-    selected,
+    _Hashed(selected),
     history,
     historyIndex,
     quickSearch,
@@ -241,13 +260,32 @@ class PanelTabState extends Equatable {
     scrollRequest,
     scrollAlign,
     visualAnchor,
-    visualBase,
+    _Hashed(visualBase),
     searching,
-    lastSelection,
+    _Hashed(lastSelection),
     renameCaret,
     passwordLocation,
     flat,
   ];
+}
+
+/// A set compared by hashing, in linear time: Equatable compares two sets
+/// element against element, which a selection of thousands of rows turns
+/// into seconds on every emit that rebuilds it.
+@immutable
+class _Hashed {
+  const _Hashed(this.set);
+
+  final Set<String> set;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _Hashed &&
+      (identical(set, other.set) ||
+          set.length == other.set.length && set.containsAll(other.set));
+
+  @override
+  int get hashCode => Object.hashAllUnordered(set);
 }
 
 /// A panel: its tabs and which one shows.

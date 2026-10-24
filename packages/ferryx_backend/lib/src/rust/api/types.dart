@@ -16,7 +16,7 @@ import 'tags.dart';
 
 // These functions are ignored because they are not marked as `pub`: `from_ops`, `part`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`
-// These functions are ignored (category: IgnoreBecauseExplicitAttribute): `invalid_pattern`, `native`, `new`, `of`, `progress`, `to_core`, `to_core`, `to_location`, `to_ops`, `to_ops`, `to_ops`
+// These functions are ignored (category: IgnoreBecauseExplicitAttribute): `invalid_pattern`, `native`, `new`, `of`, `progress`, `rows_after`, `to_core`, `to_core`, `to_location`, `to_ops`, `to_ops`, `to_ops`
 
 enum AnswerView {
   overwrite,
@@ -616,10 +616,21 @@ class ListingOptionsView {
           sort == other.sort;
 }
 
-/// A panel's rows, sorted, with what the footer shows.
+/// A panel's rows, sorted, with what the footer shows: all of them, or
+/// an update of the rows the panel was sent as `base`.
 class ListingView {
   final LocationView location;
+
+  /// Every row; with `order`, only the rows the panel has not got.
   final List<EntryView> entries;
+
+  /// For an update, each row in its place: `i >= 0` is row `i` of the
+  /// rows numbered `base`, `-1 - i` is `entries[i]`.
+  final Int32List? order;
+  final PlatformInt64 base;
+
+  /// The number of these rows: the `base` of the next update.
+  final PlatformInt64 version;
   final PlatformInt64? freeBytes;
   final PlatformInt64? totalBytes;
   final String? volumeName;
@@ -630,6 +641,9 @@ class ListingView {
   const ListingView({
     required this.location,
     required this.entries,
+    this.order,
+    required this.base,
+    required this.version,
     this.freeBytes,
     this.totalBytes,
     this.volumeName,
@@ -640,6 +654,9 @@ class ListingView {
   int get hashCode =>
       location.hashCode ^
       entries.hashCode ^
+      order.hashCode ^
+      base.hashCode ^
+      version.hashCode ^
       freeBytes.hashCode ^
       totalBytes.hashCode ^
       volumeName.hashCode ^
@@ -652,6 +669,9 @@ class ListingView {
           runtimeType == other.runtimeType &&
           location == other.location &&
           entries == other.entries &&
+          order == other.order &&
+          base == other.base &&
+          version == other.version &&
           freeBytes == other.freeBytes &&
           totalBytes == other.totalBytes &&
           volumeName == other.volumeName &&

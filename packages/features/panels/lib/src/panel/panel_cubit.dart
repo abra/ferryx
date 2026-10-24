@@ -82,6 +82,33 @@ class PanelCubit extends Cubit<PanelState> {
   /// Rows per page and per column, as the view last measured them.
   PanelGeometry geometry = const PanelGeometry();
 
+  /// Each row's name folded for quick search: folded once, a typed key
+  /// then folds only the query. A row a read again kept is the same
+  /// object (see `FileRepository`) and keeps its folding.
+  final _folded = Expando<FoldedText>('folded name');
+
+  /// Tabs whose folder changed while they were not shown: read again
+  /// when shown, not on every change (a large folder costs a read).
+  final _stale = <String>{};
+
+  /// Each tab's read again under way, and the tabs asked to read again
+  /// meanwhile: a burst of changes reads once more, not once each.
+  final _refreshing = <String, Future<void>>{};
+  final _again = <String>{};
+
+  /// The last quick search a tab ran, by tab id: a query typed on extends
+  /// it, and then only its matches can match ([narrowsAsTyped]).
+  final _searched =
+      <
+        String,
+        ({
+          List<FileEntry> entries,
+          String query,
+          QuickSearchWhere where,
+          Map<String, List<(int, int)>> matches,
+        })
+      >{};
+
   /// Operations started here whose folder sizes go into the tabs.
   final _sizeOperations = <int>{};
 
@@ -356,16 +383,38 @@ class PanelCubit extends Cubit<PanelState> {
     final entries = tab.listing?.entries ?? const [];
     final where = _p.quickSearchWhere;
     final onlyMatching = _p.quickSearchOnlyMatching;
+    final query = tab.quickSearch;
+    final searching = query.isNotEmpty;
+    final foldedQuery = FoldedText(query);
+    final last = _searched[tab.id];
+    // Only the last query's matches can match one typed on from it.
+    final among =
+        searching &&
+            last != null &&
+            identical(last.entries, entries) &&
+            last.where == where &&
+            last.query.isNotEmpty &&
+            query.startsWith(last.query) &&
+            narrowsAsTyped(where)
+        ? last.matches
+        : null;
     final matches = <String, List<(int, int)>>{};
     final rows = <FileEntry>[];
-    for (final entry in entries) {
+    for (var i = 0; i < entries.length; i++) {
+      final entry = entries[i];
       var row = entry;
       final size = tab.folderSizes[entry.name];
       if (size != null && entry.isDir && entry.size == null) {
         row = entry.copyWith(size: size);
       }
-      if (tab.quickSearch.isNotEmpty && !entry.isParent) {
-        final ranges = quickMatch(tab.quickSearch, entry.name, where);
+      if (searching && !entry.isParent) {
+        final ranges = among != null && !among.containsKey(entry.key)
+            ? null
+            : quickMatchFolded(
+                foldedQuery,
+                _folded[entry] ??= FoldedText(entry.name),
+                where,
+              );
         if (ranges == null) {
           if (onlyMatching) continue;
         } else {
@@ -373,6 +422,16 @@ class PanelCubit extends Cubit<PanelState> {
         }
       }
       rows.add(row);
+    }
+    if (searching) {
+      _searched[tab.id] = (
+        entries: entries,
+        query: query,
+        where: where,
+        matches: matches,
+      );
+    } else {
+      _searched.remove(tab.id);
     }
     final wanted = focusName ?? (fresh ? null : tab.focused?.key);
     var cursor = wanted == null ? -1 : rows.indexWhere((r) => r.key == wanted);
@@ -383,12 +442,17 @@ class PanelCubit extends Cubit<PanelState> {
           ? 0
           : math.min(math.max(tab.cursor, 0), rows.length - 1);
     }
-    final names = rows.map((r) => r.key).toSet();
+    final selected = tab.selected.isEmpty
+        ? tab.selected
+        : () {
+            final names = {for (final r in rows) r.key};
+            return tab.selected.where(names.contains).toSet();
+          }();
     return tab.copyWith(
       rows: rows,
       matches: matches,
       cursor: cursor,
-      selected: tab.selected.where(names.contains).toSet(),
+      selected: selected,
       scrollRequest: tab.scrollRequest + 1,
     );
   }
@@ -464,7 +528,36 @@ class PanelCubit extends Cubit<PanelState> {
     }
   }
 
-  Future<void> _refreshTab(int index) async {
+  /// Reads tab [index]'s folder again; asked while a read of it is under
+  /// way, reads once more after it.
+  Future<void> _refreshTab(int index) {
+    final id = state.tabs.elementAtOrNull(index)?.id;
+    if (id == null) return Future.value();
+    _stale.remove(id);
+    final running = _refreshing[id];
+    if (running != null) {
+      _again.add(id);
+      return running;
+    }
+    final run = _readAgain(id, index);
+    _refreshing[id] = run;
+    return run;
+  }
+
+  Future<void> _readAgain(String id, int index) async {
+    try {
+      await _refreshOnce(index);
+      while (_again.remove(id)) {
+        final at = state.tabs.indexWhere((t) => t.id == id);
+        if (at < 0) return;
+        await _refreshOnce(at);
+      }
+    } finally {
+      _refreshing.remove(id);
+    }
+  }
+
+  Future<void> _refreshOnce(int index) async {
     final tab = state.tabs.elementAtOrNull(index);
     if (tab == null || tab.loading) return;
     if (tab.isFlat) {
@@ -510,7 +603,20 @@ class PanelCubit extends Cubit<PanelState> {
 
   void _onDirectoryChanged(String listingId) {
     final index = state.tabs.indexWhere((t) => t.id == listingId);
-    if (index >= 0) unawaited(_refreshTab(index));
+    if (index < 0) return;
+    if (index == state.activeIndex) {
+      unawaited(_refreshTab(index));
+    } else {
+      _stale.add(listingId);
+    }
+  }
+
+  /// The tab shown now is read again if its folder changed unseen.
+  void _readIfStale() {
+    final tab = state.active;
+    if (tab != null && _stale.contains(tab.id)) {
+      unawaited(_refreshTab(state.activeIndex));
+    }
   }
 
   Future<void> _onPreferences(Preferences next) async {
@@ -1112,10 +1218,11 @@ class PanelCubit extends Cubit<PanelState> {
     if (tab == null || !(tab.location.isNative || tab.location.isRemote)) {
       return;
     }
+    final wanted = names?.toSet();
     final folders = [
       for (final row in tab.rows)
         if (row.isDir && !row.isParent && !row.isSymlink)
-          if (names == null || names.contains(row.name)) row.path,
+          if (wanted == null || wanted.contains(row.name)) row.path,
     ];
     if (folders.isEmpty) return;
     final id = await _operations.start(
@@ -1197,7 +1304,9 @@ class PanelCubit extends Cubit<PanelState> {
         closedTabs: [tab.location, ...state.closedTabs].take(20).toList(),
       ),
     );
+    _readIfStale();
     await _stopFlat(tab.id);
+    _forget(tab.id);
     await _files.closeListing(tab.id);
   }
 
@@ -1217,8 +1326,16 @@ class PanelCubit extends Cubit<PanelState> {
     );
     for (final tab in others) {
       await _stopFlat(tab.id);
+      _forget(tab.id);
       await _files.closeListing(tab.id);
     }
+  }
+
+  /// What the cubit kept of a tab closed.
+  void _forget(String id) {
+    _searched.remove(id);
+    _stale.remove(id);
+    _again.remove(id);
   }
 
   Future<void> reopenClosedTab() async {
@@ -1231,6 +1348,7 @@ class PanelCubit extends Cubit<PanelState> {
   void showTab(int index) {
     if (index < 0 || index >= state.tabs.length) return;
     emit(state.copyWith(activeIndex: index));
+    _readIfStale();
   }
 
   void nextTab() => showTab((state.activeIndex + 1) % state.tabs.length);
@@ -1440,11 +1558,16 @@ class PanelCubit extends Cubit<PanelState> {
     final walked = [...flat.walked, ...batch.entries];
     final where = _p.quickSearchWhere;
     final onlyMatching = _p.quickSearchOnlyMatching;
+    final query = FoldedText(tab.quickSearch);
     Map<String, List<(int, int)>>? matches;
     final added = <FileEntry>[];
     for (final entry in batch.entries) {
       if (tab.quickSearch.isNotEmpty && !entry.isParent) {
-        final ranges = quickMatch(tab.quickSearch, entry.name, where);
+        final ranges = quickMatchFolded(
+          query,
+          _folded[entry] ??= FoldedText(entry.name),
+          where,
+        );
         if (ranges == null) {
           if (onlyMatching) continue;
         } else {

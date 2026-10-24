@@ -2,28 +2,86 @@
 //! runner and the searches under way. Archive indexes and passwords are
 //! kept by `ferryx_vfs::archive::shared`, which the operations use too.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::sync::{Arc, LazyLock};
 
 use ferryx_core::entry::Entry;
 use ferryx_ops::Runner;
 use ferryx_vfs::archive::ArchiveIndex;
-use ferryx_vfs::watch::FolderWatcher;
+use ferryx_vfs::watch::{Changes, FolderWatcher};
 use ferryx_vfs::Location;
 use parking_lot::Mutex;
 
 use crate::api::types::{AppEvent, AppEventKind, ListingOptionsView};
 use crate::frb_generated::StreamSink;
 
-/// One open panel listing: its rows as read from disk, before sorting.
+/// One open panel listing: its rows, sorted as the panel was last sent
+/// them, and what changed since.
 pub struct OpenListing {
     pub location: Location,
     pub options: ListingOptionsView,
-    pub raw: Vec<Entry>,
+    /// The rows in the order last sent; a flat view's stay empty.
+    pub rows: Arc<Vec<Entry>>,
+    /// The number of the rows last sent: an update names the rows it
+    /// changes by it (see `api::listing`).
+    pub version: i64,
+    /// What the watcher reported since the rows were read.
+    pub changes: Changes,
+    /// Rows whose tags were not read since they were (see `api::tags`).
+    pub untagged: Untagged,
+    /// Names of the rows that had tags when they were last read.
+    pub tagged: HashSet<String>,
+    /// Held by a read again or a resort: one at a time changes the rows.
+    pub turn: Arc<Mutex<()>>,
     pub watcher: Option<FolderWatcher>,
-    /// A flat view's walk and rows (see `api::flat`); `raw` stays empty.
+    /// A flat view's walk and rows (see `api::flat`).
     pub flat: Option<FlatListing>,
+}
+
+impl OpenListing {
+    pub fn new(
+        location: Location,
+        options: ListingOptionsView,
+        rows: Vec<Entry>,
+        watcher: Option<FolderWatcher>,
+        flat: Option<FlatListing>,
+    ) -> OpenListing {
+        OpenListing {
+            location,
+            options,
+            rows: Arc::new(rows),
+            version: next_version(),
+            changes: Changes::Nothing,
+            untagged: Untagged::All,
+            tagged: HashSet::new(),
+            turn: Arc::new(Mutex::new(())),
+            watcher,
+            flat,
+        }
+    }
+}
+
+/// The rows whose tags are still to be read.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Untagged {
+    All,
+    Names(HashSet<String>),
+}
+
+impl Untagged {
+    pub fn add(&mut self, names: impl IntoIterator<Item = String>) {
+        if let Untagged::Names(pending) = self {
+            pending.extend(names);
+        }
+    }
+}
+
+static NEXT_VERSION: AtomicI64 = AtomicI64::new(1);
+
+/// A number no rows sent had, of any listing.
+pub fn next_version() -> i64 {
+    NEXT_VERSION.fetch_add(1, Ordering::SeqCst)
 }
 
 /// The rows of a flat view, filled by its walk while the panel shows the
@@ -156,6 +214,15 @@ pub fn emit(event: AppEvent) {
 
 pub fn emit_directory_changed(listing_id: &str) {
     emit(AppEvent::of(AppEventKind::DirectoryChanged, Some(listing_id.to_string())));
+}
+
+/// The watcher of `listing_id` reported `changes`: kept for its next read
+/// again, and the panel told.
+pub fn note_changes(listing_id: &str, changes: Changes) {
+    if let Some(open) = state().lock().listings.get_mut(listing_id) {
+        open.changes.merge(changes);
+    }
+    emit_directory_changed(listing_id);
 }
 
 /// The index of `archive`, read once and again when the file changed;

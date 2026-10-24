@@ -313,16 +313,45 @@ pub struct ListingOptionsView {
     pub sort: SortOptionsView,
 }
 
-/// A panel's rows, sorted, with what the footer shows.
+/// A panel's rows, sorted, with what the footer shows: all of them, or
+/// an update of the rows the panel was sent as `base`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ListingView {
     pub location: LocationView,
+    /// Every row; with `order`, only the rows the panel has not got.
     pub entries: Vec<EntryView>,
+    /// For an update, each row in its place: `i >= 0` is row `i` of the
+    /// rows numbered `base`, `-1 - i` is `entries[i]`.
+    pub order: Option<Vec<i32>>,
+    pub base: i64,
+    /// The number of these rows: the `base` of the next update.
+    pub version: i64,
     pub free_bytes: Option<i64>,
     pub total_bytes: Option<i64>,
     pub volume_name: Option<String>,
     /// Whether the folder is watched: an archive is not.
     pub watched: bool,
+}
+
+impl ListingView {
+    /// The rows a panel holding `before` (the rows numbered `base`) has
+    /// after this, as the interface applies it.
+    #[flutter_rust_bridge::frb(ignore)]
+    pub fn rows_after(&self, before: &[EntryView]) -> Vec<EntryView> {
+        match &self.order {
+            None => self.entries.clone(),
+            Some(order) => order
+                .iter()
+                .map(|&i| {
+                    if i >= 0 {
+                        before[i as usize].clone()
+                    } else {
+                        self.entries[(-1 - i) as usize].clone()
+                    }
+                })
+                .collect(),
+        }
+    }
 }
 
 // ─── Operations ───
