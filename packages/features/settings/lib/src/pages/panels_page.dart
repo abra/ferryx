@@ -153,7 +153,7 @@ class PanelsPage extends StatelessWidget {
             for (var i = 0; i < prefs.layouts.length; i++)
               ListEntryRow(
                 key: ValueKey('layout-$i'),
-                title: '${i + 1}. ${prefs.layouts[i].name}',
+                title: '${i + 1}. ${l10n.viewModeName(prefs.layouts[i])}',
                 subtitle: describeLayout(l10n, prefs.layouts[i]),
                 icon: prefs.layouts[i].mode == ViewMode.list
                     ? AppIcons.layoutList

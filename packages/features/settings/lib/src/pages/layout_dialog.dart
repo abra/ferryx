@@ -25,8 +25,13 @@ class _LayoutDialog extends StatefulWidget {
 }
 
 class _LayoutDialogState extends State<_LayoutDialog> {
+  /// The name as shown: a default mode's in this language.
+  late final String _shownName = switch (widget.layout) {
+    final layout? => context.l10n.viewModeName(layout),
+    null => '',
+  };
   late final TextEditingController _name = TextEditingController(
-    text: widget.layout?.name ?? '',
+    text: _shownName,
   );
   late ViewMode _mode = widget.layout?.mode ?? ViewMode.list;
   late BriefColumns _briefColumns =
@@ -61,7 +66,12 @@ class _LayoutDialogState extends State<_LayoutDialog> {
     if (!_complete) return;
     Navigator.of(context).pop(
       PanelLayout(
-        name: _name.text.trim(),
+        // A default mode left as named keeps its name, which every
+        // language shows in its own words.
+        name: switch (widget.layout) {
+          final layout? when _name.text.trim() == _shownName => layout.name,
+          _ => _name.text.trim(),
+        },
         mode: _mode,
         briefColumns: _briefColumns,
         columns: _columns.isEmpty ? const [ListColumn.name] : _columns,

@@ -553,7 +553,7 @@ class _PanelViewState extends State<PanelView> {
         for (var i = 0; i < layouts.length; i++)
           AppMenuAction(
             value: i,
-            label: layouts[i].name,
+            label: context.l10n.viewModeName(layouts[i]),
             icon: layouts[i].mode == ViewMode.list
                 ? AppIcons.layoutList
                 : AppIcons.layoutBrief,

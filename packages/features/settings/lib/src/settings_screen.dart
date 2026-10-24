@@ -212,7 +212,7 @@ List<String> sectionTerms(
     l10n.quickSearchOnlyMatching,
     l10n.layoutsTitle,
     l10n.layoutsReset,
-    for (final layout in prefs.layouts) layout.name,
+    for (final layout in prefs.layouts) l10n.viewModeName(layout),
   ],
   SettingsSection.viewer => [l10n.viewerWrapLabel, l10n.viewerFontSizeLabel],
   SettingsSection.terminal => [

@@ -2486,6 +2486,36 @@ abstract class FerryxLocalizations {
   /// **'Restore the default modes'**
   String get layoutsReset;
 
+  /// No description provided for @layoutShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Short'**
+  String get layoutShort;
+
+  /// No description provided for @layoutMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get layoutMedium;
+
+  /// No description provided for @layoutFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Full'**
+  String get layoutFull;
+
+  /// No description provided for @layoutWide.
+  ///
+  /// In en, this message translates to:
+  /// **'Wide'**
+  String get layoutWide;
+
+  /// No description provided for @layoutDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get layoutDetails;
+
   /// No description provided for @viewerWrapLabel.
   ///
   /// In en, this message translates to:

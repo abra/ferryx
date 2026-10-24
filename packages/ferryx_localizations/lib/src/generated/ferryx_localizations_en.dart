@@ -1485,6 +1485,21 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get layoutsReset => 'Restore the default modes';
 
   @override
+  String get layoutShort => 'Short';
+
+  @override
+  String get layoutMedium => 'Medium';
+
+  @override
+  String get layoutFull => 'Full';
+
+  @override
+  String get layoutWide => 'Wide';
+
+  @override
+  String get layoutDetails => 'Details';
+
+  @override
   String get viewerWrapLabel => 'Wrap long lines';
 
   @override

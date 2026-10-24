@@ -1521,6 +1521,21 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String get layoutsReset => 'Вернуть режимы по умолчанию';
 
   @override
+  String get layoutShort => 'Короткий';
+
+  @override
+  String get layoutMedium => 'Средний';
+
+  @override
+  String get layoutFull => 'Полный';
+
+  @override
+  String get layoutWide => 'Широкий';
+
+  @override
+  String get layoutDetails => 'Подробный';
+
+  @override
   String get viewerWrapLabel => 'Переносить длинные строки';
 
   @override

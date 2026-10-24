@@ -12,6 +12,7 @@ import 'src/generated/ferryx_localizations.dart';
 
 export 'src/command_labels.dart';
 export 'src/formatting.dart';
+export 'src/layout_labels.dart';
 export 'src/generated/ferryx_localizations.dart';
 export 'src/operations_formatting.dart';
 export 'src/tag_labels.dart';

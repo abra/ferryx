@@ -165,6 +165,53 @@ void main() {
     expect(find.text('1. Short'), findsOneWidget);
   });
 
+  testWidgets('the default view modes take the language\'s names, one the '
+      'user named keeps it; a default saved as shown keeps its own', (
+    tester,
+  ) async {
+    final service = await testPreferences();
+    await service.update(
+      (p) => p.copyWith(
+        layouts: [
+          ...PanelLayout.defaults,
+          const PanelLayout(name: 'Photos', mode: ViewMode.brief),
+        ],
+      ),
+    );
+    await pumpScreen(
+      tester,
+      locale: const Locale('ru'),
+      SettingsScreen(
+        preferencesService: service,
+        platform: TargetPlatform.macOS,
+        version: '0.1.0',
+        initialSection: SettingsSection.panels,
+        onClose: () {},
+      ),
+    );
+    expect(find.text('1. ${ru.layoutShort}'), findsOneWidget);
+    expect(find.text('5. ${ru.layoutDetails}'), findsOneWidget);
+    expect(find.text('6. Photos'), findsOneWidget);
+    expect(find.text('1. Short'), findsNothing);
+
+    await tester.ensureVisible(find.byKey(const ValueKey('layout-0')));
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const ValueKey('layout-0')),
+        matching: find.byTooltip(ru.hotkeysChange),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.widgetWithText(TextField, ru.layoutShort),
+      findsOneWidget,
+      reason: 'the name as shown',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, ru.actionSave));
+    await tester.pumpAndSettle();
+    expect(service.current.layouts.first.name, 'Short');
+  });
+
   testWidgets('the search narrows the pages and Esc closes', (tester) async {
     var closed = false;
     await open(tester, onClose: () => closed = true);
