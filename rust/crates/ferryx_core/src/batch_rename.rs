@@ -122,6 +122,12 @@ pub fn plan(items: &[RenameItem], opts: &RenameOptions) -> Result<Vec<RenameOutc
     Ok(out)
 }
 
+/// Whether `pattern` takes anything from the modification time: only then
+/// must the items' times be read.
+pub fn uses_dates(pattern: &str) -> bool {
+    tokenize(pattern).iter().any(|token| matches!(token, Token::Date(_)))
+}
+
 fn check(name: &str) -> Option<RenameProblem> {
     if name.is_empty() {
         Some(RenameProblem::Empty)
@@ -621,6 +627,18 @@ mod tests {
         let opts = RenameOptions { pattern: "[Y]".to_string(), ..Default::default() };
         let no_time = RenameItem { modified_ms: None, ..item("x") };
         assert_eq!(plan(&[no_time], &opts).unwrap()[0].new_name, "");
+    }
+
+    #[test]
+    fn a_pattern_says_whether_it_takes_dates() {
+        for pattern in ["[d]", "[N] [Y]-[M]", "[t][N]", "x[s]"] {
+            assert!(uses_dates(pattern), "{pattern}");
+        }
+        // Brackets doubled, a date letter with more after it, names and
+        // counters: no date.
+        for pattern in ["[N].[E]", "[[d]]", "[d2]", "[C:3] [P]", "dated", ""] {
+            assert!(!uses_dates(pattern), "{pattern}");
+        }
     }
 
     #[test]

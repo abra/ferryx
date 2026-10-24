@@ -1,5 +1,6 @@
 //! Batch rename: a preview of the new names, then their application.
 
+use std::fs;
 use std::path::{Path, PathBuf};
 
 use ferryx_core::batch_rename::{self, RenameItem, RenameProblem};
@@ -16,6 +17,9 @@ pub fn batch_rename_preview(
     items: Vec<RenameItemView>,
     options: RenameOptionsView,
 ) -> ApiResult<Vec<RenameOutcomeView>> {
+    // The preview runs on every keystroke: times are read only when the
+    // pattern shows them.
+    let dated = batch_rename::uses_dates(&options.pattern);
     let core_items: Vec<RenameItem> = items
         .iter()
         .map(|item| {
@@ -32,7 +36,14 @@ pub fn batch_rename_preview(
                 .and_then(Path::file_name)
                 .map(|n| n.to_string_lossy().into_owned())
                 .unwrap_or_default();
-            let modified_ms = native::stat(path).ok().and_then(|e| e.modified_ms);
+            let modified_ms = if dated {
+                fs::symlink_metadata(path)
+                    .ok()
+                    .and_then(|m| m.modified().ok())
+                    .and_then(native::system_time_ms)
+            } else {
+                None
+            };
             RenameItem { name, parent, grandparent, modified_ms }
         })
         .collect();

@@ -210,6 +210,43 @@ fn batch_rename_previews_then_applies() {
     assert!(dir.path().join(format!("{folder}-002.jpg")).exists());
 }
 
+/// Times a batch-rename preview of many files: `cargo test --release -p
+/// ferryx_api --test api_flow batch_rename_preview_bench -- --ignored
+/// --nocapture`.
+#[test]
+#[ignore]
+fn batch_rename_preview_bench() {
+    let dir = tempfile::tempdir().unwrap();
+    let items: Vec<RenameItemView> = (0..10_000)
+        .map(|i| {
+            let path = dir.path().join(format!("IMG_{i}.jpg"));
+            fs::write(&path, b"").unwrap();
+            RenameItemView { path: s(&path) }
+        })
+        .collect();
+    for pattern in ["[N]-x.[E]", "[d] [N].[E]"] {
+        let options = RenameOptionsView {
+            pattern: pattern.into(),
+            search: String::new(),
+            replace: String::new(),
+            search_regex: false,
+            search_case_sensitive: false,
+            search_once: false,
+            search_part: NamePartView::Whole,
+            case: CaseTransformView::Unchanged,
+            case_part: NamePartView::Whole,
+            counter_start: 1,
+            counter_step: 1,
+            counter_width: 1,
+        };
+        let start = Instant::now();
+        for _ in 0..5 {
+            rename::batch_rename_preview(items.clone(), options.clone()).unwrap();
+        }
+        println!("{pattern}: {:?} per preview of 10 000 files", start.elapsed() / 5);
+    }
+}
+
 #[test]
 fn find_streams_hits() {
     let _guard = serial();

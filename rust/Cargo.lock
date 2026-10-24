@@ -1300,6 +1300,7 @@ dependencies = [
  "ferryx_vfs",
  "filetime",
  "flate2",
+ "libc",
  "md-5",
  "memchr",
  "parking_lot",

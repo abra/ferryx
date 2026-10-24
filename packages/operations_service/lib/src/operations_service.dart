@@ -34,7 +34,8 @@ class OperationsService {
     if (event.kind != rust.AppEventKind.operationProgress) return;
     final view = event.progress;
     if (view == null) return;
-    final report = rust.progressFromView(view);
+    // An event brings the news of its lists: added to what came before.
+    final report = rust.progressFromEvent(view, previous: _current[view.id]);
     _current[report.id] = report;
     _progress.add(report);
   }

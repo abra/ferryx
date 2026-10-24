@@ -4,9 +4,11 @@ use std::collections::HashMap;
 use std::fs::{self, Metadata};
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
+use std::sync::LazyLock;
 use std::time::SystemTime;
 
 use ferryx_core::entry::{extension_of, Entry, EntryKind};
+use parking_lot::Mutex;
 
 use crate::error::{IoAt, VfsError, VfsErrorKind, VfsResult};
 
@@ -54,6 +56,10 @@ pub fn list_dir(dir: &Path, opts: &ListOptions) -> VfsResult<Vec<Entry>> {
     Ok(entries)
 }
 
+/// The owner and group names of single items ([`stat`]), looked up once
+/// per id while the app runs; a listing keeps names of its own.
+static NAMES: LazyLock<Mutex<Names>> = LazyLock::new(Mutex::default);
+
 /// One entry, as a listing would show it.
 pub fn stat(path: &Path) -> VfsResult<Entry> {
     let meta = fs::symlink_metadata(path).at(path)?;
@@ -61,7 +67,7 @@ pub fn stat(path: &Path) -> VfsResult<Entry> {
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_else(|| path.to_string_lossy().into_owned());
-    let mut entry = build_entry(name, path.to_path_buf(), &meta, &mut Names::default());
+    let mut entry = build_entry(name, path.to_path_buf(), &meta, &mut NAMES.lock());
     // One item's tags cost nothing to read; a listing's come apart (see
     // `tags`).
     entry.tags = crate::tags::read(path);
@@ -415,5 +421,25 @@ mod tests {
         assert_eq!(link.kind, EntryKind::Symlink);
         assert!(link.is_dir);
         assert_eq!(link.symlink_target.as_deref(), Some("target"));
+    }
+
+    /// Times single-item stats: `cargo test --release -p ferryx_vfs
+    /// stat_bench -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn stat_bench() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths: Vec<PathBuf> = (0..10_000)
+            .map(|i| {
+                let path = dir.path().join(format!("f{i}"));
+                fs::write(&path, b"x").unwrap();
+                path
+            })
+            .collect();
+        let start = std::time::Instant::now();
+        for path in &paths {
+            stat(path).unwrap();
+        }
+        println!("10 000 stats: {:?}", start.elapsed());
     }
 }

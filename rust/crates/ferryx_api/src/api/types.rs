@@ -505,6 +505,10 @@ pub struct FolderSizeView {
     pub bytes: i64,
 }
 
+/// What an operation reports. From `operation_progress` and
+/// `list_operations` its lists are whole; in an `OperationProgress` event
+/// they are the news since the operation's previous event, for the
+/// receiver to add up.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProgressView {
     pub id: i64,
@@ -518,10 +522,13 @@ pub struct ProgressView {
     pub started_ms: i64,
     pub elapsed_ms: i64,
     pub bytes_per_second: i64,
+    /// In an event: the errors since the previous one.
     pub errors: Vec<OpErrorView>,
     pub question: Option<QuestionView>,
+    /// In an event: the folder sizes done since the previous one.
     pub sizes: Vec<FolderSizeView>,
     pub result_path: Option<String>,
+    /// In an event: only in the operation's first and last (empty between).
     pub sources: Vec<String>,
     pub destination: Option<String>,
 }

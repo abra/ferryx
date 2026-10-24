@@ -18,12 +18,17 @@ regex.workspace = true
 serde.workspace = true
 walkdir.workspace = true
 zip.workspace = true
-# Every core for one big file's BLAKE3.
+# Every core for a verified copy's and a big file's BLAKE3 (rayon is in
+# the build already).
 blake3 = { workspace = true, features = ["rayon"] }
 md-5.workspace = true
 sha1.workspace = true
 sha2.workspace = true
 unicode-normalization.workspace = true
+
+# clonefile and copyfile on macOS; holes and the page cache on Linux.
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true
 
 # SHA-256 in the ARMv8 instructions (Apple silicon) rather than in software:
 # about five times as fast. Not on Windows, whose toolchain the crate's

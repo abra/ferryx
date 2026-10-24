@@ -8,12 +8,16 @@ use std::thread;
 use std::time::{Duration, Instant, SystemTime};
 
 use ferryx_vfs::VfsError;
-use parking_lot::{Condvar, Mutex};
+use parking_lot::{Condvar, Mutex, MutexGuard};
 
 use crate::journal::{Change, Direction, Fingerprint, Journal, Step, StepKind, StepRecord};
 use crate::types::*;
 use crate::{compress, copy, delete, extract, sizes};
 
+/// Hears every operation's reports. A report carries its lists as news:
+/// `errors` and `sizes` added since the operation's previous report, and
+/// `sources` in its first and last report only (empty in between). The
+/// whole lists are in [`OpContext::snapshot`] and [`Runner::progress`].
 pub type Listener = Arc<dyn Fn(Progress) + Send + Sync>;
 
 /// Work the runner runs as an operation: a module's own job, with the
@@ -36,7 +40,8 @@ pub enum Journaling {
 /// record, but cannot be undone.
 const MAX_CHANGES: usize = 200_000;
 
-/// How often progress is reported while bytes flow.
+/// How often progress is reported while work goes on; a change of state,
+/// a question and the end are reported at once.
 const REPORT_EVERY: Duration = Duration::from_millis(100);
 
 /// Every running and finished operation.
@@ -198,7 +203,7 @@ struct Sticky {
 /// One operation's state and controls, shared by its thread and the
 /// runner.
 pub struct OpContext {
-    progress: Mutex<Progress>,
+    progress: Mutex<Reported>,
     cancelled: AtomicBool,
     paused: Mutex<bool>,
     unpaused: Condvar,
@@ -208,8 +213,52 @@ pub struct OpContext {
     sticky: Mutex<Sticky>,
     listener: Option<Listener>,
     started: Instant,
-    last_report: Mutex<Instant>,
     recorder: Mutex<Recorder>,
+}
+
+/// The progress, and how much of it the listener has heard.
+struct Reported {
+    progress: Progress,
+    last_report: Option<Instant>,
+    errors_sent: usize,
+    sizes_sent: usize,
+}
+
+impl Reported {
+    /// The next report: the progress with its lists cut to the news (see
+    /// [`Listener`]).
+    fn next_report(&mut self) -> Progress {
+        let p = &self.progress;
+        let sources =
+            if self.last_report.is_none() || p.state.is_finished() { p.sources.clone() } else { Vec::new() };
+        let report = Progress {
+            id: p.id,
+            kind: p.kind,
+            state: p.state,
+            bytes_done: p.bytes_done,
+            bytes_total: p.bytes_total,
+            items_done: p.items_done,
+            items_total: p.items_total,
+            current: p.current.clone(),
+            started_ms: p.started_ms,
+            elapsed_ms: p.elapsed_ms,
+            bytes_per_second: p.bytes_per_second,
+            errors: p.errors[self.errors_sent.min(p.errors.len())..].to_vec(),
+            question: p.question.clone(),
+            sizes: p.sizes[self.sizes_sent.min(p.sizes.len())..].to_vec(),
+            result_path: p.result_path.clone(),
+            sources,
+            destination: p.destination.clone(),
+        };
+        self.errors_sent = p.errors.len();
+        self.sizes_sent = p.sizes.len();
+        self.last_report = Some(Instant::now());
+        report
+    }
+
+    fn due(&self) -> bool {
+        self.last_report.is_none_or(|at| at.elapsed() >= REPORT_EVERY)
+    }
 }
 
 /// The changes an operation made, for the journal.
@@ -247,24 +296,29 @@ impl OpContext {
             .map(|d| d.as_millis() as i64)
             .unwrap_or(0);
         OpContext {
-            progress: Mutex::new(Progress {
-                id,
-                kind: request.kind,
-                state: OpState::Scanning,
-                bytes_done: 0,
-                bytes_total: 0,
-                items_done: 0,
-                items_total: 0,
-                current: String::new(),
-                started_ms,
-                elapsed_ms: 0,
-                bytes_per_second: 0,
-                errors: Vec::new(),
-                question: None,
-                sizes: Vec::new(),
-                result_path: None,
-                sources: request.sources.clone(),
-                destination: request.destination.clone(),
+            progress: Mutex::new(Reported {
+                progress: Progress {
+                    id,
+                    kind: request.kind,
+                    state: OpState::Scanning,
+                    bytes_done: 0,
+                    bytes_total: 0,
+                    items_done: 0,
+                    items_total: 0,
+                    current: String::new(),
+                    started_ms,
+                    elapsed_ms: 0,
+                    bytes_per_second: 0,
+                    errors: Vec::new(),
+                    question: None,
+                    sizes: Vec::new(),
+                    result_path: None,
+                    sources: request.sources.clone(),
+                    destination: request.destination.clone(),
+                },
+                last_report: None,
+                errors_sent: 0,
+                sizes_sent: 0,
             }),
             cancelled: AtomicBool::new(false),
             paused: Mutex::new(false),
@@ -275,7 +329,6 @@ impl OpContext {
             sticky: Mutex::new(Sticky::default()),
             listener,
             started: Instant::now(),
-            last_report: Mutex::new(Instant::now() - REPORT_EVERY),
             recorder: Mutex::new(Recorder::default()),
         }
     }
@@ -285,8 +338,14 @@ impl OpContext {
         OpContext::new(0, request, None)
     }
 
+    /// Makes a context that reports to `listener`, for the modules' tests.
+    pub fn listened(request: &OpRequest, listener: Listener) -> OpContext {
+        OpContext::new(0, request, Some(listener))
+    }
+
+    /// The whole progress, its lists complete.
     pub fn snapshot(&self) -> Progress {
-        self.progress.lock().clone()
+        self.progress.lock().progress.clone()
     }
 
     // ─── Controls ───
@@ -298,14 +357,14 @@ impl OpContext {
         }
         self.unpaused.notify_all();
         let state = if paused { OpState::Paused } else { OpState::Running };
-        self.update(|p| {
+        self.update_now(|p| {
             if !p.state.is_finished() && p.question.is_none() {
                 p.state = state;
             }
         });
     }
 
-    fn cancel(&self) {
+    pub(crate) fn cancel(&self) {
         self.cancelled.store(true, Ordering::SeqCst);
         self.set_paused(false);
         // A question waits no longer.
@@ -349,70 +408,63 @@ impl OpContext {
         self.cancelled.load(Ordering::SeqCst)
     }
 
-    /// Changes the progress and reports it at once.
+    /// Changes the progress; reports it when the last report is old enough.
     pub fn update(&self, f: impl FnOnce(&mut Progress)) {
-        let snapshot = {
-            let mut p = self.progress.lock();
-            f(&mut p);
-            p.elapsed_ms = self.started.elapsed().as_millis() as u64;
-            p.clone()
-        };
-        *self.last_report.lock() = Instant::now();
-        self.report(snapshot);
+        let mut reported = self.progress.lock();
+        f(&mut reported.progress);
+        self.report(reported, false);
     }
 
-    /// Adds bytes to the count and reports when enough time passed.
+    /// Changes the progress and reports it at once: a change of state.
+    pub fn update_now(&self, f: impl FnOnce(&mut Progress)) {
+        let mut reported = self.progress.lock();
+        f(&mut reported.progress);
+        self.report(reported, true);
+    }
+
+    /// Adds bytes to the count; reports when the last report is old enough.
     pub fn add_bytes(&self, bytes: u64) {
-        let mut p = self.progress.lock();
+        let mut reported = self.progress.lock();
+        let p = &mut reported.progress;
         p.bytes_done += bytes;
-        let elapsed = self.started.elapsed();
-        p.elapsed_ms = elapsed.as_millis() as u64;
-        if elapsed.as_secs_f64() > 0.0 {
-            p.bytes_per_second = (p.bytes_done as f64 / elapsed.as_secs_f64()) as u64;
+        let elapsed = self.started.elapsed().as_secs_f64();
+        if elapsed > 0.0 {
+            p.bytes_per_second = (p.bytes_done as f64 / elapsed) as u64;
         }
-        let due = self.last_report.lock().elapsed() >= REPORT_EVERY;
-        if due {
-            let snapshot = p.clone();
-            drop(p);
-            *self.last_report.lock() = Instant::now();
-            self.report(snapshot);
+        self.report(reported, false);
+    }
+
+    /// Takes back bytes counted by an attempt that failed.
+    pub fn take_back_bytes(&self, bytes: u64) {
+        if bytes > 0 {
+            self.update(|p| p.bytes_done = p.bytes_done.saturating_sub(bytes));
         }
     }
 
     pub fn set_current(&self, path: &Path) {
-        let mut p = self.progress.lock();
-        p.current = path.to_string_lossy().into_owned();
-        let due = self.last_report.lock().elapsed() >= REPORT_EVERY;
-        if due {
-            let snapshot = p.clone();
-            drop(p);
-            *self.last_report.lock() = Instant::now();
-            self.report(snapshot);
-        }
+        self.update(|p| p.current = path.to_string_lossy().into_owned());
     }
 
     pub fn item_done(&self) {
-        let mut p = self.progress.lock();
-        p.items_done += 1;
-        let due = self.last_report.lock().elapsed() >= REPORT_EVERY;
-        if due {
-            let snapshot = p.clone();
-            drop(p);
-            *self.last_report.lock() = Instant::now();
-            self.report(snapshot);
-        }
+        self.update(|p| p.items_done += 1);
     }
 
     pub fn set_totals(&self, bytes: u64, items: u64) {
-        self.update(|p| {
+        self.update_now(|p| {
             p.bytes_total = bytes;
             p.items_total = items;
             p.state = OpState::Running;
         });
     }
 
+    /// Records an error skipped on the way. The first is reported at once
+    /// (the interface shows it); the rest come with the next report.
     pub fn record_error(&self, path: &Path, message: String) {
-        self.update(|p| p.errors.push(OpError { path: path.to_string_lossy().into_owned(), message }));
+        let mut reported = self.progress.lock();
+        let errors = &mut reported.progress.errors;
+        errors.push(OpError { path: path.to_string_lossy().into_owned(), message });
+        let first = errors.len() == 1;
+        self.report(reported, first);
     }
 
     /// Asks about a conflict at `existing` and waits for the answer; an
@@ -541,7 +593,7 @@ impl OpContext {
         let id = self.next_question.fetch_add(1, Ordering::SeqCst);
         let question = Question { id, kind, message, source, existing, answers };
         *self.pending.lock() = Some((id, None));
-        self.update(|p| {
+        self.update_now(|p| {
             p.question = Some(question);
             p.state = OpState::Waiting;
         });
@@ -555,7 +607,7 @@ impl OpContext {
             }
         };
         *self.pending.lock() = None;
-        self.update(|p| {
+        self.update_now(|p| {
             p.question = None;
             p.state = if *self.paused.lock() { OpState::Paused } else { OpState::Running };
         });
@@ -596,21 +648,35 @@ impl OpContext {
         }
     }
 
-    /// Records the item at `from` as moved to `to`. A move across volumes
-    /// copies first: what that copy recorded at `to` (or inside it)
-    /// becomes the move of the item it came from.
+    /// Records the item at `from` as renamed to `to` (what it replaced is
+    /// on record already, as overwritten).
     pub fn record_moved(&self, from: &Path, to: &Path) {
-        self.convert_to_moves(from, to, true);
+        self.recorder.lock().push(Change::Moved { from: from.to_path_buf(), to: to.to_path_buf() });
+    }
+
+    /// Where the record stands: a move across volumes takes it before its
+    /// copy, for [`OpContext::record_moved_by_copy`].
+    pub(crate) fn record_mark(&self) -> usize {
+        self.recorder.lock().changes.len()
+    }
+
+    /// Records the item at `from` as moved to `to` by a copy and a delete:
+    /// what the copy recorded since `mark` at `to` (or inside it) becomes
+    /// the move of the item it came from.
+    pub(crate) fn record_moved_by_copy(&self, mark: usize, from: &Path, to: &Path) {
+        self.convert_to_moves(mark, from, to, true);
     }
 
     /// Records the items of the folder `from` as moved into the folder
     /// `to` that was there before (a merge across volumes): only what the
-    /// copy recorded inside `to` moved, never `to` itself.
-    pub fn record_merged(&self, from: &Path, to: &Path) {
-        self.convert_to_moves(from, to, false);
+    /// copy recorded since `mark` inside `to` moved, never `to` itself.
+    pub(crate) fn record_merged(&self, mark: usize, from: &Path, to: &Path) {
+        self.convert_to_moves(mark, from, to, false);
     }
 
-    fn convert_to_moves(&self, from: &Path, to: &Path, whole: bool) {
+    /// Rewrites the changes recorded since `mark` (the copy of one item):
+    /// no more than that copy recorded is ever looked at.
+    fn convert_to_moves(&self, mark: usize, from: &Path, to: &Path, whole: bool) {
         let mut recorder = self.recorder.lock();
         let source_of = |path: &Path| {
             path.strip_prefix(to).ok().map(|rest| {
@@ -622,29 +688,29 @@ impl OpContext {
             })
         };
         let mut converted = false;
-        let mut changes = Vec::with_capacity(recorder.changes.len());
-        for change in std::mem::take(&mut recorder.changes) {
+        let mark = mark.min(recorder.changes.len());
+        let copied = recorder.changes.split_off(mark);
+        for change in copied {
             match change {
                 Change::Created { path, fingerprint } => match source_of(&path) {
                     Some(source) => {
                         converted = true;
-                        changes.push(Change::Moved { from: source, to: path });
+                        recorder.created.remove(&path);
+                        recorder.changes.push(Change::Moved { from: source, to: path });
                     }
-                    None => changes.push(Change::Created { path, fingerprint }),
+                    None => recorder.changes.push(Change::Created { path, fingerprint }),
                 },
                 Change::Overwritten { path } => {
                     let source = source_of(&path);
-                    changes.push(Change::Overwritten { path: path.clone() });
+                    recorder.changes.push(Change::Overwritten { path: path.clone() });
                     if let Some(source) = source {
                         converted = true;
-                        changes.push(Change::Moved { from: source, to: path });
+                        recorder.changes.push(Change::Moved { from: source, to: path });
                     }
                 }
-                other => changes.push(other),
+                other => recorder.changes.push(other),
             }
         }
-        recorder.changes = changes;
-        recorder.created.retain(|p| !p.starts_with(to));
         // Even into a folder this operation made: the item came from
         // elsewhere, and going back it must leave before the folder goes.
         if whole && !converted {
@@ -688,7 +754,7 @@ impl OpContext {
     }
 
     fn finish(&self, outcome: Result<(), Abort>) {
-        self.update(|p| {
+        self.update_now(|p| {
             p.question = None;
             p.current.clear();
             p.state = match outcome {
@@ -701,16 +767,23 @@ impl OpContext {
     }
 
     fn fail(&self, message: String) {
-        self.update(|p| {
+        self.update_now(|p| {
             p.errors.push(OpError { path: String::new(), message });
             p.state = OpState::Failed;
         });
     }
 
-    fn report(&self, progress: Progress) {
-        if let Some(listener) = &self.listener {
-            listener(progress);
+    /// Reports the progress when `now` or when the last report is old
+    /// enough; the listener is called with the lock released.
+    fn report(&self, mut reported: MutexGuard<'_, Reported>, now: bool) {
+        reported.progress.elapsed_ms = self.started.elapsed().as_millis() as u64;
+        let Some(listener) = &self.listener else { return };
+        if !now && !reported.due() {
+            return;
         }
+        let report = reported.next_report();
+        drop(reported);
+        listener(report);
     }
 }
 
@@ -743,4 +816,149 @@ pub fn copy_name(dir: &Path, name: &str) -> PathBuf {
         }
     }
     unreachable!()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn request(kind: OpKind) -> OpRequest {
+        OpRequest {
+            kind,
+            sources: Vec::new(),
+            archive: None,
+            destination: None,
+            new_name: None,
+            options: OpOptions::default(),
+        }
+    }
+
+    /// A context whose listener keeps every report.
+    fn listening(request: &OpRequest) -> (OpContext, Arc<Mutex<Vec<Progress>>>) {
+        let reports = Arc::new(Mutex::new(Vec::new()));
+        let sink = reports.clone();
+        (OpContext::listened(request, Arc::new(move |p| sink.lock().push(p))), reports)
+    }
+
+    #[test]
+    fn reports_are_throttled_but_changes_of_state_go_at_once() {
+        let (ctx, reports) = listening(&request(OpKind::Copy));
+        ctx.set_totals(3000, 3000);
+        let start = Instant::now();
+        for i in 0..1000 {
+            ctx.add_bytes(1);
+            ctx.item_done();
+            ctx.update(|p| p.items_done += i % 2);
+        }
+        // One report for the totals, then one per period at most.
+        let allowed = 2 + start.elapsed().as_millis() as usize / REPORT_EVERY.as_millis() as usize;
+        assert!(reports.lock().len() <= allowed, "{} reports", reports.lock().len());
+        let before = reports.lock().len();
+        ctx.set_paused(true);
+        assert_eq!(reports.lock().len(), before + 1);
+        assert_eq!(reports.lock().last().unwrap().state, OpState::Paused);
+        ctx.set_paused(false);
+        ctx.finish(Ok(()));
+        let last = reports.lock().last().cloned().unwrap();
+        assert_eq!(last.state, OpState::Done);
+        assert_eq!((last.bytes_done, last.items_done), (1000, 1500));
+    }
+
+    #[test]
+    fn reports_carry_their_lists_as_news() {
+        let mut req = request(OpKind::CalcSizes);
+        req.sources = vec![PathBuf::from("/a"), PathBuf::from("/b")];
+        let (ctx, reports) = listening(&req);
+        ctx.set_totals(0, 2);
+        ctx.update(|p| p.sizes.push(FolderSize { path: PathBuf::from("/a"), bytes: 1 }));
+        ctx.record_error(Path::new("/x"), "first".to_string());
+        ctx.update(|p| p.sizes.push(FolderSize { path: PathBuf::from("/b"), bytes: 2 }));
+        ctx.record_error(Path::new("/y"), "second".to_string());
+        ctx.finish(Ok(()));
+
+        let whole = ctx.snapshot();
+        assert_eq!(whole.sources, req.sources);
+        assert_eq!(whole.sizes.len(), 2);
+        assert_eq!(whole.errors.len(), 2);
+        let reports = reports.lock();
+        assert!(reports.len() >= 3);
+        // The first error is shown at once, before the end.
+        assert!(reports
+            .iter()
+            .any(|r| !r.state.is_finished() && r.errors.iter().any(|e| e.message == "first")));
+        // Each size and error comes once; the sources first and last.
+        let sizes: Vec<FolderSize> = reports.iter().flat_map(|r| r.sizes.clone()).collect();
+        let errors: Vec<OpError> = reports.iter().flat_map(|r| r.errors.clone()).collect();
+        assert_eq!((sizes, errors), (whole.sizes, whole.errors));
+        assert_eq!(reports[0].sources, req.sources);
+        assert_eq!(reports.last().unwrap().sources, req.sources);
+        assert!(reports[1..reports.len() - 1].iter().all(|r| r.sources.is_empty()));
+    }
+
+    #[test]
+    fn a_move_across_volumes_turns_what_its_copy_recorded_into_moves() {
+        let (from, to) = (Path::new("/v1/src"), Path::new("/v2/dest/src"));
+        let ctx = OpContext::detached(&request(OpKind::Move));
+        // An item before it, renamed: not the copy's.
+        ctx.record_moved(Path::new("/v2/a"), Path::new("/v2/dest/a"));
+        // A merge into the folder there: items made, one overwritten.
+        let mark = ctx.record_mark();
+        ctx.record_created(&to.join("new"));
+        ctx.record_overwritten(&to.join("old"));
+        ctx.record_created(&to.join("deep"));
+        ctx.record_created(&to.join("deep/inner"));
+        ctx.record_merged(mark, from, to);
+        assert_eq!(
+            ctx.recorded(),
+            vec![
+                Change::Moved { from: PathBuf::from("/v2/a"), to: PathBuf::from("/v2/dest/a") },
+                Change::Moved { from: from.join("new"), to: to.join("new") },
+                Change::Overwritten { path: to.join("old") },
+                Change::Moved { from: from.join("old"), to: to.join("old") },
+                Change::Moved { from: from.join("deep"), to: to.join("deep") },
+            ]
+        );
+
+        // Into a folder the operation made: the copy recorded nothing of
+        // its own, the item moved all the same, after the folder came.
+        let ctx = OpContext::detached(&request(OpKind::Move));
+        ctx.record_created(Path::new("/v2/made"));
+        let mark = ctx.record_mark();
+        ctx.record_created(Path::new("/v2/made/x"));
+        ctx.record_moved_by_copy(mark, Path::new("/v1/x"), Path::new("/v2/made/x"));
+        assert_eq!(
+            ctx.recorded(),
+            vec![
+                Change::Created { path: PathBuf::from("/v2/made"), fingerprint: None },
+                Change::Moved { from: PathBuf::from("/v1/x"), to: PathBuf::from("/v2/made/x") },
+            ]
+        );
+    }
+
+    /// Times recording many moves: `cargo test --release -p ferryx_ops
+    /// record_bench -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn record_bench() {
+        let from = Path::new("/nowhere/from");
+        let to = Path::new("/nowhere/to");
+        for n in [10_000, 50_000] {
+            let ctx = OpContext::detached(&request(OpKind::Move));
+            let start = Instant::now();
+            for i in 0..n {
+                let name = format!("f{i}");
+                ctx.record_moved(&from.join(&name), &to.join(&name));
+            }
+            println!("{n} renames recorded: {:?}", start.elapsed());
+            let ctx = OpContext::detached(&request(OpKind::Move));
+            let start = Instant::now();
+            for i in 0..n {
+                let name = format!("f{i}");
+                let mark = ctx.record_mark();
+                ctx.record_created(&to.join(&name));
+                ctx.record_moved_by_copy(mark, &from.join(&name), &to.join(&name));
+            }
+            println!("{n} moves across volumes recorded: {:?}", start.elapsed());
+        }
+    }
 }

@@ -292,6 +292,42 @@ d.OperationQuestion questionFromView(rust.QuestionView view) =>
           : conflictSideFromView(view.existing!),
     );
 
+/// The report of an `OperationProgress` event, whose lists bring only what
+/// is new (the errors and sizes since the operation's previous event, the
+/// sources in its first and last), added to [previous], the operation's
+/// report before it.
+d.OperationProgress progressFromEvent(
+  rust.ProgressView view, {
+  d.OperationProgress? previous,
+}) {
+  final report = progressFromView(view);
+  if (previous == null) return report;
+  return d.OperationProgress(
+    id: report.id,
+    kind: report.kind,
+    state: report.state,
+    bytesDone: report.bytesDone,
+    bytesTotal: report.bytesTotal,
+    itemsDone: report.itemsDone,
+    itemsTotal: report.itemsTotal,
+    current: report.current,
+    started: report.started,
+    elapsed: report.elapsed,
+    bytesPerSecond: report.bytesPerSecond,
+    errors: report.errors.isEmpty
+        ? previous.errors
+        : [...previous.errors, ...report.errors],
+    question: report.question,
+    sizes: report.sizes.isEmpty
+        ? previous.sizes
+        : [...previous.sizes, ...report.sizes],
+    resultPath: report.resultPath,
+    sources: report.sources.isEmpty ? previous.sources : report.sources,
+    destination: report.destination,
+  );
+}
+
+/// A whole report, as `operationProgress` and `listOperations` answer.
 d.OperationProgress progressFromView(rust.ProgressView view) =>
     d.OperationProgress(
       id: view.id,

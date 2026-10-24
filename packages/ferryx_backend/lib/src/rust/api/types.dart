@@ -806,6 +806,10 @@ enum OpStateView {
   failed,
 }
 
+/// What an operation reports. From `operation_progress` and
+/// `list_operations` its lists are whole; in an `OperationProgress` event
+/// they are the news since the operation's previous event, for the
+/// receiver to add up.
 class ProgressView {
   final PlatformInt64 id;
   final OpKindView kind;
@@ -818,10 +822,16 @@ class ProgressView {
   final PlatformInt64 startedMs;
   final PlatformInt64 elapsedMs;
   final PlatformInt64 bytesPerSecond;
+
+  /// In an event: the errors since the previous one.
   final List<OpErrorView> errors;
   final QuestionView? question;
+
+  /// In an event: the folder sizes done since the previous one.
   final List<FolderSizeView> sizes;
   final String? resultPath;
+
+  /// In an event: only in the operation's first and last (empty between).
   final List<String> sources;
   final String? destination;
 

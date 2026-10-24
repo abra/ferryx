@@ -200,12 +200,31 @@ Rules:
   the network and not watched either (see Network locations).
 - Operations never block the bridge: `start_operation` answers an id at
   once and every change comes as an `OperationProgress` event (throttled
-  to one report per 100 ms while bytes flow, at once on a state change).
+  to one report per 100 ms while work goes on, at once on a change of
+  state, a question, the first error and the end). An event's lists bring
+  only what is new: the errors and folder sizes since the operation's
+  previous event, its sources in the first and last event alone;
+  `OperationsService` adds them up (`progressFromEvent`), while
+  `operation_progress` and `list_operations` answer them whole.
   A question (`Conflict` with both sides, `Error` with retry/skip/stop)
   puts the operation in `Waiting` until `answer_operation`; an "…All"
   answer sticks for the rest of the operation.
-- Folder sizes are an operation (`CalcSizes`) whose progress carries the
-  sizes done so far; the panel merges them into its rows by name.
+- A move on one volume renames each item whole and counts it as one
+  (nothing is walked); a copy, or a move across volumes, counts the bytes
+  and items under the sources first. A file whose attributes are kept is
+  cloned where the volume can (APFS: at once, every attribute with it),
+  else copied with `fcopyfile` on macOS (holes, extended attributes and
+  Finder tags, ACL, flags, then the times and creation date) or through
+  one buffer per operation; a cancelled file's part is taken away.
+  Verifying hashes the source (BLAKE3) while copying and reads the copy
+  back past the page cache (`F_NOCACHE`; on Linux written out and dropped
+  from it); a clone, sharing its source's blocks, is not read back.
+- Folder sizes are an operation (`CalcSizes`) whose events bring the
+  sizes done since the last; the panel merges them into its rows by name.
+  A pool of up to eight threads reads the trees (`getattrlistbulk` on
+  macOS, a `lstat` per file elsewhere); the size is the files' logical
+  size, a file of several hard links counted once per folder, and each
+  folder's comes as soon as its tree is read.
 - Find Files runs on a thread and sends hits in batches (`FindProgress`,
   at most every 80 ms or 200 hits) and `FindDone` at the end or on cancel.
 - With "Use the Spotlight index" (offered where `capabilities().spotlight`
@@ -1136,7 +1155,11 @@ partially created resources.
   Finder tags. The archive tests write every format they read (a stored
   RAR5 and an ISO with Joliet names by hand); ignored tests time large
   archives, a flat walk of a big tree (`FERRYX_FLAT_BENCH=~/Library`), tag
-  reading and a live Spotlight search.
+  reading, a live Spotlight search, copies (`copy_bench`: a clone of a
+  big file, a copy, many small files), moves through a runner with what
+  its listener is sent (`move_bench`), recording moves (`record_bench`),
+  folder sizes (`FERRYX_SIZES_BENCH=/Applications`, `sizes_bench`), single
+  stats (`stat_bench`) and a batch-rename preview of 10 000 files.
 - Dart: cubit tests (`bloc_test`, `mocktail`) in the panels, viewer,
   find and terminal features; widget tests in the settings feature, the
   component library and the terminal (its keys on macOS and Linux, the end

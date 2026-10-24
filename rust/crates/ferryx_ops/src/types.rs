@@ -41,9 +41,12 @@ pub enum ConflictPolicy {
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OpOptions {
     pub conflicts: ConflictPolicy,
-    /// Permissions and times copied with the data.
+    /// Permissions and times copied with the data (on macOS also extended
+    /// attributes and Finder tags, ACL, flags and the creation date). Off,
+    /// only the data is copied.
     pub preserve_attributes: bool,
-    /// Read the copy back and compare it.
+    /// Read the copy back past the page cache and compare it with the
+    /// source as it was read (not for a clone, which shares its blocks).
     pub verify: bool,
     /// Compress: AES-256 password. Extract: the archives' password.
     pub password: Option<String>,
@@ -145,7 +148,8 @@ pub struct FolderSize {
     pub bytes: u64,
 }
 
-/// What an operation reports; every change comes through the listener.
+/// What an operation reports; every change comes through the listener,
+/// its lists as news ([`crate::runner::Listener`]).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Progress {
     pub id: u64,

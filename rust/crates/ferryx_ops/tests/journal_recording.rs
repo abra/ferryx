@@ -110,6 +110,44 @@ fn a_move_records_moves_and_the_folders_a_merge_emptied() {
 }
 
 #[test]
+fn thousands_of_items_moved_and_merged_go_back() {
+    const N: usize = 3000;
+    let dir = tempfile::tempdir().unwrap();
+    let flat = dir.path().join("flat");
+    let src = dir.path().join("src");
+    fs::create_dir_all(&flat).unwrap();
+    fs::create_dir_all(src.join("sub")).unwrap();
+    let dest = dir.path().join("dest");
+    fs::create_dir_all(dest.join("src/sub")).unwrap();
+    let mut sources = Vec::new();
+    for i in 0..N {
+        fs::write(flat.join(format!("f{i}")), format!("{i}")).unwrap();
+        sources.push(flat.join(format!("f{i}")));
+        fs::write(src.join(format!("sub/m{i}")), format!("{i}")).unwrap();
+    }
+    // Every tenth merged item takes the place of one there.
+    for i in (0..N).step_by(10) {
+        fs::write(dest.join(format!("src/sub/m{i}")), b"there").unwrap();
+    }
+    sources.push(src.clone());
+    let changes = recorded(&request(OpKind::Move, sources, Some(&dest)));
+    let moved = changes.iter().filter(|c| matches!(c, Change::Moved { .. })).count();
+    let overwritten = changes.iter().filter(|c| matches!(c, Change::Overwritten { .. })).count();
+    assert_eq!((moved, overwritten), (2 * N, N / 10));
+    assert!(changes.contains(&Change::FolderRemoved { path: src.clone() }));
+    assert_eq!(fs::read(dest.join("src/sub/m10")).unwrap(), b"10");
+
+    walk(changes);
+    for i in (0..N).step_by(97) {
+        assert_eq!(fs::read(flat.join(format!("f{i}"))).unwrap(), format!("{i}").as_bytes());
+        assert_eq!(fs::read(src.join(format!("sub/m{i}"))).unwrap(), format!("{i}").as_bytes());
+        assert!(!dest.join(format!("f{i}")).exists());
+    }
+    assert_eq!(fs::read_dir(&flat).unwrap().count(), N);
+    assert_eq!(fs::read_dir(src.join("sub")).unwrap().count(), N);
+}
+
+#[test]
 fn a_move_over_an_item_records_the_loss_and_the_move() {
     let dir = tempfile::tempdir().unwrap();
     fs::write(dir.path().join("a"), b"mine").unwrap();
