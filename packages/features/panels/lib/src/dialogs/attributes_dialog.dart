@@ -304,136 +304,133 @@ class _AttributesDialogState extends State<_AttributesDialog> {
     final l10n = context.l10n;
     final colors = context.appColors;
     final created = _commonTime((a) => a.created);
-    final maxHeight = dialogBodyMaxHeight(context);
     return AppDialog(
       title: l10n.attributesTitle(
         _items.length,
         PathText.baseName(_items.first.path),
       ),
-      body: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxHeight),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(l10n.permissionsLabel, style: context.text.labelMedium),
-              const SizedBox(height: AppSpacing.xs),
-              _PermissionsGrid(
-                value: (bit) => _value(_permissions, (a) => a.permissions, bit),
-                onToggle: (bit) =>
-                    _toggle(_permissions, (a) => a.permissions, bit),
-              ),
-              if (_hasFlags) ...[
-                dialogRowGap,
-                Text(l10n.flagsLabel, style: context.text.labelMedium),
-                const SizedBox(height: AppSpacing.xs),
-                Wrap(
-                  spacing: AppSpacing.lg,
-                  runSpacing: AppSpacing.xs,
-                  children: [
-                    for (final (bit, label) in [
-                      (FileFlags.hidden, l10n.flagHidden),
-                      (FileFlags.userImmutable, l10n.flagLocked),
-                      (FileFlags.userAppend, l10n.flagAppendOnly),
-                      (FileFlags.noDump, l10n.flagNoDump),
-                      (FileFlags.archived, l10n.flagArchived),
-                    ])
-                      _BitCheckbox(
-                        label: label,
-                        value: _value(_flags, (a) => a.flags, bit),
-                        onToggle: () => _toggle(_flags, (a) => a.flags, bit),
-                      ),
-                  ],
-                ),
-              ],
+      body: AppDialogScrollBody(
+        maxHeight: dialogBodyMaxHeight(context),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.permissionsLabel, style: context.text.labelMedium),
+            const SizedBox(height: AppSpacing.xs),
+            _PermissionsGrid(
+              value: (bit) => _value(_permissions, (a) => a.permissions, bit),
+              onToggle: (bit) =>
+                  _toggle(_permissions, (a) => a.permissions, bit),
+            ),
+            if (_hasFlags) ...[
               dialogRowGap,
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: AppSpacing.md,
+              Text(l10n.flagsLabel, style: context.text.labelMedium),
+              const SizedBox(height: AppSpacing.xs),
+              Wrap(
+                spacing: AppSpacing.lg,
+                runSpacing: AppSpacing.xs,
                 children: [
-                  Expanded(
-                    child: _FieldWithError(
-                      field: DialogField(
-                        label: l10n.ownerLabel,
-                        controller: _owner,
-                        hint: _several ? '—' : null,
-                        onSubmitted: (_) => _apply(),
-                      ),
-                      error: _ownerError,
+                  for (final (bit, label) in [
+                    (FileFlags.hidden, l10n.flagHidden),
+                    (FileFlags.userImmutable, l10n.flagLocked),
+                    (FileFlags.userAppend, l10n.flagAppendOnly),
+                    (FileFlags.noDump, l10n.flagNoDump),
+                    (FileFlags.archived, l10n.flagArchived),
+                  ])
+                    _BitCheckbox(
+                      label: label,
+                      value: _value(_flags, (a) => a.flags, bit),
+                      onToggle: () => _toggle(_flags, (a) => a.flags, bit),
                     ),
-                  ),
-                  Expanded(
-                    child: _FieldWithError(
-                      field: DialogField(
-                        label: l10n.groupLabel,
-                        controller: _group,
-                        hint: _several ? '—' : null,
-                        onSubmitted: (_) => _apply(),
-                      ),
-                      error: _groupError,
-                    ),
-                  ),
                 ],
               ),
-              dialogRowGap,
-              Text(l10n.timesLabel, style: context.text.labelMedium),
-              const SizedBox(height: AppSpacing.xs),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: AppSpacing.md,
-                children: [
-                  Expanded(
-                    child: _FieldWithError(
-                      field: DialogField(
-                        label: l10n.modifiedLabel,
-                        controller: _modified,
-                        monospace: true,
-                        hint: l10n.dateFieldHint,
-                        onSubmitted: (_) => _apply(),
-                      ),
-                      error: _modifiedError,
-                    ),
-                  ),
-                  Expanded(
-                    child: _FieldWithError(
-                      field: DialogField(
-                        label: l10n.accessedLabel,
-                        controller: _accessed,
-                        monospace: true,
-                        hint: l10n.dateFieldHint,
-                        onSubmitted: (_) => _apply(),
-                      ),
-                      error: _accessedError,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              AppLabelRow(
-                label: Text(
-                  l10n.createdLabel,
-                  style: context.text.bodyMedium?.copyWith(
-                    color: colors.textMuted,
-                  ),
-                ),
-                trailing: Text(
-                  created == null ? '—' : l10n.dateTime(created),
-                  style: context.text.bodyMedium?.copyWith(
-                    color: colors.textMuted,
-                  ),
-                ),
-              ),
-              if (_hasFolder) ...[
-                dialogRowGap,
-                DialogToggle(
-                  label: l10n.applyRecursively,
-                  value: _recursive,
-                  onChanged: (v) => setState(() => _recursive = v),
-                ),
-              ],
             ],
-          ),
+            dialogRowGap,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: AppSpacing.md,
+              children: [
+                Expanded(
+                  child: _FieldWithError(
+                    field: DialogField(
+                      label: l10n.ownerLabel,
+                      controller: _owner,
+                      hint: _several ? '—' : null,
+                      onSubmitted: (_) => _apply(),
+                    ),
+                    error: _ownerError,
+                  ),
+                ),
+                Expanded(
+                  child: _FieldWithError(
+                    field: DialogField(
+                      label: l10n.groupLabel,
+                      controller: _group,
+                      hint: _several ? '—' : null,
+                      onSubmitted: (_) => _apply(),
+                    ),
+                    error: _groupError,
+                  ),
+                ),
+              ],
+            ),
+            dialogRowGap,
+            Text(l10n.timesLabel, style: context.text.labelMedium),
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: AppSpacing.md,
+              children: [
+                Expanded(
+                  child: _FieldWithError(
+                    field: DialogField(
+                      label: l10n.modifiedLabel,
+                      controller: _modified,
+                      monospace: true,
+                      hint: l10n.dateFieldHint,
+                      onSubmitted: (_) => _apply(),
+                    ),
+                    error: _modifiedError,
+                  ),
+                ),
+                Expanded(
+                  child: _FieldWithError(
+                    field: DialogField(
+                      label: l10n.accessedLabel,
+                      controller: _accessed,
+                      monospace: true,
+                      hint: l10n.dateFieldHint,
+                      onSubmitted: (_) => _apply(),
+                    ),
+                    error: _accessedError,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            AppLabelRow(
+              label: Text(
+                l10n.createdLabel,
+                style: context.text.bodyMedium?.copyWith(
+                  color: colors.textMuted,
+                ),
+              ),
+              trailing: Text(
+                created == null ? '—' : l10n.dateTime(created),
+                style: context.text.bodyMedium?.copyWith(
+                  color: colors.textMuted,
+                ),
+              ),
+            ),
+            if (_hasFolder) ...[
+              dialogRowGap,
+              DialogToggle(
+                label: l10n.applyRecursively,
+                value: _recursive,
+                onChanged: (v) => setState(() => _recursive = v),
+              ),
+            ],
+          ],
         ),
       ),
       actions: [
@@ -451,19 +448,10 @@ class _AttributesDialogState extends State<_AttributesDialog> {
 }
 
 /// The tallest a scrolling dialog body gets: a panel dialog's height, or
-/// what the window leaves past the dialog's own title, buttons and
-/// margins.
-double dialogBodyMaxHeight(BuildContext context) {
-  final metrics = context.metrics;
-  final room =
-      MediaQuery.sizeOf(context).height -
-      2 * metrics.contentMargin -
-      2 * metrics.topBarHeight;
-  return math.max(
-    AppSizes.pickerListMaxHeight,
-    math.min(AppSizes.panelDialogHeight, room),
-  );
-}
+/// what the window leaves past the dialog's inset, title, buttons and
+/// margins ([appDialogBodyMaxHeight]).
+double dialogBodyMaxHeight(BuildContext context) =>
+    math.min(AppSizes.panelDialogHeight, appDialogBodyMaxHeight(context));
 
 /// Owner, group and others against read, write and execute, with the
 /// special bits under them.

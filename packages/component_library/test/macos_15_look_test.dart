@@ -376,6 +376,51 @@ void main() {
       expect(bytes.getUint8(i + 2), greaterThan(bytes.getUint8(i) + 30));
     });
 
+    testWidgets('a focused field in a dialog body that scrolls keeps its '
+        'ring at the sides', (tester) async {
+      final node = FocusNode();
+      addTearDown(node.dispose);
+      await pumpOnGround(
+        tester,
+        size: const Size(400, 300),
+        AppDialog(
+          title: 'Rename',
+          width: 320,
+          body: AppDialogScrollBody(
+            maxHeight: 120,
+            child: Column(
+              children: [
+                TextField(focusNode: node),
+                const SizedBox(height: 400),
+              ],
+            ),
+          ),
+          actions: [OutlinedButton(onPressed: () {}, child: const Text('OK'))],
+        ),
+      );
+      node.requestFocus();
+      await tester.pumpAndSettle();
+      final field = tester.getRect(find.byType(TextField));
+      final data = await tester.runAsync(() async {
+        final image = await captureImage(
+          find.byType(RepaintBoundary).evaluate().first,
+        );
+        return (
+          image.width,
+          (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!,
+        );
+      });
+      final (width, bytes) = data!;
+      for (final x in [field.left.round() - 2, field.right.round() + 1]) {
+        final i = (field.center.dy.round() * width + x) * 4;
+        expect(
+          bytes.getUint8(i + 2),
+          greaterThan(bytes.getUint8(i) + 30),
+          reason: 'blue beside the field at $x',
+        );
+      }
+    });
+
     testWidgets('a dialog: its content is clipped inside the edge', (
       tester,
     ) async {

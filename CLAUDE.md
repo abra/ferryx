@@ -124,7 +124,9 @@ See `ARCHITECTURE.md`. The rules that matter most:
   and lets a selection read `AppFocusArea.activeOf` to grey itself elsewhere.
 - Dialogs open through `showAppDialog` (the theme's barrier, no dismissal
   by a click beside); `AppDialog` owns Return/Esc/⌘. and the default
-  action, so never autofocus a button for Return. Options in a dialog are
+  action, so never autofocus a button for Return. A body that may not
+  fit a low window is an `AppDialogScrollBody`, never a scroll view of
+  its own (it would cut the side rings of the fields). Options in a dialog are
   `AppCheckbox`es; `AppToggle` is for settings that act at once. A label
   with a control is an `AppControlRow`; `AppLabelRow` is for a label with
   secondary text only. A name or path that may not fit goes through

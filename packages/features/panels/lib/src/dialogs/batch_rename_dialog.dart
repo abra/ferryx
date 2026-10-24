@@ -160,159 +160,157 @@ class _BatchRenameDialogState extends State<_BatchRenameDialog> {
     return AppDialog(
       title: l10n.batchRenameTitle(widget.paths.length),
       width: AppSizes.panelDialogWidth,
-      body: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: dialogBodyMaxHeight(context)),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              DialogField(
-                label: l10n.renamePatternLabel,
-                hint: l10n.renamePatternHint,
-                controller: _pattern,
-                autofocus: true,
-                monospace: true,
-                onSubmitted: (_) => _apply(),
-              ),
-              if (errorText != null && !_errorInSearch) _FieldError(errorText),
-              const SizedBox(height: AppSpacing.xs),
-              _HelpDisclosure(
-                shown: _helpShown,
-                onToggle: () => setState(() => _helpShown = !_helpShown),
-              ),
-              dialogRowGap,
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        DialogField(
-                          label: l10n.renameSearchLabel,
-                          controller: _search,
-                          monospace: true,
-                          onSubmitted: (_) => _apply(),
+      body: AppDialogScrollBody(
+        maxHeight: dialogBodyMaxHeight(context),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DialogField(
+              label: l10n.renamePatternLabel,
+              hint: l10n.renamePatternHint,
+              controller: _pattern,
+              autofocus: true,
+              monospace: true,
+              onSubmitted: (_) => _apply(),
+            ),
+            if (errorText != null && !_errorInSearch) _FieldError(errorText),
+            const SizedBox(height: AppSpacing.xs),
+            _HelpDisclosure(
+              shown: _helpShown,
+              onToggle: () => setState(() => _helpShown = !_helpShown),
+            ),
+            dialogRowGap,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      DialogField(
+                        label: l10n.renameSearchLabel,
+                        controller: _search,
+                        monospace: true,
+                        onSubmitted: (_) => _apply(),
+                      ),
+                      if (errorText != null && _errorInSearch)
+                        _FieldError(errorText),
+                      const SizedBox(height: AppSpacing.sm),
+                      DialogField(
+                        label: l10n.renameReplaceLabel,
+                        controller: _replace,
+                        monospace: true,
+                        onSubmitted: (_) => _apply(),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      DialogChoice<NamePart>(
+                        label: l10n.renameSearchPartLabel,
+                        value: _options.searchPart,
+                        items: parts,
+                        onChanged: (v) =>
+                            _update((o) => o.copyWith(searchPart: v)),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      DialogToggle(
+                        label: l10n.renameRegex,
+                        value: _options.searchRegex,
+                        onChanged: (v) =>
+                            _update((o) => o.copyWith(searchRegex: v)),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      DialogToggle(
+                        label: l10n.renameCaseSensitive,
+                        value: _options.searchCaseSensitive,
+                        onChanged: (v) => _update(
+                          (o) => o.copyWith(searchCaseSensitive: v),
                         ),
-                        if (errorText != null && _errorInSearch)
-                          _FieldError(errorText),
-                        const SizedBox(height: AppSpacing.sm),
-                        DialogField(
-                          label: l10n.renameReplaceLabel,
-                          controller: _replace,
-                          monospace: true,
-                          onSubmitted: (_) => _apply(),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        DialogChoice<NamePart>(
-                          label: l10n.renameSearchPartLabel,
-                          value: _options.searchPart,
-                          items: parts,
-                          onChanged: (v) =>
-                              _update((o) => o.copyWith(searchPart: v)),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        DialogToggle(
-                          label: l10n.renameRegex,
-                          value: _options.searchRegex,
-                          onChanged: (v) =>
-                              _update((o) => o.copyWith(searchRegex: v)),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        DialogToggle(
-                          label: l10n.renameCaseSensitive,
-                          value: _options.searchCaseSensitive,
-                          onChanged: (v) => _update(
-                            (o) => o.copyWith(searchCaseSensitive: v),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      DialogToggle(
+                        label: l10n.renameOnce,
+                        value: _options.searchOnce,
+                        onChanged: (v) =>
+                            _update((o) => o.copyWith(searchOnce: v)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xl),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      DialogChoice<CaseTransform>(
+                        label: l10n.renameCaseLabel,
+                        value: _options.caseTransform,
+                        items: [
+                          (CaseTransform.unchanged, l10n.caseUnchanged),
+                          (CaseTransform.lower, l10n.caseLower),
+                          (CaseTransform.upper, l10n.caseUpper),
+                          (CaseTransform.capitalize, l10n.caseCapitalize),
+                        ],
+                        onChanged: (v) =>
+                            _update((o) => o.copyWith(caseTransform: v)),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      DialogChoice<NamePart>(
+                        label: l10n.renameCasePartLabel,
+                        value: _options.casePart,
+                        items: parts,
+                        onChanged: (v) =>
+                            _update((o) => o.copyWith(casePart: v)),
+                      ),
+                      dialogRowGap,
+                      Text(
+                        l10n.renameCounterLabel,
+                        style: context.text.labelMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Row(
+                        spacing: AppSpacing.sm,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _NumberField(
+                              label: l10n.renameCounterStart,
+                              controller: _counterStart,
+                              onSubmitted: _apply,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        DialogToggle(
-                          label: l10n.renameOnce,
-                          value: _options.searchOnce,
-                          onChanged: (v) =>
-                              _update((o) => o.copyWith(searchOnce: v)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.xl),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        DialogChoice<CaseTransform>(
-                          label: l10n.renameCaseLabel,
-                          value: _options.caseTransform,
-                          items: [
-                            (CaseTransform.unchanged, l10n.caseUnchanged),
-                            (CaseTransform.lower, l10n.caseLower),
-                            (CaseTransform.upper, l10n.caseUpper),
-                            (CaseTransform.capitalize, l10n.caseCapitalize),
-                          ],
-                          onChanged: (v) =>
-                              _update((o) => o.copyWith(caseTransform: v)),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        DialogChoice<NamePart>(
-                          label: l10n.renameCasePartLabel,
-                          value: _options.casePart,
-                          items: parts,
-                          onChanged: (v) =>
-                              _update((o) => o.copyWith(casePart: v)),
-                        ),
-                        dialogRowGap,
-                        Text(
-                          l10n.renameCounterLabel,
-                          style: context.text.labelMedium,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Row(
-                          spacing: AppSpacing.sm,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: _NumberField(
-                                label: l10n.renameCounterStart,
-                                controller: _counterStart,
-                                onSubmitted: _apply,
-                              ),
+                          Expanded(
+                            child: _NumberField(
+                              label: l10n.renameCounterStep,
+                              controller: _counterStep,
+                              onSubmitted: _apply,
                             ),
-                            Expanded(
-                              child: _NumberField(
-                                label: l10n.renameCounterStep,
-                                controller: _counterStep,
-                                onSubmitted: _apply,
-                              ),
+                          ),
+                          Expanded(
+                            child: _NumberField(
+                              label: l10n.renameCounterWidth,
+                              controller: _counterWidth,
+                              onSubmitted: _apply,
                             ),
-                            Expanded(
-                              child: _NumberField(
-                                label: l10n.renameCounterWidth,
-                                controller: _counterWidth,
-                                onSubmitted: _apply,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              dialogRowGap,
-              _PreviewTable(preview: _preview),
-              if (!_changes && _error == null && !_hasProblem) ...[
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  l10n.renameNoChanges,
-                  style: context.text.bodySmall?.copyWith(
-                    color: colors.textMuted,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],
+            ),
+            dialogRowGap,
+            _PreviewTable(preview: _preview),
+            if (!_changes && _error == null && !_hasProblem) ...[
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                l10n.renameNoChanges,
+                style: context.text.bodySmall?.copyWith(
+                  color: colors.textMuted,
+                ),
+              ),
             ],
-          ),
+          ],
         ),
       ),
       actions: [

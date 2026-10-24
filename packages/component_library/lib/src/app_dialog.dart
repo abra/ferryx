@@ -785,6 +785,46 @@ double appDialogBodyMaxHeight(BuildContext context) {
   );
 }
 
+/// A dialog's body that scrolls in a low window: [child] held to
+/// [maxHeight] ([appDialogBodyMaxHeight] by default). It clips above and
+/// below only: the focus ring of a field along its sides is painted
+/// outside the field, where a scroll view's own clip would cut it off.
+class AppDialogScrollBody extends StatelessWidget {
+  const AppDialogScrollBody({required this.child, this.maxHeight, super.key});
+
+  final Widget child;
+  final double? maxHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = context.metrics;
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: maxHeight ?? appDialogBodyMaxHeight(context),
+      ),
+      child: ClipRect(
+        clipper: _OpenSides(
+          metrics.focusRingWidth + math.max(0, metrics.focusRingGap),
+        ),
+        child: SingleChildScrollView(clipBehavior: Clip.none, child: child),
+      ),
+    );
+  }
+}
+
+class _OpenSides extends CustomClipper<Rect> {
+  const _OpenSides(this.room);
+
+  final double room;
+
+  @override
+  Rect getClip(Size size) =>
+      Rect.fromLTRB(-room, 0, size.width + room, size.height);
+
+  @override
+  bool shouldReclip(_OpenSides oldClipper) => oldClipper.room != room;
+}
+
 /// Clips [child] to the inside of [shape]'s edge (its fill), so a surface
 /// that draws its edge round its content, as a window does, keeps it: a
 /// [Material]'s own clip covers the edge too. Without a shape, no clip.

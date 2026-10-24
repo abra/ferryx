@@ -114,7 +114,11 @@ not:
   state for several items); a switch (`AppToggle`) is for a setting that
   acts at once. A label with a control is an `AppControlRow` (the control
   is never squeezed or dropped); `AppLabelRow` is for a label with
-  secondary text.
+  secondary text. A body taller than a low window leaves room for is an
+  `AppDialogScrollBody`: held to what the window leaves past the
+  dialog's inset, title and buttons (`appDialogBodyMaxHeight`), it
+  scrolls, and clips above and below only, so the focus ring of a field
+  along its sides stays whole.
 - Menus: a check column only while an item is checked or mixed on macOS
   (NSMenu since macOS 14: labels 11 in, 20 with the column), while one is
   an option elsewhere; the icon column whenever an item shows one, so
