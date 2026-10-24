@@ -53,6 +53,20 @@ not:
   NSPopUpButton, NSTableView, NSMenu, NSAlert and a sheet, and Finder
   itself); `test/macos_15_look_test.dart` in the component library holds
   them. macOS 26 keeps its own metrics where it differs.
+- Tabs: on macOS 15 a panel's tabs are NSWindow's tab bar as Finder has
+  it, measured beside a tabbed NSWindow with a unified toolbar in both
+  appearances: equal tabs filling the bar edge to edge, 28 high on a
+  line, 1 pt lines between them, + in a 28 cell after a stronger line;
+  the inactive ones sit a shade below the bar above under an edge (a
+  soft shade under it in light, black in dark), the active one is the
+  bar's own colour and opens into it, so the panel's header draws no
+  line over the strip (`AppTabStrip.joinsBarAbove`). Its focus ring is
+  inside the tab. macOS 26 keeps rounded tabs on the bar.
+- Bars at the bottom: the panel's footer stands as high as the hint line
+  under it (27 and a line on macOS 15, as Finder's path and status bars):
+  the item or the selection at the start, the count and the free space at
+  the end, the name giving way first. A Vim key in a cap is typed text
+  (`AppKeyCap.typed`), in the monospace face, so `l` is not a bar.
 - Selection: `selectionAccent` (NSColor.selectedContentBackgroundColor, a
   shade deeper than the button accent) with `onAccent` text where the
   keys are, `selectionMuted` (the unemphasized grey) everywhere else —

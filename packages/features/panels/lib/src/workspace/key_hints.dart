@@ -197,7 +197,16 @@ class KeyHintStrip extends StatelessWidget {
           // A command the user unbound has no key to show.
           final keys = shortcutMap.labelOf(command, platform, vim: vim);
           if (keys != null) {
-            entries.add(AppKeyHint([keys], l10n.commandLabel(command)));
+            entries.add(
+              AppKeyHint(
+                [keys],
+                l10n.commandLabel(command),
+                // Vim's keys are typed: `l` must not read as a bar.
+                typed:
+                    vim &&
+                    (shortcutMap.letterChord(command)?.isVimKey ?? false),
+              ),
+            );
           }
         case KeyHint(:final key, :final word):
           entries.add(

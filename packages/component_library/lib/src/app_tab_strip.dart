@@ -44,10 +44,12 @@ class AppTab {
   final bool pinned;
 }
 
-/// A row of tabs, the platform's way: Safari's and Finder's on macOS
-/// (equal segments, the close button at the start on hover), Explorer's
-/// on Windows (the active tab joins the page, the close button at the end),
-/// libadwaita's on GNOME (rounded tabs, titles centred).
+/// A row of tabs, the platform's way: Finder's window tabs on macOS 15
+/// (equal segments filling the bar, lines between them, the active one
+/// open to the bar above, the close button at the start on hover), rounded
+/// tabs on the bar on macOS 26, Explorer's on Windows (the active tab joins
+/// the page, the close button at the end), libadwaita's on GNOME (rounded
+/// tabs, titles centred).
 ///
 /// Tabs share the width between [minTabWidth] and [maxTabWidth], scaled
 /// with the text; more than fit scroll sideways, the active one always in
@@ -107,6 +109,11 @@ class AppTabStrip extends StatefulWidget {
     return _tabHeight(context) + spec.top + spec.bottom;
   }
 
+  /// Whether the strip draws the edge under the bar above it, the active
+  /// tab open to that bar in its colour (macOS 15's window tabs): the bar
+  /// above then draws no bottom edge of its own.
+  static bool joinsBarAbove(BuildContext context) => _specOf(context).flat;
+
   static double _tabHeight(BuildContext context) {
     final spec = _specOf(context);
     final line =
@@ -115,16 +122,33 @@ class AppTabStrip extends StatefulWidget {
     return math.max(spec.height, line + 2 * AppSpacing.xs);
   }
 
-  /// The strip's geometry on each desktop. macOS: window tabs filling the
-  /// bar, a regular control high, room around for the 3 pt focus ring,
-  /// titles centred (NSWindow tabbing, Safari). Windows: TabView's tabs 32
-  /// high on an 8 px top margin, standing on the page, 100–240 wide.
-  /// GNOME: AdwTabBar's 34-high tabs in a 47 bar, 5 apart, at least 126
-  /// wide, titles centred in the body face.
+  /// The strip's geometry on each desktop. macOS 15: NSWindow's tab bar
+  /// as Finder has it, measured beside AppKit: tabs 28 high filling the
+  /// bar edge to edge, a line under them, 1 pt lines between them, titles
+  /// centred. macOS 26: rounded tabs a regular control high, room around
+  /// for the 3 pt focus ring. Windows: TabView's tabs 32 high on an 8 px
+  /// top margin, standing on the page, 100–240 wide. GNOME: AdwTabBar's
+  /// 34-high tabs in a 47 bar, 5 apart, at least 126 wide, titles centred
+  /// in the body face.
   static _Spec _specOf(BuildContext context) {
     final metrics = context.metrics;
     final text = context.text;
     return switch (metrics.style) {
+      AppPlatformStyle.macos when metrics.generation == MacGeneration.sequoia =>
+        (
+          height: 28.0,
+          top: 0.0,
+          // The line under the tabs.
+          bottom: 1.0,
+          side: 0.0,
+          gap: 0.0,
+          minWidth: 120.0,
+          maxWidth: double.infinity,
+          separatorInset: 0.0,
+          centred: true,
+          flat: true,
+          font: text.labelMedium!,
+        ),
       AppPlatformStyle.macos => (
         height: metrics.controlHeight,
         top: 3.5,
@@ -135,6 +159,7 @@ class AppTabStrip extends StatefulWidget {
         maxWidth: double.infinity,
         separatorInset: 4.0,
         centred: true,
+        flat: false,
         font: text.labelMedium!,
       ),
       AppPlatformStyle.windows => (
@@ -147,6 +172,7 @@ class AppTabStrip extends StatefulWidget {
         maxWidth: 240.0,
         separatorInset: 8.0,
         centred: false,
+        flat: false,
         font: text.labelMedium!,
       ),
       AppPlatformStyle.gnome => (
@@ -159,6 +185,7 @@ class AppTabStrip extends StatefulWidget {
         maxWidth: double.infinity,
         separatorInset: null,
         centred: true,
+        flat: false,
         font: text.bodyMedium!,
       ),
     };
@@ -315,130 +342,155 @@ class _AppTabStripState extends State<AppTabStrip> {
     final ratio = MediaQuery.devicePixelRatioOf(context);
     final margin = (spec.side * ratio).ceilToDouble() / ratio;
     final tabHeight = AppTabStrip._tabHeight(context);
+    final flat = spec.flat ? _FlatColors.of(context) : null;
     // Sunken, so the active tab (the page's colour) stands out of it as
     // Safari's, Explorer's and libadwaita's do.
-    final background = colors.surfaceSunken;
+    final background = flat?.bar ?? colors.surfaceSunken;
     return Container(
       height: AppTabStrip.heightOf(context),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+      padding: flat != null
+          ? EdgeInsets.zero
+          : const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
       decoration: BoxDecoration(
         color: background,
-        border: AppBorder(bottom: BorderSide(color: colors.line)),
+        border: AppBorder(
+          bottom: BorderSide(color: flat?.bottom ?? colors.line),
+        ),
       ),
-      child: Row(
-        spacing: metrics.toolbarSpacing,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                _onWidth(constraints.maxWidth);
-                // A pinned tab is as wide as its name, the others share
-                // what is left; each in whole pixels, so the tabs (each on
-                // a layer of the list's own) and their lines land on them.
-                final pinned = [
-                  for (final tab in widget.tabs)
-                    if (tab.pinned)
-                      (_pinnedWidth(context, tab, scale) * ratio)
-                              .ceilToDouble() /
-                          ratio,
-                ];
-                final rest = widget.tabs.length - pinned.length;
-                final gaps = spec.gap * (widget.tabs.length - 1);
-                final room =
-                    constraints.maxWidth -
-                    2 * margin -
-                    gaps -
-                    pinned.fold(0.0, (sum, w) => sum + w);
-                final width = rest == 0
-                    ? 0.0
-                    : ((room / rest).clamp(
-                                    spec.minWidth * scale,
-                                    spec.maxWidth * scale,
-                                  ) *
-                                  ratio)
-                              .floorToDouble() /
-                          ratio;
-                var nextPinned = 0;
-                // Each tab's extent along the strip: its width and the gap
-                // after it.
-                _widths = [
-                  for (final (i, tab) in widget.tabs.indexed)
-                    (tab.pinned ? pinned[nextPinned++] : width) +
-                        (i < widget.tabs.length - 1 ? spec.gap : 0),
-                ];
-                _margin = margin;
-                final total = _widths.fold(2 * margin, (sum, w) => sum + w);
-                _setOverflow(total > constraints.maxWidth + 0.5);
-                return ReorderableListView.builder(
-                  scrollController: _scroll,
-                  scrollDirection: Axis.horizontal,
-                  // The room the focus ring of an end tab needs.
-                  padding: EdgeInsets.symmetric(horizontal: margin),
-                  buildDefaultDragHandles: false,
-                  proxyDecorator: (child, _, _) =>
-                      Material(type: MaterialType.transparency, child: child),
-                  itemCount: widget.tabs.length,
-                  // The index it lands at, the moved tab taken out first.
-                  onReorderItem: (from, to) {
-                    if (to != from) widget.onReorder(from, to);
-                  },
-                  itemBuilder: (context, index) {
-                    final tab = widget.tabs[index];
-                    Widget item = _Tab(
-                      key: _keyOf(tab.id),
-                      focusNode: _nodeOf(tab.id),
-                      onStep: (by) => _focusTab(switch (by) {
-                        _toStart => 0,
-                        _toEnd => widget.tabs.length - 1,
-                        _ => index + by,
-                      }),
-                      tab: tab,
-                      active: index == widget.active,
-                      height: tabHeight,
-                      width:
-                          _widths[index] -
-                          (index < widget.tabs.length - 1 ? spec.gap : 0),
-                      spec: spec,
-                      // No line before the first, nor beside the active.
-                      separator:
-                          index > 0 &&
-                          index != widget.active &&
-                          index - 1 != widget.active,
-                      onSelect: () => widget.onSelect(index),
-                      onClose: () => widget.onClose(index),
-                      onMenu: (anchor) => widget.onMenu(index, anchor),
-                      onLeave: widget.onLeave,
-                      closeTooltip: widget.closeTooltip,
-                    );
-                    item = widget.wrapTab?.call(index, item) ?? item;
-                    return ReorderableDragStartListener(
-                      key: ValueKey(tab.id),
-                      index: index,
-                      child: Padding(
-                        padding: EdgeInsets.only(
-                          top: spec.top,
-                          bottom: spec.bottom,
-                          right: index < widget.tabs.length - 1 ? spec.gap : 0,
-                        ),
-                        child: item,
+          // The edge under the bar above, under the tabs: the active tab
+          // covers it and opens into that bar.
+          if (flat != null) _FlatEdge(colors: flat),
+          Row(
+            spacing: flat != null ? 0 : metrics.toolbarSpacing,
+            children: [
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    _onWidth(constraints.maxWidth);
+                    // A pinned tab is as wide as its name, the others share
+                    // what is left; each in whole pixels, so the tabs (each on
+                    // a layer of the list's own) and their lines land on them.
+                    final pinned = [
+                      for (final tab in widget.tabs)
+                        if (tab.pinned)
+                          (_pinnedWidth(context, tab, scale) * ratio)
+                                  .ceilToDouble() /
+                              ratio,
+                    ];
+                    final rest = widget.tabs.length - pinned.length;
+                    final gaps = spec.gap * (widget.tabs.length - 1);
+                    final room =
+                        constraints.maxWidth -
+                        2 * margin -
+                        gaps -
+                        pinned.fold(0.0, (sum, w) => sum + w);
+                    final width = rest == 0
+                        ? 0.0
+                        : ((room / rest).clamp(
+                                        spec.minWidth * scale,
+                                        spec.maxWidth * scale,
+                                      ) *
+                                      ratio)
+                                  .floorToDouble() /
+                              ratio;
+                    var nextPinned = 0;
+                    // Each tab's extent along the strip: its width and the gap
+                    // after it.
+                    _widths = [
+                      for (final (i, tab) in widget.tabs.indexed)
+                        (tab.pinned ? pinned[nextPinned++] : width) +
+                            (i < widget.tabs.length - 1 ? spec.gap : 0),
+                    ];
+                    _margin = margin;
+                    final total = _widths.fold(2 * margin, (sum, w) => sum + w);
+                    _setOverflow(total > constraints.maxWidth + 0.5);
+                    return ReorderableListView.builder(
+                      scrollController: _scroll,
+                      scrollDirection: Axis.horizontal,
+                      // The room the focus ring of an end tab needs.
+                      padding: EdgeInsets.symmetric(horizontal: margin),
+                      buildDefaultDragHandles: false,
+                      proxyDecorator: (child, _, _) => Material(
+                        type: MaterialType.transparency,
+                        child: child,
                       ),
+                      itemCount: widget.tabs.length,
+                      // The index it lands at, the moved tab taken out first.
+                      onReorderItem: (from, to) {
+                        if (to != from) widget.onReorder(from, to);
+                      },
+                      itemBuilder: (context, index) {
+                        final tab = widget.tabs[index];
+                        Widget item = _Tab(
+                          key: _keyOf(tab.id),
+                          focusNode: _nodeOf(tab.id),
+                          onStep: (by) => _focusTab(switch (by) {
+                            _toStart => 0,
+                            _toEnd => widget.tabs.length - 1,
+                            _ => index + by,
+                          }),
+                          tab: tab,
+                          active: index == widget.active,
+                          height: tabHeight,
+                          width:
+                              _widths[index] -
+                              (index < widget.tabs.length - 1 ? spec.gap : 0),
+                          spec: spec,
+                          // No line before the first; beside the active one
+                          // only between flat tabs.
+                          separator:
+                              index > 0 &&
+                              (flat != null ||
+                                  index != widget.active &&
+                                      index - 1 != widget.active),
+                          onSelect: () => widget.onSelect(index),
+                          onClose: () => widget.onClose(index),
+                          onMenu: (anchor) => widget.onMenu(index, anchor),
+                          onLeave: widget.onLeave,
+                          closeTooltip: widget.closeTooltip,
+                        );
+                        item = widget.wrapTab?.call(index, item) ?? item;
+                        return ReorderableDragStartListener(
+                          key: ValueKey(tab.id),
+                          index: index,
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              top: flat != null ? 0 : spec.top,
+                              bottom: flat != null ? 0 : spec.bottom,
+                              right: index < widget.tabs.length - 1
+                                  ? spec.gap
+                                  : 0,
+                            ),
+                            child: item,
+                          ),
+                        );
+                      },
                     );
                   },
-                );
-              },
-            ),
-          ),
-          if (_overflows)
-            AppIconButton(
-              icon: AppIcons.chevronDown,
-              tooltip: widget.listTooltip,
-              onPressed: _showList,
-            ),
-          AppIconButton(
-            icon: AppIcons.add,
-            tooltip: widget.newTabTooltip,
-            shortcut: widget.newTabShortcut,
-            onPressed: widget.onNewTab,
+                ),
+              ),
+              if (_overflows)
+                _ButtonCell(
+                  flat: flat,
+                  child: AppIconButton(
+                    icon: AppIcons.chevronDown,
+                    tooltip: widget.listTooltip,
+                    onPressed: _showList,
+                  ),
+                ),
+              _ButtonCell(
+                flat: flat,
+                child: AppIconButton(
+                  icon: AppIcons.add,
+                  tooltip: widget.newTabTooltip,
+                  shortcut: widget.newTabShortcut,
+                  onPressed: widget.onNewTab,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -574,8 +626,11 @@ class _TabState extends State<_Tab> {
         ? Icon(AppIcons.pin, size: AppIconSize.sm, color: colors.textFaint)
         : null;
     final icon = Icon(tab.icon, size: AppIconSize.sm, color: ink);
+    final flat = widget.spec.flat ? _FlatColors.of(context) : null;
     final fill = active
         ? switch (style) {
+            // A window tab is the bar above's own colour.
+            AppPlatformStyle.macos when flat != null => colors.windowChrome,
             AppPlatformStyle.macos ||
             AppPlatformStyle.windows => context.colors.surface,
             AppPlatformStyle.gnome => colors.selectionFill,
@@ -585,7 +640,9 @@ class _TabState extends State<_Tab> {
         : null;
     final radius = metrics.radius.control;
     // TabView's selected tab: top corners of an overlay's radius.
-    final shape = style == AppPlatformStyle.windows
+    final shape = flat != null
+        ? BorderRadius.zero
+        : style == AppPlatformStyle.windows
         ? BorderRadius.vertical(top: Radius.circular(metrics.radius.popover))
         : BorderRadius.circular(radius);
     // A centred name takes its icon along, as Safari's and AdwTabBar's do.
@@ -623,7 +680,7 @@ class _TabState extends State<_Tab> {
       decoration: BoxDecoration(
         color: fill,
         borderRadius: shape,
-        boxShadow: active && style == AppPlatformStyle.macos
+        boxShadow: active && style == AppPlatformStyle.macos && flat == null
             ? [
                 BoxShadow(
                   color: Colors.black.withValues(
@@ -636,7 +693,20 @@ class _TabState extends State<_Tab> {
       ),
       child: Row(spacing: _tabGap, children: children),
     );
-    body = FocusRing(radius: radius, child: body);
+    // Flat tabs touch: the ring goes inside.
+    body = flat != null
+        ? Stack(
+            children: [
+              body,
+              Positioned.fill(
+                child: Padding(
+                  padding: EdgeInsets.all(metrics.focusRingWidth + 1),
+                  child: FocusRing(radius: radius, child: const SizedBox()),
+                ),
+              ),
+            ],
+          )
+        : FocusRing(radius: radius, child: body);
     final separatorInset = widget.spec.separatorInset;
     final separator = separatorInset != null && widget.separator;
     return Semantics(
@@ -687,23 +757,26 @@ class _TabState extends State<_Tab> {
                           widget.onMenu(details.globalPosition & Size.zero),
                       child: Container(
                         width: widget.width,
-                        padding: const EdgeInsets.symmetric(horizontal: 1),
-                        // A short line at the start, as Finder's and
-                        // TabView's separators stand off the bar's edges.
+                        padding: EdgeInsets.symmetric(
+                          horizontal: flat != null ? 0 : 1,
+                        ),
+                        // A line at the start: the bar's height between
+                        // flat tabs, short elsewhere, as TabView's stand
+                        // off the bar's edges.
                         child: Stack(
                           clipBehavior: Clip.none,
                           children: [
                             body,
                             if (separator)
                               Positioned(
-                                left: -1,
+                                left: flat != null ? 0 : -1,
                                 top: separatorInset,
                                 bottom: separatorInset,
                                 child: SizedBox(
                                   width: 1,
                                   child: AppRule(
                                     axis: Axis.vertical,
-                                    color: colors.line,
+                                    color: flat?.line ?? colors.line,
                                   ),
                                 ),
                               ),
@@ -754,8 +827,122 @@ typedef _Spec = ({
   double maxWidth,
   double? separatorInset,
   bool centred,
+
+  /// macOS 15's window tabs: edge to edge, the active one open to the bar
+  /// above ([_FlatColors]).
+  bool flat,
   TextStyle font,
 });
+
+/// The colours of macOS 15's window tab bar, as measured beside AppKit
+/// (Finder, and an NSWindow with a unified toolbar) and set on the bar
+/// above ([AppColorsExt.windowChrome], the active tab's colour). Light:
+/// toolbar 255, the bar under the inactive tabs 240, its top edge 200 with
+/// 225 and 237 under it, lines 220 between the tabs, 185 before the + cell,
+/// 212 under it all. Dark: toolbar 34, the bar 19, black edges, lines 52.
+@immutable
+class _FlatColors {
+  const _FlatColors({
+    required this.bar,
+    required this.edge,
+    required this.shade,
+    required this.line,
+    required this.cellLine,
+    required this.bottom,
+  });
+
+  factory _FlatColors.of(BuildContext context) {
+    final chrome = context.appColors.windowChrome;
+    Color over(Color base, Color ink, double alpha) =>
+        Color.alphaBlend(ink.withValues(alpha: alpha), base);
+    if (context.isDark) {
+      final bar = over(chrome, Colors.black, 0.52);
+      final line = over(bar, Colors.white, 0.14);
+      return _FlatColors(
+        bar: bar,
+        edge: Colors.black,
+        shade: const [],
+        line: line,
+        cellLine: line,
+        bottom: Colors.black,
+      );
+    }
+    // As the screen shows them beside AppKit's: a little under the
+    // ratios measured, the darker the more.
+    final bar = over(chrome, Colors.black, 0.045);
+    return _FlatColors(
+      bar: bar,
+      edge: over(bar, Colors.black, 0.15),
+      shade: [
+        over(bar, Colors.black, 0.06),
+        over(bar, Colors.black, 0.0125),
+      ],
+      line: over(bar, Colors.black, 0.08),
+      cellLine: over(bar, Colors.black, 0.2),
+      bottom: over(bar, Colors.black, 0.1),
+    );
+  }
+
+  /// Under the inactive tabs and the buttons.
+  final Color bar;
+
+  /// The bar's top edge, and the rows of shade under it.
+  final Color edge;
+  final List<Color> shade;
+
+  /// Between two tabs.
+  final Color line;
+
+  /// Before the ⌄ and + cells.
+  final Color cellLine;
+
+  /// Under the bar.
+  final Color bottom;
+}
+
+/// A flat strip's top edge with its shade, along the whole bar.
+class _FlatEdge extends StatelessWidget {
+  const _FlatEdge({required this.colors});
+
+  final _FlatColors colors;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.topCenter,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppRule(color: colors.edge),
+        for (final shade in colors.shade)
+          SizedBox(height: 1, child: ColoredBox(color: shade)),
+      ],
+    ),
+  );
+}
+
+/// The ⌄ or + button: on a flat strip in a cell of its own after a line,
+/// as Finder's +; as it is on the others.
+class _ButtonCell extends StatelessWidget {
+  const _ButtonCell({required this.flat, required this.child});
+
+  final _FlatColors? flat;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final flat = this.flat;
+    if (flat == null) return child;
+    return Container(
+      width: context.metrics.iconButtonSize.width,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        border: AppBorder(left: BorderSide(color: flat.cellLine)),
+      ),
+      child: child,
+    );
+  }
+}
 
 /// A tab's close button: a small square that fills under the pointer and
 /// while pressed, as Safari's does, so the glyph is not the whole target.

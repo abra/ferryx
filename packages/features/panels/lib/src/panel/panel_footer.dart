@@ -55,14 +55,18 @@ class PanelFooter extends StatelessWidget {
   /// The server's capsule was clicked while it is out of reach.
   final VoidCallback? onReconnect;
 
-  /// The footer's height at the text size in [context]: a control's
-  /// height and a margin, taller as the text grows.
+  /// The footer's height at the text size in [context]: the hint line's
+  /// under it, a bar button's and a margin (as Finder's path and status
+  /// bars, 27 and a line on macOS 15, match), taller as the text grows.
   static double heightOf(BuildContext context) {
     final line = context.text.bodySmall!;
     final text = MediaQuery.textScalerOf(
       context,
     ).scale(line.fontSize! * line.height!);
-    return math.max(context.metrics.controlHeight, text + AppSpacing.sm) +
+    return math.max(
+          context.metrics.iconButtonSize.height,
+          text + AppSpacing.sm,
+        ) +
         AppSpacing.xs;
   }
 
@@ -169,9 +173,24 @@ class PanelFooter extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.md),
           ],
-          Expanded(child: left),
-          const SizedBox(width: AppSpacing.md),
-          Flexible(child: _Line(right, muted)),
+          // The count and the free space keep to the end, up to half the
+          // line; the focused item's name gives way first.
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) => Row(
+                children: [
+                  Expanded(child: left),
+                  const SizedBox(width: AppSpacing.md),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: constraints.maxWidth / 2,
+                    ),
+                    child: _Line(right, muted),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

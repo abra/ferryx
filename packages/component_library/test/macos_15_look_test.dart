@@ -586,6 +586,113 @@ void main() {
       expect(icon, findsNothing);
     });
   });
+
+  group('window tabs, as Finder\'s on macOS 15', () {
+    /// The bar above in its colour, the strip under it, at 1x; the grey of
+    /// each pixel by its position in the strip's box.
+    Future<(Rect, int Function(double x, double y))> pumpStrip(
+      WidgetTester tester,
+      Brightness brightness,
+    ) async {
+      tester.view.physicalSize = const Size(400, 120);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          themeAnimationDuration: Duration.zero,
+          theme: AppTheme.of(AppPlatformStyle.macos, brightness),
+          home: Builder(
+            builder: (context) => RepaintBoundary(
+              child: Material(
+                color: context.appColors.windowChrome,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 20),
+                    AppTabStrip(
+                      tabs: const [
+                        AppTab(id: 0, label: 'A', icon: AppIcons.folder),
+                        AppTab(id: 1, label: 'B', icon: AppIcons.folder),
+                        AppTab(id: 2, label: 'C', icon: AppIcons.folder),
+                      ],
+                      active: 1,
+                      onSelect: (_) {},
+                      onClose: (_) {},
+                      onReorder: (_, _) {},
+                      onMenu: (_, _) {},
+                      onNewTab: () {},
+                      closeTooltip: 'Close',
+                      newTabTooltip: 'New',
+                      listTooltip: 'All',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final bar = tester.getRect(find.byType(AppTabStrip));
+      final data = await tester.runAsync(() async {
+        final image = await captureImage(
+          find.byType(RepaintBoundary).evaluate().first,
+        );
+        return (
+          image.width,
+          (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!,
+        );
+      });
+      final (width, bytes) = data!;
+      return (
+        bar,
+        (double x, double y) =>
+            bytes.getUint8(((bar.top + y).round() * width + x.round()) * 4 + 1),
+      );
+    }
+
+    double tabLeft(WidgetTester tester, String label) => tester
+        .getRect(
+          find.ancestor(
+            of: find.text(label),
+            matching: find.byType(HintTarget),
+          ),
+        )
+        .left;
+
+    for (final brightness in Brightness.values) {
+      testWidgets('${brightness.name}: the active tab opens into the bar '
+          'above in its colour; the others sit lower, under an edge, with a '
+          'line between them', (tester) async {
+        final (bar, grey) = await pumpStrip(tester, brightness);
+        final above = grey(200, -3);
+        final b = tabLeft(tester, 'B');
+        final c = tabLeft(tester, 'C');
+        // Clear of the names and icons in the middle.
+        final inA = bar.left + 3;
+        final inB = b + 3;
+        expect(c, greaterThan(inB));
+        // The active tab: the bar's colour from its top row down.
+        expect(grey(inB, 0), above);
+        expect(grey(inB, 14), above);
+        // An inactive one: an edge on top, then the bar, apart from the
+        // bar above.
+        final fill = grey(inA, 14);
+        expect(fill, isNot(above));
+        expect(grey(inA, 0), isNot(fill), reason: 'the edge');
+        // The line between A and B, the bar's height.
+        expect(grey(b, 14), isNot(fill));
+        if (brightness == Brightness.light) {
+          // Under the toolbar's white: lower, and a shade under the edge.
+          expect(fill, lessThan(above));
+          expect(grey(inA, 1), lessThan(fill));
+        } else {
+          // Darker than the bar above, as AppKit's dark tab bar is.
+          expect(fill, lessThan(above));
+        }
+      });
+    }
+  });
 }
 
 /// One transparent pixel.

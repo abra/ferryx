@@ -78,12 +78,29 @@ class AppKeyCap extends StatelessWidget {
     this.label, {
     this.emphasized = false,
     this.muted = false,
+    this.typed = false,
     super.key,
   });
 
   final String label;
   final bool emphasized;
   final bool muted;
+
+  /// The label is text one types (Vim's `l`, `gg`, `/`), not a key's
+  /// name: in the monospace face, where `l`, `I` and `1` tell apart.
+  final bool typed;
+
+  /// The cap's face: the key caps' own, or the monospace one at its size
+  /// and line for [typed] text, so the caps stand alike.
+  TextStyle _faceOf(BuildContext context) {
+    final caps = context.metrics.typeScale.keyCap;
+    return typed
+        ? context.metrics.typeScale.mono.copyWith(
+            fontSize: caps.fontSize,
+            height: caps.height,
+          )
+        : caps;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +132,7 @@ class AppKeyCap extends StatelessWidget {
         ),
         child: _KeyCapRow(
           label,
-          style: context.metrics.typeScale.keyCap.copyWith(color: ink),
+          style: _faceOf(context).copyWith(color: ink),
           color: ink,
         ),
       ),

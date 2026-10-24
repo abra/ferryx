@@ -740,6 +740,7 @@ class _PanelViewState extends State<PanelView> {
                     onPanelMenu: widget.hooks.onPanelMenu,
                     shortcutMap: widget.shortcutMap,
                     decor: widget.windowDecor,
+                    edge: !showTabs || !AppTabStrip.joinsBarAbove(context),
                   ),
                   if (showTabs)
                     AppTabStrip(

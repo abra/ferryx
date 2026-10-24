@@ -12,9 +12,10 @@ void main() {
     List<AppTab> tabs, {
     int active = 0,
     AppPlatformStyle style = AppPlatformStyle.macos,
+    MacGeneration generation = MacGeneration.sequoia,
     double width = 600,
   }) => MaterialApp(
-    theme: AppTheme.of(style, Brightness.light),
+    theme: AppTheme.of(style, Brightness.light, generation: generation),
     home: Scaffold(
       body: Align(
         alignment: Alignment.topLeft,
@@ -200,6 +201,63 @@ void main() {
     await tester.pumpAndSettle();
     expect(calls, ['move 0 2']);
   });
+
+  Rect tabRect(WidgetTester tester, String label) => tester.getRect(
+    find.ancestor(of: find.text(label), matching: find.byType(HintTarget)),
+  );
+
+  testWidgets('on macOS 15 the tabs fill the bar edge to edge, as Finder\'s '
+      'window tabs: they touch, + stands in a cell of its own at the end, '
+      'and the strip joins the bar above', (tester) async {
+    await tester.pumpWidget(strip(named(['Работа', 'Загрузки']), active: 1));
+    final bar = tester.getRect(find.byType(AppTabStrip));
+    final first = tabRect(tester, 'Работа');
+    final second = tabRect(tester, 'Загрузки');
+    final plus = tester.getRect(
+      find.ancestor(
+        of: find.byIcon(AppIcons.add),
+        matching: find.byType(AppIconButton),
+      ),
+    );
+    final metrics = AppTheme.of(
+      AppPlatformStyle.macos,
+      Brightness.light,
+    ).extension<AppMetrics>()!;
+    expect(first.left, bar.left);
+    expect(first.right, second.left);
+    // The + cell: a line, then the button's width, to the end.
+    expect(bar.right - second.right, metrics.iconButtonSize.width);
+    expect(plus.right, lessThanOrEqualTo(bar.right));
+    expect(first.height, 28);
+    expect(bar.height, 29, reason: '28 and the line under them');
+    expect(
+      AppTabStrip.joinsBarAbove(tester.element(find.byType(AppTabStrip))),
+      isTrue,
+    );
+  });
+
+  for (final (style, generation) in [
+    (AppPlatformStyle.macos, MacGeneration.tahoe),
+    (AppPlatformStyle.windows, MacGeneration.sequoia),
+    (AppPlatformStyle.gnome, MacGeneration.sequoia),
+  ]) {
+    testWidgets('${style.name} ${generation.name}: tabs stand apart on the '
+        'bar, which keeps the line of the bar above', (tester) async {
+      await tester.pumpWidget(
+        strip(
+          named(['Работа', 'Загрузки']),
+          style: style,
+          generation: generation,
+        ),
+      );
+      final bar = tester.getRect(find.byType(AppTabStrip));
+      expect(tabRect(tester, 'Работа').left, greaterThan(bar.left));
+      expect(
+        AppTabStrip.joinsBarAbove(tester.element(find.byType(AppTabStrip))),
+        isFalse,
+      );
+    });
+  }
 
   testWidgets('the strip grows with the text', (tester) async {
     await tester.pumpWidget(strip(named(['Сома'])));

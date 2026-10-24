@@ -22,6 +22,7 @@ class PanelHeader extends StatelessWidget {
     required this.onPanelMenu,
     required this.shortcutMap,
     this.decor = WindowDecor.none,
+    this.edge = true,
     super.key,
   });
 
@@ -38,6 +39,10 @@ class PanelHeader extends StatelessWidget {
   final ShortcutMap shortcutMap;
   final WindowDecor decor;
 
+  /// The line under the bar; none over a tab strip that draws its own and
+  /// opens its active tab into the bar ([AppTabStrip.joinsBarAbove]).
+  final bool edge;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -46,7 +51,12 @@ class PanelHeader extends StatelessWidget {
       height: context.metrics.topBarHeight,
       decoration: BoxDecoration(
         color: colors.windowChrome,
-        border: AppBorder(bottom: BorderSide(color: colors.line)),
+        // The height stays: the bar's last row is its own colour then.
+        border: AppBorder(
+          bottom: BorderSide(
+            color: edge ? colors.line : colors.windowChrome,
+          ),
+        ),
       ),
       child: AppTopBarRow(
         leftInset: leftInset,

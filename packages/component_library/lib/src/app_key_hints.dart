@@ -7,12 +7,15 @@ import 'theme/tokens/app_spacing.dart';
 /// One entry of [AppKeyHints]: the keys and what they do.
 @immutable
 class AppKeyHint {
-  const AppKeyHint(this.keys, this.label);
+  const AppKeyHint(this.keys, this.label, {this.typed = false});
 
   /// Key labels, each drawn as its own cap (`['←', '→']`); build them with
   /// `Chord.keyLabel` so they read right on every desktop.
   final List<String> keys;
   final String label;
+
+  /// The keys are typed text (Vim's `l`, `gg`, `/`): see [AppKeyCap.typed].
+  final bool typed;
 }
 
 /// The keys that work right now, as a strip of caps and words that wraps:
@@ -38,7 +41,7 @@ class AppKeyHints extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               for (final key in hint.keys) ...[
-                AppKeyCap(key),
+                AppKeyCap(key, typed: hint.typed),
                 const SizedBox(width: AppSpacing.xxs),
               ],
               const SizedBox(width: AppSpacing.xxs),
