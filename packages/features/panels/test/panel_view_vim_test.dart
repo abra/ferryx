@@ -241,6 +241,43 @@ void main() {
     expect(tab().cursor, 2);
   });
 
+  testWidgets('h and l move by a column where the names stand in columns, '
+      'as vifm\'s ls-like view; in a table they go out and in; gl goes in '
+      'either way', (tester) async {
+    await pump(tester);
+    // Short, low enough for the six rows to take two columns.
+    cubit.setLayout(0);
+    tester.view.physicalSize = const Size(1000, 230);
+    await tester.pumpAndSettle();
+    final perColumn = cubit.geometry.rowsPerColumn;
+    expect(perColumn, inInclusiveRange(2, 5), reason: "two columns");
+    await type(tester, 'l');
+    expect(tab().cursor, perColumn);
+    await type(tester, 'h');
+    expect(tab().cursor, 0);
+    await type(tester, 'j');
+    await type(tester, 'gl');
+    verify(
+      () =>
+          files.openListing(any(), const Location.native('/home/docs'), any()),
+    ).called(1);
+
+    // Full: a table.
+    await cubit.start(null, home);
+    cubit.setLayout(2);
+    await tester.pumpAndSettle();
+    clearInteractions(files);
+    await type(tester, 'j');
+    await type(tester, 'l');
+    verify(
+      () =>
+          files.openListing(any(), const Location.native('/home/docs'), any()),
+    ).called(1);
+    // Out of docs, which l went into.
+    await type(tester, 'h');
+    verify(() => files.openListing(any(), home, any())).called(1);
+  });
+
   testWidgets('v grows a selection; Esc ends it, then clears it', (
     tester,
   ) async {

@@ -124,7 +124,9 @@ files is Rust.
   (⌘/) lists every key of where you are, and a quiet line under the panels
   names the keys for what is under the cursor or selected (Tab for the
   other panel, F5 to copy a selection…) until you hide it.
-- **Vim mode** (Settings → Panels): `h j k l` move and enter, counts
+- **Vim mode** (Settings → Panels): `j k` move; `h l` go out and in
+  in a table and step a column in the names-in-columns modes, as in
+  vifm's ls-like view (`gl` and `-` go in and out in any mode), counts
   (`5j`, `3G`, `2gt`), `gg` / `G`, `H M L`, `zz zt zb`, `f` / `F` / `;` /
   `,` jump by a first letter, `v` Visual selection, `x` / Space toggle,
   `yy` / `dd` / `p` copy or move between the panels through the shelf,

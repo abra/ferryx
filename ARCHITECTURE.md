@@ -532,8 +532,11 @@ Settings → Panels → "Vim keys" (`Preferences.vimMode`) lays a second key
 table over the panel scope; nothing else in the window changes.
 
 - `ShortcutMap.forUser(vimMotions: true)` applies `withVimMotions`: `j k`
-  move, `h` is the parent and `l` enters (ranger's reading of the home
-  row), `gg` / `G`, `H M L`, `zz zt zb`, `w` / `b` step columns in Brief,
+  move; in a table `h` is the parent and `l` enters (ranger's reading of
+  the home row), where the names stand in columns (Brief) they step a
+  column left and right (`vimLeft`, `vimRight`), as vifm's ls-like view;
+  `gl`, `gf` and `-` go in and out in either; `gg` / `G`, `H M L`,
+  `zz zt zb`, `w` / `b` step columns in Brief too,
   `f` / `F` / `;` / `,`, marks `m` and `'`, `v` / `V` Visual, `x` and Space
   select, `*` / `#` by extension, `yy` / `dd` / `p` / `uy` the shelf,
   `yn yp yd` names and paths, `D` trash, `dD` delete, `cw` / `A` / `I`

@@ -724,6 +724,8 @@
   "cmdVimHalfPageUp": "Half a Page Up",
   "cmdVimColumnNext": "Next Column",
   "cmdVimColumnPrevious": "Previous Column",
+  "cmdVimLeft": "Column Left or Out of the Folder",
+  "cmdVimRight": "Column Right or Into the Item",
   "cmdVimRenameAppend": "Rename at the End of the Name",
   "cmdVimRenamePrepend": "Rename at the Start of the Name",
   "cmdVimSortReverse": "Reverse the Sort Order",

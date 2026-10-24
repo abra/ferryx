@@ -2188,6 +2188,12 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get cmdVimColumnPrevious => 'Previous Column';
 
   @override
+  String get cmdVimLeft => 'Column Left or Out of the Folder';
+
+  @override
+  String get cmdVimRight => 'Column Right or Into the Item';
+
+  @override
   String get cmdVimRenameAppend => 'Rename at the End of the Name';
 
   @override

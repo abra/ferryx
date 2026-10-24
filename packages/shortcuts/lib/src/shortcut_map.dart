@@ -107,8 +107,11 @@ class ShortcutMap {
       : primaryChord(command)?.label(platform);
 
   /// Vim keys on top of the current bindings, as a file manager with Vim
-  /// keys (ranger, vifm) has them: `h j k l` for up, down, into and out,
-  /// `gg`/`G` and counts, `w`/`b` by a column in brief mode, `H M L` and
+  /// keys (ranger, vifm) has them: `j k` down and up; `h l` out of the
+  /// folder and into the item in a table, a column left and right where
+  /// the names stand in columns, as vifm's ls-like view has them (`gl`,
+  /// `gf` and `-` go in and out in either); `gg`/`G` and counts, `w`/`b`
+  /// by a column too, `H M L` and
   /// `zz zt zb` on the screen, `⌃d ⌃u ⌃f ⌃b` by half a page and a page
   /// (on desktops whose command key is not Control), `⌃o ⌃i` back and
   /// forward; `v` selects as the cursor moves, `Space` and `x` toggle a
@@ -151,9 +154,10 @@ class ShortcutMap {
     // Motions.
     add(AppCommand.moveDown, key(LogicalKeyboardKey.keyJ));
     add(AppCommand.moveUp, key(LogicalKeyboardKey.keyK));
-    add(AppCommand.enterItem, key(LogicalKeyboardKey.keyL));
+    add(AppCommand.vimLeft, key(LogicalKeyboardKey.keyH));
+    add(AppCommand.vimRight, key(LogicalKeyboardKey.keyL));
+    add(AppCommand.enterItem, seq(g, LogicalKeyboardKey.keyL));
     add(AppCommand.enterItem, seq(g, LogicalKeyboardKey.keyF));
-    add(AppCommand.goParent, key(LogicalKeyboardKey.keyH));
     add(AppCommand.goParent, key(LogicalKeyboardKey.minus));
     add(AppCommand.moveFirst, seq(g, g));
     add(AppCommand.moveLast, key(g, shift: true));
@@ -750,6 +754,8 @@ const _defaults = <AppCommand, List<Chord>>{
   AppCommand.vimHalfPageUp: [],
   AppCommand.vimColumnNext: [],
   AppCommand.vimColumnPrevious: [],
+  AppCommand.vimLeft: [],
+  AppCommand.vimRight: [],
   AppCommand.vimRenameAppend: [],
   AppCommand.vimRenamePrepend: [],
   AppCommand.vimSortReverse: [],

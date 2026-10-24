@@ -653,6 +653,8 @@
   "cmdVimHalfPageUp": "На полстраницы вверх",
   "cmdVimColumnNext": "Следующая колонка",
   "cmdVimColumnPrevious": "Предыдущая колонка",
+  "cmdVimLeft": "Колонка влево или выйти из папки",
+  "cmdVimRight": "Колонка вправо или войти",
   "cmdVimRenameAppend": "Переименовать с конца имени",
   "cmdVimRenamePrepend": "Переименовать с начала имени",
   "cmdVimSortReverse": "Обратить порядок сортировки",

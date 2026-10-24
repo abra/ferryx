@@ -238,6 +238,10 @@ enum AppCommand {
   vimHalfPageUp(CommandScope.panel),
   vimColumnNext(CommandScope.panel),
   vimColumnPrevious(CommandScope.panel),
+  // `h` and `l`: a column either way where the names stand in columns,
+  // out of the folder and into the item in a table (vifm's ls-like view).
+  vimLeft(CommandScope.panel),
+  vimRight(CommandScope.panel),
   vimRenameAppend(CommandScope.panel),
   vimRenamePrepend(CommandScope.panel),
   vimSortReverse(CommandScope.panel),

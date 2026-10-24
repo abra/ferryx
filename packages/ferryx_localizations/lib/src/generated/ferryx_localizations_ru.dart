@@ -2224,6 +2224,12 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String get cmdVimColumnPrevious => 'Предыдущая колонка';
 
   @override
+  String get cmdVimLeft => 'Колонка влево или выйти из папки';
+
+  @override
+  String get cmdVimRight => 'Колонка вправо или войти';
+
+  @override
   String get cmdVimRenameAppend => 'Переименовать с конца имени';
 
   @override

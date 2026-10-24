@@ -3860,6 +3860,18 @@ abstract class FerryxLocalizations {
   /// **'Previous Column'**
   String get cmdVimColumnPrevious;
 
+  /// No description provided for @cmdVimLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Column Left or Out of the Folder'**
+  String get cmdVimLeft;
+
+  /// No description provided for @cmdVimRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Column Right or Into the Item'**
+  String get cmdVimRight;
+
   /// No description provided for @cmdVimRenameAppend.
   ///
   /// In en, this message translates to:

@@ -151,6 +151,13 @@ class _PanelViewState extends State<PanelView> {
     return layouts[tab.layoutIndex.clamp(0, layouts.length - 1)];
   }
 
+  /// Whether the names stand in columns (brief mode), where `h` and `l`
+  /// move by a column.
+  bool get _inColumns => switch (_cubit.state.active) {
+    final tab? => _layoutOf(tab).mode == ViewMode.brief,
+    null => false,
+  };
+
   @override
   void initState() {
     super.initState();
@@ -428,6 +435,10 @@ class _PanelViewState extends State<PanelView> {
     AppCommand.vimHalfPageUp: () => _cubit.moveCursor(-_halfPage * _count),
     AppCommand.vimColumnNext: () => _cubit.moveColumn(_count),
     AppCommand.vimColumnPrevious: () => _cubit.moveColumn(-_count),
+    AppCommand.vimLeft: () =>
+        _inColumns ? _cubit.moveColumn(-_count) : unawaited(_cubit.goParent()),
+    AppCommand.vimRight: () =>
+        _inColumns ? _cubit.moveColumn(_count) : unawaited(_enter()),
     AppCommand.vimRenameAppend: () =>
         _cubit.startRenaming(caret: RenameCaret.end),
     AppCommand.vimRenamePrepend: () =>
