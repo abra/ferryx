@@ -2282,6 +2282,24 @@ abstract class FerryxLocalizations {
   /// **'Hide the hints'**
   String get hintsHide;
 
+  /// No description provided for @hintsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Shortcuts'**
+  String get hintsHelp;
+
+  /// No description provided for @commandsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Commands'**
+  String get commandsButton;
+
+  /// No description provided for @menuHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get menuHelp;
+
   /// No description provided for @hintsHidden.
   ///
   /// In en, this message translates to:

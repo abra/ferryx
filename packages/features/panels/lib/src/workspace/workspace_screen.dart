@@ -693,6 +693,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                               hasShelf: !workspace.shelf.isEmpty,
                               shortcutMap: widget.shortcutMap,
                               onHide: () => _hideKeyHints(context),
+                              onHelp: () => unawaited(
+                                widget.navigation.openCheatSheet(context),
+                              ),
                             ),
                         ],
                       ),
@@ -812,6 +815,7 @@ class _KeyHintsLine extends StatelessWidget {
     required this.hasShelf,
     required this.shortcutMap,
     required this.onHide,
+    required this.onHelp,
   });
 
   final FocusNode terminalFocus;
@@ -824,10 +828,15 @@ class _KeyHintsLine extends StatelessWidget {
   final bool hasShelf;
   final ShortcutMap shortcutMap;
   final VoidCallback onHide;
+  final VoidCallback onHelp;
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: Listenable.merge([terminalFocus, shelfFocus]),
+    listenable: Listenable.merge([
+      terminalFocus,
+      shelfFocus,
+      FocusManager.instance,
+    ]),
     builder: (context, _) {
       if (terminalHints case final hints? when terminalFocus.hasFocus) {
         return KeyHintStrip(
@@ -835,17 +844,29 @@ class _KeyHintsLine extends StatelessWidget {
           shortcutMap: shortcutMap,
           vim: false,
           onHide: onHide,
+          onHelp: onHelp,
         );
       }
+      // A text field, including Vim's command line, consumes sequences as text.
+      final typing =
+          FocusManager.instance.primaryFocus?.context
+              ?.findAncestorStateOfType<EditableTextState>() !=
+          null;
       return BlocBuilder<PanelCubit, PanelState>(
         bloc: panel,
         builder: (context, state) => KeyHintStrip(
           hints: shelfFocus.hasFocus
               ? shelfHints
-              : hintsFor(tab: state.active, vim: vim, hasRegister: hasShelf),
+              : hintsFor(
+                  tab: state.active,
+                  vim: vim,
+                  hasRegister: hasShelf,
+                  hasMultipleTabs: state.tabs.length > 1 && !typing,
+                ),
           shortcutMap: shortcutMap,
           vim: vim,
           onHide: onHide,
+          onHelp: onHelp,
         ),
       );
     },

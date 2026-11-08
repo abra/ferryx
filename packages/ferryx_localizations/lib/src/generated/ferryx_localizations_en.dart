@@ -1381,6 +1381,15 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get hintsHide => 'Hide the hints';
 
   @override
+  String get hintsHelp => 'Shortcuts';
+
+  @override
+  String get commandsButton => 'Commands';
+
+  @override
+  String get menuHelp => 'Help';
+
+  @override
   String get hintsHidden =>
       'Hints are off; Settings, General turns them back on';
 

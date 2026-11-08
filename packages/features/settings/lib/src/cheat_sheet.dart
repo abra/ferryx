@@ -101,7 +101,10 @@ class _CheatSheetDialogState extends State<CheatSheetDialog> {
         scopes: const {CommandScope.dialogs},
       ),
       child: CommandHandlers(
-        handlers: {AppCommand.dismiss: () => Navigator.of(context).pop()},
+        handlers: {
+          AppCommand.dismiss: () => Navigator.of(context).pop(),
+          AppCommand.cheatSheet: () => Navigator.of(context).pop(),
+        },
         child: AppDialog(
           title: l10n.cheatSheetTitle,
           width: AppSizes.panelDialogWidth,

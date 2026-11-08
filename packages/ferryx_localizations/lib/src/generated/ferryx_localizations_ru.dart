@@ -1417,6 +1417,15 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String get hintsHide => 'Скрыть подсказки';
 
   @override
+  String get hintsHelp => 'Клавиши';
+
+  @override
+  String get commandsButton => 'Команды';
+
+  @override
+  String get menuHelp => 'Справка';
+
+  @override
   String get hintsHidden =>
       'Подсказки выключены; включить снова: Настройки, Основные';
 

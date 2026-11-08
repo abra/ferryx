@@ -644,6 +644,28 @@ elsewhere — features never ask the platform.
   mode, an empty folder), with chords and labels from the shortcut map
   and the strings, so a rebound key shows as bound; `Preferences.showKeyHints`
   turns it off (its own close button, Settings → General).
+  With multiple tabs in the active panel, previous/next tab lead ordinary
+  browsing hints (`gT`/`gt` with Vim keys). Search, rename and selection keep
+  their own hints; text fields, the terminal and the shelf take precedence.
+  Closing back to one tab restores the ordinary browsing hints.
+  `AppKeyHints(singleLine: true)` measures the actual caps and labels during
+  layout and shows a complete leading prefix. The hidden suffix neither
+  paints nor enters semantics; resizing or changing the text scale measures
+  it again. The strip's Shortcuts button opens the existing cheat-sheet
+  navigation callback even without a bound chord.
+- `AppMenuBar` in the composition root installs Flutter's `PlatformMenuBar`
+  on macOS. Labels and key equivalents come from the shared command model;
+  unsupported commands are omitted and commands without a handler in the
+  focused scope are disabled. Focus changes rebuild the menus, not the
+  window. A selection resolves the current scope again before dispatch.
+  Edit routes to Flutter's text-editing intents in a field and to terminal
+  clipboard commands in the terminal. Native equivalents yield to field
+  editing and shell control keys; Flutter still handles window shortcuts.
+- The panel header uses `AppTopBarRow` forms for labelled sort and Commands
+  controls, falling back to icons as the path needs room. The sort button
+  names the field and direction in its tooltip. Opening the palette first
+  focuses that panel and waits for focus to settle, so both the offered
+  commands and the return focus belong to the clicked panel.
 - The panel's key map also holds the window's two-key sequences
   (`toShortcuts(sequencesOf:)`), tried before its own keys, so `gn`, `cd`,
   `gj` complete from a panel instead of running its `n`, `d`, `j`; a

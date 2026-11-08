@@ -46,13 +46,20 @@ const shelfHints = [
 ];
 
 /// The keys worth knowing right now, for what is under the cursor or
-/// selected: five at most, the plainest first. Pure, so it is tested.
+/// selected. Tab navigation leads ordinary browsing when available;
+/// editing, searching and selection keep their own hints.
 List<PanelHint> hintsFor({
   required PanelTabState? tab,
   required bool vim,
   required bool hasRegister,
+  bool hasMultipleTabs = false,
 }) {
-  final hints = _hintsFor(tab: tab, vim: vim, hasRegister: hasRegister);
+  final hints = _hintsFor(
+    tab: tab,
+    vim: vim,
+    hasRegister: hasRegister,
+    hasMultipleTabs: hasMultipleTabs,
+  );
   // A flat view names its way back first.
   if (tab != null &&
       tab.isFlat &&
@@ -67,6 +74,7 @@ List<PanelHint> _hintsFor({
   required PanelTabState? tab,
   required bool vim,
   required bool hasRegister,
+  required bool hasMultipleTabs,
 }) {
   if (tab == null) return const [CommandHint(AppCommand.switchPanel)];
   if (tab.renaming != null) {
@@ -107,6 +115,20 @@ List<PanelHint> _hintsFor({
       CommandHint(AppCommand.deselectAll),
     ];
   }
+  final browsing = _browsingHints(tab, hasRegister: hasRegister);
+  return hasMultipleTabs
+      ? [
+          const CommandHint(AppCommand.previousTab),
+          const CommandHint(AppCommand.nextTab),
+          ...browsing.take(3),
+        ]
+      : browsing;
+}
+
+List<PanelHint> _browsingHints(
+  PanelTabState tab, {
+  required bool hasRegister,
+}) {
   final focused = tab.focused;
   if (focused == null) {
     return const [
@@ -168,14 +190,15 @@ List<PanelHint> terminalHintsFor(TerminalPlace mode) =>
 
 /// A quiet line under the panels: the keys for what is under the cursor
 /// or selected, as caps and words in the secondary colour, the cheat
-/// sheet's key at the end, and a way to hide the line. Hints that do not
-/// fit the width are cut, never wrapped: the line stays one line.
+/// sheet at the end, and a way to hide the line. Only complete hints that
+/// fit are shown; the line never wraps.
 class KeyHintStrip extends StatelessWidget {
   const KeyHintStrip({
     required this.hints,
     required this.shortcutMap,
     required this.vim,
     required this.onHide,
+    required this.onHelp,
     super.key,
   });
 
@@ -183,6 +206,7 @@ class KeyHintStrip extends StatelessWidget {
   final ShortcutMap shortcutMap;
   final bool vim;
   final VoidCallback onHide;
+  final VoidCallback onHelp;
 
   @override
   Widget build(BuildContext context) {
@@ -242,21 +266,26 @@ class KeyHintStrip extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            // One line: what does not fit is clipped at the end.
-            child: ClipRect(
-              child: OverflowBox(
-                alignment: Alignment.centerLeft,
-                maxWidth: double.infinity,
-                child: AppKeyHints(entries),
+            child: AppKeyHints(entries, singleLine: true),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          AppTooltip(
+            message: l10n.cmdCheatSheet,
+            shortcut: sheet,
+            child: TextButton(
+              onPressed: onHelp,
+              style: AppButtonStyles.bar(context),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                spacing: AppSpacing.xs,
+                children: [
+                  const Icon(AppIcons.keyboard, size: AppIconSize.sm),
+                  Text(l10n.hintsHelp),
+                  if (sheet != null) AppKeyCap(sheet),
+                ],
               ),
             ),
           ),
-          if (sheet != null) ...[
-            const SizedBox(width: AppSpacing.lg),
-            AppKeyHints([
-              AppKeyHint([sheet], l10n.commandLabel(AppCommand.cheatSheet)),
-            ]),
-          ],
           const SizedBox(width: AppSpacing.sm),
           AppIconButton(
             icon: AppIcons.close,

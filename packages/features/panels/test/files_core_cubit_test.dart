@@ -338,9 +338,18 @@ void main() {
       sort: SortOptions(),
       flat: FlatView(generation: 1),
     );
-    final hints = hintsFor(tab: flatTab, vim: false, hasRegister: false);
+    final hints = hintsFor(
+      tab: flatTab,
+      vim: false,
+      hasRegister: false,
+      hasMultipleTabs: true,
+    );
     expect(hints.first, isA<CommandHint>());
     expect((hints.first as CommandHint).command, AppCommand.toggleFlatView);
+    expect(
+      hints.whereType<CommandHint>().map((hint) => hint.command),
+      containsAll([AppCommand.previousTab, AppCommand.nextTab]),
+    );
     expect(hints.length, lessThanOrEqualTo(5));
     const plainTab = PanelTabState(
       id: 't',

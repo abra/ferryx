@@ -1,4 +1,7 @@
+import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
+import 'package:ferryx_localizations/ferryx_localizations.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:panels_feature/panels_feature.dart';
@@ -56,9 +59,43 @@ void main() {
   ];
 
   test('with nothing in the panel: how to get to the other one', () {
-    expect(commands(hintsFor(tab: null, vim: false, hasRegister: false)), [
-      AppCommand.switchPanel,
-    ]);
+    expect(
+      commands(
+        hintsFor(
+          tab: null,
+          vim: false,
+          hasRegister: false,
+          hasMultipleTabs: true,
+        ),
+      ),
+      [AppCommand.switchPanel],
+    );
+  });
+
+  test('multiple tabs lead browsing hints, including an empty folder', () {
+    for (final current in [
+      tab(cursor: 0),
+      tab(cursor: 1),
+      tab(cursor: 2),
+      tab(rows: const [], cursor: -1),
+    ]) {
+      final hints = hintsFor(
+        tab: current,
+        vim: true,
+        hasRegister: true,
+        hasMultipleTabs: true,
+      );
+      expect(commands(hints).take(2), [
+        AppCommand.previousTab,
+        AppCommand.nextTab,
+      ]);
+      expect(hints.length, lessThanOrEqualTo(5));
+      final single = commands(
+        hintsFor(tab: current, vim: true, hasRegister: true),
+      );
+      expect(single, isNot(contains(AppCommand.previousTab)));
+      expect(single, isNot(contains(AppCommand.nextTab)));
+    }
   });
 
   test('a file, a folder and .. each get their own keys', () {
@@ -87,6 +124,7 @@ void main() {
       tab: tab(selected: {'a.txt'}),
       vim: false,
       hasRegister: false,
+      hasMultipleTabs: true,
     );
     expect(commands(hints), [
       AppCommand.copyTo,
@@ -107,6 +145,7 @@ void main() {
       tab: tab(renaming: 2),
       vim: false,
       hasRegister: false,
+      hasMultipleTabs: true,
     );
     expect(renaming, hasLength(2));
     expect((renaming.first as KeyHint).key, LogicalKeyboardKey.enter);
@@ -114,6 +153,7 @@ void main() {
       tab: tab(searching: true),
       vim: true,
       hasRegister: false,
+      hasMultipleTabs: true,
     );
     expect((prompt.first as KeyHint).word, HintWord.keepMatches);
     final matches = hintsFor(
@@ -125,6 +165,7 @@ void main() {
       ),
       vim: true,
       hasRegister: false,
+      hasMultipleTabs: true,
     );
     expect(commands(matches), [
       AppCommand.vimSearchNext,
@@ -135,6 +176,7 @@ void main() {
       tab: tab(cursor: 1, visualAnchor: 1, selected: {'docs'}),
       vim: true,
       hasRegister: false,
+      hasMultipleTabs: true,
     );
     expect(commands(visual), [
       AppCommand.vimYank,
@@ -160,5 +202,100 @@ void main() {
         AppCommand.switchPanel,
       ],
     );
+  });
+
+  testWidgets(
+    'help remains clickable and keyboard accessible without a binding',
+    (tester) async {
+      var opened = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(AppPlatformStyle.macos),
+          localizationsDelegates: FerryxSupportedLocales.delegates,
+          supportedLocales: FerryxSupportedLocales.locales,
+          home: Material(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: KeyHintStrip(
+                hints: const [],
+                shortcutMap: ShortcutMap.forUser(TargetPlatform.macOS)
+                    .rebind(AppCommand.cheatSheet, []),
+                vim: false,
+                onHide: () {},
+                onHelp: () => opened++,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Shortcuts'));
+      expect(opened, 1);
+      Focus.of(tester.element(find.text('Shortcuts'))).requestFocus();
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      expect(opened, 2);
+    },
+  );
+
+  testWidgets('tab hints use the mode, language and user bindings', (
+    tester,
+  ) async {
+    const platform = TargetPlatform.macOS;
+    final ru = lookupFerryxLocalizations(const Locale('ru'));
+    final hints = hintsFor(
+      tab: tab(cursor: 2),
+      vim: false,
+      hasRegister: false,
+      hasMultipleTabs: true,
+    );
+    Finder keyCap(String label) => find.byWidgetPredicate(
+      (w) => w is AppKeyCap && w.label == label,
+    );
+    for (final vim in [false, true]) {
+      final defaults = ShortcutMap.forUser(platform, vimMotions: vim);
+      for (final rebound in [false, true]) {
+        final map = rebound
+            ? defaults
+                  .rebind(AppCommand.nextTab, [
+                    Chord(LogicalKeyboardKey.keyN, primary: true, alt: true),
+                  ])
+                  .rebind(AppCommand.previousTab, [])
+            : defaults;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: vim
+                ? AppTheme.dark(AppPlatformStyle.macos)
+                : AppTheme.light(AppPlatformStyle.macos),
+            locale: const Locale('ru'),
+            localizationsDelegates: FerryxSupportedLocales.delegates,
+            supportedLocales: FerryxSupportedLocales.locales,
+            home: Material(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: KeyHintStrip(
+                  hints: hints,
+                  shortcutMap: map,
+                  vim: vim,
+                  onHide: () {},
+                  onHelp: () {},
+                ),
+              ),
+            ),
+          ),
+        );
+        final next = rebound ? '⌥⌘N' : (vim ? 'gt' : '⇧⌘]');
+        final previous = vim ? 'gT' : '⇧⌘[';
+        expect(find.text(ru.cmdNextTab), findsOneWidget);
+        expect(keyCap(next), findsOneWidget);
+        expect(keyCap(previous), rebound ? findsNothing : findsOneWidget);
+        expect(
+          find.text(ru.cmdPreviousTab),
+          rebound ? findsNothing : findsOneWidget,
+        );
+        final cap = tester.widget<AppKeyCap>(keyCap(next));
+        expect(cap.typed, vim && !rebound);
+        expect(tester.takeException(), isNull);
+      }
+    }
   });
 }

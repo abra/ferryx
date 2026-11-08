@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:component_library/component_library.dart';
+import 'package:ferryx/app/app_menu_bar.dart';
 import 'package:ferryx/app/dependency_scope.dart';
 import 'package:ferryx/app/routing.dart';
 import 'package:ferryx/app/window_chrome.dart';
@@ -10,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import 'package:palette_feature/palette_feature.dart';
 import 'package:platform_services/platform_services.dart';
 import 'package:preferences_service/preferences_service.dart';
+import 'package:settings_feature/settings_feature.dart';
 import 'package:shortcuts/shortcuts.dart';
 
 /// `MaterialApp.router` with theme, locale and the global shortcut table.
@@ -90,6 +92,23 @@ class _FerryxAppState extends State<FerryxApp> {
             child: Builder(
               builder: (context) => CommandHandlers(
                 handlers: {
+                  AppCommand.openSettings: () {
+                    if (_router.state.uri.path != AppRoutes.settings) {
+                      unawaited(_router.push<void>(AppRoutes.settings));
+                    }
+                  },
+                  AppCommand.cheatSheet: () {
+                    final focused = FocusManager.instance.primaryFocus?.context;
+                    if (focused == null) return;
+                    unawaited(
+                      showCheatSheet(
+                        focused,
+                        shortcutMap: deps.shortcutMap,
+                        platform: deps.platform,
+                        vim: deps.preferencesService.current.vimMode,
+                      ),
+                    );
+                  },
                   AppCommand.hintMode: () =>
                       HintModeHost.maybeOf(context)?.toggle(),
                   // Over every route: the palette lists what can run where
@@ -107,14 +126,17 @@ class _FerryxAppState extends State<FerryxApp> {
                     );
                   },
                 },
-                child: MediaQuery.withClampedTextScaling(
-                  maxScaleFactor: 1.6,
-                  child: _TextScale(
-                    scale: preferences.textScale,
-                    child: WindowChrome(
-                      title: _title,
-                      frame: deps.windowFrame,
-                      child: child!,
+                child: AppMenuBar(
+                  shortcutMap: deps.shortcutMap,
+                  child: MediaQuery.withClampedTextScaling(
+                    maxScaleFactor: 1.6,
+                    child: _TextScale(
+                      scale: preferences.textScale,
+                      child: WindowChrome(
+                        title: _title,
+                        frame: deps.windowFrame,
+                        child: child!,
+                      ),
                     ),
                   ),
                 ),

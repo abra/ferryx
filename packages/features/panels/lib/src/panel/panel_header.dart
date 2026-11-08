@@ -20,6 +20,7 @@ class PanelHeader extends StatelessWidget {
     required this.onSortMenu,
     required this.onLayoutMenu,
     required this.onPanelMenu,
+    required this.onCommandPalette,
     required this.shortcutMap,
     this.decor = WindowDecor.none,
     this.edge = true,
@@ -36,6 +37,7 @@ class PanelHeader extends StatelessWidget {
   final void Function(Rect anchor) onSortMenu;
   final void Function(Rect anchor) onLayoutMenu;
   final void Function(Rect anchor) onPanelMenu;
+  final VoidCallback onCommandPalette;
   final ShortcutMap shortcutMap;
   final WindowDecor decor;
 
@@ -62,8 +64,33 @@ class PanelHeader extends StatelessWidget {
         leftInset: leftInset,
         rightInset: rightInset,
         title: Breadcrumbs(location: location, onOpen: onOpen, active: active),
+        measureKey: sort.field,
+        forms: [
+          [
+            _SortIndicator(sort: sort, onPressed: onSortMenu),
+            _PaletteButton(
+              shortcutMap: shortcutMap,
+              onPressed: onCommandPalette,
+            ),
+          ],
+          [
+            _SortIndicator(sort: sort, onPressed: onSortMenu),
+            _PaletteButton(
+              shortcutMap: shortcutMap,
+              onPressed: onCommandPalette,
+              compact: true,
+            ),
+          ],
+          [
+            _SortIndicator(sort: sort, onPressed: onSortMenu, compact: true),
+            _PaletteButton(
+              shortcutMap: shortcutMap,
+              onPressed: onCommandPalette,
+              compact: true,
+            ),
+          ],
+        ],
         trailing: [
-          _SortIndicator(sort: sort, onPressed: onSortMenu),
           _BarButton(
             icon: layout.mode == ViewMode.list
                 ? AppIcons.layoutList
@@ -105,62 +132,88 @@ class _BarButton extends StatelessWidget {
   );
 }
 
-/// The sort order as a bar button: the field's letter, as orthodox
-/// managers show it (`n` by name, `S` by size the other way round), with
-/// the direction's arrow beside it; the tooltip names both.
+/// The field and direction, with an icon fallback when the path needs room.
 class _SortIndicator extends StatelessWidget {
-  const _SortIndicator({required this.sort, required this.onPressed});
+  const _SortIndicator({
+    required this.sort,
+    required this.onPressed,
+    this.compact = false,
+  });
 
   final SortOptions sort;
   final void Function(Rect anchor) onPressed;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final colors = context.appColors;
     final direction = sort.descending
         ? l10n.sortDescending
         : l10n.sortAscending;
-    return Builder(
-      builder: (context) => AppIconButton(
+    final label = l10n.sortFieldLabel(sort.field);
+    final tooltip = l10n.panelSortSummary(label, direction);
+    if (compact) {
+      return _BarButton(
         icon: AppIcons.sort,
-        tooltip: l10n.panelSortSummary(
-          l10n.sortFieldLabel(sort.field),
-          direction,
-        ),
+        tooltip: tooltip,
+        onPressed: onPressed,
+      );
+    }
+    return AppTooltip(
+      message: tooltip,
+      child: TextButton(
         onPressed: () => onPressed(keyboardMenuAnchor(context)),
-        glyph: Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: AppIconSize.md,
-                height: AppIconSize.md,
-                alignment: Alignment.center,
-                decoration: appEdgedBox(
-                  color: colors.controlFill,
-                  edge: colors.controlBorder,
-                  radius: context.metrics.radius.chip,
-                ),
-                child: Text(
-                  sort.indicator,
-                  style: context.mono
-                      .copyWith(
-                        fontSize: context.text.bodySmall?.fontSize,
-                        height: 1,
-                        color: context.colors.onSurface,
-                      )
-                      .weight(FontWeight.w600),
-                ),
-              ),
-              Icon(
-                sort.descending ? AppIcons.chevronDown : AppIcons.chevronUp,
-                size: AppIconSize.xs,
-                color: colors.textMuted,
-              ),
-            ],
-          ),
+        style: AppButtonStyles.bar(context),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: AppSpacing.xs,
+          children: [
+            Text(label),
+            Icon(
+              sort.descending ? AppIcons.keyDown : AppIcons.keyUp,
+              size: AppIconSize.sm,
+            ),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class _PaletteButton extends StatelessWidget {
+  const _PaletteButton({
+    required this.shortcutMap,
+    required this.onPressed,
+    this.compact = false,
+  });
+
+  final ShortcutMap shortcutMap;
+  final VoidCallback onPressed;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final shortcut = shortcutMap.labelOf(
+      AppCommand.commandPalette,
+      context.platform,
+    );
+    if (compact) {
+      return AppIconButton(
+        icon: AppIcons.search,
+        tooltip: l10n.cmdCommandPalette,
+        shortcut: shortcut,
+        onPressed: onPressed,
+      );
+    }
+    return AppTooltip(
+      message: l10n.cmdCommandPalette,
+      shortcut: shortcut,
+      child: TextButton.icon(
+        onPressed: onPressed,
+        style: AppButtonStyles.bar(context),
+        icon: const Icon(AppIcons.search, size: AppIconSize.sm),
+        label: Text(l10n.commandsButton),
       ),
     );
   }

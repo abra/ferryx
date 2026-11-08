@@ -679,6 +679,16 @@ class _PanelViewState extends State<PanelView> {
       ? AppIcons.folder
       : AppIcons.fileArchive;
 
+  Future<void> _openCommandPalette() async {
+    widget.hooks.onActivate();
+    widget.focusNode.requestFocus();
+    // Pointer clicks need not focus a toolbar button. Let the panel take
+    // focus before the palette captures its commands and return location.
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted || !widget.focusNode.hasFocus) return;
+    invokeCommand(widget.focusNode.context!, AppCommand.commandPalette);
+  }
+
   @override
   Widget build(BuildContext context) => BlocConsumer<PanelCubit, PanelState>(
     listenWhen: _asksPassword,
@@ -738,6 +748,7 @@ class _PanelViewState extends State<PanelView> {
                     onSortMenu: (anchor) => unawaited(_sortMenu(anchor)),
                     onLayoutMenu: (anchor) => unawaited(_layoutMenu(anchor)),
                     onPanelMenu: widget.hooks.onPanelMenu,
+                    onCommandPalette: () => unawaited(_openCommandPalette()),
                     shortcutMap: widget.shortcutMap,
                     decor: widget.windowDecor,
                     edge: !showTabs || !AppTabStrip.joinsBarAbove(context),

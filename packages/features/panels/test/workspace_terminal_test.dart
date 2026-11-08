@@ -266,6 +266,10 @@ void main() {
     expect(find.text(en.cmdHideTerminal), findsNothing);
     await showTerminal(tester);
     expect(find.text(en.cmdHideTerminal), findsOneWidget);
+    // Lower-priority hints may be offstage until the whole entry fits.
+    expect(find.text(en.cmdTerminalClear, skipOffstage: false), findsOneWidget);
+    tester.view.physicalSize = const Size(1800, 800);
+    await tester.pumpAndSettle();
     expect(find.text(en.cmdTerminalClear), findsOneWidget);
   });
 

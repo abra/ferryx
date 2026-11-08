@@ -246,6 +246,7 @@ class WorkspaceHarness {
     Brightness brightness = Brightness.light,
     AppPlatformStyle style = AppPlatformStyle.macos,
     WindowDecor decor = WindowDecor.none,
+    Map<AppCommand, VoidCallback> commandHandlers = const {},
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -271,7 +272,10 @@ class WorkspaceHarness {
               platform,
               scopes: const {CommandScope.global},
             ),
-            child: RepaintBoundary(key: shotKey, child: child),
+            child: CommandHandlers(
+              handlers: commandHandlers,
+              child: RepaintBoundary(key: shotKey, child: child),
+            ),
           ),
         ),
         home: WorkspaceScreen(

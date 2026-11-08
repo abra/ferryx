@@ -124,6 +124,14 @@ files is Rust.
   (⌘/) lists every key of where you are, and a quiet line under the panels
   names the keys for what is under the cursor or selected (Tab for the
   other panel, F5 to copy a selection…) until you hide it.
+  With multiple tabs in the active panel, it also shows how to switch them
+  (`gT` / `gt` in Vim mode), using your current key bindings.
+  Hints appear only when the whole entry fits; the **Shortcuts** button opens
+  the cheat sheet. **Commands** in a panel's top bar opens the command palette
+  for that panel (a search icon in a narrow panel). Sorting shows its field
+  and direction, with the full description on hover or keyboard focus.
+  On macOS, the menu bar groups file operations, navigation, view settings,
+  tabs, the terminal and help; its shortcuts follow your bindings.
 - **Vim mode** (Settings → Panels): `j k` move; `h l` go out and in
   in a table and step a column in the names-in-columns modes, as in
   vifm's ls-like view (`gl` and `-` go in and out in any mode), counts

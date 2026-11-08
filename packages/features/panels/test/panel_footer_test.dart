@@ -1,5 +1,6 @@
 import 'package:component_library/component_library.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:panels_feature/panels_feature.dart';
 import 'package:panels_feature/src/panel/panel_footer.dart';
@@ -38,6 +39,53 @@ void main() {
     setUp(() async {
       h = WorkspaceHarness();
       await h.setUp(vim: true);
+    });
+
+    Finder hint(String text) => find.descendant(
+      of: find.byType(KeyHintStrip),
+      matching: find.text(text),
+    );
+
+    testWidgets('tab hints follow creation, the active panel and closing', (
+      tester,
+    ) async {
+      await h.pump(tester);
+      expect(hint('gt'), findsNothing);
+      await h.press(tester, LogicalKeyboardKey.keyT, meta: true);
+      expect(hint('gt'), findsOneWidget);
+      expect(hint('gT'), findsOneWidget);
+
+      // The advertised sequences select tabs in the active panel.
+      await h.press(tester, LogicalKeyboardKey.keyG);
+      await h.press(tester, LogicalKeyboardKey.keyT);
+      expect(tester.widget<AppTabStrip>(find.byType(AppTabStrip)).active, 0);
+      await h.press(tester, LogicalKeyboardKey.keyG);
+      await h.press(tester, LogicalKeyboardKey.keyT, shift: true);
+      expect(tester.widget<AppTabStrip>(find.byType(AppTabStrip)).active, 1);
+
+      await h.press(tester, LogicalKeyboardKey.tab);
+      expect(hint('gt'), findsNothing, reason: 'the right panel has one tab');
+      await h.press(tester, LogicalKeyboardKey.tab);
+      expect(hint('gt'), findsOneWidget);
+      await h.press(tester, LogicalKeyboardKey.keyW, meta: true);
+      expect(hint('gt'), findsNothing);
+      expect(hint('gT'), findsNothing);
+    });
+
+    testWidgets('a command line hides tab hints until the panel has keys', (
+      tester,
+    ) async {
+      await h.pump(tester);
+      await h.press(tester, LogicalKeyboardKey.keyT, meta: true);
+      expect(hint('gt'), findsOneWidget);
+      await h.press(tester, LogicalKeyboardKey.semicolon, shift: true);
+      expect(find.byType(TextField), findsOneWidget);
+      expect(hint('gt'), findsNothing);
+      expect(hint('gT'), findsNothing);
+      await h.press(tester, LogicalKeyboardKey.escape);
+      expect(find.byType(TextField), findsNothing);
+      expect(hint('gt'), findsOneWidget);
+      expect(hint('gT'), findsOneWidget);
     });
 
     testWidgets('the keys of the hint line are typed text, in the monospace '
