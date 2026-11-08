@@ -11,6 +11,7 @@ import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 import 'package:terminal_feature/terminal_feature.dart';
 import 'package:terminal_service/terminal_service.dart';
+import 'package:xterm/xterm.dart';
 
 import 'fakes.dart';
 
@@ -28,6 +29,7 @@ void main() {
   late List<String> placed;
   late FocusNode focus;
   late TerminalSessionCubit cubit;
+  late ValueNotifier<TerminalPreferences> displayPreferences;
 
   final en = lookupFerryxLocalizations(const Locale('en'));
 
@@ -42,6 +44,7 @@ void main() {
     reached = [];
     placed = [];
     focus = FocusNode(debugLabel: 'terminal');
+    displayPreferences = ValueNotifier(const TerminalPreferences());
     when(() => preferences.current).thenReturn(const Preferences());
     when(() => service.start(any())).thenAnswer((_) async {
       final session = FakeSession();
@@ -50,7 +53,10 @@ void main() {
     });
   });
 
-  tearDown(() => focus.dispose());
+  tearDown(() {
+    focus.dispose();
+    displayPreferences.dispose();
+  });
 
   Future<void> pump(
     WidgetTester tester, {
@@ -89,15 +95,19 @@ void main() {
               for (final command in AppCommand.inScope(CommandScope.global))
                 command: () => reached.add(command),
             },
-            child: TerminalPane(
-              cubit: cubit,
-              focusNode: focus,
-              shortcutMap: map,
-              fontSize: 12,
-              placement: placement,
-              onHide: () => placed.add('hide'),
-              onTogglePanels: () => placed.add('panels'),
-              onToggleFullWindow: () => placed.add('full'),
+            child: ValueListenableBuilder<TerminalPreferences>(
+              valueListenable: displayPreferences,
+              builder: (context, prefs, _) => TerminalPane(
+                cubit: cubit,
+                focusNode: focus,
+                shortcutMap: map,
+                fontFamily: prefs.fontFamily,
+                fontSize: prefs.fontSize,
+                placement: placement,
+                onHide: () => placed.add('hide'),
+                onTogglePanels: () => placed.add('panels'),
+                onToggleFullWindow: () => placed.add('full'),
+              ),
             ),
           ),
         ),
@@ -156,6 +166,48 @@ void main() {
     await tester.tap(button(en.cmdToggleTerminal));
     await tester.tap(button(en.cmdTogglePanelsOverTerminal));
     expect(placed, ['hide', 'full', 'panels']);
+  });
+
+  testWidgets('changing the font updates the open terminal without losing '
+      'its session, text or selection', (tester) async {
+    await pump(tester);
+    final session = sessions.single;
+    session.emit(TerminalOutput(utf8.encode('kept output\r\n')));
+    await tester.pumpAndSettle();
+    await chord(tester, LogicalKeyboardKey.keyA, meta: true);
+
+    final before = tester.widget<TerminalView>(find.byType(TerminalView));
+    final beforeState = tester.state<TerminalViewState>(
+      find.byType(TerminalView),
+    );
+    final selection = before.controller!.selection;
+    final contents = cubit.terminal.buffer.getText();
+    displayPreferences.value = displayPreferences.value.copyWith(
+      fontFamily: 'Menlo',
+    );
+    await tester.pumpAndSettle();
+
+    final after = tester.widget<TerminalView>(find.byType(TerminalView));
+    expect(after.textStyle.fontFamily, 'Menlo');
+    expect(after.textStyle.fontSize, 12);
+    expect(after.terminal, same(before.terminal));
+    expect(after.controller, same(before.controller));
+    expect(after.controller!.selection, selection);
+    expect(
+      tester.state<TerminalViewState>(find.byType(TerminalView)),
+      same(beforeState),
+    );
+    expect(cubit.terminal.buffer.getText(), contents);
+    expect(sessions, hasLength(1));
+    expect(session.closed, isFalse);
+
+    displayPreferences.value = displayPreferences.value.copyWith(
+      fontFamily: '',
+    );
+    await tester.pumpAndSettle();
+    final restored = tester.widget<TerminalView>(find.byType(TerminalView));
+    expect(restored.textStyle.fontFamily, before.textStyle.fontFamily);
+    expect(sessions, hasLength(1));
   });
 
   testWidgets('on macOS: Return, arrows and Control keys go to the shell; '

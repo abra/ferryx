@@ -13,6 +13,7 @@ import 'quick_look.dart';
 /// pressing ↓ on it).
 class FakePlatformServices implements PlatformServices {
   FakePlatformServices({
+    this.fontFamilies = const [],
     this.capabilities = const PlatformCapabilities(
       quickLook: true,
       share: true,
@@ -22,6 +23,13 @@ class FakePlatformServices implements PlatformServices {
 
   @override
   final PlatformCapabilities capabilities;
+
+  /// The installed families a settings screen can offer.
+  List<String> fontFamilies;
+
+  @override
+  Future<List<String>> monospaceFontFamilies() async =>
+      List.unmodifiable(fontFamilies);
 
   /// Every list Quick Look was opened on or turned to, in order.
   final quickLooks = <QuickLookItems>[];

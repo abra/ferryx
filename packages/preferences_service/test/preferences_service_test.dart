@@ -46,6 +46,7 @@ void main() {
         vimMarks: {'a': 'native:/tmp'},
         terminal: TerminalPreferences(
           shell: '/bin/bash',
+          fontFamily: 'Geist Mono',
           fontSize: 14,
           scrollback: 20000,
           lines: 20,
@@ -83,6 +84,24 @@ void main() {
       expect(Preferences.fromJson({}).terminal, const TerminalPreferences());
     });
 
+    test('terminal font preferences accept old files and normalize names', () {
+      expect(TerminalPreferences.fromJson({}).fontFamily, isEmpty);
+      for (final invalid in [null, 42, false, <String>[]]) {
+        expect(
+          TerminalPreferences.fromJson({'fontFamily': invalid}).fontFamily,
+          isEmpty,
+        );
+      }
+      expect(
+        TerminalPreferences.fromJson({'fontFamily': '  Menlo  '}).fontFamily,
+        'Menlo',
+      );
+      expect(
+        TerminalPreferences.fromJson({'fontFamily': '   '}).fontFamily,
+        isEmpty,
+      );
+    });
+
     test('damaged values fall back to defaults', () {
       final prefs = Preferences.fromJson({
         'themeMode': 'purple',
@@ -108,6 +127,31 @@ void main() {
   });
 
   group('PreferencesService', () {
+    test(
+      'a font change is saved, restored and can return to the default',
+      () async {
+        final storage = InMemoryPreferencesStorage();
+        final service = await PreferencesService.create(storage: storage);
+        final seen = <String>[];
+        final subscription = service.stream.listen(
+          (p) => seen.add(p.terminal.fontFamily),
+        );
+        await service.update(
+          (p) => p.copyWith(terminal: p.terminal.copyWith(fontFamily: 'Menlo')),
+        );
+        final restored = await PreferencesService.create(storage: storage);
+        expect(restored.current.terminal.fontFamily, 'Menlo');
+        await service.update(
+          (p) => p.copyWith(terminal: p.terminal.copyWith(fontFamily: '')),
+        );
+        expect(service.current.terminal.fontFamily, isEmpty);
+        expect(seen, ['Menlo', '']);
+        await subscription.cancel();
+        await restored.dispose();
+        await service.dispose();
+      },
+    );
+
     test('broadcasts and saves every change in order', () async {
       final storage = InMemoryPreferencesStorage();
       final service = await PreferencesService.create(storage: storage);

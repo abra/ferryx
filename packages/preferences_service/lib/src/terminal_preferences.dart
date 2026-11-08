@@ -20,6 +20,7 @@ enum TerminalPlace {
 class TerminalPreferences extends Equatable {
   const TerminalPreferences({
     this.shell = '',
+    this.fontFamily = '',
     this.fontSize = 12,
     this.scrollback = 10000,
     this.lines = defaultLines,
@@ -37,6 +38,9 @@ class TerminalPreferences extends Equatable {
   /// The shell to run: a path or a name on `PATH`; empty for the user's
   /// login shell.
   final String shell;
+
+  /// An installed font family; empty for the platform's monospace face.
+  final String fontFamily;
   final double fontSize;
 
   /// Lines kept above the screen to scroll back to.
@@ -50,12 +54,14 @@ class TerminalPreferences extends Equatable {
 
   TerminalPreferences copyWith({
     String? shell,
+    String? fontFamily,
     double? fontSize,
     int? scrollback,
     int? lines,
     TerminalPlace? place,
   }) => TerminalPreferences(
     shell: shell ?? this.shell,
+    fontFamily: fontFamily ?? this.fontFamily,
     fontSize: fontSize ?? this.fontSize,
     scrollback: scrollback ?? this.scrollback,
     lines: lines ?? this.lines,
@@ -64,6 +70,7 @@ class TerminalPreferences extends Equatable {
 
   Map<String, Object?> toJson() => {
     'shell': shell,
+    'fontFamily': fontFamily,
     'fontSize': fontSize,
     'scrollback': scrollback,
     'lines': lines,
@@ -81,6 +88,9 @@ class TerminalPreferences extends Equatable {
       shell: json['shell'] is String
           ? (json['shell']! as String).trim()
           : defaults.shell,
+      fontFamily: json['fontFamily'] is String
+          ? (json['fontFamily']! as String).trim()
+          : defaults.fontFamily,
       fontSize: numberOr(
         json['fontSize'],
         defaults.fontSize,
@@ -98,5 +108,12 @@ class TerminalPreferences extends Equatable {
   }
 
   @override
-  List<Object?> get props => [shell, fontSize, scrollback, lines, place];
+  List<Object?> get props => [
+    shell,
+    fontFamily,
+    fontSize,
+    scrollback,
+    lines,
+    place,
+  ];
 }

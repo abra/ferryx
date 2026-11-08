@@ -2598,6 +2598,27 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get terminalFontSizeLabel => 'Font size';
 
   @override
+  String get terminalFontLabel => 'Font';
+
+  @override
+  String get terminalFontSystem => 'System';
+
+  @override
+  String get terminalFontPreview => 'Preview';
+
+  @override
+  String get terminalFontSample => 'Aa Бб 0O 1lI\n0123456789 {} [] →';
+
+  @override
+  String get terminalFontsLoading => 'Loading fonts…';
+
+  @override
+  String get terminalFontsLoadFailed => 'Could not load installed fonts.';
+
+  @override
+  String get terminalFontUnavailable => 'Not installed; using the system font.';
+
+  @override
   String get terminalScrollbackLabel => 'Lines kept to scroll back';
 
   @override

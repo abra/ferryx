@@ -120,6 +120,9 @@ Vim mode is optional and off by default.
   (⌘C, ⌘V, ⌘K) work as in Terminal.app; shell control keys reach the shell,
   while terminal controls and supported window shortcuts remain available.
   There is one terminal session per window.
+  Settings → Terminal offers installed monospaced fonts, the bundled Geist
+  Mono and the system default, with a preview and a separate font size.
+  Font changes apply immediately without restarting the shell.
   `:term make` runs a command there from Vim mode.
 - **Undo and redo** (⌘Z / ⇧⌘Z) for supported local changes: copies, moves,
   the trash, renames (batch ones too), new folders and files, archive

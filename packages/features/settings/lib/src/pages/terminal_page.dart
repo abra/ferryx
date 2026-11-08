@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:preferences_service/preferences_service.dart';
 
 import '../settings_rows.dart';
+import 'terminal_font_picker.dart';
 
 /// The integrated terminal: the shell it runs, its type size, and how much
 /// it keeps to scroll back.
@@ -12,6 +13,7 @@ class TerminalPage extends StatelessWidget {
     required this.prefs,
     required this.service,
     required this.defaultShell,
+    this.loadMonospaceFonts,
     super.key,
   });
 
@@ -20,6 +22,7 @@ class TerminalPage extends StatelessWidget {
 
   /// The shell a session runs when none is set here.
   final String defaultShell;
+  final Future<List<String>> Function()? loadMonospaceFonts;
 
   /// The scrollback lengths offered; a value set otherwise shows too.
   static const scrollbacks = [1000, 5000, 10000, 50000, 100000];
@@ -52,6 +55,12 @@ class TerminalPage extends StatelessWidget {
                 ),
               ),
             ),
+            TerminalFontPicker(
+              value: terminal.fontFamily,
+              loadFonts: loadMonospaceFonts,
+              onChanged: (family) =>
+                  _update((t) => t.copyWith(fontFamily: family)),
+            ),
             SliderRow(
               label: l10n.terminalFontSizeLabel,
               value: terminal.fontSize,
@@ -68,6 +77,10 @@ class TerminalPage extends StatelessWidget {
               onChanged: (value) =>
                   _update((t) => t.copyWith(fontSize: value.roundToDouble())),
             ),
+            _FontPreview(
+              family: terminal.fontFamily,
+              size: terminal.fontSize,
+            ),
             ChoiceRow<int>(
               label: l10n.terminalScrollbackLabel,
               note: l10n.terminalScrollbackNote,
@@ -83,6 +96,40 @@ class TerminalPage extends StatelessWidget {
                   _update((t) => t.copyWith(scrollback: lines)),
             ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+class _FontPreview extends StatelessWidget {
+  const _FontPreview({required this.family, required this.size});
+
+  final String family;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final type = context.metrics.typeScale;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.l10n.terminalFontPreview,
+          style: context.text.bodySmall?.copyWith(
+            color: context.appColors.textMuted,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          context.l10n.terminalFontSample,
+          textScaler: TextScaler.noScaling,
+          style: context.mono.copyWith(
+            fontFamily: family.isEmpty ? type.monoFamily : family,
+            fontFamilyFallback: [type.monoFamily, ...type.monoFallback],
+            fontSize: size,
+            height: AppTypography.terminalLineHeightFactor,
+          ),
         ),
       ],
     );

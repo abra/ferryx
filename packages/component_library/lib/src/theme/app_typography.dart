@@ -82,6 +82,9 @@ abstract final class AppTypography {
   static const String bundledSans = 'Inter';
   static const String bundledMono = 'Geist Mono';
 
+  /// Shared by the terminal's cells and its font preview in Settings.
+  static const double terminalLineHeightFactor = 1.2;
+
   /// The `wght` axis setting for [weight].
   static List<FontVariation> variations(FontWeight weight) => [
     FontVariation('wght', weight.value.toDouble()),

@@ -9,7 +9,7 @@ import 'package:xterm/xterm.dart';
 /// style object, so equal inputs must give the same instances.
 class TerminalLook {
   /// The line height of the emulator's text, as the view lays it out.
-  static const lineHeightFactor = 1.2;
+  static const lineHeightFactor = AppTypography.terminalLineHeightFactor;
 
   TerminalTheme? _theme;
   List<Object?>? _themeKey;
@@ -67,10 +67,15 @@ class TerminalLook {
     );
   }
 
-  /// The platform's monospace face at [fontSize].
-  TerminalStyle styleOf(BuildContext context, double fontSize) {
+  /// The chosen face at [fontSize], or the platform's monospace default.
+  TerminalStyle styleOf(
+    BuildContext context,
+    double fontSize, {
+    String fontFamily = '',
+  }) {
     final type = context.metrics.typeScale;
-    final key = [type.monoFamily, ...type.monoFallback, fontSize];
+    final family = fontFamily.isEmpty ? type.monoFamily : fontFamily;
+    final key = [family, type.monoFamily, ...type.monoFallback, fontSize];
     final cached = _style;
     if (cached != null && _sameAs(_styleKey, key)) return cached;
     _styleKey = key;
@@ -78,8 +83,12 @@ class TerminalLook {
     return _style = TerminalStyle(
       fontSize: fontSize,
       height: lineHeightFactor,
-      fontFamily: type.monoFamily,
-      fontFamilyFallback: [...type.monoFallback, ...symbolFonts],
+      fontFamily: family,
+      fontFamilyFallback: [
+        if (family != type.monoFamily) type.monoFamily,
+        ...type.monoFallback,
+        ...symbolFonts,
+      ],
     );
   }
 

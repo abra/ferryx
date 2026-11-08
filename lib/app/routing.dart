@@ -95,6 +95,7 @@ GoRouter buildRouter({
                 ? state.extra! as SettingsSection
                 : SettingsSection.general,
             defaultShell: deps.terminal.defaultShell(),
+            loadMonospaceFonts: deps.platformServices.monospaceFontFamilies,
             onClose: () => context.pop(),
           ),
         ),
@@ -157,6 +158,7 @@ class _WorkspaceRoute extends StatelessWidget {
               focusNode: view.focusNode,
               shortcutMap: deps.shortcutMap,
               fontSize: deps.preferencesService.current.terminal.fontSize,
+              fontFamily: deps.preferencesService.current.terminal.fontFamily,
               placement: TerminalPlacement(
                 panelsHidden: view.panelsHidden,
                 fullWindow: view.fullWindow,

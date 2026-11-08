@@ -3,7 +3,7 @@ import Cocoa
 import FlutterMacOS
 import Quartz
 
-/// Quick Look, the share picker and the keyboard layout for Dart
+/// Quick Look, the share picker, keyboard layout and font catalog for Dart
 /// (`ChannelPlatformServices` in packages/platform_services) over the
 /// `ferryx/platform` channel.
 ///
@@ -73,6 +73,8 @@ final class NativeServices: NSObject, QLPreviewPanelDataSource, QLPreviewPanelDe
       result(nil)
     case "keyboard.latin":
       result(Self.latinKeyboard())
+    case "fonts.monospaceFamilies":
+      result(Self.monospaceFontFamilies())
     case "share":
       let paths = arguments["paths"] as? [String] ?? []
       let rect = arguments["rect"] as? [Double] ?? [0, 0, 0, 0]
@@ -85,6 +87,14 @@ final class NativeServices: NSObject, QLPreviewPanelDataSource, QLPreviewPanelDe
 
   private func clamped(_ value: Int) -> Int {
     items.isEmpty ? 0 : min(max(value, 0), items.count - 1)
+  }
+
+  /// Families, not PostScript face names: Flutter chooses the weight itself.
+  static func monospaceFontFamilies() -> [String] {
+    let names = NSFontManager.shared.availableFontNames(with: .fixedPitchFontMask) ?? []
+    let families = names.compactMap { NSFont(name: $0, size: 12)?.familyName }
+      .filter { !$0.isEmpty && !$0.hasPrefix(".") }
+    return Array(Set(families))
   }
 
   // MARK: - Quick Look

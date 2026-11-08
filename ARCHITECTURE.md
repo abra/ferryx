@@ -870,9 +870,12 @@ place, or over the whole window, in step with the active panel's folder.
   text and accent (the cursor, translucent so the letter shows), the
   selection colours (emphasized where the keys are, grey elsewhere) and
   `AppTerminalColors` (sixteen ANSI colours per brightness) make its
-  colours; the platform's monospace face its type at the settings' size
-  (the interface's text scale does not apply: the terminal's size is its
-  own setting), with Nerd Font faces as fallbacks for prompt icons. An
+  colours; the selected monospace family (the platform default when empty)
+  and size come from `TerminalPreferences` independently of the interface's
+  text scale. Changing either updates the existing view and its cell
+  measurements without replacing the session. The system monospace face
+  remains a fallback for a missing font, with Nerd Font faces as fallbacks
+  for prompt icons. An
   exit or a failed start shows a line under the emulator; Return or its
   button starts a new shell below the old output, the modes a program
   left on reset.
@@ -938,6 +941,14 @@ the hotkeys and the palette. The panels' side is `native_actions.dart`
 (a part of the workspace) over the pure `quick_look_pick.dart` and
 `drop_plan.dart`.
 
+- **Font families**. `PlatformServices.monospaceFontFamilies` calls
+  `fonts.monospaceFamilies` on `ferryx/platform`: AppKit's fixed-pitch faces
+  on macOS, DirectWrite on Windows, Pango on Linux. The service returns
+  sorted, unique family names, not individual styles. The composition root
+  injects this loader into Settings; the terminal page reads it once per
+  visit, adds the bundled Geist Mono and System choices, and previews the
+  saved family and size. A failed read can be retried; an unavailable saved
+  family remains selected rather than being erased from preferences.
 - **Quick Look** (⌘Y; `preview` moved to ⇧⌘Y, Space keeps it):
   `NativeServices.swift` in the runner owns a `QLPreviewPanel` (the window
   is its controller in the responder chain) fed with file paths and an

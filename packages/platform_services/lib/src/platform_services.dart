@@ -14,8 +14,8 @@ import 'quick_look.dart';
 abstract class PlatformServices {
   const PlatformServices();
 
-  /// The implementation for [platform]: the runner's channel on macOS,
-  /// the desktop's drags alone elsewhere.
+  /// Native services and the font catalog through the runners' channels,
+  /// with system file drags shared across desktops.
   factory PlatformServices.forPlatform(TargetPlatform platform) =>
       platform == TargetPlatform.macOS
       ? ChannelPlatformServices()
@@ -28,6 +28,11 @@ abstract class PlatformServices {
   /// keys' places (`ChordLayout` in packages/shortcuts). Always `true`
   /// where the desktop does not say.
   ValueListenable<bool> get latinKeyboard;
+
+  /// Installed monospace font families, sorted by name without duplicates.
+  /// Reads the desktop catalog on demand. Platform failures are reported to
+  /// the caller, which can still offer the system default and bundled face.
+  Future<List<String>> monospaceFontFamilies();
 
   // ─── Quick Look ───
 

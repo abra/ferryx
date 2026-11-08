@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import 'file_drag_request.dart';
+import 'monospace_fonts.dart';
 import 'platform_capabilities.dart';
 import 'platform_services.dart';
 import 'quick_look.dart';
@@ -15,7 +16,8 @@ import 'system_file_drags.dart';
 /// desktop's session.
 ///
 /// The channel, both ways:
-/// - `quickLook.show {paths, index}`, `quickLook.select {index}`,
+/// - `fonts.monospaceFamilies` (installed monospace family names),
+///   `quickLook.show {paths, index}`, `quickLook.select {index}`,
 ///   `quickLook.close`, `share {paths, rect: [left, top, width, height]}`,
 ///   `keyboard.latin` (whether the layout is ASCII-capable);
 /// - from the runner: `quickLook.closed`, `quickLook.step {delta}`,
@@ -76,6 +78,10 @@ class ChannelPlatformServices implements PlatformServices {
 
   @override
   ValueListenable<bool> get latinKeyboard => _latin;
+
+  @override
+  Future<List<String>> monospaceFontFamilies() =>
+      readMonospaceFontFamilies(_channel);
 
   // ─── Quick Look ───
 

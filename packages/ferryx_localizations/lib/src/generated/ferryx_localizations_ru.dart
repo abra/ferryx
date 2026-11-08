@@ -2645,6 +2645,29 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String get terminalFontSizeLabel => 'Размер шрифта';
 
   @override
+  String get terminalFontLabel => 'Шрифт';
+
+  @override
+  String get terminalFontSystem => 'Системный';
+
+  @override
+  String get terminalFontPreview => 'Предпросмотр';
+
+  @override
+  String get terminalFontSample => 'Aa Бб 0O 1lI\n0123456789 {} [] →';
+
+  @override
+  String get terminalFontsLoading => 'Загрузка шрифтов…';
+
+  @override
+  String get terminalFontsLoadFailed =>
+      'Не удалось получить список установленных шрифтов.';
+
+  @override
+  String get terminalFontUnavailable =>
+      'Шрифт не установлен; используется системный.';
+
+  @override
   String get terminalScrollbackLabel => 'Строк для прокрутки назад';
 
   @override

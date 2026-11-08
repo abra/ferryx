@@ -37,6 +37,7 @@ class SettingsScreen extends StatefulWidget {
     this.initialSection = SettingsSection.general,
     this.unavailableCommands = const {},
     this.defaultShell = '',
+    this.loadMonospaceFonts,
     super.key,
   });
 
@@ -52,6 +53,9 @@ class SettingsScreen extends StatefulWidget {
 
   /// The shell the terminal runs when none is set (for the field's hint).
   final String defaultShell;
+
+  /// Installed monospace families, read only when the terminal page opens.
+  final Future<List<String>> Function()? loadMonospaceFonts;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -143,6 +147,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             shortcutMap: map,
                             version: widget.version,
                             defaultShell: widget.defaultShell,
+                            loadMonospaceFonts: widget.loadMonospaceFonts,
                             onClose: widget.onClose,
                           ),
                         ),
@@ -218,6 +223,8 @@ List<String> sectionTerms(
   SettingsSection.terminal => [
     l10n.terminalTitle,
     l10n.terminalShellLabel,
+    l10n.terminalFontLabel,
+    prefs.terminal.fontFamily,
     l10n.terminalFontSizeLabel,
     l10n.terminalScrollbackLabel,
   ],
@@ -364,6 +371,7 @@ class _Content extends StatelessWidget {
     required this.shortcutMap,
     required this.version,
     required this.defaultShell,
+    required this.loadMonospaceFonts,
     required this.onClose,
   });
 
@@ -374,6 +382,7 @@ class _Content extends StatelessWidget {
   final ShortcutMap shortcutMap;
   final String version;
   final String defaultShell;
+  final Future<List<String>> Function()? loadMonospaceFonts;
   final VoidCallback onClose;
 
   @override
@@ -389,6 +398,7 @@ class _Content extends StatelessWidget {
         prefs: prefs,
         service: service,
         defaultShell: defaultShell,
+        loadMonospaceFonts: loadMonospaceFonts,
       ),
       SettingsSection.hotkeys => HotkeysPage(
         prefs: prefs,

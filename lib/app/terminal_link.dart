@@ -54,6 +54,7 @@ class TerminalLink implements WorkspaceTerminalController {
   double lineHeight(BuildContext context) => TerminalPane.lineHeightOf(
     context,
     _preferences.current.terminal.fontSize,
+    fontFamily: _preferences.current.terminal.fontFamily,
   );
 
   @override

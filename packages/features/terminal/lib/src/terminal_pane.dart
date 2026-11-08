@@ -50,12 +50,14 @@ class TerminalPane extends StatefulWidget {
     required this.onHide,
     required this.onTogglePanels,
     required this.onToggleFullWindow,
+    this.fontFamily = '',
     super.key,
   });
 
   final TerminalSessionCubit cubit;
   final FocusNode focusNode;
   final ShortcutMap shortcutMap;
+  final String fontFamily;
   final double fontSize;
   final TerminalPlacement placement;
   final VoidCallback onHide;
@@ -64,8 +66,13 @@ class TerminalPane extends StatefulWidget {
 
   /// The height of one line of the terminal's text at [fontSize], for
   /// sizing the terminal by lines.
-  static double lineHeightOf(BuildContext context, double fontSize) =>
-      _measure.cellOf(_measure.styleOf(context, fontSize)).height;
+  static double lineHeightOf(
+    BuildContext context,
+    double fontSize, {
+    String fontFamily = '',
+  }) => _measure
+      .cellOf(_measure.styleOf(context, fontSize, fontFamily: fontFamily))
+      .height;
 
   /// Measures once per face and size, however often the window asks.
   static final _measure = TerminalLook();
@@ -245,6 +252,7 @@ class _TerminalPaneState extends State<TerminalPane> {
                     terminal: _cubit.terminal,
                     selection: _cubit.selection,
                     look: _look,
+                    fontFamily: widget.fontFamily,
                     fontSize: widget.fontSize,
                     focusNode: widget.focusNode,
                     scroll: _scroll,
@@ -280,6 +288,7 @@ class _Screen extends StatelessWidget {
     required this.terminal,
     required this.selection,
     required this.look,
+    required this.fontFamily,
     required this.fontSize,
     required this.focusNode,
     required this.scroll,
@@ -291,6 +300,7 @@ class _Screen extends StatelessWidget {
   final Terminal terminal;
   final TerminalController selection;
   final TerminalLook look;
+  final String fontFamily;
   final double fontSize;
   final FocusNode focusNode;
   final ScrollController scroll;
@@ -313,7 +323,7 @@ class _Screen extends StatelessWidget {
       focusNode: focusNode,
       scrollController: scroll,
       theme: look.themeOf(context, active: AppFocusArea.activeOf(context)),
-      textStyle: look.styleOf(context, fontSize),
+      textStyle: look.styleOf(context, fontSize, fontFamily: fontFamily),
       // The terminal's font size is a setting of its own.
       textScaler: TextScaler.noScaling,
       // The text starts under the bar's icon.

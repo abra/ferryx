@@ -4,6 +4,14 @@ import XCTest
 
 @MainActor
 class RunnerTests: XCTestCase {
+  func testMonospaceFontCatalogContainsFamiliesWithoutProportionalFaces() {
+    let families = NativeServices.monospaceFontFamilies()
+    XCTAssertTrue(families.contains("Menlo"))
+    XCTAssertFalse(families.contains("Helvetica"))
+    XCTAssertFalse(families.contains(where: { $0.isEmpty || $0.hasPrefix(".") }))
+    XCTAssertEqual(Set(families).count, families.count)
+  }
+
   func testTrafficLightsStayInsideTheToolbarAfterAppearanceTitleAndSizeChanges() throws {
     let window = MainFlutterWindow(
       contentRect: NSRect(x: 100, y: 100, width: 1000, height: 700),

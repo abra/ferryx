@@ -4526,6 +4526,48 @@ abstract class FerryxLocalizations {
   /// **'Font size'**
   String get terminalFontSizeLabel;
 
+  /// No description provided for @terminalFontLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Font'**
+  String get terminalFontLabel;
+
+  /// No description provided for @terminalFontSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get terminalFontSystem;
+
+  /// No description provided for @terminalFontPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get terminalFontPreview;
+
+  /// No description provided for @terminalFontSample.
+  ///
+  /// In en, this message translates to:
+  /// **'Aa Бб 0O 1lI\n0123456789 \'{}\' [] →'**
+  String get terminalFontSample;
+
+  /// No description provided for @terminalFontsLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading fonts…'**
+  String get terminalFontsLoading;
+
+  /// No description provided for @terminalFontsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load installed fonts.'**
+  String get terminalFontsLoadFailed;
+
+  /// No description provided for @terminalFontUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not installed; using the system font.'**
+  String get terminalFontUnavailable;
+
   /// No description provided for @terminalScrollbackLabel.
   ///
   /// In en, this message translates to:
