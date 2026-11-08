@@ -373,7 +373,7 @@ tar is a tar, and ⌘↓ (`detect_archive`) opens an archive of any name;
   remain links; their streamed targets are bounded to 64 KiB. Folder
   creation is cached, while member parents are opened anew under the root.
 - **Crates.** All pure Rust except zstd and the zip crate's bzip2, which
-  were in already: `sevenz-rust2` 0.20 (the last release for Rust 1.85;
+  were in already: `sevenz-rust2` 0.20 (pinned in the workspace;
   AES, LZMA/LZMA2, BZip2, Deflate, PPMd, Zstd), `unrar-rs` (a Rust port of
   RARLAB's UnRAR, RAR 1.5–5, solid and encrypted archives; built with
   `crypto-rust` so no C toolchain is needed — the default AWS-LC backend
@@ -985,9 +985,9 @@ the service.
 
 ### Undo and redo (⌘Z, ⇧⌘Z; Vim `uu`, `U`; `:undo`, `:redo`)
 
-The journal (`ferryx_ops::journal`) lives in the core, so every caller is
-covered: the `Runner` owns it, and every operation records what it changed
-through its `OpContext` (`record_created`, `record_moved`,
+The journal (`ferryx_ops::journal`) lives in the core: the `Runner` owns it,
+and supported local operations record what they changed through their
+`OpContext` (`record_created`, `record_moved`,
 `record_overwritten`, `record`), whatever started it (a panel, a dialog,
 the Vim register, a feature of another stream). Bridge calls that change
 files themselves (inline and batch rename, new folder or file, links, a
@@ -1004,17 +1004,18 @@ saved checksum file) record through `tasks::record`. A step is a list of
 
 Undoing walks the step last change first and records what it did as the
 redo step (`Journal::finish_walk`); redo is the same walk over that.
-Created items go to the trash, not away, so an undo loses nothing. A copy
-records only the topmost item it made (what is inside needs no record of
-its own); a merge records each item it made inside the folder that was
-there. Across volumes each file or link becomes a `Moved` record only
+Created items go to the trash; overwritten contents have no backup and
+cannot be restored. A copy records only the topmost item it made
+(its contents need no separate record); a merge records each item it made
+inside the folder that was there. Across volumes each file or link becomes a `Moved` record only
 after its source is removed; emptied source folders get `FolderRemoved`
 records after their children. Undo therefore recreates the source folders
 before moving files back, including after a skip, error or cancellation.
 Names that swapped (a batch rename) go back through temporary names. A
 step keeps up to 200 000 changes, beyond that it is on record as too big
-to undo; the stack keeps 100 steps; a new step empties redo. Permanent
-deletion is never recorded (its dialog says it cannot be brought back).
+to undo; the stack keeps 100 steps in memory for the process lifetime;
+a new step empties redo. Permanent deletion and server operations are
+never recorded.
 
 Before a walk, `undo::check` compares every change with the disk: an item
 gone (`Missing`), a place taken (`Occupied`), an item no longer in the
@@ -1119,8 +1120,9 @@ servers, Go to Folder and `:connect`/`:cd` take an address, Disconnect
 
 ### Crates
 
-Pure Rust, no OpenSSL and no libssh2; `ring` is the one C and assembly
-dependency (rustls's and russh's crypto), built by cargo for every target.
+The network protocols use Rust implementations, without OpenSSL or
+libssh2. `ring` supplies C and assembly cryptography for rustls and russh;
+certificate verification and credential storage use platform services.
 
 | Crate | Why | Licence |
 |-------|-----|---------|
@@ -1132,8 +1134,11 @@ dependency (rustls's and russh's crypto), built by cargo for every target.
 | `tokio` 1 | The runtime of russh and reqwest: two workers owned by the core (`remote::runtime`). | MIT |
 | `dav-server`, `rcgen`, `hyper` (tests only) | The in-process WebDAV server and the test certificate authority. | Apache-2.0; MIT or Apache-2.0 |
 
-The workspace MSRV (1.85) still builds: the new dependencies were chosen
-with `CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback`.
+The workspace declares `rust-version = "1.85"`, but that is not a verified
+minimum for the current dependency graph. In the checked-in lockfile,
+`unrar-rs` pulls in `ppmd-turbo` 0.2.0 and `reedsolomon-rs` 0.4.11, both
+declaring Rust 1.97.1. Use current rustup stable, as cargokit and CI do;
+Rust 1.85 is insufficient for this lockfile.
 
 ### Locations and keys
 
@@ -1359,8 +1364,10 @@ partially created resources.
   are macOS's alone.
 - External editors and tools run through the desktop (`open -a`), not
   in the integrated terminal, even those marked "in terminal".
-- Windows and Linux are built and tested in CI, not used on a desktop day
-  to day; the macOS app is signed ad hoc, not notarised.
+- CI is configured to check, build and launch the app on Windows and Linux
+  on pull requests, pushes to `ci/**`, and manual dispatch. There is no
+  macOS CI job; macOS is used day to day. The macOS app is signed ad hoc,
+  not notarised.
 - Undo cannot bring back what was overwritten (it is reported, and left
   as it is) or deleted for good; the journal lives as long as the app.
   Items Ferryx trashes on macOS have no Finder Put Back.

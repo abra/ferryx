@@ -6,12 +6,17 @@ Guidance for Claude Code when working in this repository.
 
 - Flutter is pinned in `.fvmrc`; always use `fvm flutter` / `fvm dart`
   (every Make target does, except `make codegen`: `flutter_rust_bridge_codegen`
-  calls the Flutter on PATH, so keep fvm's global version the pinned one).
+  calls Flutter/Dart on PATH; use `fvm exec make codegen` to supply the
+  project's pinned SDK).
 - Rust builds inside the Flutter build go through cargokit, which runs
   `rustup run stable cargo`. Keep the rustup toolchain current
   (`rustup update stable`). `rust_builder/cargokit/build_pod.sh` pins
   `RUSTC` to the rustup toolchain so a Homebrew Rust ahead on PATH cannot
   link a std built for the host's macOS.
+  The Makefile calls `cargo` from PATH; keep it on that same toolchain.
+  The workspace's declared `rust-version = "1.85"` is below the current
+  lockfile's requirements: the RAR dependencies require at least 1.97.1.
+  CI uses stable and does not verify the declared minimum.
 - `flutter_rust_bridge_codegen` 2.13.0 must match the `flutter_rust_bridge`
   version in `rust/Cargo.toml`, `pubspec.yaml` and
   `packages/ferryx_backend/pubspec.yaml`.
@@ -29,7 +34,7 @@ Guidance for Claude Code when working in this repository.
 | Regenerate bridge | `make codegen` (after editing `rust/crates/ferryx_api/src/api/`) |
 | Regenerate l10n | `make l10n` (after editing `packages/ferryx_localizations/lib/l10n/*.arb`) |
 | Rebuild app icons | `make icons` (after editing a master in `brand/`; needs `rsvg-convert`) |
-| Run | `make run` |
+| Run | `make run` on macOS/Linux; `fvm flutter run -d windows` on Windows |
 | Release build | `make build-macos`, `make build-linux`, `make build-windows` |
 | macOS disk image | `make dmg` (`build/Ferryx-<version>.dmg`); `make release` publishes it through `gh` |
 | Clean, list targets | `make clean`, `make help` |
@@ -58,21 +63,22 @@ See `ARCHITECTURE.md`. The rules that matter most:
   Features never import `ferryx_backend`.
 - Cubit state carries typed codes (`FerryxErrorKind`), never localized
   strings; Views map them with `context.l10n` (`errorMessage`).
-- Every user action is an `AppCommand` with a default chord in
-  `packages/shortcuts`. New actions get a command, a label in both ARBs
-  (`cmd…` keys) and an entry in `CommandLabels`; `shortcuts_test` fails
-  when a chord does two things in one place.
+- Commands belong in `AppCommand` and the map in `packages/shortcuts`;
+  commands may deliberately have no default chord. New actions get a
+  command, a label in both ARBs (`cmd…` keys) and an entry in `CommandLabels`;
+  `shortcuts_test` fails when a chord does two things in one place.
 - The core owns the file system: listings are read, sorted and watched in
   Rust (`open_listing` per panel tab, `DirectoryChanged` events); every
   operation runs in Rust on a thread of its own and reports progress,
   questions and errors through the event stream; the interface never
   touches `dart:io` for files.
-- Every change to files goes on the undo journal: an operation of the
+- Supported local file changes go on the undo journal: an operation of the
   `Runner` records what it makes, moves, trashes or overwrites through its
   `OpContext` (`record_created`, `record_moved`, `record_overwritten`,
   `record`); a bridge call that changes files itself records through
   `tasks::record`. Trash through `ferryx_vfs::trash` (it keeps receipts);
-  permanent deletion is never recorded.
+  permanent deletion and server operations are never recorded. The journal
+  is in memory for the process lifetime; overwritten contents cannot be restored.
 - A tab may be on a server (`Location.isRemote`; its `server` is a key the
   core makes, never Dart). A command that works on this computer only
   checks the location and says `networkNotOnServer` (`_onServer()`,
