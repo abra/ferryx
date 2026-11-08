@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 /// Colour roles beyond [ColorScheme]: surfaces of the window, fills of
 /// interactive states, editor accents, ratings, hints, plates.
 ///
-/// One instance per platform style and brightness (`AppPalette`); read
-/// through `context.appColors`. Fills of states are translucent where the
-/// platform's are, so they compose over whatever surface they sit on.
+/// One instance per brightness (`AppPalette`), shared across desktops; read
+/// through `context.appColors`. Soft row selections and filled accent
+/// controls have separate foreground roles to keep both readable.
 @immutable
 class AppColorsExt extends ThemeExtension<AppColorsExt> {
   const AppColorsExt({
@@ -24,7 +24,8 @@ class AppColorsExt extends ThemeExtension<AppColorsExt> {
     required this.textFaint,
     required this.accent,
     required this.onAccent,
-    required this.onAccentMuted,
+    required this.onSelection,
+    required this.onSelectionMuted,
     required this.selectionAccent,
     required this.selectionMuted,
     required this.link,
@@ -99,23 +100,23 @@ class AppColorsExt extends ThemeExtension<AppColorsExt> {
   final Color textMuted;
   final Color textFaint;
 
-  /// Filled controls, the emphasized selection, the cursor.
+  /// Filled controls and the keyboard focus indicator.
   final Color accent;
 
   /// Text and icons on [accent].
   final Color onAccent;
 
-  /// Secondary text on [accent] and [selectionAccent]: a row's details
-  /// while it is selected, a menu item's key.
-  final Color onAccentMuted;
+  /// Text and icons on [selectionAccent], independently of button text.
+  final Color onSelection;
 
-  /// The emphasized selection of a list or menu in the area with the
-  /// focus: NSColor.selectedContentBackgroundColor, a shade deeper than
-  /// the accent of buttons, so white text reads on it.
+  /// Secondary text on [selectionAccent]: file metadata and command keys.
+  final Color onSelectionMuted;
+
+  /// A soft selection in the area with keyboard focus. Pair with
+  /// [onSelection] and [onSelectionMuted], not [onAccent].
   final Color selectionAccent;
 
-  /// The same selection where the focus is not (another panel, a window
-  /// that is not key): NSColor.unemphasizedSelectedContentBackgroundColor.
+  /// Neutral selection where the focus is in another panel or window.
   final Color selectionMuted;
 
   /// Links and references in text: the accent darkened enough to read.
@@ -200,15 +201,14 @@ class AppColorsExt extends ThemeExtension<AppColorsExt> {
   /// page.
   final Color pageRingMuted;
 
-  /// The knob of an on/off switch (Fluent's while on): white, but for
-  /// AppKit's dark appearance through macOS 15, which greys it.
+  /// The knob on a neutral off track. The on track uses [onAccent].
+  /// Fluent's outlined off track uses [textMuted] instead.
   final Color switchKnob;
 
-  /// The track of a switch that is on: the accent, but for AppKit's dark
-  /// appearance through macOS 15, which draws it a shade deeper.
+  /// The track of a switch that is on, paired with [onAccent].
   final Color switchTrack;
 
-  /// The palette is fixed per style and brightness; another one is a new
+  /// The palette is fixed per brightness; another one is a new
   /// palette, not a copy.
   @override
   AppColorsExt copyWith() => this;
@@ -233,7 +233,8 @@ class AppColorsExt extends ThemeExtension<AppColorsExt> {
       textFaint: mix(textFaint, other.textFaint),
       accent: mix(accent, other.accent),
       onAccent: mix(onAccent, other.onAccent),
-      onAccentMuted: mix(onAccentMuted, other.onAccentMuted),
+      onSelection: mix(onSelection, other.onSelection),
+      onSelectionMuted: mix(onSelectionMuted, other.onSelectionMuted),
       selectionAccent: mix(selectionAccent, other.selectionAccent),
       selectionMuted: mix(selectionMuted, other.selectionMuted),
       link: mix(link, other.link),

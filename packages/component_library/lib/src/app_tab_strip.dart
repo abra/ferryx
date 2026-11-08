@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_context_menu.dart';
+import 'app_focus_area.dart';
 import 'app_icon_button.dart';
 import 'app_icons.dart';
 import 'app_tooltip.dart';
@@ -16,6 +17,7 @@ import 'theme/app_typography.dart';
 import 'theme/extensions/build_context_ext.dart';
 import 'theme/tokens/app_icon_size.dart';
 import 'theme/tokens/app_motion.dart';
+import 'theme/tokens/app_sizes.dart';
 import 'theme/tokens/app_spacing.dart';
 import 'theme/hairlines.dart';
 import 'app_divider.dart';
@@ -677,6 +679,18 @@ class _TabState extends State<_Tab> {
     Widget body = Container(
       height: widget.height,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      foregroundDecoration: active
+          ? BoxDecoration(
+              border: AppBorder(
+                bottom: BorderSide(
+                  color: AppFocusArea.activeOf(context)
+                      ? colors.accent
+                      : colors.controlBorder,
+                  width: AppSizes.focusBarHeight,
+                ),
+              ),
+            )
+          : null,
       decoration: BoxDecoration(
         color: fill,
         borderRadius: shape,
@@ -834,12 +848,9 @@ typedef _Spec = ({
   TextStyle font,
 });
 
-/// The colours of macOS 15's window tab bar, as measured beside AppKit
-/// (Finder, and an NSWindow with a unified toolbar) and set on the bar
-/// above ([AppColorsExt.windowChrome], the active tab's colour). Light:
-/// toolbar 255, the bar under the inactive tabs 240, its top edge 200 with
-/// 225 and 237 under it, lines 220 between the tabs, 185 before the + cell,
-/// 212 under it all. Dark: toolbar 34, the bar 19, black edges, lines 52.
+/// Flat window tabs keep their native geometry and use the same blue-gray
+/// surface roles as the panel toolbar. The shallow edge separates inactive
+/// tabs without introducing an unrelated gray palette.
 @immutable
 class _FlatColors {
   const _FlatColors({
@@ -852,34 +863,22 @@ class _FlatColors {
   });
 
   factory _FlatColors.of(BuildContext context) {
-    final chrome = context.appColors.windowChrome;
-    Color over(Color base, Color ink, double alpha) =>
-        Color.alphaBlend(ink.withValues(alpha: alpha), base);
-    if (context.isDark) {
-      final bar = over(chrome, Colors.black, 0.52);
-      final line = over(bar, Colors.white, 0.14);
-      return _FlatColors(
-        bar: bar,
-        edge: Colors.black,
-        shade: const [],
-        line: line,
-        cellLine: line,
-        bottom: Colors.black,
-      );
-    }
-    // As the screen shows them beside AppKit's: a little under the
-    // ratios measured, the darker the more.
-    final bar = over(chrome, Colors.black, 0.045);
+    final colors = context.appColors;
+    final bar = context.isDark ? context.colors.surface : colors.surfaceSunken;
     return _FlatColors(
       bar: bar,
-      edge: over(bar, Colors.black, 0.15),
-      shade: [
-        over(bar, Colors.black, 0.06),
-        over(bar, Colors.black, 0.0125),
-      ],
-      line: over(bar, Colors.black, 0.08),
-      cellLine: over(bar, Colors.black, 0.2),
-      bottom: over(bar, Colors.black, 0.1),
+      edge: colors.controlBorder,
+      shade: context.isDark
+          ? const []
+          : [
+              Color.alphaBlend(
+                colors.controlBorder.withValues(alpha: 0.3),
+                bar,
+              ),
+            ],
+      line: colors.line,
+      cellLine: colors.controlBorder,
+      bottom: colors.line,
     );
   }
 

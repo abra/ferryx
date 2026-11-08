@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ru" data-theme="balanced">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Ferryx — прототипы интерфейса</title>
+    <link rel="icon" href="../../../brand/ferryx-symbolic.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="prototype.css">
+    <script src="prototype.js" defer></script>
+  </head>
+  <body>
+    <header class="demo-bar">
+      <div class="demo-heading"><strong>FERRYX</strong><span>Исследование интерфейса</span></div>
+      <nav class="variants" aria-label="Варианты оформления">
+        <button data-theme-choice="blueprint" aria-pressed="false"><span>A</span> Чертёж</button>
+        <button data-theme-choice="balanced" aria-pressed="true"><span>B</span> Баланс</button>
+        <button data-theme-choice="night" aria-pressed="false"><span>C</span> Ночной</button>
+      </nav>
+      <span class="demo-badge">Интерактивный прототип · демоданные</span>
+    </header>
+
+    <main class="stage">
+      <section class="ferryx-window" aria-label="Прототип файлового менеджера Ferryx">
+        <div class="workspace" id="workspace">
+          <section class="pane active" data-pane="left" aria-label="Левая файловая панель">
+            <header class="pane-toolbar">
+              <div class="traffic-lights" aria-hidden="true"><i></i><i></i><i></i></div>
+              <button class="icon-button parent-button" data-action="parent" data-side="left" aria-label="На уровень выше в левой панели" title="На уровень выше · ⌘↑"><span data-icon="up"></span></button>
+              <nav class="breadcrumbs" data-breadcrumb="left" aria-label="Путь левой панели"></nav>
+              <div class="toolbar-actions">
+                <button class="command-button" data-action="commands" data-side="left" title="Команды · ⌘P"><span data-icon="search"></span><span class="control-label">Команды</span></button>
+                <button class="icon-button" data-action="sort" data-side="left" aria-label="Сортировка левой панели" title="Изменить направление сортировки"><span data-icon="sort"></span></button>
+              </div>
+            </header>
+            <div class="tabs-bar" data-tabs="left" role="tablist" aria-label="Вкладки левой панели"></div>
+            <div class="column-head" role="row">
+              <button data-action="sort-name" data-side="left" role="columnheader" class="name-column">Имя <span data-sort-indicator="left">↑</span></button>
+              <span class="size-column" role="columnheader">Размер</span>
+              <span class="date-column" role="columnheader">Изменён</span>
+              <span class="permissions-column" role="columnheader">Права</span>
+            </div>
+            <div class="file-list" data-list="left" tabindex="0" role="grid" aria-label="Файлы левой панели" aria-multiselectable="true"></div>
+            <footer class="pane-status" data-status="left"></footer>
+          </section>
+
+          <div class="panel-divider" aria-hidden="true"><span></span></div>
+
+          <section class="pane" data-pane="right" aria-label="Правая файловая панель">
+            <header class="pane-toolbar">
+              <button class="icon-button parent-button" data-action="parent" data-side="right" aria-label="На уровень выше в правой панели" title="На уровень выше · ⌘↑"><span data-icon="up"></span></button>
+              <nav class="breadcrumbs" data-breadcrumb="right" aria-label="Путь правой панели"></nav>
+              <div class="toolbar-actions">
+                <button class="command-button" data-action="commands" data-side="right" title="Команды · ⌘P"><span data-icon="search"></span><span class="control-label">Команды</span></button>
+                <button class="icon-button" data-action="sort" data-side="right" aria-label="Сортировка правой панели" title="Изменить направление сортировки"><span data-icon="sort"></span></button>
+              </div>
+            </header>
+            <div class="tabs-bar" data-tabs="right" role="tablist" aria-label="Вкладки правой панели"></div>
+            <div class="column-head" role="row">
+              <button data-action="sort-name" data-side="right" role="columnheader" class="name-column">Имя <span data-sort-indicator="right">↑</span></button>
+              <span class="size-column" role="columnheader">Размер</span>
+              <span class="date-column" role="columnheader">Изменён</span>
+              <span class="permissions-column" role="columnheader">Права</span>
+            </div>
+            <div class="file-list" data-list="right" tabindex="0" role="grid" aria-label="Файлы правой панели" aria-multiselectable="true"></div>
+            <footer class="pane-status" data-status="right"></footer>
+          </section>
+        </div>
+
+        <section class="terminal-panel" id="terminal" aria-label="Демонстрация терминала" hidden>
+          <div class="terminal-toolbar"><span><span data-icon="terminal"></span> Терминал <span class="muted">— zsh</span></span><button class="icon-button" data-action="terminal" aria-label="Скрыть терминал"><span data-icon="close"></span></button></div>
+          <div class="terminal-content"><span class="terminal-prompt">~/Projects/ferryx</span> <span class="muted">on</span> <span class="terminal-branch">main</span><br><span class="terminal-prompt">❯</span> <span class="terminal-cursor"></span></div>
+        </section>
+
+        <div class="operations-strip" id="operations" aria-live="polite" hidden>
+          <span data-icon="copy"></span><span id="operation-label"></span><progress id="operation-progress" max="100" value="0"></progress><span id="operation-percent" class="mono">0%</span>
+        </div>
+
+        <footer class="key-hints">
+          <div class="hint-group" id="hint-group"></div>
+          <div class="footer-actions">
+            <button data-action="terminal" title="Показать демонстрацию терминала"><span data-icon="terminal"></span><span class="control-label">Терминал</span></button>
+            <button data-action="shortcuts"><span data-icon="keyboard"></span><span class="control-label">Сочетания</span><kbd>⌘/</kbd></button>
+          </div>
+        </footer>
+        <div class="toast" id="toast" role="status" hidden></div>
+      </section>
+    </main>
+
+    <footer class="demo-caption">
+      <p id="variant-description"></p>
+      <span>13 px текст <i>·</i> 22 px строка <i>·</i> масштаб 100%</span>
+    </footer>
+
+    <dialog id="palette" class="palette-dialog" aria-labelledby="palette-title">
+      <form method="dialog" class="palette-top"><span data-icon="search"></span><label class="sr-only" id="palette-title" for="command-query">Поиск команды</label><input id="command-query" placeholder="Найти команду…" autocomplete="off" spellcheck="false"><button class="escape-button" aria-label="Закрыть поиск команд">esc</button></form>
+      <div class="palette-scope" id="palette-scope"></div>
+      <div class="palette-results" id="palette-results" role="group" aria-label="Найденные команды"></div>
+      <div class="dialog-footnote"><span><kbd>↑</kbd><kbd>↓</kbd> выбрать</span><span><kbd>↵</kbd> выполнить</span></div>
+    </dialog>
+
+    <dialog id="action-dialog" class="action-dialog" aria-labelledby="action-title">
+      <form method="dialog">
+        <header class="dialog-title"><h2 id="action-title"></h2><button class="icon-button" aria-label="Закрыть диалог"><span data-icon="close"></span></button></header>
+        <div id="action-body" class="action-body"></div>
+        <footer class="dialog-actions"><button class="secondary-button" value="cancel">Закрыть</button><button class="primary-button" id="action-confirm" value="confirm" hidden>Копировать</button></footer>
+      </form>
+    </dialog>
+  </body>
+</html>

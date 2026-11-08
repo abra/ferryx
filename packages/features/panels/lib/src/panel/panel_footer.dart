@@ -459,7 +459,7 @@ class _ModeCap extends StatelessWidget {
     final (fill, ink) = !active
         ? (colors.selectionMuted, colors.textMuted)
         : switch (mode) {
-            VimMode.normal => (colors.accent, colors.onAccent),
+            VimMode.normal => (colors.selectionAccent, colors.link),
             VimMode.visual => (colors.wash(5), colors.ink(5)),
             VimMode.search => (colors.wash(3), colors.ink(3)),
             VimMode.command => (colors.wash(1), colors.ink(1)),

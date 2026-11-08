@@ -82,15 +82,15 @@ class _AppSearchFieldState extends State<AppSearchField> {
     final radius = metrics.radius;
     final colors = context.appColors;
     final theme = Theme.of(context).inputDecorationTheme;
-    // An NSSearchField over a sidebar's vibrancy (measured on macOS 15):
-    // the fill and edge of the sidebar's own greys, no lighter bezel; in
-    // the dark its lower edge stays the lighter one.
+    // A sidebar search uses a quiet fill, without a lighter bezel. Keep
+    // the control edge strong enough to hold around the rounded corners;
+    // the divider role is too faint here. In the dark the lower edge is light.
     final quiet = widget.sidebar && metrics.style == AppPlatformStyle.macos;
     final dark = Theme.of(context).brightness == Brightness.dark;
     InputBorder? onSidebar(InputBorder? border) =>
         quiet && border is AppOutlineInputBorder
         ? AppOutlineInputBorder(
-            borderSide: border.borderSide.copyWith(color: colors.line),
+            borderSide: border.borderSide.copyWith(color: colors.controlBorder),
             borderRadius: border.borderRadius,
             gapPadding: border.gapPadding,
             halo: border.halo,

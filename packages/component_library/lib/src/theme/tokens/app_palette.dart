@@ -1,22 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../app_platform_style.dart';
 import '../extensions/app_colors_ext.dart';
 
-/// The colours of one platform style and brightness: the content surface,
-/// its text, and every other role in [colors].
+/// Ferryx's Balanced palette: blue accents, quiet surfaces and soft row
+/// selection. Geometry and typography remain native through AppMetrics and
+/// AppTypography; colour roles are shared across desktops.
 ///
-/// Values follow each platform's system colours:
-/// - macOS: AppKit's dynamic colours (label alphas .85/.55, separator .1,
-///   systemBlue accent, the accessible variants of the system colours for
-///   text such as ratings).
-/// - Windows 11: Fluent's tokens (Mica backdrop, layer and card fills, text
-///   alphas .894/.606/.447, the default accent #005FB8 / #60CDFF).
-/// - GNOME: libadwaita 1.6's named colours (window, view, header bar and
-///   sidebar backgrounds, `#3584e4` accent, text at .8 and dim .55).
-///
-/// The PDF markers, `==highlight==` and the click hints stay the same on
-/// every platform: they belong to the document, not to the desktop.
+/// Both palettes are constants. Theme rebuilds and row painting reuse them.
 @immutable
 class AppPalette {
   const AppPalette({
@@ -25,16 +15,10 @@ class AppPalette {
     required this.colors,
   });
 
-  /// The palette of [style] at [brightness].
-  factory AppPalette.of(AppPlatformStyle style, Brightness brightness) =>
-      switch ((style, brightness)) {
-        (AppPlatformStyle.macos, Brightness.light) => _macosLight,
-        (AppPlatformStyle.macos, Brightness.dark) => _macosDark,
-        (AppPlatformStyle.windows, Brightness.light) => _windowsLight,
-        (AppPlatformStyle.windows, Brightness.dark) => _windowsDark,
-        (AppPlatformStyle.gnome, Brightness.light) => _gnomeLight,
-        (AppPlatformStyle.gnome, Brightness.dark) => _gnomeDark,
-      };
+  factory AppPalette.of(Brightness brightness) => switch (brightness) {
+    Brightness.light => _light,
+    Brightness.dark => _dark,
+  };
 
   /// The content's background: documents, lists, menus, popovers.
   final Color surface;
@@ -43,7 +27,7 @@ class AppPalette {
   final Color onSurface;
   final AppColorsExt colors;
 
-  // Shared across platforms: document colours, not desktop ones.
+  // Document markings keep their own semantic colours.
   static const _markers = [
     Color(0xFFFDE68A),
     Color(0xFFBFDBFE),
@@ -54,14 +38,14 @@ class AppPalette {
   ];
   static const _highlightLight = Color(0xFFFDE68A);
 
-  /// Text colours of `[text]{.red}` (red, orange, yellow, green, blue,
-  /// purple): 5.4:1 or more on the light page, 6.5:1 on the dark one.
   // The system yellows; on a light bar the fill is too pale to stand as an
   // icon's shape, so a deeper gold draws its edge.
   static const _starLight = Color(0xFFFFCC00);
   static const _starEdgeLight = Color(0xFFB88200);
   static const _starDark = Color(0xFFFFD60A);
 
+  /// Text colours of `[text]{.red}` (red, orange, yellow, green, blue,
+  /// purple), paired with the content surface.
   static const _inksLight = [
     Color(0xFFB8231A),
     Color(0xFFB04A00),
@@ -98,12 +82,8 @@ class AppPalette {
     Color(0xFF3F2B60),
   ];
 
-  /// Selected text on a white page, the same in both themes of a style:
-  /// NSColor.selectedTextBackgroundColor, and 30 % of the Fluent and
-  /// libadwaita light accents over white.
-  static const _pageSelectionMacos = Color(0xFFB3D7FF);
-  static const _pageSelectionWindows = Color(0xFFB3CFEA);
-  static const _pageSelectionGnome = Color(0xFFC2D9F7);
+  /// Selected text on a white document page, the same in both themes.
+  static const _pageSelection = Color(0xFFB3D7FF);
 
   /// The page's selection and the keyboard's frame on it while the focus
   /// is elsewhere: the same greys on every style, as the page is white.
@@ -116,34 +96,33 @@ class AppPalette {
   static const _hintInk = Color(0xFF1B1B1A);
   static const _toastError = Color(0xFF7A1A12);
 
-  static const _macosLight = AppPalette(
+  static const _light = AppPalette(
     surface: Color(0xFFFFFFFF),
-    onSurface: Color(0xD9000000),
+    onSurface: Color(0xFF253449),
     colors: AppColorsExt(
-      window: Color(0xFFECECEC),
-      sidebar: Color(0xFFE9E9EB),
-      windowChrome: Color(0xFFF6F6F6),
-      surfaceRaised: Color(0xFFF5F5F7),
-      surfaceSunken: Color(0x0D000000),
-      hoverFill: Color(0x0D000000),
-      pressedFill: Color(0x1A000000),
-      selectionFill: Color(0x1A000000),
+      window: Color(0xFFF1F5FB),
+      sidebar: Color(0xFFF3F6FB),
+      windowChrome: Color(0xFFF7F9FC),
+      surfaceRaised: Color(0xFFFAFCFF),
+      surfaceSunken: Color(0xFFF1F5FB),
+      hoverFill: Color(0xFFF0F5FC),
+      pressedFill: Color(0xFFE0E9F5),
+      selectionFill: Color(0xFFEDF0F5),
       controlFill: Color(0xFFFFFFFF),
-      // Laid over what is behind a control, not over its fill: #D2 on the
-      // window's grey, as AppKit's #DF on its lighter one.
-      controlBorder: Color(0x1A000000),
-      line: Color(0x1A000000),
-      textMuted: Color(0x8C000000),
-      textFaint: Color(0x6B000000),
-      accent: Color(0xFF007AFF),
+      controlBorder: Color(0xFFCCD8E8),
+      line: Color(0xFFDCE4EF),
+      textMuted: Color(0xFF566880),
+      textFaint: Color(0xFF6F8097),
+      accent: Color(0xFF174DA7),
       onAccent: Color(0xFFFFFFFF),
-      onAccentMuted: Color(0xD9FFFFFF),
-      selectionAccent: Color(0xFF0064E1),
-      selectionMuted: Color(0x24000000),
-      link: Color(0xFF0068DA),
-      accentSoft: Color(0x1F007AFF),
-      selection: Color(0x29007AFF),
-      focusRing: Color(0x80007AFF),
+      onSelection: Color(0xFF253449),
+      onSelectionMuted: Color(0xFF566880),
+      selectionAccent: Color(0xFFE5EFFE),
+      selectionMuted: Color(0xFFEDF0F5),
+      link: Color(0xFF174DA7),
+      accentSoft: Color(0xFFD8E7FC),
+      selection: Color(0xFFE5EFFE),
+      focusRing: Color(0x99174DA7),
       cardMarker: Color(0xFFC93400),
       cardMarkerSoft: Color(0x24FF9500),
       ratingAgain: Color(0xFFD70015),
@@ -159,49 +138,50 @@ class AppPalette {
       hintBackground: _hintLight,
       hintBorder: _hintBorder,
       hintForeground: _hintInk,
-      toastBackground: Color(0xF5F6F6F6),
-      toastForeground: Color(0xD9000000),
-      toastLink: Color(0xFF0068DA),
+      toastBackground: Color(0xF5F7F9FC),
+      toastForeground: Color(0xFF253449),
+      toastLink: Color(0xFF174DA7),
       toastError: _toastError,
       markers: _markers,
       inks: _inksLight,
       starFill: _starLight,
       starEdge: _starEdgeLight,
       washes: _washesLight,
-      pageSelection: _pageSelectionMacos,
+      pageSelection: _pageSelection,
       pageSelectionMuted: _pageSelectionMuted,
       pageRingMuted: _pageRingMuted,
       switchKnob: Color(0xFFFFFFFF),
-      switchTrack: Color(0xFF007AFF),
+      switchTrack: Color(0xFF174DA7),
     ),
   );
 
-  static const _macosDark = AppPalette(
-    surface: Color(0xFF1E1E1E),
-    onSurface: Color(0xD9FFFFFF),
+  static const _dark = AppPalette(
+    surface: Color(0xFF0E1829),
+    onSurface: Color(0xFFD8E5FB),
     colors: AppColorsExt(
-      window: Color(0xFF323232),
-      sidebar: Color(0xFF2B2B2D),
-      windowChrome: Color(0xFF2A2A2A),
-      surfaceRaised: Color(0xFF262628),
-      surfaceSunken: Color(0x12FFFFFF),
-      hoverFill: Color(0x12FFFFFF),
-      pressedFill: Color(0x21FFFFFF),
-      selectionFill: Color(0x1FFFFFFF),
-      controlFill: Color(0x40FFFFFF),
-      controlBorder: Color(0x1FFFFFFF),
-      line: Color(0x1AFFFFFF),
-      textMuted: Color(0x8CFFFFFF),
-      textFaint: Color(0x66FFFFFF),
-      accent: Color(0xFF0A84FF),
-      onAccent: Color(0xFFFFFFFF),
-      onAccentMuted: Color(0xD9FFFFFF),
-      selectionAccent: Color(0xFF0058D0),
-      selectionMuted: Color(0x2EFFFFFF),
-      link: Color(0xFF419CFF),
-      accentSoft: Color(0x380A84FF),
-      selection: Color(0x420A84FF),
-      focusRing: Color(0x990A84FF),
+      window: Color(0xFF121F33),
+      sidebar: Color(0xFF101C2F),
+      windowChrome: Color(0xFF121F33),
+      surfaceRaised: Color(0xFF17273F),
+      surfaceSunken: Color(0xFF142238),
+      hoverFill: Color(0xFF182942),
+      pressedFill: Color(0xFF243B5A),
+      selectionFill: Color(0xFF1B2A40),
+      controlFill: Color(0xFF17273F),
+      controlBorder: Color(0xFF45638F),
+      line: Color(0xFF263C5C),
+      textMuted: Color(0xFF9AACCB),
+      textFaint: Color(0xFF7E94B4),
+      accent: Color(0xFF8AB4FF),
+      onAccent: Color(0xFF102140),
+      onSelection: Color(0xFFD8E5FB),
+      onSelectionMuted: Color(0xFF9AACCB),
+      selectionAccent: Color(0xFF203C62),
+      selectionMuted: Color(0xFF1B2A40),
+      link: Color(0xFF8AB4FF),
+      accentSoft: Color(0xFF243F64),
+      selection: Color(0xFF203C62),
+      focusRing: Color(0x998AB4FF),
       cardMarker: Color(0xFFFFB340),
       cardMarkerSoft: Color(0x33FF9F0A),
       ratingAgain: Color(0xFFFF6961),
@@ -217,252 +197,20 @@ class AppPalette {
       hintBackground: _hintDark,
       hintBorder: _hintBorder,
       hintForeground: Color(0xFFFFFFFF),
-      toastBackground: Color(0xF52E2E2E),
-      toastForeground: Color(0xD9FFFFFF),
-      toastLink: Color(0xFF419CFF),
+      toastBackground: Color(0xF5121F33),
+      toastForeground: Color(0xFFD8E5FB),
+      toastLink: Color(0xFF8AB4FF),
       toastError: _toastError,
       markers: _markers,
       inks: _inksDark,
       starFill: _starDark,
       starEdge: _starDark,
       washes: _washesDark,
-      pageSelection: _pageSelectionMacos,
+      pageSelection: _pageSelection,
       pageSelectionMuted: _pageSelectionMuted,
       pageRingMuted: _pageRingMuted,
-      switchKnob: Color(0xFFCCCCCC),
-      switchTrack: Color(0xFF1663D8),
-    ),
-  );
-
-  static const _windowsLight = AppPalette(
-    surface: Color(0xFFFCFCFC),
-    onSurface: Color(0xE4000000),
-    colors: AppColorsExt(
-      window: Color(0xFFF3F3F3),
-      sidebar: Color(0xFFF3F3F3),
-      windowChrome: Color(0xFFFCFCFC),
-      surfaceRaised: Color(0xFFF7F7F7),
-      surfaceSunken: Color(0x0D000000),
-      hoverFill: Color(0x0A000000),
-      pressedFill: Color(0x06000000),
-      selectionFill: Color(0x0A000000),
-      controlFill: Color(0xB3FFFFFF),
-      controlBorder: Color(0x24000000),
-      line: Color(0x14000000),
-      textMuted: Color(0x9B000000),
-      textFaint: Color(0x72000000),
-      accent: Color(0xFF005FB8),
-      onAccent: Color(0xFFFFFFFF),
-      onAccentMuted: Color(0xD9FFFFFF),
-      selectionAccent: Color(0xFF005FB8),
-      selectionMuted: Color(0x0F000000),
-      link: Color(0xFF005FB8),
-      accentSoft: Color(0x1F005FB8),
-      selection: Color(0x24005FB8),
-      focusRing: Color(0xE4000000),
-      cardMarker: Color(0xFF9D5D00),
-      cardMarkerSoft: Color(0xFFFFF4CE),
-      ratingAgain: Color(0xFFC42B1C),
-      ratingHard: Color(0xFF9D5D00),
-      ratingGood: Color(0xFF0F7B0F),
-      ratingEasy: Color(0xFF005FB8),
-      ratingAgainSoft: Color(0xFFFDE7E9),
-      ratingHardSoft: Color(0xFFFFF4CE),
-      ratingGoodSoft: Color(0xFFDFF6DD),
-      ratingEasySoft: Color(0x1A005FB8),
-      danger: Color(0xFFC42B1C),
-      highlight: _highlightLight,
-      hintBackground: _hintLight,
-      hintBorder: _hintBorder,
-      hintForeground: _hintInk,
-      toastBackground: Color(0xF22C2C2C),
-      toastForeground: Color(0xFFFFFFFF),
-      toastLink: Color(0xFF99EBFF),
-      toastError: _toastError,
-      markers: _markers,
-      inks: _inksLight,
-      starFill: _starLight,
-      starEdge: _starEdgeLight,
-      washes: _washesLight,
-      pageSelection: _pageSelectionWindows,
-      pageSelectionMuted: _pageSelectionMuted,
-      pageRingMuted: _pageRingMuted,
-      switchKnob: Color(0xFFFFFFFF),
-      switchTrack: Color(0xFF005FB8),
-    ),
-  );
-
-  static const _windowsDark = AppPalette(
-    surface: Color(0xFF282828),
-    onSurface: Color(0xFFFFFFFF),
-    colors: AppColorsExt(
-      window: Color(0xFF202020),
-      sidebar: Color(0xFF202020),
-      windowChrome: Color(0xFF282828),
-      surfaceRaised: Color(0xFF2C2C2C),
-      surfaceSunken: Color(0x0FFFFFFF),
-      hoverFill: Color(0x0FFFFFFF),
-      pressedFill: Color(0x0AFFFFFF),
-      selectionFill: Color(0x0FFFFFFF),
-      controlFill: Color(0x0FFFFFFF),
-      controlBorder: Color(0x1FFFFFFF),
-      line: Color(0x15FFFFFF),
-      textMuted: Color(0xC8FFFFFF),
-      textFaint: Color(0x8BFFFFFF),
-      accent: Color(0xFF60CDFF),
-      onAccent: Color(0xFF000000),
-      onAccentMuted: Color(0xD9000000),
-      selectionAccent: Color(0xFF60CDFF),
-      selectionMuted: Color(0x14FFFFFF),
-      link: Color(0xFF99EBFF),
-      accentSoft: Color(0x2960CDFF),
-      selection: Color(0x3360CDFF),
-      focusRing: Color(0xFFFFFFFF),
-      cardMarker: Color(0xFFFCE100),
-      cardMarkerSoft: Color(0xFF433519),
-      ratingAgain: Color(0xFFFF99A4),
-      ratingHard: Color(0xFFFCE100),
-      ratingGood: Color(0xFF6CCB5F),
-      ratingEasy: Color(0xFF60CDFF),
-      ratingAgainSoft: Color(0xFF442726),
-      ratingHardSoft: Color(0xFF433519),
-      ratingGoodSoft: Color(0xFF393D1B),
-      ratingEasySoft: Color(0x2660CDFF),
-      danger: Color(0xFFFF99A4),
-      highlight: _highlightDark,
-      hintBackground: _hintDark,
-      hintBorder: _hintBorder,
-      hintForeground: Color(0xFFFFFFFF),
-      toastBackground: Color(0xF5F3F3F3),
-      toastForeground: Color(0xFF1A1A1A),
-      toastLink: Color(0xFF005FB8),
-      toastError: _toastError,
-      markers: _markers,
-      inks: _inksDark,
-      starFill: _starDark,
-      starEdge: _starDark,
-      washes: _washesDark,
-      pageSelection: _pageSelectionWindows,
-      pageSelectionMuted: _pageSelectionMuted,
-      pageRingMuted: _pageRingMuted,
-      switchKnob: Color(0xFF000000),
-      switchTrack: Color(0xFF60CDFF),
-    ),
-  );
-
-  static const _gnomeLight = AppPalette(
-    surface: Color(0xFFFFFFFF),
-    onSurface: Color(0xCC000006),
-    colors: AppColorsExt(
-      window: Color(0xFFFAFAFB),
-      sidebar: Color(0xFFEBEBED),
-      windowChrome: Color(0xFFFFFFFF),
-      surfaceRaised: Color(0xFFFAFAFB),
-      surfaceSunken: Color(0x12000006),
-      hoverFill: Color(0x12000006),
-      pressedFill: Color(0x29000006),
-      selectionFill: Color(0x1A000006),
-      controlFill: Color(0x1A000006),
-      controlBorder: Color(0x26000006),
-      line: Color(0x1F000006),
-      textMuted: Color(0x8C000006),
-      textFaint: Color(0x73000006),
-      accent: Color(0xFF3584E4),
-      onAccent: Color(0xFFFFFFFF),
-      onAccentMuted: Color(0xD9FFFFFF),
-      selectionAccent: Color(0xFF3584E4),
-      selectionMuted: Color(0x1A000006),
-      link: Color(0xFF1C71D8),
-      accentSoft: Color(0x263584E4),
-      selection: Color(0x2E3584E4),
-      focusRing: Color(0x803584E4),
-      cardMarker: Color(0xFF9C6E03),
-      cardMarkerSoft: Color(0x26E5A50A),
-      ratingAgain: Color(0xFFC01C28),
-      ratingHard: Color(0xFF9C6E03),
-      ratingGood: Color(0xFF1B8553),
-      ratingEasy: Color(0xFF1C71D8),
-      ratingAgainSoft: Color(0x1FE01B24),
-      ratingHardSoft: Color(0x26E5A50A),
-      ratingGoodSoft: Color(0x262EC27E),
-      ratingEasySoft: Color(0x213584E4),
-      danger: Color(0xFFC01C28),
-      highlight: _highlightLight,
-      hintBackground: _hintLight,
-      hintBorder: _hintBorder,
-      hintForeground: _hintInk,
-      toastBackground: Color(0xF23D3D3D),
-      toastForeground: Color(0xFFFFFFFF),
-      toastLink: Color(0xFF99C1F1),
-      toastError: _toastError,
-      markers: _markers,
-      inks: _inksLight,
-      starFill: _starLight,
-      starEdge: _starEdgeLight,
-      washes: _washesLight,
-      pageSelection: _pageSelectionGnome,
-      pageSelectionMuted: _pageSelectionMuted,
-      pageRingMuted: _pageRingMuted,
-      switchKnob: Color(0xFFFFFFFF),
-      switchTrack: Color(0xFF3584E4),
-    ),
-  );
-
-  static const _gnomeDark = AppPalette(
-    surface: Color(0xFF1D1D20),
-    onSurface: Color(0xFFFFFFFF),
-    colors: AppColorsExt(
-      window: Color(0xFF222226),
-      sidebar: Color(0xFF2E2E32),
-      windowChrome: Color(0xFF2E2E32),
-      surfaceRaised: Color(0xFF29292D),
-      surfaceSunken: Color(0x12FFFFFF),
-      hoverFill: Color(0x12FFFFFF),
-      pressedFill: Color(0x29FFFFFF),
-      selectionFill: Color(0x1AFFFFFF),
-      controlFill: Color(0x1AFFFFFF),
-      controlBorder: Color(0x26FFFFFF),
-      line: Color(0x1FFFFFFF),
-      textMuted: Color(0x99FFFFFF),
-      textFaint: Color(0x73FFFFFF),
-      accent: Color(0xFF3584E4),
-      onAccent: Color(0xFFFFFFFF),
-      onAccentMuted: Color(0xD9FFFFFF),
-      selectionAccent: Color(0xFF3584E4),
-      selectionMuted: Color(0x1AFFFFFF),
-      link: Color(0xFF78AEED),
-      accentSoft: Color(0x403584E4),
-      selection: Color(0x4D3584E4),
-      focusRing: Color(0x8078AEED),
-      cardMarker: Color(0xFFF8E45C),
-      cardMarkerSoft: Color(0x33F6D32D),
-      ratingAgain: Color(0xFFFF7B63),
-      ratingHard: Color(0xFFF8E45C),
-      ratingGood: Color(0xFF8FF0A4),
-      ratingEasy: Color(0xFF78AEED),
-      ratingAgainSoft: Color(0x33E01B24),
-      ratingHardSoft: Color(0x33F6D32D),
-      ratingGoodSoft: Color(0x332EC27E),
-      ratingEasySoft: Color(0x333584E4),
-      danger: Color(0xFFFF7B63),
-      highlight: _highlightDark,
-      hintBackground: _hintDark,
-      hintBorder: _hintBorder,
-      hintForeground: Color(0xFFFFFFFF),
-      toastBackground: Color(0xF5F0F0F2),
-      toastForeground: Color(0xFF1D1D20),
-      toastLink: Color(0xFF1C71D8),
-      toastError: _toastError,
-      markers: _markers,
-      inks: _inksDark,
-      starFill: _starDark,
-      starEdge: _starDark,
-      washes: _washesDark,
-      pageSelection: _pageSelectionGnome,
-      pageSelectionMuted: _pageSelectionMuted,
-      pageRingMuted: _pageRingMuted,
-      switchKnob: Color(0xFFFFFFFF),
-      switchTrack: Color(0xFF3584E4),
+      switchKnob: Color(0xFFD8E5FB),
+      switchTrack: Color(0xFF8AB4FF),
     ),
   );
 }

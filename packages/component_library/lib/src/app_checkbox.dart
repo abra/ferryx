@@ -61,7 +61,12 @@ class _AppCheckboxState extends State<AppCheckbox> {
     final fill = !_enabled
         ? (on ? colors.selectionMuted : colors.surfaceSunken)
         : on
-        ? (_pressed ? colors.selectionAccent : colors.accent)
+        ? (_pressed
+              ? Color.alphaBlend(
+                  colors.pressedFill.withValues(alpha: 0.15),
+                  colors.accent,
+                )
+              : colors.accent)
         : _pressed
         ? colors.pressedFill
         : colors.controlFill;

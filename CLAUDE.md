@@ -30,6 +30,7 @@ Guidance for Claude Code when working in this repository.
 | Format Dart + Rust | `make format` (check only: `make format-check`) |
 | Analyze everything | `make analyze` |
 | All tests | `make test` (`make test-rust`, `make test-dart`) |
+| Native AppKit window tests (macOS + Xcode) | `make test-macos` |
 | Host library for real-core tests | `make core` |
 | Regenerate bridge | `make codegen` (after editing `rust/crates/ferryx_api/src/api/`) |
 | Regenerate l10n | `make l10n` (after editing `packages/ferryx_localizations/lib/l10n/*.arb`) |
@@ -116,7 +117,9 @@ See `ARCHITECTURE.md`. The rules that matter most:
   radius but `AppRadius.full`, are the platform's: read them from
   `context.metrics`. Check long/overflowing text, keyboard focus rings and
   both themes.
-- Native look: the theme follows macOS HIG, Fluent and GNOME HIG
+- Native look: Ferryx's Balanced light/dark palette is shared across
+  desktops; geometry, typography and interaction follow macOS HIG, Fluent
+  and GNOME HIG
   (`AppPlatformStyle`, see ARCHITECTURE.md "Native look on each desktop").
   Features never branch on `defaultTargetPlatform`; a difference belongs in
   the theme or a component-library widget. Menus go through `showAppMenu`,
@@ -138,7 +141,11 @@ See `ARCHITECTURE.md`. The rules that matter most:
   secondary text only. A name or path that may not fit goes through
   `AppMiddleEllipsis`. Selection colours are `selectionAccent` /
   `selectionMuted` through `AppFocusArea.activeOf`, never `accent` for a
-  row. A table's rows (files, results) take `metrics.tableRowInset` and
+  row. Pair soft active selection with `onSelection` / `onSelectionMuted`;
+  `onAccent` belongs on filled accent controls. Keep the file cursor's
+  leading line independent of marked rows and their check marks. File
+  metadata uses `context.mono`, with matching column measurements.
+  A table's rows (files, results) take `metrics.tableRowInset` and
   `radius.tableRow`; a sidebar's, picker's or menu's `rowInset` and
   `radius.row`; a sidebar's list pads its rows by `metrics.navRowMargin`.
   A look claimed to be native is measured beside AppKit first

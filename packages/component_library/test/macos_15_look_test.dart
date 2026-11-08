@@ -106,7 +106,7 @@ void main() {
           .decoration!;
       expect(decoration.fillColor, colors.hoverFill);
       final edge = decoration.enabledBorder! as AppOutlineInputBorder;
-      expect(edge.borderSide.color, colors.line);
+      expect(edge.borderSide.color, colors.controlBorder);
       expect(edge.borderRadius, BorderRadius.circular(6));
       // Its lower edge is lighter in the dark only, as AppKit draws it.
       expect(edge.shade, brightness == Brightness.dark ? isNotNull : isNull);
@@ -337,8 +337,14 @@ void main() {
         final field = tester.getRect(find.byType(TextField));
         final x = field.right.round() - 20;
         final top = field.top.round();
-        // The line over the ground: the controls' edge, 0x1A black.
-        expect(grey(x, top), closeTo(0xE9 * 0.9, 2));
+        final colors = AppTheme.light(AppPlatformStyle.macos)
+            .extension<AppColorsExt>()!;
+        final edge = colors.controlBorder;
+        // The control edge lands on the ground, including on a sidebar.
+        expect(
+          grey(x, top),
+          closeTo(Color.alphaBlend(edge, ground).g * 255, 2),
+        );
         expect(grey(x, top), lessThan(grey(x, top + 3)));
         expectEdgeAtCorner(grey, field.topLeft);
       });

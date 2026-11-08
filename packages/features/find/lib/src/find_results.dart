@@ -315,8 +315,8 @@ class _RowState extends State<_Row> {
         : _hovered && metrics.navHover
         ? colors.hoverFill
         : null;
-    final ink = emphasized ? colors.onAccent : context.colors.onSurface;
-    final muted = emphasized ? colors.onAccentMuted : colors.textMuted;
+    final ink = emphasized ? colors.onSelection : context.colors.onSurface;
+    final muted = emphasized ? colors.onSelectionMuted : colors.textMuted;
     final detail = context.text.bodySmall?.copyWith(
       color: muted,
       fontFeatures: const [FontFeature.tabularFigures()],
@@ -364,7 +364,7 @@ class _RowState extends State<_Row> {
                           hit.isDir ? AppIcons.folder : AppIcons.file,
                           size: AppIconSize.md,
                           color: emphasized
-                              ? colors.onAccent
+                              ? colors.onSelection
                               : colors.textMuted,
                         ),
                         const SizedBox(width: AppSpacing.sm),

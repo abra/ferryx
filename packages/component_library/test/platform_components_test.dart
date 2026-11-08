@@ -169,7 +169,7 @@ void main() {
       await tester.pump();
       expect((await rowDecoration(tester))!.color, colors.selectionAccent);
       final label = tester.widget<Text>(find.text('Neuron'));
-      expect(label.style!.color, colors.onAccent);
+      expect(label.style!.color, colors.onSelection);
       expect(
         tester.widget<FocusRing>(find.byType(FocusRing)).decorate,
         isFalse,
@@ -350,7 +350,7 @@ void main() {
       }
     });
 
-    testWidgets('the highlight takes the accent with light text on macOS, a '
+    testWidgets('the highlight takes the selection roles on macOS, a '
         'subtle fill elsewhere; shortcuts are plain text', (tester) async {
       for (final style in AppPlatformStyle.values) {
         await open(tester, style, () async {
@@ -366,7 +366,7 @@ void main() {
         final fill = (row.decoration! as BoxDecoration).color;
         if (style == AppPlatformStyle.macos) {
           expect(fill, colors.selectionAccent);
-          expect(label.style!.color, colors.onAccent);
+          expect(label.style!.color, colors.onSelection);
         } else {
           expect(fill, colors.hoverFill);
         }

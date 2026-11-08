@@ -28,14 +28,15 @@ features/* never import sibling features.
 
 ### Native look on each desktop
 
-One layout, three sets of conventions: the theme follows Apple's Human
-Interface Guidelines on macOS (with macOS 26's own metrics, `MacGeneration`),
-Fluent on Windows 11 and the GNOME HIG (libadwaita) on Linux.
+One layout, Ferryx's Balanced light/dark palette and three sets of desktop
+conventions. Control geometry, typography and interaction follow Apple's
+Human Interface Guidelines on macOS (with macOS 26's own metrics,
+`MacGeneration`), Fluent on Windows 11 and the GNOME HIG on Linux.
 `AppPlatformStyle` is picked from the platform in the composition root
 (`AppTheme.of(style, brightness, generation:)`), and everything a desktop
 draws differently comes from the theme, never from `defaultTargetPlatform`
-in feature code: type (`AppTypography`), colour (`AppPalette`, six
-palettes, `AppColorsExt` roles), metrics (`AppMetrics`: control, row and
+in feature code: type (`AppTypography`), colour (`AppPalette`, two shared
+constant palettes, `AppColorsExt` roles), metrics (`AppMetrics`: control, row and
 menu heights, radii, the top row, focus rings, insets) and the shared
 controls (`AppNavItem`, `showAppMenu`, `AppDialog`, `AppToggle`,
 `AppSegmentedControl`, `AppPopupButton`, `AppTabStrip`, `AppSplitter`,
@@ -45,8 +46,12 @@ library is shared with Mnema and documented there in depth; Ferryx adds
 file icons (`AppIcons`), the tag palette (`AppColorsExt.ink/wash` by
 index) and Finder's tag colours (`AppTagColors`, `AppTagDots`).
 
-The HIG details the library keeps for every screen, so features need
-not:
+The [visual study](docs/prototypes/protocol-style/README.md) records the
+Protocol Explorer reference and the three prototypes. Variant B informs
+the shared palette: cool surfaces, blue accents, soft selection and fine
+dividers. This changes neither the native density nor list virtualization.
+
+The desktop details the library keeps for every screen:
 
 - Measured, not remembered: the macOS 15 values below were taken beside
   AppKit at one pixel per point (a scratch app with NSButton, NSTextField,
@@ -58,27 +63,33 @@ not:
   appearances: equal tabs filling the bar edge to edge, 28 high on a
   line, 1 pt lines between them, + in a 28 cell after a stronger line;
   the inactive ones sit a shade below the bar above under an edge (a
-  soft shade under it in light, black in dark), the active one is the
+  soft shade under it in light), the active one is the
   bar's own colour and opens into it, so the panel's header draws no
   line over the strip (`AppTabStrip.joinsBarAbove`). Its focus ring is
-  inside the tab. macOS 26 keeps rounded tabs on the bar.
+  inside the tab. macOS 26 keeps rounded tabs on the bar. Both use the
+  shared surface roles; a bottom accent marks the active tab and becomes
+  neutral when its panel or window loses focus.
 - Bars at the bottom: the panel's footer stands as high as the hint line
   under it (27 and a line on macOS 15, as Finder's path and status bars):
   the item or the selection at the start, the count and the free space at
   the end, the name giving way first. A Vim key in a cap is typed text
   (`AppKeyCap.typed`), in the monospace face, so `l` is not a bar.
-- Selection: `selectionAccent` (NSColor.selectedContentBackgroundColor, a
-  shade deeper than the button accent) with `onAccent` text where the
-  keys are, `selectionMuted` (the unemphasized grey) everywhere else —
+- Selection: soft `selectionAccent` with `onSelection` text and
+  `onSelectionMuted` metadata where the keys are, `selectionMuted`
+  (the unemphasized grey) everywhere else —
   another panel, or the whole window while it is not the active one
   (`AppWindowActivity` at the app root, read by `AppFocusArea.activeOf`).
+  A file cursor has a leading accent line; independently marked files
+  have `accentSoft` and a check mark. `accent` / `onAccent` remain the
+  pair for filled buttons, badges and checked controls. Contrast tests
+  cover normal and secondary selection text in both appearances.
 - Rows: a table's (a panel's files, the results and comparisons in
   dialogs) take `metrics.tableRowInset` and `radius.tableRow` — on macOS
   15 the highlight spans the row, square, as in Finder's list view; a
   sidebar's, a picker's or a menu's take `rowInset` and `radius.row`,
   inset and rounded (an NSTableView's inset style, the source list).
   Elsewhere and on macOS 26 the two are the same. Rows sit on the content
-  colour (`colors.surface`: white, or #1E1E1E), not on the window's grey;
+  colour (`colors.surface`: white or dark navy), distinct from the chrome;
   a table inside a dialog is framed by a hairline (`radius.tableFrame`,
   square on macOS 15). Rows are `metrics.listRowHeight` tall. A sidebar
   (the settings' pages) pads its rows and its search field by
@@ -143,8 +154,10 @@ not:
   leaving the menu takes the highlight with it. A search field clears
   with its button or Esc.
 - Text: a file name or a path that does not fit loses its middle
-  (`AppMiddleEllipsis`), never its extension; figures in columns and
-  footers are tabular; secondary text is `textMuted` (AA on every
+  (`AppMiddleEllipsis`), never its extension; file names keep the system
+  face, while sizes, dates and permissions use `context.mono`. Column
+  measurements use the same text style as their cells. Figures in
+  columns and footers are tabular; secondary text is `textMuted` (AA on every
   surface), `textFaint` is for placeholders and disabled text only.
 
 ### Window chrome
@@ -158,6 +171,13 @@ header keeps the traffic lights' room, the right panel's the trailing
 buttons'. The window is shown only after the preferences are read
 (`showWindow`), at its remembered frame fitted to the screens, and
 `WindowStateSaver` writes moves and resizes back.
+
+The runner reapplies the traffic-light layout after `appearance` changes:
+`window_manager.setBrightness` makes AppKit restore its shorter title bar
+while keeping the custom button offsets. `RunnerTests` checks the actual
+AppKit button and ancestor bounds after theme, title and size changes
+(`make test-macos`);
+Flutter widget previews cannot cover these system controls.
 
 ## Rust workspace (`rust/`)
 

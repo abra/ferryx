@@ -272,7 +272,7 @@ class _AppNavItemState extends State<AppNavItem> {
         ? colors.hoverFill
         : null;
     final ink = emphasized
-        ? colors.onAccent
+        ? colors.onSelection
         : widget.accent
         ? colors.accent
         : context.colors.onSurface;
@@ -284,7 +284,7 @@ class _AppNavItemState extends State<AppNavItem> {
       overflow: TextOverflow.ellipsis,
     );
     final iconColor = emphasized
-        ? colors.onAccent
+        ? colors.onSelection
         : widget.accent
         ? colors.accent
         : widget.navigation && metrics.style == AppPlatformStyle.macos
@@ -297,7 +297,7 @@ class _AppNavItemState extends State<AppNavItem> {
         : Icon(
             widget.expanded! ? AppIcons.chevronDown : AppIcons.chevronRight,
             size: AppIconSize.sm,
-            color: emphasized ? colors.onAccent : colors.textFaint,
+            color: emphasized ? colors.onSelection : colors.textFaint,
           );
 
     // The same row folded or not: the icon keeps its place on the
@@ -354,7 +354,7 @@ class _AppNavItemState extends State<AppNavItem> {
             Text(
               value,
               style: context.text.labelSmall?.copyWith(
-                color: emphasized ? colors.onAccent : colors.textFaint,
+                color: emphasized ? colors.onSelection : colors.textFaint,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
               maxLines: 1,
@@ -529,7 +529,7 @@ class _ActionButtonState extends State<_ActionButton> {
     final fill = !_hovered && !_pressed
         ? null
         : widget.emphasized
-        ? colors.onAccent.withValues(alpha: _pressed ? 0.3 : 0.2)
+        ? colors.onSelection.withValues(alpha: _pressed ? 0.3 : 0.2)
         : _pressed
         ? colors.pressedFill
         : colors.hoverFill;
@@ -566,7 +566,9 @@ class _ActionButtonState extends State<_ActionButton> {
                 child: Icon(
                   widget.action.icon,
                   size: AppIconSize.sm,
-                  color: widget.emphasized ? colors.onAccent : colors.textMuted,
+                  color: widget.emphasized
+                      ? colors.onSelection
+                      : colors.textMuted,
                 ),
               ),
             ),
@@ -592,9 +594,13 @@ class _Badge extends StatelessWidget {
     final fill = windows
         ? colors.accent
         : emphasized
-        ? colors.onAccent.withValues(alpha: 0.25)
+        ? colors.onSelection.withValues(alpha: 0.25)
         : colors.selectionFill;
-    final ink = windows || emphasized ? colors.onAccent : colors.textMuted;
+    final ink = windows
+        ? colors.onAccent
+        : emphasized
+        ? colors.onSelection
+        : colors.textMuted;
     // No alignment on the box: it would stretch the capsule to the row's
     // height. A short count centres in the minimum width instead.
     return Container(

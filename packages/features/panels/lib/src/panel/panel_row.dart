@@ -11,8 +11,8 @@ import 'file_icon.dart';
 /// the keys are in or in the other one.
 ///
 /// Orthodox managers tell the cursor from the selection: the cursor row
-/// takes the emphasized selection (the accent with light text), selected
-/// rows a tint of it. Where the keys are not (the other panel, a window
+/// takes a soft selection and an accent edge; marked rows have a tint
+/// and a check mark. Where the keys are not (the other panel, a window
 /// that is not active) both grey to the unemphasized selection with the
 /// normal text, as macOS greys a selection without focus.
 @immutable
@@ -43,8 +43,7 @@ class RowLook {
   /// emphasized selection, as Finder lights it, wherever the keys are.
   final bool dropTarget;
 
-  /// The cursor row in the active panel, or the drop's folder: light text
-  /// on the accent.
+  /// The cursor row in the active panel, or the drop's folder.
   bool get emphasized => (cursor && active) || dropTarget;
 
   Color? background(AppColorsExt colors) {
@@ -54,10 +53,23 @@ class RowLook {
     return null;
   }
 
+  /// Painted over the fill without changing column positions or row size.
+  /// The check mark remains independent when the cursor crosses a selection.
+  Decoration? cursorDecoration(AppColorsExt colors) => emphasized
+      ? BoxDecoration(
+          border: AppBorder(
+            left: BorderSide(
+              color: colors.accent,
+              width: AppSizes.focusBarHeight,
+            ),
+          ),
+        )
+      : null;
+
   /// The name's colour; [ink] is the row's own when nothing overrides it.
   Color foreground(BuildContext context, {Color? ink}) {
     final colors = context.appColors;
-    if (emphasized) return colors.onAccent;
+    if (emphasized) return colors.onSelection;
     if (selected && active) return colors.link;
     if (dimmed) return colors.textFaint;
     return ink ?? context.colors.onSurface;
@@ -66,14 +78,14 @@ class RowLook {
   /// The colour of a row's details (size, date) and of its check mark's
   /// companions.
   Color secondary(AppColorsExt colors) {
-    if (emphasized) return colors.onAccentMuted;
+    if (emphasized) return colors.onSelectionMuted;
     if (dimmed) return colors.textFaint;
     return colors.textMuted;
   }
 
   /// The selection's check mark.
   Color checkMark(AppColorsExt colors) {
-    if (emphasized) return colors.onAccent;
+    if (emphasized) return colors.onSelection;
     return active ? colors.accent : colors.textMuted;
   }
 }
@@ -116,7 +128,9 @@ class RowName extends StatelessWidget {
     final (icon, tint) = FileIcon.describe(entry, colors);
     // The row drops its fill under a rename's field: the icon keeps its
     // own colour, not the one for the accent.
-    final iconColor = look.emphasized && field == null ? colors.onAccent : tint;
+    final iconColor = look.emphasized && field == null
+        ? colors.onSelection
+        : tint;
     final base = context.text.bodyMedium!.copyWith(
       color: look.foreground(context),
       fontStyle: entry.isSymlink ? FontStyle.italic : null,
@@ -152,9 +166,9 @@ class RowName extends StatelessWidget {
                 message: context.l10n.tagNames(entry.tags.map((t) => t.name)),
                 child: AppTagDots(
                   colors: dots,
-                  // On the accent the dots take a light ring, as Finder's.
+                  // A contrasting ring separates tags from the cursor fill.
                   ring: look.emphasized
-                      ? colors.onAccent
+                      ? colors.onSelection
                       : look.background(colors) ?? colors.window,
                   size: dotSize,
                 ),
@@ -200,7 +214,7 @@ class RowName extends StatelessWidget {
     final chars = name.characters.toList();
     final underline = style.copyWith(
       decoration: TextDecoration.underline,
-      decorationColor: look.emphasized ? colors.onAccent : colors.accent,
+      decorationColor: look.emphasized ? colors.onSelection : colors.accent,
       decorationThickness: 2,
     );
     final spans = <TextSpan>[];
@@ -438,13 +452,16 @@ double dateColumnWidth(BuildContext context) {
   }
 }
 
-/// The face of a column's text: the body in the muted colour, figures of
-/// one width so sizes and dates line up (Finder sets them in the name's
-/// size); permissions in the monospace face.
+/// Technical metadata uses the platform monospace face; names, extensions
+/// and account names keep the system face. Measurements use this same style.
 TextStyle columnStyle(BuildContext context, {ListColumn? column}) {
-  final base = column == ListColumn.permissions
-      ? context.mono
-      : context.text.bodyMedium!;
+  final base = switch (column) {
+    ListColumn.name ||
+    ListColumn.extension ||
+    ListColumn.owner ||
+    ListColumn.group => context.text.bodyMedium!,
+    _ => context.mono,
+  };
   return base.copyWith(
     color: context.appColors.textMuted,
     fontFeatures: const [FontFeature.tabularFigures()],

@@ -268,12 +268,36 @@ void main() {
   });
 
   group('palettes', () {
+    test('selection text stays readable without borrowing button colours', () {
+      for (final brightness in brightnesses) {
+        final palette = AppPalette.of(brightness);
+        final c = palette.colors;
+        expect(AppPalette.of(brightness), same(palette));
+        for (final background in [c.selectionAccent, c.accentSoft]) {
+          expect(
+            contrast(c.onSelection, background),
+            greaterThanOrEqualTo(4.5),
+          );
+          expect(
+            contrast(c.onSelectionMuted, background),
+            greaterThanOrEqualTo(4.5),
+          );
+          expect(contrast(c.accent, background), greaterThanOrEqualTo(3));
+        }
+        expect(contrast(c.onAccent, c.accent), greaterThanOrEqualTo(4.5));
+        expect(
+          contrast(c.textMuted, c.selectionMuted),
+          greaterThanOrEqualTo(4.5),
+        );
+      }
+    });
+
     test(
       'text reads on its surfaces (WCAG AA for body and secondary text)',
       () {
         for (final style in styles) {
           for (final brightness in brightnesses) {
-            final palette = AppPalette.of(style, brightness);
+            final palette = AppPalette.of(brightness);
             final c = palette.colors;
             final label = '$style $brightness';
             expect(
@@ -334,8 +358,8 @@ void main() {
     test('selected text on a page: a visible tint in both themes, under '
         'which the page\'s ink stays readable', () {
       for (final style in styles) {
-        final light = AppPalette.of(style, Brightness.light).colors;
-        final dark = AppPalette.of(style, Brightness.dark).colors;
+        final light = AppPalette.of(Brightness.light).colors;
+        final dark = AppPalette.of(Brightness.dark).colors;
         // The page is white in both themes, so the tint is too.
         expect(dark.pageSelection, light.pageSelection, reason: '$style');
         final tint = light.pageSelection;
@@ -358,18 +382,16 @@ void main() {
       }
     });
 
-    test('six PDF markers on every platform, clamped by index', () {
-      for (final style in styles) {
-        final c = AppPalette.of(style, Brightness.light).colors;
-        expect(c.markers, hasLength(6));
-        expect(c.marker(99), c.markers.last);
-        expect(c.marker(-1), c.markers.first);
-      }
+    test('six PDF markers, clamped by index', () {
+      final c = AppPalette.of(Brightness.light).colors;
+      expect(c.markers, hasLength(6));
+      expect(c.marker(99), c.markers.last);
+      expect(c.marker(-1), c.markers.first);
     });
 
     test('interpolates for the light/dark cross-fade, markers included', () {
-      final a = AppPalette.of(AppPlatformStyle.gnome, Brightness.light).colors;
-      final b = AppPalette.of(AppPlatformStyle.gnome, Brightness.dark).colors;
+      final a = AppPalette.of(Brightness.light).colors;
+      final b = AppPalette.of(Brightness.dark).colors;
       expect(a.lerp(b, 0).sidebar, a.sidebar);
       expect(a.lerp(b, 1).sidebar, b.sidebar);
       expect(a.lerp(b, 0.5).markers, hasLength(6));
@@ -398,7 +420,11 @@ void main() {
       final colors = AppTheme.light(style).extension<AppColorsExt>()!;
       final shape = plate.shape as AppRoundedRectangleBorder;
       final edge = shape.side.color;
-      expect(edge.a, greaterThan(colors.line.a), reason: '$style: no divider');
+      expect(
+        contrast(edge, plate.color!),
+        greaterThan(contrast(colors.line, plate.color!)),
+        reason: '$style: the menu edge is stronger than a divider',
+      );
       // The fill stops inside the edge, so its corners keep it.
       expect(shape.insetFill, isTrue);
       final shadows = plate.shadows!;

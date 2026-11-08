@@ -234,11 +234,11 @@ class _AppMenuItemState extends State<AppMenuItem> {
     final foreground = !widget.enabled
         ? colors.textFaint
         : accentLit
-        ? colors.onAccent
+        ? colors.onSelection
         : widget.danger
         ? colors.danger
         : context.colors.onSurface;
-    final secondary = accentLit ? colors.onAccentMuted : colors.textMuted;
+    final secondary = accentLit ? colors.onSelectionMuted : colors.textMuted;
     final label = Text(
       widget.label,
       style: context.text.bodyMedium?.copyWith(color: foreground),

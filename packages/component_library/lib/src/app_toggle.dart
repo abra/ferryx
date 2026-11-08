@@ -38,15 +38,10 @@ class AppToggle extends StatelessWidget {
     final Color track;
     final Color? outline;
     final Color knobColor;
-    // Through macOS 15 AppKit greys the knob in the dark and deepens the
-    // track; macOS 26 draws both as the accent and white, as the other
-    // desktops do.
-    final tahoe = metrics.generation == MacGeneration.tahoe;
-    final knobFill = tahoe ? colors.onAccent : colors.switchKnob;
     if (value) {
-      track = tahoe ? colors.accent : colors.switchTrack;
+      track = colors.switchTrack;
       outline = null;
-      knobColor = knobFill;
+      knobColor = colors.onAccent;
     } else if (windows) {
       track = Colors.transparent;
       outline = colors.textMuted;
@@ -57,7 +52,9 @@ class AppToggle extends StatelessWidget {
       outline = metrics.style == AppPlatformStyle.macos
           ? colors.controlBorder
           : null;
-      knobColor = knobFill;
+      // The off track needs its own foreground: onAccent can be dark
+      // against the pale blue on track in the dark theme.
+      knobColor = colors.switchKnob;
     }
     final raised = !windows;
     return Semantics(

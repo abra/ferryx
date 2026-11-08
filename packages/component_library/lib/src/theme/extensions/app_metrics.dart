@@ -214,7 +214,7 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
   /// do not).
   final bool navHover;
 
-  /// Whether the highlighted menu item takes the accent with light text
+  /// Whether the highlighted menu item takes the selection colour roles
   /// (macOS) rather than a subtle fill.
   final bool menuHighlightAccent;
 

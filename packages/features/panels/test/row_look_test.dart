@@ -40,14 +40,14 @@ void main() {
   );
 
   testWidgets('the cursor row of the active panel takes the emphasized '
-      'selection with light text', (tester) async {
+      'selection with its own text colours', (tester) async {
     await pump(tester);
     final row = look(cursor: true);
     expect(row.emphasized, isTrue);
     expect(row.background(colors), colors.selectionAccent);
-    expect(row.foreground(context), colors.onAccent);
-    expect(row.secondary(colors), colors.onAccentMuted);
-    expect(row.checkMark(colors), colors.onAccent);
+    expect(row.foreground(context), colors.onSelection);
+    expect(row.secondary(colors), colors.onSelectionMuted);
+    expect(row.checkMark(colors), colors.onSelection);
   });
 
   testWidgets('the cursor row elsewhere greys and keeps the normal text', (
@@ -112,7 +112,7 @@ void main() {
       return tester.widget<Icon>(find.byType(Icon)).color;
     }
 
-    expect(await iconColor(), colors.onAccent);
-    expect(await iconColor(field: const SizedBox()), isNot(colors.onAccent));
+    expect(await iconColor(), colors.onSelection);
+    expect(await iconColor(field: const SizedBox()), isNot(colors.onSelection));
   });
 }

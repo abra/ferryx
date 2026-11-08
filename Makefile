@@ -1,4 +1,4 @@
-.PHONY: get l10n format format-check analyze test test-dart test-rust core codegen icons verify run build-macos dmg release build-linux build-windows linux clean help
+.PHONY: get l10n format format-check analyze test test-dart test-rust test-macos core codegen icons verify run build-macos dmg release build-linux build-windows linux clean help
 
 FLUTTER ?= fvm flutter
 DART ?= fvm dart
@@ -92,6 +92,11 @@ test-dart: core
 
 ## Full local quality gate
 verify: format-check analyze test
+
+## Native AppKit window tests (macOS with Xcode, in addition to verify)
+test-macos:
+	xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Debug \
+		-destination 'platform=macOS' -derivedDataPath build/macos -only-testing:RunnerTests test
 
 ## Run the desktop app on the host platform
 run:

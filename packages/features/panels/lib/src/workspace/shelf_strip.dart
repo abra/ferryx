@@ -339,12 +339,12 @@ class _ShelfChip extends StatelessWidget {
     final metrics = context.metrics;
     final lit = cursor && AppFocusArea.activeOf(context);
     final ink = lit
-        ? colors.onAccent
+        ? colors.onSelection
         : item.missing
         ? colors.textFaint
         : context.colors.onSurface;
     final secondary = lit
-        ? colors.onAccentMuted
+        ? colors.onSelectionMuted
         : item.missing
         ? colors.textFaint
         : colors.textMuted;

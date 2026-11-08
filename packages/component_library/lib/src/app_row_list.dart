@@ -138,11 +138,11 @@ class AppRowState {
 
   /// The colour of the row's text.
   Color ink(BuildContext context) =>
-      emphasized ? context.appColors.onAccent : context.colors.onSurface;
+      emphasized ? context.appColors.onSelection : context.colors.onSurface;
 
   /// The colour of the row's secondary text.
   Color muted(BuildContext context) => emphasized
-      ? context.appColors.onAccentMuted
+      ? context.appColors.onSelectionMuted
       : context.appColors.textMuted;
 }
 

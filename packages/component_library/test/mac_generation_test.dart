@@ -111,8 +111,8 @@ void main() {
     });
 
     for (final brightness in Brightness.values) {
-      testWidgets('$generation $brightness: the switch\'s knob and track are '
-          'AppKit\'s, on and off', (tester) async {
+      testWidgets('$generation $brightness: the switch\'s knob stays visible '
+          'on the accent and neutral tracks', (tester) async {
         Color fillOf(Finder container) {
           return switch (tester
               .widget<AnimatedContainer>(container)
@@ -144,23 +144,28 @@ void main() {
             of: find.byType(AppToggle),
             matching: find.byType(AnimatedContainer),
           );
-          final dark = brightness == Brightness.dark;
-          final sequoia = generation == MacGeneration.sequoia;
-          // AppKit on macOS 15: a grey knob and a deeper track in the dark.
+          final colors = AppTheme.of(
+            AppPlatformStyle.macos,
+            brightness,
+            generation: generation,
+          ).extension<AppColorsExt>()!;
+          final knob = fillOf(containers.last);
+          final track = fillOf(containers.first);
           expect(
-            fillOf(containers.last),
-            dark && sequoia ? const Color(0xFFCCCCCC) : Colors.white,
+            knob,
+            value ? colors.onAccent : colors.switchKnob,
             reason: 'the knob, ${value ? 'on' : 'off'}',
           );
-          if (value) {
+          expect(track, value ? colors.switchTrack : colors.pressedFill);
+          if (value || brightness == Brightness.dark) {
+            final luminances = [
+              knob.computeLuminance(),
+              track.computeLuminance(),
+            ]..sort();
             expect(
-              fillOf(containers.first),
-              switch ((dark, sequoia)) {
-                (true, true) => const Color(0xFF1663D8),
-                (true, false) => const Color(0xFF0A84FF),
-                (false, _) => const Color(0xFF007AFF),
-              },
-              reason: 'the track',
+              (luminances.last + 0.05) / (luminances.first + 0.05),
+              greaterThanOrEqualTo(3),
+              reason: 'the knob must remain visible against its track',
             );
           }
         }

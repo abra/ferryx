@@ -608,11 +608,11 @@ class _QuickPickerRow<T> extends StatelessWidget {
     final active = AppFocusArea.activeOf(context);
     final lit = selected && active;
     final ink = lit
-        ? colors.onAccent
+        ? colors.onSelection
         : item.dimmed
         ? colors.textFaint
         : context.colors.onSurface;
-    final secondary = lit ? colors.onAccentMuted : colors.textMuted;
+    final secondary = lit ? colors.onSelectionMuted : colors.textMuted;
     final body = context.text.bodyMedium!.copyWith(color: ink);
     // What matched: heavier, and in the link colour off the accent.
     TextStyle matched(TextStyle style) =>
@@ -648,7 +648,7 @@ class _QuickPickerRow<T> extends StatelessWidget {
                   Icon(
                     item.icon,
                     size: AppIconSize.md,
-                    color: lit ? colors.onAccent : colors.textMuted,
+                    color: lit ? colors.onSelection : colors.textMuted,
                   ),
                   const SizedBox(width: AppSpacing.sm),
                 ],

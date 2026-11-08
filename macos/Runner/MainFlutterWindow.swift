@@ -61,6 +61,13 @@ class MainFlutterWindow: NSWindow {
     didSet { placeWindowButtons() }
   }
 
+  // window_manager syncs Flutter's theme through this property. AppKit
+  // then restores a 28 pt title bar but keeps the buttons' custom offsets,
+  // clipping them above the window unless the 52 pt layout is reapplied.
+  override var appearance: NSAppearance? {
+    didSet { placeWindowButtons() }
+  }
+
   // The window stays hidden until Dart has read the remembered frame and
   // calls `show()` (window_state.dart); otherwise it would first appear at
   // the default size and jump, and `showWindow` would skip the restore

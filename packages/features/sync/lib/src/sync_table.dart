@@ -381,7 +381,7 @@ class _ActionGlyph extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final colors = context.appColors;
-    final onAccent = look.emphasized;
+    final emphasized = look.emphasized;
     final (
       IconData icon,
       Color color,
@@ -390,25 +390,25 @@ class _ActionGlyph extends StatelessWidget {
     ) = switch (action) {
       RowAction.copyToRight => (
         AppIcons.forward,
-        onAccent ? colors.onAccent : colors.accent,
+        emphasized ? colors.onSelection : colors.accent,
         Alignment.center,
         l10n.syncActionCopyRight,
       ),
       RowAction.copyToLeft => (
         AppIcons.back,
-        onAccent ? colors.onAccent : colors.accent,
+        emphasized ? colors.onSelection : colors.accent,
         Alignment.center,
         l10n.syncActionCopyLeft,
       ),
       RowAction.deleteLeft => (
         AppIcons.trash,
-        onAccent ? colors.onAccent : colors.danger,
+        emphasized ? colors.onSelection : colors.danger,
         Alignment.centerLeft,
         l10n.syncActionDeleteLeft,
       ),
       RowAction.deleteRight => (
         AppIcons.trash,
-        onAccent ? colors.onAccent : colors.danger,
+        emphasized ? colors.onSelection : colors.danger,
         Alignment.centerRight,
         l10n.syncActionDeleteRight,
       ),
@@ -427,7 +427,7 @@ class _ActionGlyph extends StatelessWidget {
         ),
         CompareState.conflict => (
           AppIcons.notEqual,
-          onAccent ? colors.onAccent : colors.danger,
+          emphasized ? colors.onSelection : colors.danger,
           Alignment.center,
           l10n.syncStateConflict,
         ),

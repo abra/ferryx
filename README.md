@@ -3,11 +3,16 @@
 # Ferryx
 
 A dual-pane file manager for the desktop, built for the keyboard: the
-orthodox two-panel workflow of the classic commanders with the look and
-manners of each desktop. The interface is Flutter; file listings,
-operations and the filesystem core are Rust.
+orthodox two-panel workflow of the classic commanders with a compact blue
+interface and each desktop's conventions. The interface is Flutter; file
+listings, operations and the filesystem core are Rust.
 
-![Ferryx on macOS with two file panels, folder tabs, sorting controls and contextual keyboard hints](docs/screenshots/ferryx-macos.png)
+![Ferryx Balanced light theme with two file panels, folder tabs, separate cursor and selection, and contextual keyboard hints](docs/screenshots/ferryx-balanced-light.png)
+
+Flutter UI with sample files, rendered at 1280 × 800 using macOS metrics;
+native window buttons are outside this preview.
+[Dark appearance](docs/screenshots/ferryx-balanced-dark.png) ·
+[Earlier macOS window screenshot](docs/screenshots/ferryx-macos.png).
 
 ## Features
 
@@ -174,9 +179,11 @@ Vim mode is optional and off by default.
   `A` / `I` rename, `:` commands (`:cd ~/src`, `:mkdir`, `:sort size!`,
   `:set hidden`, `:tabnew`, `:marks`, `:42`…) with history and Tab
   completion; the footer names the mode and shows the keys that wait.
-- **Native look**: macOS HIG (with macOS 26's own metrics), Windows 11
-  Fluent or GNOME HIG, chosen by the platform, light and dark. Interface in
-  English and Russian.
+- **Appearance**: Balanced light and dark themes with blue accents, soft
+  selection and monospace file metadata. Compact controls and system fonts
+  follow macOS HIG (including macOS 26's metrics), Windows 11 Fluent or
+  GNOME HIG. Interface in English and Russian. See the
+  [design prototypes](docs/prototypes/protocol-style/README.md).
 - **Platforms**: macOS, Windows and Linux desktops. Day-to-day builds and
   runs are on macOS; CI is configured to run checks, release builds and
   launch smoke checks on Windows and Linux. See [CI](#ci) below.
@@ -234,6 +241,7 @@ bindings are checked in; normal builds do not require running codegen.
 | Rebuild the app icons from `brand/` | `make icons` |
 | Rust tests only | `make test-rust` |
 | Dart tests only | `make test-dart` |
+| Native AppKit window tests (macOS + Xcode, additional to `verify`) | `make test-macos` |
 | Build the Rust library used by integration tests | `make core` (also run by `make test-dart`) |
 | Regenerate bridge bindings after editing `rust/crates/ferryx_api/src/api` | `make codegen` |
 | Regenerate localizations after editing ARB files | `make l10n` |

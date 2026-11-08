@@ -56,7 +56,7 @@ abstract final class AppTheme {
     MacGeneration generation,
   ) {
     final isDark = brightness == Brightness.dark;
-    final palette = AppPalette.of(style, brightness);
+    final palette = AppPalette.of(brightness);
     final ext = palette.colors;
     final metrics = AppMetrics.of(style, generation: generation);
     final type = metrics.typeScale;
@@ -349,11 +349,10 @@ class _Controls {
     animationDuration: Duration.zero,
   );
 
-  /// The default (macOS), accent (Windows) or suggested (GNOME) button;
-  /// in the dark a macOS 15 default button is the deeper selection blue
-  /// (#125CD2 measured), not the accent.
+  /// Filled controls use the accent pair; a row's soft selection has
+  /// separate foreground colours and must never be used as a button fill.
   ButtonStyle filled() => _base(
-    background: metrics.bezelShade && isDark ? ext.selectionAccent : ext.accent,
+    background: ext.accent,
     foreground: ext.onAccent,
     shape: _shape(),
     hover: switch (style) {

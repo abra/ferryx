@@ -417,6 +417,9 @@ class _BriefCell extends StatelessWidget {
               key: cursorKey,
               child: Container(
                 height: height,
+                foregroundDecoration: renaming
+                    ? null
+                    : look.cursorDecoration(colors),
                 margin: EdgeInsets.symmetric(
                   horizontal: context.metrics.tableRowInset,
                 ),
