@@ -236,6 +236,139 @@ void main() {
     );
   });
 
+  for (final ratio in [1.0, 1.5, 2.0]) {
+    for (final count in [2, 3, 4]) {
+      for (final extraPixel in [1.0, 2.0]) {
+        testWidgets('flat tabs meet the + cell without a gap: $count tabs, '
+            '$ratio DPR, $extraPixel extra physical pixels', (tester) async {
+          final physicalWidth = 600 * ratio + extraPixel;
+          tester.view.devicePixelRatio = ratio;
+          tester.view.physicalSize = Size(physicalWidth, 200 * ratio);
+          addTearDown(tester.view.reset);
+          final labels = [for (var i = 0; i < count; i++) 'Folder $i'];
+          await tester.pumpWidget(
+            strip(
+              named(labels),
+              active: count - 1,
+              width: physicalWidth / ratio,
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          final bar = tester.getRect(find.byType(AppTabStrip));
+          final tabs = [for (final label in labels) tabRect(tester, label)];
+          final context = tester.element(find.byType(AppTabStrip));
+          final cellWidth = context.metrics.iconButtonSize.width;
+          expect(tabs.first.left, closeTo(bar.left, 1e-6));
+          for (var i = 1; i < tabs.length; i++) {
+            expect(tabs[i].left, closeTo(tabs[i - 1].right, 1e-6));
+          }
+          expect(
+            tabs.last.right,
+            closeTo(bar.right - cellWidth, 1e-6),
+            reason: 'the last tab must touch the new-tab cell',
+          );
+          for (final tab in tabs) {
+            expect(tab.left * ratio, closeTo((tab.left * ratio).round(), 1e-6));
+            expect(
+              tab.right * ratio,
+              closeTo((tab.right * ratio).round(), 1e-6),
+            );
+          }
+          expect(find.byIcon(AppIcons.chevronDown), findsNothing);
+        });
+      }
+    }
+  }
+
+  testWidgets('fractional available width keeps fitted tabs unscrolled and '
+      'on physical pixels', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(600, 200);
+    addTearDown(tester.view.reset);
+    final labels = ['Work', 'Downloads', 'Documents'];
+    // The 28 px new-tab cell leaves 570.6 px for three fitting tabs.
+    await tester.pumpWidget(strip(named(labels), active: 2, width: 598.6));
+    await tester.pumpAndSettle();
+
+    final scroll = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byType(ReorderableListView),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(scroll.position.maxScrollExtent, closeTo(0, 1e-6));
+    expect(scroll.position.pixels, closeTo(0, 1e-6));
+    final viewport = tester.getRect(find.byType(ReorderableListView));
+    for (final label in labels) {
+      final tab = tabRect(tester, label);
+      expect(tab.left, closeTo(tab.left.round(), 1e-6));
+      expect(tab.right, closeTo(tab.right.round(), 1e-6));
+      expect(tab.right, lessThanOrEqualTo(viewport.right + 1e-6));
+    }
+    expect(find.byIcon(AppIcons.chevronDown), findsNothing);
+  });
+
+  testWidgets('a pinned tab keeps its width while ordinary tabs fill the '
+      'remaining room up to +', (tester) async {
+    final labels = ['A pinned folder with a long name', 'Work', 'Downloads'];
+    double? pinnedWidth;
+    for (final width in [601.0, 702.0]) {
+      await tester.pumpWidget(
+        strip(named(labels, pinned: 1), active: 2, width: width),
+      );
+      await tester.pumpAndSettle();
+      final pinned = tabRect(tester, labels.first);
+      expect(pinned.width, lessThanOrEqualTo(AppTabStrip.maxPinnedWidth));
+      if (pinnedWidth != null) expect(pinned.width, pinnedWidth);
+      pinnedWidth = pinned.width;
+      final bar = tester.getRect(find.byType(AppTabStrip));
+      final cellWidth = tester
+          .element(find.byType(AppTabStrip))
+          .metrics
+          .iconButtonSize
+          .width;
+      expect(tabRect(tester, 'Work').left, pinned.right);
+      expect(tabRect(tester, 'Downloads').left, tabRect(tester, 'Work').right);
+      expect(
+        tabRect(tester, 'Downloads').right,
+        closeTo(bar.right - cellWidth, 1e-6),
+      );
+    }
+  });
+
+  testWidgets('Windows tabs keep their width cap in a wide strip and '
+      'scroll at their minimum width in a narrow one', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1000, 300);
+    addTearDown(tester.view.reset);
+    final labels = ['Work', 'Downloads'];
+    await tester.pumpWidget(
+      strip(named(labels), style: AppPlatformStyle.windows, width: 900),
+    );
+    await tester.pumpAndSettle();
+    for (final label in labels) {
+      expect(tabRect(tester, label).width, 240);
+    }
+    expect(find.byIcon(AppIcons.chevronDown), findsNothing);
+
+    await tester.pumpWidget(
+      strip(
+        named(labels),
+        active: 1,
+        style: AppPlatformStyle.windows,
+        width: 240,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tabRect(tester, 'Downloads').width, 100);
+    expect(find.byIcon(AppIcons.chevronDown), findsOneWidget);
+    final viewport = tester.getRect(find.byType(ReorderableListView));
+    final active = tabRect(tester, 'Downloads');
+    expect(active.left, greaterThanOrEqualTo(viewport.left));
+    expect(active.right, lessThanOrEqualTo(viewport.right));
+  });
+
   for (final (style, generation) in [
     (AppPlatformStyle.macos, MacGeneration.tahoe),
     (AppPlatformStyle.windows, MacGeneration.sequoia),

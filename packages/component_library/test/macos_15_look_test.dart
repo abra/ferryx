@@ -598,9 +598,11 @@ void main() {
     /// each pixel by its position in the strip's box.
     Future<(Rect, int Function(double x, double y))> pumpStrip(
       WidgetTester tester,
-      Brightness brightness,
-    ) async {
-      tester.view.physicalSize = const Size(400, 120);
+      Brightness brightness, {
+      double stripWidth = 400,
+      int active = 1,
+    }) async {
+      tester.view.physicalSize = Size(stripWidth, 120);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
@@ -621,7 +623,7 @@ void main() {
                         AppTab(id: 1, label: 'B', icon: AppIcons.folder),
                         AppTab(id: 2, label: 'C', icon: AppIcons.folder),
                       ],
-                      active: 1,
+                      active: active,
                       onSelect: (_) {},
                       onClose: (_) {},
                       onReorder: (_, _) {},
@@ -696,6 +698,36 @@ void main() {
           // Darker than the bar above, as AppKit's dark tab bar is.
           expect(fill, lessThan(above));
         }
+      });
+
+      testWidgets('${brightness.name}: the last active tab meets the new-tab '
+          'cell without a step in its top edge or underline', (tester) async {
+        final (bar, grey) = await pumpStrip(
+          tester,
+          brightness,
+          stripWidth: 599,
+          active: 2,
+        );
+        final context = tester.element(find.byType(AppTabStrip));
+        final cellLeft = bar.right - context.metrics.iconButtonSize.width;
+        final lastTabPixel = cellLeft - 1;
+        final inActiveTab = tabLeft(tester, 'C') + 3;
+        final above = grey(lastTabPixel, -3);
+
+        expect(
+          grey(lastTabPixel, 0),
+          above,
+          reason: 'continuous open top edge',
+        );
+        expect(grey(lastTabPixel, 14), above, reason: 'no exposed strip pixel');
+        final underlineY = bar.height - 3;
+        final accent = grey(inActiveTab, underlineY);
+        expect(accent, isNot(above));
+        expect(
+          grey(lastTabPixel, underlineY),
+          accent,
+          reason: 'the active underline reaches the new-tab cell',
+        );
       });
     }
   });

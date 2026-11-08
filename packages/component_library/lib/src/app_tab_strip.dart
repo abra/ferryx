@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show precisionErrorTolerance;
 import 'package:flutter/gestures.dart' show kMiddleMouseButton;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -398,12 +399,27 @@ class _AppTabStripState extends State<AppTabStrip> {
                                       ratio)
                                   .floorToDouble() /
                               ratio;
+                    // Equal widths rounded down leave up to rest - 1 device
+                    // pixels before the + cell. Share those pixels between
+                    // ordinary tabs, without growing pinned or capped tabs.
+                    final extraPixels =
+                        rest == 0 || width + 1 / ratio > spec.maxWidth * scale
+                        ? 0
+                        : ((room * ratio + precisionErrorTolerance).floor() -
+                                  (width * ratio).round() * rest)
+                              .clamp(0, rest - 1);
                     var nextPinned = 0;
+                    var nextOrdinary = 0;
                     // Each tab's extent along the strip: its width and the gap
                     // after it.
                     _widths = [
                       for (final (i, tab) in widget.tabs.indexed)
-                        (tab.pinned ? pinned[nextPinned++] : width) +
+                        (tab.pinned
+                                ? pinned[nextPinned++]
+                                : width +
+                                      (nextOrdinary++ < extraPixels
+                                          ? 1 / ratio
+                                          : 0)) +
                             (i < widget.tabs.length - 1 ? spec.gap : 0),
                     ];
                     _margin = margin;
