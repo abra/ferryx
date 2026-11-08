@@ -7,6 +7,8 @@ orthodox two-panel workflow of the classic commanders with the look and
 manners of each desktop. The interface is Flutter; everything that touches
 files is Rust.
 
+![Ferryx on macOS with two file panels, folder tabs, sorting controls and contextual keyboard hints](docs/screenshots/ferryx-macos.png)
+
 - **Two panels** with tabs (⌘T), each with its own history (⌘[ / ⌘]),
   sorting and view mode; swap (⌘U) and sync (⌥⌘U) them, or collapse to one
   (⇧⌘P). The edge between them moves by drag or by the keys (⌥⌘\).
@@ -21,8 +23,8 @@ files is Rust.
   five presets on ⌃1–⌃5, editable in Settings.
 - **Sorting** by name, extension, size and the modified, created, added and
   accessed times (⌃⌘1–⌃⌘7), folders first or not, natural, case-insensitive
-  or case-sensitive comparison; the indicator in the panel's corner names
-  the order (`n`, `S`, `m`…).
+  or case-sensitive comparison; the panel header shows the sort field and
+  direction, with a compact icon and full tooltip in narrow panels.
 - **Operations in the background** with progress, speed and time left,
   pause and stop, and questions on conflicts and errors with "apply to all":
   copy (F5), copy as (⇧F5), move (F6), move or rename as (⇧F6), rename in
