@@ -1,73 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-<title>Ferryx</title>
-<!-- The macOS tile (824 body on the 1024 grid, continuous corners) with the helm: walnut rim and spokes, a brass hub. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-labelledby="title">
+<title id="title">Ferryx — macOS app icon</title>
+<!-- Asset-catalog artwork: 824 px tile on the existing 1024 px canvas. Keep the brass helm clear of the corners. -->
 <defs>
-  <linearGradient id="helm_bg" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#27549B"/>
-    <stop offset="1" stop-color="#0C1C44"/>
-  </linearGradient>
-  <radialGradient id="helm_vignette" cx="0.5" cy="0.9" r="0.8">
-    <stop offset="0" stop-color="#000000" stop-opacity="0.28"/>
-    <stop offset="1" stop-color="#000000" stop-opacity="0"/>
-  </radialGradient>
-  <radialGradient id="helm_sheen" cx="0.3" cy="0.08" r="0.9">
-    <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18"/>
-    <stop offset="0.6" stop-color="#FFFFFF" stop-opacity="0"/>
-  </radialGradient>
-  <linearGradient id="helm_wood" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#A8622F"/>
-    <stop offset="0.5" stop-color="#6E3B16"/>
-    <stop offset="1" stop-color="#3E2009"/>
-  </linearGradient>
-  <linearGradient id="helm_woodHandle" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#B86F38"/>
-    <stop offset="1" stop-color="#5A2E10"/>
-  </linearGradient>
-  <radialGradient id="helm_brass" cx="0.35" cy="0.3" r="0.85">
-    <stop offset="0" stop-color="#FFEDB5"/>
-    <stop offset="0.45" stop-color="#DBAA4C"/>
-    <stop offset="1" stop-color="#7E5217"/>
-  </radialGradient>
-  <radialGradient id="helm_brassDeep" cx="0.4" cy="0.35" r="0.9">
-    <stop offset="0" stop-color="#C08A33"/>
-    <stop offset="1" stop-color="#5E3C0F"/>
-  </radialGradient>
-  <clipPath id="helm_tile"><path d="M100 332 C100 178 178 100 332 100 H692 C846 100 924 178 924 332 V692 C924 846 846 924 692 924 H332 C178 924 100 846 100 692 Z"/></clipPath>
-  <filter id="helm_shadow" x="-15%" y="-15%" width="130%" height="140%">
-    <feGaussianBlur in="SourceAlpha" stdDeviation="18"/>
-    <feOffset dy="26" result="o"/>
-    <feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
-    <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-  </filter>
-  <!-- One spoke with its handle past the rim; eight of them turn round the hub. -->
-  <g id="helm_spoke">
-    <rect x="490" y="112" width="44" height="86" rx="22" fill="url(#helm_woodHandle)"/>
-    <rect x="496" y="186" width="32" height="250" rx="12" fill="url(#helm_wood)"/>
-    <rect x="500" y="120" width="8" height="60" rx="4" fill="#FFFFFF" fill-opacity="0.28"/>
-  </g>
+<linearGradient id="sea" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="924"><stop stop-color="#143A65"/><stop offset="1" stop-color="#081A31"/></linearGradient>
+<linearGradient id="brass" gradientUnits="userSpaceOnUse" x1="192" y1="144" x2="760" y2="864"><stop stop-color="#FFE9AE"/><stop offset="1" stop-color="#D2A056"/></linearGradient>
 </defs>
-<g clip-path="url(#helm_tile)">
-  <rect width="1024" height="1024" fill="url(#helm_bg)"/>
-  <rect width="1024" height="1024" fill="url(#helm_vignette)"/>
-  <rect width="1024" height="1024" fill="url(#helm_sheen)"/>
+<path d="M100 332C100 178 178 100 332 100H692C846 100 924 178 924 332V692C924 846 846 924 692 924H332C178 924 100 846 100 692Z" fill="url(#sea)"/>
+<g fill="url(#brass)">
+<path d="M488 512L488 184A24 24 0 0 1 536 184L536 512Z M495.029 495.029L726.96 263.098A24 24 0 0 1 760.902 297.04L528.971 528.971Z M512 488L840 488A24 24 0 0 1 840 536L512 536Z M528.971 495.029L760.902 726.96A24 24 0 0 1 726.96 760.902L495.029 528.971Z M536 512L536 840A24 24 0 0 1 488 840L488 512Z M528.971 528.971L297.04 760.902A24 24 0 0 1 263.098 726.96L495.029 495.029Z M512 536L184 536A24 24 0 0 1 184 488L512 488Z M495.029 528.971L263.098 297.04A24 24 0 0 1 297.04 263.098L528.971 495.029Z"/>
+<path fill-rule="evenodd" d="M240 512a272 272 0 1 0 544 0a272 272 0 1 0 -544 0ZM296 512a216 216 0 1 0 432 0a216 216 0 1 0 -432 0Z"/>
+<circle cx="512" cy="512" r="72"/>
 </g>
-<g filter="url(#helm_shadow)">
-  <use href="#helm_spoke"/>
-  <use href="#helm_spoke" transform="rotate(45 512 512)"/>
-  <use href="#helm_spoke" transform="rotate(90 512 512)"/>
-  <use href="#helm_spoke" transform="rotate(135 512 512)"/>
-  <use href="#helm_spoke" transform="rotate(180 512 512)"/>
-  <use href="#helm_spoke" transform="rotate(225 512 512)"/>
-  <use href="#helm_spoke" transform="rotate(270 512 512)"/>
-  <use href="#helm_spoke" transform="rotate(315 512 512)"/>
-  <circle cx="512" cy="512" r="300" fill="none" stroke="url(#helm_wood)" stroke-width="52"/>
-  <circle cx="512" cy="512" r="200" fill="none" stroke="url(#helm_wood)" stroke-width="28"/>
-  <circle cx="512" cy="512" r="96" fill="url(#helm_brass)"/>
-</g>
-<!-- Light along the rims and on the hub. -->
-<path d="M252 362 A300 300 0 0 1 662 252" fill="none" stroke="#FFFFFF" stroke-opacity="0.26" stroke-width="12" stroke-linecap="round"/>
-<path d="M339 412 A200 200 0 0 1 612 339" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="8" stroke-linecap="round"/>
-<circle cx="512" cy="512" r="56" fill="url(#helm_brassDeep)"/>
-<circle cx="512" cy="512" r="20" fill="#FFEDB5" fill-opacity="0.9"/>
-<ellipse cx="486" cy="470" rx="26" ry="14" fill="#FFFFFF" fill-opacity="0.35" transform="rotate(-35 486 470)"/>
 </svg>

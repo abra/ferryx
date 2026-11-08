@@ -1,0 +1,276 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="940" viewBox="0 0 1320 940"><title>Ferryx — финальная иконка A</title><rect x="0" y="0" width="1320" height="940" rx="0" fill="#F3F3EF" stroke="none"/><text x="48" y="62" font-family="Arial,Helvetica,sans-serif" font-size="34" font-weight="700" fill="#102C48" text-anchor="start">Ferryx</text><text x="48" y="97" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="400" fill="#52646D" text-anchor="start">Штурвал · один обод · светлая латунь</text><text x="1272" y="60" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="700" fill="#52646D" text-anchor="end">ВАРИАНТ A / ГОТОВЫЕ ИКОНКИ</text><rect x="48" y="130" width="392" height="550" rx="20" fill="#FFFFFF" stroke="none"/><text x="72" y="169" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="700" fill="#102C48" text-anchor="start">macOS</text><text x="72" y="196" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="400" fill="#52646D" text-anchor="start">PNG · 16–1024 px</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="244" height="244" role="img" aria-labelledby="hero-macos-title" x="122" y="211">
+<title id="hero-macos-title">Ferryx — macOS app icon</title>
+
+<defs>
+<linearGradient id="hero-macos-sea" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="924"><stop stop-color="#143A65" /><stop offset="1" stop-color="#081A31" /></linearGradient>
+<linearGradient id="hero-macos-brass" gradientUnits="userSpaceOnUse" x1="192" y1="144" x2="760" y2="864"><stop stop-color="#FFE9AE" /><stop offset="1" stop-color="#D2A056" /></linearGradient>
+</defs>
+<path d="M100 332C100 178 178 100 332 100H692C846 100 924 178 924 332V692C924 846 846 924 692 924H332C178 924 100 846 100 692Z" fill="url(#hero-macos-sea)" />
+<g fill="url(#hero-macos-brass)">
+<path d="M488 512L488 184A24 24 0 0 1 536 184L536 512Z M495.029 495.029L726.96 263.098A24 24 0 0 1 760.902 297.04L528.971 528.971Z M512 488L840 488A24 24 0 0 1 840 536L512 536Z M528.971 495.029L760.902 726.96A24 24 0 0 1 726.96 760.902L495.029 528.971Z M536 512L536 840A24 24 0 0 1 488 840L488 512Z M528.971 528.971L297.04 760.902A24 24 0 0 1 263.098 726.96L495.029 495.029Z M512 536L184 536A24 24 0 0 1 184 488L512 488Z M495.029 528.971L263.098 297.04A24 24 0 0 1 297.04 263.098L528.971 495.029Z" />
+<path fill-rule="evenodd" d="M240 512a272 272 0 1 0 544 0a272 272 0 1 0 -544 0ZM296 512a216 216 0 1 0 432 0a216 216 0 1 0 -432 0Z" />
+<circle cx="512" cy="512" r="72" />
+</g>
+</svg><rect x="72" y="474" width="344" height="72" rx="10" fill="#F3F3EF" stroke="none"/><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="64" height="64" role="img" aria-labelledby="macos-0-64-title" x="104" y="478.0">
+<title id="macos-0-64-title">Ferryx — macOS app icon</title>
+
+<defs>
+<linearGradient id="macos-0-64-sea" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="924"><stop stop-color="#143A65" /><stop offset="1" stop-color="#081A31" /></linearGradient>
+<linearGradient id="macos-0-64-brass" gradientUnits="userSpaceOnUse" x1="192" y1="144" x2="760" y2="864"><stop stop-color="#FFE9AE" /><stop offset="1" stop-color="#D2A056" /></linearGradient>
+</defs>
+<path d="M100 332C100 178 178 100 332 100H692C846 100 924 178 924 332V692C924 846 846 924 692 924H332C178 924 100 846 100 692Z" fill="url(#macos-0-64-sea)" />
+<g fill="url(#macos-0-64-brass)">
+<path d="M488 512L488 184A24 24 0 0 1 536 184L536 512Z M495.029 495.029L726.96 263.098A24 24 0 0 1 760.902 297.04L528.971 528.971Z M512 488L840 488A24 24 0 0 1 840 536L512 536Z M528.971 495.029L760.902 726.96A24 24 0 0 1 726.96 760.902L495.029 528.971Z M536 512L536 840A24 24 0 0 1 488 840L488 512Z M528.971 528.971L297.04 760.902A24 24 0 0 1 263.098 726.96L495.029 495.029Z M512 536L184 536A24 24 0 0 1 184 488L512 488Z M495.029 528.971L263.098 297.04A24 24 0 0 1 297.04 263.098L528.971 495.029Z" />
+<path fill-rule="evenodd" d="M240 512a272 272 0 1 0 544 0a272 272 0 1 0 -544 0ZM296 512a216 216 0 1 0 432 0a216 216 0 1 0 -432 0Z" />
+<circle cx="512" cy="512" r="72" />
+</g>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-labelledby="macos-0-32-title" x="224" y="494.0">
+<title id="macos-0-32-title">Ferryx — small macOS app icon</title>
+
+<path d="M2 10C2 4.5 4.5 2 10 2H22C27.5 2 30 4.5 30 10V22C30 27.5 27.5 30 22 30H10C4.5 30 2 27.5 2 22Z" fill="#143A65" />
+<g fill="#F0CF8C">
+<path d="M15.125 16L15.125 5.375A0.875 0.875 0 0 1 16.875 5.375L16.875 16Z M15.381 15.381L22.894 7.868A0.875 0.875 0 0 1 24.132 9.106L16.619 16.619Z M16 15.125L26.625 15.125A0.875 0.875 0 0 1 26.625 16.875L16 16.875Z M16.619 15.381L24.132 22.894A0.875 0.875 0 0 1 22.894 24.132L15.381 16.619Z M16.875 16L16.875 26.625A0.875 0.875 0 0 1 15.125 26.625L15.125 16Z M16.619 16.619L9.106 24.132A0.875 0.875 0 0 1 7.868 22.894L15.381 15.381Z M16 16.875L5.375 16.875A0.875 0.875 0 0 1 5.375 15.125L16 15.125Z M15.381 16.619L7.868 9.106A0.875 0.875 0 0 1 9.106 7.868L16.619 15.381Z" />
+<path fill-rule="evenodd" d="M7.1 16a8.9 8.9 0 1 0 17.8 0a8.9 8.9 0 1 0 -17.8 0ZM9.3 16a6.7 6.7 0 1 0 13.4 0a6.7 6.7 0 1 0 -13.4 0Z" />
+<circle cx="16" cy="16" r="2.2" />
+</g>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="16" height="16" role="img" aria-labelledby="macos-0-16-title" x="328" y="502.0">
+<title id="macos-0-16-title">Ferryx — small macOS app icon</title>
+
+<path d="M2 10C2 4.5 4.5 2 10 2H22C27.5 2 30 4.5 30 10V22C30 27.5 27.5 30 22 30H10C4.5 30 2 27.5 2 22Z" fill="#143A65" />
+<g fill="#F0CF8C">
+<path d="M15.125 16L15.125 5.375A0.875 0.875 0 0 1 16.875 5.375L16.875 16Z M15.381 15.381L22.894 7.868A0.875 0.875 0 0 1 24.132 9.106L16.619 16.619Z M16 15.125L26.625 15.125A0.875 0.875 0 0 1 26.625 16.875L16 16.875Z M16.619 15.381L24.132 22.894A0.875 0.875 0 0 1 22.894 24.132L15.381 16.619Z M16.875 16L16.875 26.625A0.875 0.875 0 0 1 15.125 26.625L15.125 16Z M16.619 16.619L9.106 24.132A0.875 0.875 0 0 1 7.868 22.894L15.381 15.381Z M16 16.875L5.375 16.875A0.875 0.875 0 0 1 5.375 15.125L16 15.125Z M15.381 16.619L7.868 9.106A0.875 0.875 0 0 1 9.106 7.868L16.619 15.381Z" />
+<path fill-rule="evenodd" d="M7.1 16a8.9 8.9 0 1 0 17.8 0a8.9 8.9 0 1 0 -17.8 0ZM9.3 16a6.7 6.7 0 1 0 13.4 0a6.7 6.7 0 1 0 -13.4 0Z" />
+<circle cx="16" cy="16" r="2.2" />
+</g>
+</svg><rect x="72" y="554" width="344" height="72" rx="10" fill="#14283C" stroke="none"/><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="64" height="64" role="img" aria-labelledby="macos-1-64-title" x="104" y="558.0">
+<title id="macos-1-64-title">Ferryx — macOS app icon</title>
+
+<defs>
+<linearGradient id="macos-1-64-sea" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="924"><stop stop-color="#143A65" /><stop offset="1" stop-color="#081A31" /></linearGradient>
+<linearGradient id="macos-1-64-brass" gradientUnits="userSpaceOnUse" x1="192" y1="144" x2="760" y2="864"><stop stop-color="#FFE9AE" /><stop offset="1" stop-color="#D2A056" /></linearGradient>
+</defs>
+<path d="M100 332C100 178 178 100 332 100H692C846 100 924 178 924 332V692C924 846 846 924 692 924H332C178 924 100 846 100 692Z" fill="url(#macos-1-64-sea)" />
+<g fill="url(#macos-1-64-brass)">
+<path d="M488 512L488 184A24 24 0 0 1 536 184L536 512Z M495.029 495.029L726.96 263.098A24 24 0 0 1 760.902 297.04L528.971 528.971Z M512 488L840 488A24 24 0 0 1 840 536L512 536Z M528.971 495.029L760.902 726.96A24 24 0 0 1 726.96 760.902L495.029 528.971Z M536 512L536 840A24 24 0 0 1 488 840L488 512Z M528.971 528.971L297.04 760.902A24 24 0 0 1 263.098 726.96L495.029 495.029Z M512 536L184 536A24 24 0 0 1 184 488L512 488Z M495.029 528.971L263.098 297.04A24 24 0 0 1 297.04 263.098L528.971 495.029Z" />
+<path fill-rule="evenodd" d="M240 512a272 272 0 1 0 544 0a272 272 0 1 0 -544 0ZM296 512a216 216 0 1 0 432 0a216 216 0 1 0 -432 0Z" />
+<circle cx="512" cy="512" r="72" />
+</g>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-labelledby="macos-1-32-title" x="224" y="574.0">
+<title id="macos-1-32-title">Ferryx — small macOS app icon</title>
+
+<path d="M2 10C2 4.5 4.5 2 10 2H22C27.5 2 30 4.5 30 10V22C30 27.5 27.5 30 22 30H10C4.5 30 2 27.5 2 22Z" fill="#143A65" />
+<g fill="#F0CF8C">
+<path d="M15.125 16L15.125 5.375A0.875 0.875 0 0 1 16.875 5.375L16.875 16Z M15.381 15.381L22.894 7.868A0.875 0.875 0 0 1 24.132 9.106L16.619 16.619Z M16 15.125L26.625 15.125A0.875 0.875 0 0 1 26.625 16.875L16 16.875Z M16.619 15.381L24.132 22.894A0.875 0.875 0 0 1 22.894 24.132L15.381 16.619Z M16.875 16L16.875 26.625A0.875 0.875 0 0 1 15.125 26.625L15.125 16Z M16.619 16.619L9.106 24.132A0.875 0.875 0 0 1 7.868 22.894L15.381 15.381Z M16 16.875L5.375 16.875A0.875 0.875 0 0 1 5.375 15.125L16 15.125Z M15.381 16.619L7.868 9.106A0.875 0.875 0 0 1 9.106 7.868L16.619 15.381Z" />
+<path fill-rule="evenodd" d="M7.1 16a8.9 8.9 0 1 0 17.8 0a8.9 8.9 0 1 0 -17.8 0ZM9.3 16a6.7 6.7 0 1 0 13.4 0a6.7 6.7 0 1 0 -13.4 0Z" />
+<circle cx="16" cy="16" r="2.2" />
+</g>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="16" height="16" role="img" aria-labelledby="macos-1-16-title" x="328" y="582.0">
+<title id="macos-1-16-title">Ferryx — small macOS app icon</title>
+
+<path d="M2 10C2 4.5 4.5 2 10 2H22C27.5 2 30 4.5 30 10V22C30 27.5 27.5 30 22 30H10C4.5 30 2 27.5 2 22Z" fill="#143A65" />
+<g fill="#F0CF8C">
+<path d="M15.125 16L15.125 5.375A0.875 0.875 0 0 1 16.875 5.375L16.875 16Z M15.381 15.381L22.894 7.868A0.875 0.875 0 0 1 24.132 9.106L16.619 16.619Z M16 15.125L26.625 15.125A0.875 0.875 0 0 1 26.625 16.875L16 16.875Z M16.619 15.381L24.132 22.894A0.875 0.875 0 0 1 22.894 24.132L15.381 16.619Z M16.875 16L16.875 26.625A0.875 0.875 0 0 1 15.125 26.625L15.125 16Z M16.619 16.619L9.106 24.132A0.875 0.875 0 0 1 7.868 22.894L15.381 15.381Z M16 16.875L5.375 16.875A0.875 0.875 0 0 1 5.375 15.125L16 15.125Z M15.381 16.619L7.868 9.106A0.875 0.875 0 0 1 9.106 7.868L16.619 15.381Z" />
+<path fill-rule="evenodd" d="M7.1 16a8.9 8.9 0 1 0 17.8 0a8.9 8.9 0 1 0 -17.8 0ZM9.3 16a6.7 6.7 0 1 0 13.4 0a6.7 6.7 0 1 0 -13.4 0Z" />
+<circle cx="16" cy="16" r="2.2" />
+</g>
+</svg><text x="136.0" y="653" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#52646D" text-anchor="middle">64 px</text><text x="240.0" y="653" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#52646D" text-anchor="middle">32 px</text><text x="336.0" y="653" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#52646D" text-anchor="middle">16 px</text><rect x="464" y="130" width="392" height="550" rx="20" fill="#FFFFFF" stroke="none"/><text x="488" y="169" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="700" fill="#102C48" text-anchor="start">Windows</text><text x="488" y="196" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="400" fill="#52646D" text-anchor="start">ICO · 10 размеров, 16–256 px</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="244" height="244" role="img" aria-labelledby="hero-windows-title" x="538" y="211">
+<title id="hero-windows-title">Ferryx — Windows app icon</title>
+
+<defs>
+<linearGradient id="hero-windows-brass" gradientUnits="userSpaceOnUse" x1="40" y1="20" x2="208" y2="232"><stop stop-color="#FFE9AE" /><stop offset="1" stop-color="#D2A056" /></linearGradient>
+</defs>
+<g fill="#081A31">
+<path d="M118.4 128L118.4 27.2A9.6 9.6 0 0 1 137.6 27.2L137.6 128Z M121.212 121.212L192.488 49.935A9.6 9.6 0 0 1 206.065 63.512L134.788 134.788Z M128 118.4L228.8 118.4A9.6 9.6 0 0 1 228.8 137.6L128 137.6Z M134.788 121.212L206.065 192.488A9.6 9.6 0 0 1 192.488 206.065L121.212 134.788Z M137.6 128L137.6 228.8A9.6 9.6 0 0 1 118.4 228.8L118.4 128Z M134.788 134.788L63.512 206.065A9.6 9.6 0 0 1 49.935 192.488L121.212 121.212Z M128 137.6L27.2 137.6A9.6 9.6 0 0 1 27.2 118.4L128 118.4Z M121.212 134.788L49.935 63.512A9.6 9.6 0 0 1 63.512 49.935L134.788 121.212Z" />
+<path fill-rule="evenodd" d="M44 128a84 84 0 1 0 168 0a84 84 0 1 0 -168 0ZM65.6 128a62.4 62.4 0 1 0 124.8 0a62.4 62.4 0 1 0 -124.8 0Z" />
+<circle cx="128" cy="128" r="24" />
+</g>
+<g fill="url(#hero-windows-brass)">
+<path d="M120.8 128L120.8 27.2A7.2 7.2 0 0 1 135.2 27.2L135.2 128Z M122.909 122.909L194.185 51.632A7.2 7.2 0 0 1 204.368 61.815L133.091 133.091Z M128 120.8L228.8 120.8A7.2 7.2 0 0 1 228.8 135.2L128 135.2Z M133.091 122.909L204.368 194.185A7.2 7.2 0 0 1 194.185 204.368L122.909 133.091Z M135.2 128L135.2 228.8A7.2 7.2 0 0 1 120.8 228.8L120.8 128Z M133.091 133.091L61.815 204.368A7.2 7.2 0 0 1 51.632 194.185L122.909 122.909Z M128 135.2L27.2 135.2A7.2 7.2 0 0 1 27.2 120.8L128 120.8Z M122.909 133.091L51.632 61.815A7.2 7.2 0 0 1 61.815 51.632L133.091 122.909Z" />
+<path fill-rule="evenodd" d="M46.4 128a81.6 81.6 0 1 0 163.2 0a81.6 81.6 0 1 0 -163.2 0ZM63.2 128a64.8 64.8 0 1 0 129.6 0a64.8 64.8 0 1 0 -129.6 0Z" />
+<circle cx="128" cy="128" r="21.6" />
+</g>
+</svg><rect x="488" y="474" width="344" height="72" rx="10" fill="#F3F3EF" stroke="none"/><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="64" height="64" role="img" aria-labelledby="windows-0-64-title" x="520" y="478.0">
+<title id="windows-0-64-title">Ferryx — Windows app icon</title>
+
+<defs>
+<linearGradient id="windows-0-64-brass" gradientUnits="userSpaceOnUse" x1="40" y1="20" x2="208" y2="232"><stop stop-color="#FFE9AE" /><stop offset="1" stop-color="#D2A056" /></linearGradient>
+</defs>
+<g fill="#081A31">
+<path d="M118.4 128L118.4 27.2A9.6 9.6 0 0 1 137.6 27.2L137.6 128Z M121.212 121.212L192.488 49.935A9.6 9.6 0 0 1 206.065 63.512L134.788 134.788Z M128 118.4L228.8 118.4A9.6 9.6 0 0 1 228.8 137.6L128 137.6Z M134.788 121.212L206.065 192.488A9.6 9.6 0 0 1 192.488 206.065L121.212 134.788Z M137.6 128L137.6 228.8A9.6 9.6 0 0 1 118.4 228.8L118.4 128Z M134.788 134.788L63.512 206.065A9.6 9.6 0 0 1 49.935 192.488L121.212 121.212Z M128 137.6L27.2 137.6A9.6 9.6 0 0 1 27.2 118.4L128 118.4Z M121.212 134.788L49.935 63.512A9.6 9.6 0 0 1 63.512 49.935L134.788 121.212Z" />
+<path fill-rule="evenodd" d="M44 128a84 84 0 1 0 168 0a84 84 0 1 0 -168 0ZM65.6 128a62.4 62.4 0 1 0 124.8 0a62.4 62.4 0 1 0 -124.8 0Z" />
+<circle cx="128" cy="128" r="24" />
+</g>
+<g fill="url(#windows-0-64-brass)">
+<path d="M120.8 128L120.8 27.2A7.2 7.2 0 0 1 135.2 27.2L135.2 128Z M122.909 122.909L194.185 51.632A7.2 7.2 0 0 1 204.368 61.815L133.091 133.091Z M128 120.8L228.8 120.8A7.2 7.2 0 0 1 228.8 135.2L128 135.2Z M133.091 122.909L204.368 194.185A7.2 7.2 0 0 1 194.185 204.368L122.909 133.091Z M135.2 128L135.2 228.8A7.2 7.2 0 0 1 120.8 228.8L120.8 128Z M133.091 133.091L61.815 204.368A7.2 7.2 0 0 1 51.632 194.185L122.909 122.909Z M128 135.2L27.2 135.2A7.2 7.2 0 0 1 27.2 120.8L128 120.8Z M122.909 133.091L51.632 61.815A7.2 7.2 0 0 1 61.815 51.632L133.091 122.909Z" />
+<path fill-rule="evenodd" d="M46.4 128a81.6 81.6 0 1 0 163.2 0a81.6 81.6 0 1 0 -163.2 0ZM63.2 128a64.8 64.8 0 1 0 129.6 0a64.8 64.8 0 1 0 -129.6 0Z" />
+<circle cx="128" cy="128" r="21.6" />
+</g>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-labelledby="windows-0-32-title" x="640" y="494.0">
+<title id="windows-0-32-title">Ferryx — small Windows app icon</title>
+
+<g fill="#081A31">
+<path d="M14.4 16L14.4 3.45A1.6 1.6 0 0 1 17.6 3.45L17.6 16Z M14.869 14.869L23.743 5.994A1.6 1.6 0 0 1 26.006 8.257L17.131 17.131Z M16 14.4L28.55 14.4A1.6 1.6 0 0 1 28.55 17.6L16 17.6Z M17.131 14.869L26.006 23.743A1.6 1.6 0 0 1 23.743 26.006L14.869 17.131Z M17.6 16L17.6 28.55A1.6 1.6 0 0 1 14.4 28.55L14.4 16Z M17.131 17.131L8.257 26.006A1.6 1.6 0 0 1 5.994 23.743L14.869 14.869Z M16 17.6L3.45 17.6A1.6 1.6 0 0 1 3.45 14.4L16 14.4Z M14.869 17.131L5.994 8.257A1.6 1.6 0 0 1 8.257 5.994L17.131 14.869Z" />
+<path fill-rule="evenodd" d="M4.85 16a11.15 11.15 0 1 0 22.3 0a11.15 11.15 0 1 0 -22.3 0ZM8.65 16a7.35 7.35 0 1 0 14.7 0a7.35 7.35 0 1 0 -14.7 0Z" />
+<circle cx="16" cy="16" r="3.05" />
+</g>
+<g fill="#F0CF8C">
+<path d="M15.05 16L15.05 3.45A0.95 0.95 0 0 1 16.95 3.45L16.95 16Z M15.328 15.328L24.202 6.454A0.95 0.95 0 0 1 25.546 7.798L16.672 16.672Z M16 15.05L28.55 15.05A0.95 0.95 0 0 1 28.55 16.95L16 16.95Z M16.672 15.328L25.546 24.202A0.95 0.95 0 0 1 24.202 25.546L15.328 16.672Z M16.95 16L16.95 28.55A0.95 0.95 0 0 1 15.05 28.55L15.05 16Z M16.672 16.672L7.798 25.546A0.95 0.95 0 0 1 6.454 24.202L15.328 15.328Z M16 16.95L3.45 16.95A0.95 0.95 0 0 1 3.45 15.05L16 15.05Z M15.328 16.672L6.454 7.798A0.95 0.95 0 0 1 7.798 6.454L16.672 15.328Z" />
+<path fill-rule="evenodd" d="M5.5 16a10.5 10.5 0 1 0 21 0a10.5 10.5 0 1 0 -21 0ZM8 16a8 8 0 1 0 16 0a8 8 0 1 0 -16 0Z" />
+<circle cx="16" cy="16" r="2.4" />
+</g>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="16" height="16" role="img" aria-labelledby="windows-0-16-title" x="744" y="502.0">
+<title id="windows-0-16-title">Ferryx — small Windows app icon</title>
+
+<g fill="#081A31">
+<path d="M14.4 16L14.4 3.45A1.6 1.6 0 0 1 17.6 3.45L17.6 16Z M14.869 14.869L23.743 5.994A1.6 1.6 0 0 1 26.006 8.257L17.131 17.131Z M16 14.4L28.55 14.4A1.6 1.6 0 0 1 28.55 17.6L16 17.6Z M17.131 14.869L26.006 23.743A1.6 1.6 0 0 1 23.743 26.006L14.869 17.131Z M17.6 16L17.6 28.55A1.6 1.6 0 0 1 14.4 28.55L14.4 16Z M17.131 17.131L8.257 26.006A1.6 1.6 0 0 1 5.994 23.743L14.869 14.869Z M16 17.6L3.45 17.6A1.6 1.6 0 0 1 3.45 14.4L16 14.4Z M14.869 17.131L5.994 8.257A1.6 1.6 0 0 1 8.257 5.994L17.131 14.869Z" />
+<path fill-rule="evenodd" d="M4.85 16a11.15 11.15 0 1 0 22.3 0a11.15 11.15 0 1 0 -22.3 0ZM8.65 16a7.35 7.35 0 1 0 14.7 0a7.35 7.35 0 1 0 -14.7 0Z" />
+<circle cx="16" cy="16" r="3.05" />
+</g>
+<g fill="#F0CF8C">
+<path d="M15.05 16L15.05 3.45A0.95 0.95 0 0 1 16.95 3.45L16.95 16Z M15.328 15.328L24.202 6.454A0.95 0.95 0 0 1 25.546 7.798L16.672 16.672Z M16 15.05L28.55 15.05A0.95 0.95 0 0 1 28.55 16.95L16 16.95Z M16.672 15.328L25.546 24.202A0.95 0.95 0 0 1 24.202 25.546L15.328 16.672Z M16.95 16L16.95 28.55A0.95 0.95 0 0 1 15.05 28.55L15.05 16Z M16.672 16.672L7.798 25.546A0.95 0.95 0 0 1 6.454 24.202L15.328 15.328Z M16 16.95L3.45 16.95A0.95 0.95 0 0 1 3.45 15.05L16 15.05Z M15.328 16.672L6.454 7.798A0.95 0.95 0 0 1 7.798 6.454L16.672 15.328Z" />
+<path fill-rule="evenodd" d="M5.5 16a10.5 10.5 0 1 0 21 0a10.5 10.5 0 1 0 -21 0ZM8 16a8 8 0 1 0 16 0a8 8 0 1 0 -16 0Z" />
+<circle cx="16" cy="16" r="2.4" />
+</g>
+</svg><rect x="488" y="554" width="344" height="72" rx="10" fill="#14283C" stroke="none"/><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="64" height="64" role="img" aria-labelledby="windows-1-64-title" x="520" y="558.0">
+<title id="windows-1-64-title">Ferryx — Windows app icon</title>
+
+<defs>
+<linearGradient id="windows-1-64-brass" gradientUnits="userSpaceOnUse" x1="40" y1="20" x2="208" y2="232"><stop stop-color="#FFE9AE" /><stop offset="1" stop-color="#D2A056" /></linearGradient>
+</defs>
+<g fill="#081A31">
+<path d="M118.4 128L118.4 27.2A9.6 9.6 0 0 1 137.6 27.2L137.6 128Z M121.212 121.212L192.488 49.935A9.6 9.6 0 0 1 206.065 63.512L134.788 134.788Z M128 118.4L228.8 118.4A9.6 9.6 0 0 1 228.8 137.6L128 137.6Z M134.788 121.212L206.065 192.488A9.6 9.6 0 0 1 192.488 206.065L121.212 134.788Z M137.6 128L137.6 228.8A9.6 9.6 0 0 1 118.4 228.8L118.4 128Z M134.788 134.788L63.512 206.065A9.6 9.6 0 0 1 49.935 192.488L121.212 121.212Z M128 137.6L27.2 137.6A9.6 9.6 0 0 1 27.2 118.4L128 118.4Z M121.212 134.788L49.935 63.512A9.6 9.6 0 0 1 63.512 49.935L134.788 121.212Z" />
+<path fill-rule="evenodd" d="M44 128a84 84 0 1 0 168 0a84 84 0 1 0 -168 0ZM65.6 128a62.4 62.4 0 1 0 124.8 0a62.4 62.4 0 1 0 -124.8 0Z" />
+<circle cx="128" cy="128" r="24" />
+</g>
+<g fill="url(#windows-1-64-brass)">
+<path d="M120.8 128L120.8 27.2A7.2 7.2 0 0 1 135.2 27.2L135.2 128Z M122.909 122.909L194.185 51.632A7.2 7.2 0 0 1 204.368 61.815L133.091 133.091Z M128 120.8L228.8 120.8A7.2 7.2 0 0 1 228.8 135.2L128 135.2Z M133.091 122.909L204.368 194.185A7.2 7.2 0 0 1 194.185 204.368L122.909 133.091Z M135.2 128L135.2 228.8A7.2 7.2 0 0 1 120.8 228.8L120.8 128Z M133.091 133.091L61.815 204.368A7.2 7.2 0 0 1 51.632 194.185L122.909 122.909Z M128 135.2L27.2 135.2A7.2 7.2 0 0 1 27.2 120.8L128 120.8Z M122.909 133.091L51.632 61.815A7.2 7.2 0 0 1 61.815 51.632L133.091 122.909Z" />
+<path fill-rule="evenodd" d="M46.4 128a81.6 81.6 0 1 0 163.2 0a81.6 81.6 0 1 0 -163.2 0ZM63.2 128a64.8 64.8 0 1 0 129.6 0a64.8 64.8 0 1 0 -129.6 0Z" />
+<circle cx="128" cy="128" r="21.6" />
+</g>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-labelledby="windows-1-32-title" x="640" y="574.0">
+<title id="windows-1-32-title">Ferryx — small Windows app icon</title>
+
+<g fill="#081A31">
+<path d="M14.4 16L14.4 3.45A1.6 1.6 0 0 1 17.6 3.45L17.6 16Z M14.869 14.869L23.743 5.994A1.6 1.6 0 0 1 26.006 8.257L17.131 17.131Z M16 14.4L28.55 14.4A1.6 1.6 0 0 1 28.55 17.6L16 17.6Z M17.131 14.869L26.006 23.743A1.6 1.6 0 0 1 23.743 26.006L14.869 17.131Z M17.6 16L17.6 28.55A1.6 1.6 0 0 1 14.4 28.55L14.4 16Z M17.131 17.131L8.257 26.006A1.6 1.6 0 0 1 5.994 23.743L14.869 14.869Z M16 17.6L3.45 17.6A1.6 1.6 0 0 1 3.45 14.4L16 14.4Z M14.869 17.131L5.994 8.257A1.6 1.6 0 0 1 8.257 5.994L17.131 14.869Z" />
+<path fill-rule="evenodd" d="M4.85 16a11.15 11.15 0 1 0 22.3 0a11.15 11.15 0 1 0 -22.3 0ZM8.65 16a7.35 7.35 0 1 0 14.7 0a7.35 7.35 0 1 0 -14.7 0Z" />
+<circle cx="16" cy="16" r="3.05" />
+</g>
+<g fill="#F0CF8C">
+<path d="M15.05 16L15.05 3.45A0.95 0.95 0 0 1 16.95 3.45L16.95 16Z M15.328 15.328L24.202 6.454A0.95 0.95 0 0 1 25.546 7.798L16.672 16.672Z M16 15.05L28.55 15.05A0.95 0.95 0 0 1 28.55 16.95L16 16.95Z M16.672 15.328L25.546 24.202A0.95 0.95 0 0 1 24.202 25.546L15.328 16.672Z M16.95 16L16.95 28.55A0.95 0.95 0 0 1 15.05 28.55L15.05 16Z M16.672 16.672L7.798 25.546A0.95 0.95 0 0 1 6.454 24.202L15.328 15.328Z M16 16.95L3.45 16.95A0.95 0.95 0 0 1 3.45 15.05L16 15.05Z M15.328 16.672L6.454 7.798A0.95 0.95 0 0 1 7.798 6.454L16.672 15.328Z" />
+<path fill-rule="evenodd" d="M5.5 16a10.5 10.5 0 1 0 21 0a10.5 10.5 0 1 0 -21 0ZM8 16a8 8 0 1 0 16 0a8 8 0 1 0 -16 0Z" />
+<circle cx="16" cy="16" r="2.4" />
+</g>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="16" height="16" role="img" aria-labelledby="windows-1-16-title" x="744" y="582.0">
+<title id="windows-1-16-title">Ferryx — small Windows app icon</title>
+
+<g fill="#081A31">
+<path d="M14.4 16L14.4 3.45A1.6 1.6 0 0 1 17.6 3.45L17.6 16Z M14.869 14.869L23.743 5.994A1.6 1.6 0 0 1 26.006 8.257L17.131 17.131Z M16 14.4L28.55 14.4A1.6 1.6 0 0 1 28.55 17.6L16 17.6Z M17.131 14.869L26.006 23.743A1.6 1.6 0 0 1 23.743 26.006L14.869 17.131Z M17.6 16L17.6 28.55A1.6 1.6 0 0 1 14.4 28.55L14.4 16Z M17.131 17.131L8.257 26.006A1.6 1.6 0 0 1 5.994 23.743L14.869 14.869Z M16 17.6L3.45 17.6A1.6 1.6 0 0 1 3.45 14.4L16 14.4Z M14.869 17.131L5.994 8.257A1.6 1.6 0 0 1 8.257 5.994L17.131 14.869Z" />
+<path fill-rule="evenodd" d="M4.85 16a11.15 11.15 0 1 0 22.3 0a11.15 11.15 0 1 0 -22.3 0ZM8.65 16a7.35 7.35 0 1 0 14.7 0a7.35 7.35 0 1 0 -14.7 0Z" />
+<circle cx="16" cy="16" r="3.05" />
+</g>
+<g fill="#F0CF8C">
+<path d="M15.05 16L15.05 3.45A0.95 0.95 0 0 1 16.95 3.45L16.95 16Z M15.328 15.328L24.202 6.454A0.95 0.95 0 0 1 25.546 7.798L16.672 16.672Z M16 15.05L28.55 15.05A0.95 0.95 0 0 1 28.55 16.95L16 16.95Z M16.672 15.328L25.546 24.202A0.95 0.95 0 0 1 24.202 25.546L15.328 16.672Z M16.95 16L16.95 28.55A0.95 0.95 0 0 1 15.05 28.55L15.05 16Z M16.672 16.672L7.798 25.546A0.95 0.95 0 0 1 6.454 24.202L15.328 15.328Z M16 16.95L3.45 16.95A0.95 0.95 0 0 1 3.45 15.05L16 15.05Z M15.328 16.672L6.454 7.798A0.95 0.95 0 0 1 7.798 6.454L16.672 15.328Z" />
+<path fill-rule="evenodd" d="M5.5 16a10.5 10.5 0 1 0 21 0a10.5 10.5 0 1 0 -21 0ZM8 16a8 8 0 1 0 16 0a8 8 0 1 0 -16 0Z" />
+<circle cx="16" cy="16" r="2.4" />
+</g>
+</svg><text x="552.0" y="653" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#52646D" text-anchor="middle">64 px</text><text x="656.0" y="653" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#52646D" text-anchor="middle">32 px</text><text x="752.0" y="653" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#52646D" text-anchor="middle">16 px</text><rect x="880" y="130" width="392" height="550" rx="20" fill="#FFFFFF" stroke="none"/><text x="904" y="169" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="700" fill="#102C48" text-anchor="start">Linux</text><text x="904" y="196" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="400" fill="#52646D" text-anchor="start">PNG + SVG · 16–512 px</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="244" height="244" role="img" aria-labelledby="hero-gnome-title" x="954" y="211">
+<title id="hero-gnome-title">Ferryx — Linux app icon</title>
+
+<rect x="8" y="12" width="112" height="104" rx="22" fill="#081A31" />
+<rect x="8" y="12" width="112" height="100" rx="22" fill="#143A65" />
+<g fill="#F0CF8C">
+<path d="M61 62L61 21A3 3 0 0 1 67 21L67 62Z M61.879 59.879L90.87 30.887A3 3 0 0 1 95.113 35.13L66.121 64.121Z M64 59L105 59A3 3 0 0 1 105 65L64 65Z M66.121 59.879L95.113 88.87A3 3 0 0 1 90.87 93.113L61.879 64.121Z M67 62L67 103A3 3 0 0 1 61 103L61 62Z M66.121 64.121L37.13 93.113A3 3 0 0 1 32.887 88.87L61.879 59.879Z M64 65L23 65A3 3 0 0 1 23 59L64 59Z M61.879 64.121L32.887 35.13A3 3 0 0 1 37.13 30.887L66.121 59.879Z" />
+<path fill-rule="evenodd" d="M30 62a34 34 0 1 0 68 0a34 34 0 1 0 -68 0ZM37 62a27 27 0 1 0 54 0a27 27 0 1 0 -54 0Z" />
+<circle cx="64" cy="62" r="9" />
+</g>
+</svg><rect x="904" y="474" width="344" height="72" rx="10" fill="#F3F3EF" stroke="none"/><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="64" height="64" role="img" aria-labelledby="gnome-0-64-title" x="936" y="478.0">
+<title id="gnome-0-64-title">Ferryx — Linux app icon</title>
+
+<rect x="8" y="12" width="112" height="104" rx="22" fill="#081A31" />
+<rect x="8" y="12" width="112" height="100" rx="22" fill="#143A65" />
+<g fill="#F0CF8C">
+<path d="M61 62L61 21A3 3 0 0 1 67 21L67 62Z M61.879 59.879L90.87 30.887A3 3 0 0 1 95.113 35.13L66.121 64.121Z M64 59L105 59A3 3 0 0 1 105 65L64 65Z M66.121 59.879L95.113 88.87A3 3 0 0 1 90.87 93.113L61.879 64.121Z M67 62L67 103A3 3 0 0 1 61 103L61 62Z M66.121 64.121L37.13 93.113A3 3 0 0 1 32.887 88.87L61.879 59.879Z M64 65L23 65A3 3 0 0 1 23 59L64 59Z M61.879 64.121L32.887 35.13A3 3 0 0 1 37.13 30.887L66.121 59.879Z" />
+<path fill-rule="evenodd" d="M30 62a34 34 0 1 0 68 0a34 34 0 1 0 -68 0ZM37 62a27 27 0 1 0 54 0a27 27 0 1 0 -54 0Z" />
+<circle cx="64" cy="62" r="9" />
+</g>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-labelledby="gnome-0-32-title" x="1056" y="494.0">
+<title id="gnome-0-32-title">Ferryx — small Linux app icon</title>
+
+<rect x="2" y="3" width="28" height="26" rx="5.5" fill="#081A31" />
+<rect x="2" y="3" width="28" height="25" rx="5.5" fill="#143A65" />
+<g fill="#F0CF8C">
+<path d="M15.125 15.5L15.125 5.375A0.875 0.875 0 0 1 16.875 5.375L16.875 15.5Z M15.381 14.881L22.541 7.722A0.875 0.875 0 0 1 23.778 8.959L16.619 16.119Z M16 14.625L26.125 14.625A0.875 0.875 0 0 1 26.125 16.375L16 16.375Z M16.619 14.881L23.778 22.041A0.875 0.875 0 0 1 22.541 23.278L15.381 16.119Z M16.875 15.5L16.875 25.625A0.875 0.875 0 0 1 15.125 25.625L15.125 15.5Z M16.619 16.119L9.459 23.278A0.875 0.875 0 0 1 8.222 22.041L15.381 14.881Z M16 16.375L5.875 16.375A0.875 0.875 0 0 1 5.875 14.625L16 14.625Z M15.381 16.119L8.222 8.959A0.875 0.875 0 0 1 9.459 7.722L16.619 14.881Z" />
+<path fill-rule="evenodd" d="M7.5 15.5a8.5 8.5 0 1 0 17 0a8.5 8.5 0 1 0 -17 0ZM9.7 15.5a6.3 6.3 0 1 0 12.6 0a6.3 6.3 0 1 0 -12.6 0Z" />
+<circle cx="16" cy="15.5" r="2.2" />
+</g>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="16" height="16" role="img" aria-labelledby="gnome-0-16-title" x="1160" y="502.0">
+<title id="gnome-0-16-title">Ferryx — small Linux app icon</title>
+
+<rect x="2" y="3" width="28" height="26" rx="5.5" fill="#081A31" />
+<rect x="2" y="3" width="28" height="25" rx="5.5" fill="#143A65" />
+<g fill="#F0CF8C">
+<path d="M15.125 15.5L15.125 5.375A0.875 0.875 0 0 1 16.875 5.375L16.875 15.5Z M15.381 14.881L22.541 7.722A0.875 0.875 0 0 1 23.778 8.959L16.619 16.119Z M16 14.625L26.125 14.625A0.875 0.875 0 0 1 26.125 16.375L16 16.375Z M16.619 14.881L23.778 22.041A0.875 0.875 0 0 1 22.541 23.278L15.381 16.119Z M16.875 15.5L16.875 25.625A0.875 0.875 0 0 1 15.125 25.625L15.125 15.5Z M16.619 16.119L9.459 23.278A0.875 0.875 0 0 1 8.222 22.041L15.381 14.881Z M16 16.375L5.875 16.375A0.875 0.875 0 0 1 5.875 14.625L16 14.625Z M15.381 16.119L8.222 8.959A0.875 0.875 0 0 1 9.459 7.722L16.619 14.881Z" />
+<path fill-rule="evenodd" d="M7.5 15.5a8.5 8.5 0 1 0 17 0a8.5 8.5 0 1 0 -17 0ZM9.7 15.5a6.3 6.3 0 1 0 12.6 0a6.3 6.3 0 1 0 -12.6 0Z" />
+<circle cx="16" cy="15.5" r="2.2" />
+</g>
+</svg><rect x="904" y="554" width="344" height="72" rx="10" fill="#14283C" stroke="none"/><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="64" height="64" role="img" aria-labelledby="gnome-1-64-title" x="936" y="558.0">
+<title id="gnome-1-64-title">Ferryx — Linux app icon</title>
+
+<rect x="8" y="12" width="112" height="104" rx="22" fill="#081A31" />
+<rect x="8" y="12" width="112" height="100" rx="22" fill="#143A65" />
+<g fill="#F0CF8C">
+<path d="M61 62L61 21A3 3 0 0 1 67 21L67 62Z M61.879 59.879L90.87 30.887A3 3 0 0 1 95.113 35.13L66.121 64.121Z M64 59L105 59A3 3 0 0 1 105 65L64 65Z M66.121 59.879L95.113 88.87A3 3 0 0 1 90.87 93.113L61.879 64.121Z M67 62L67 103A3 3 0 0 1 61 103L61 62Z M66.121 64.121L37.13 93.113A3 3 0 0 1 32.887 88.87L61.879 59.879Z M64 65L23 65A3 3 0 0 1 23 59L64 59Z M61.879 64.121L32.887 35.13A3 3 0 0 1 37.13 30.887L66.121 59.879Z" />
+<path fill-rule="evenodd" d="M30 62a34 34 0 1 0 68 0a34 34 0 1 0 -68 0ZM37 62a27 27 0 1 0 54 0a27 27 0 1 0 -54 0Z" />
+<circle cx="64" cy="62" r="9" />
+</g>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-labelledby="gnome-1-32-title" x="1056" y="574.0">
+<title id="gnome-1-32-title">Ferryx — small Linux app icon</title>
+
+<rect x="2" y="3" width="28" height="26" rx="5.5" fill="#081A31" />
+<rect x="2" y="3" width="28" height="25" rx="5.5" fill="#143A65" />
+<g fill="#F0CF8C">
+<path d="M15.125 15.5L15.125 5.375A0.875 0.875 0 0 1 16.875 5.375L16.875 15.5Z M15.381 14.881L22.541 7.722A0.875 0.875 0 0 1 23.778 8.959L16.619 16.119Z M16 14.625L26.125 14.625A0.875 0.875 0 0 1 26.125 16.375L16 16.375Z M16.619 14.881L23.778 22.041A0.875 0.875 0 0 1 22.541 23.278L15.381 16.119Z M16.875 15.5L16.875 25.625A0.875 0.875 0 0 1 15.125 25.625L15.125 15.5Z M16.619 16.119L9.459 23.278A0.875 0.875 0 0 1 8.222 22.041L15.381 14.881Z M16 16.375L5.875 16.375A0.875 0.875 0 0 1 5.875 14.625L16 14.625Z M15.381 16.119L8.222 8.959A0.875 0.875 0 0 1 9.459 7.722L16.619 14.881Z" />
+<path fill-rule="evenodd" d="M7.5 15.5a8.5 8.5 0 1 0 17 0a8.5 8.5 0 1 0 -17 0ZM9.7 15.5a6.3 6.3 0 1 0 12.6 0a6.3 6.3 0 1 0 -12.6 0Z" />
+<circle cx="16" cy="15.5" r="2.2" />
+</g>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="16" height="16" role="img" aria-labelledby="gnome-1-16-title" x="1160" y="582.0">
+<title id="gnome-1-16-title">Ferryx — small Linux app icon</title>
+
+<rect x="2" y="3" width="28" height="26" rx="5.5" fill="#081A31" />
+<rect x="2" y="3" width="28" height="25" rx="5.5" fill="#143A65" />
+<g fill="#F0CF8C">
+<path d="M15.125 15.5L15.125 5.375A0.875 0.875 0 0 1 16.875 5.375L16.875 15.5Z M15.381 14.881L22.541 7.722A0.875 0.875 0 0 1 23.778 8.959L16.619 16.119Z M16 14.625L26.125 14.625A0.875 0.875 0 0 1 26.125 16.375L16 16.375Z M16.619 14.881L23.778 22.041A0.875 0.875 0 0 1 22.541 23.278L15.381 16.119Z M16.875 15.5L16.875 25.625A0.875 0.875 0 0 1 15.125 25.625L15.125 15.5Z M16.619 16.119L9.459 23.278A0.875 0.875 0 0 1 8.222 22.041L15.381 14.881Z M16 16.375L5.875 16.375A0.875 0.875 0 0 1 5.875 14.625L16 14.625Z M15.381 16.119L8.222 8.959A0.875 0.875 0 0 1 9.459 7.722L16.619 14.881Z" />
+<path fill-rule="evenodd" d="M7.5 15.5a8.5 8.5 0 1 0 17 0a8.5 8.5 0 1 0 -17 0ZM9.7 15.5a6.3 6.3 0 1 0 12.6 0a6.3 6.3 0 1 0 -12.6 0Z" />
+<circle cx="16" cy="15.5" r="2.2" />
+</g>
+</svg><text x="968.0" y="653" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#52646D" text-anchor="middle">64 px</text><text x="1072.0" y="653" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#52646D" text-anchor="middle">32 px</text><text x="1168.0" y="653" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#52646D" text-anchor="middle">16 px</text><text x="48" y="720" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="700" fill="#52646D" text-anchor="start">ЗНАК БЕЗ ПОДЛОЖКИ</text><rect x="48" y="740" width="288" height="116" rx="14" fill="#FFFFFF" stroke="none"/><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="80" height="80" role="img" aria-labelledby="variant-0-title" x="60" y="758">
+<title id="variant-0-title">Ferryx — helm symbol</title>
+
+<g fill="#143A65">
+<path d="M122 128L122 46A6 6 0 0 1 134 46L134 128Z M123.757 123.757L181.74 65.775A6 6 0 0 1 190.225 74.26L132.243 132.243Z M128 122L210 122A6 6 0 0 1 210 134L128 134Z M132.243 123.757L190.225 181.74A6 6 0 0 1 181.74 190.225L123.757 132.243Z M134 128L134 210A6 6 0 0 1 122 210L122 128Z M132.243 132.243L74.26 190.225A6 6 0 0 1 65.775 181.74L123.757 123.757Z M128 134L46 134A6 6 0 0 1 46 122L128 122Z M123.757 132.243L65.775 74.26A6 6 0 0 1 74.26 65.775L132.243 123.757Z" />
+<path fill-rule="evenodd" d="M60 128a68 68 0 1 0 136 0a68 68 0 1 0 -136 0ZM74 128a54 54 0 1 0 108 0a54 54 0 1 0 -108 0Z" />
+<circle cx="128" cy="128" r="18" />
+</g>
+</svg><text x="156" y="790" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700" fill="#102C48" text-anchor="start">Синий</text><text x="156" y="818" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="400" fill="#102C48" text-anchor="start">#143A65</text><rect x="360" y="740" width="288" height="116" rx="14" fill="#10263B" stroke="none"/><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="80" height="80" role="img" aria-labelledby="variant-1-title" x="372" y="758">
+<title id="variant-1-title">Ferryx — brass helm symbol</title>
+<g fill="#F0CF8C">
+<path d="M122 128L122 46A6 6 0 0 1 134 46L134 128Z M123.757 123.757L181.74 65.775A6 6 0 0 1 190.225 74.26L132.243 132.243Z M128 122L210 122A6 6 0 0 1 210 134L128 134Z M132.243 123.757L190.225 181.74A6 6 0 0 1 181.74 190.225L123.757 132.243Z M134 128L134 210A6 6 0 0 1 122 210L122 128Z M132.243 132.243L74.26 190.225A6 6 0 0 1 65.775 181.74L123.757 123.757Z M128 134L46 134A6 6 0 0 1 46 122L128 122Z M123.757 132.243L65.775 74.26A6 6 0 0 1 74.26 65.775L132.243 123.757Z" />
+<path fill-rule="evenodd" d="M60 128a68 68 0 1 0 136 0a68 68 0 1 0 -136 0ZM74 128a54 54 0 1 0 108 0a54 54 0 1 0 -108 0Z" />
+<circle cx="128" cy="128" r="18" />
+</g>
+</svg><text x="468" y="790" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="start">Латунь</text><text x="468" y="818" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="400" fill="#FFFFFF" text-anchor="start">#F0CF8C</text><rect x="672" y="740" width="288" height="116" rx="14" fill="#10263B" stroke="none"/><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="80" height="80" role="img" aria-labelledby="variant-2-title" x="684" y="758">
+<title id="variant-2-title">Ferryx — reversed helm symbol</title>
+
+<g fill="#FFFFFF">
+<path d="M122.25 128L122.25 46A5.75 5.75 0 0 1 133.75 46L133.75 128Z M123.934 123.934L181.917 65.951A5.75 5.75 0 0 1 190.049 74.083L132.066 132.066Z M128 122.25L210 122.25A5.75 5.75 0 0 1 210 133.75L128 133.75Z M132.066 123.934L190.049 181.917A5.75 5.75 0 0 1 181.917 190.049L123.934 132.066Z M133.75 128L133.75 210A5.75 5.75 0 0 1 122.25 210L122.25 128Z M132.066 132.066L74.083 190.049A5.75 5.75 0 0 1 65.951 181.917L123.934 123.934Z M128 133.75L46 133.75A5.75 5.75 0 0 1 46 122.25L128 122.25Z M123.934 132.066L65.951 74.083A5.75 5.75 0 0 1 74.083 65.951L132.066 123.934Z" />
+<path fill-rule="evenodd" d="M60.25 128a67.75 67.75 0 1 0 135.5 0a67.75 67.75 0 1 0 -135.5 0ZM73.75 128a54.25 54.25 0 1 0 108.5 0a54.25 54.25 0 1 0 -108.5 0Z" />
+<circle cx="128" cy="128" r="17.5" />
+</g>
+</svg><text x="780" y="790" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="start">Белый</text><text x="780" y="818" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="400" fill="#FFFFFF" text-anchor="start">#FFFFFF</text><rect x="984" y="740" width="288" height="116" rx="14" fill="#FFFFFF" stroke="none"/><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="80" height="80" role="img" aria-labelledby="variant-3-title" x="996" y="758">
+<title id="variant-3-title">Ferryx — black helm symbol</title>
+<g fill="#000000">
+<path d="M122 128L122 46A6 6 0 0 1 134 46L134 128Z M123.757 123.757L181.74 65.775A6 6 0 0 1 190.225 74.26L132.243 132.243Z M128 122L210 122A6 6 0 0 1 210 134L128 134Z M132.243 123.757L190.225 181.74A6 6 0 0 1 181.74 190.225L123.757 132.243Z M134 128L134 210A6 6 0 0 1 122 210L122 128Z M132.243 132.243L74.26 190.225A6 6 0 0 1 65.775 181.74L123.757 123.757Z M128 134L46 134A6 6 0 0 1 46 122L128 122Z M123.757 132.243L65.775 74.26A6 6 0 0 1 74.26 65.775L132.243 123.757Z" />
+<path fill-rule="evenodd" d="M60 128a68 68 0 1 0 136 0a68 68 0 1 0 -136 0ZM74 128a54 54 0 1 0 108 0a54 54 0 1 0 -108 0Z" />
+<circle cx="128" cy="128" r="18" />
+</g>
+</svg><text x="1092" y="790" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700" fill="#102C48" text-anchor="start">Чёрный</text><text x="1092" y="818" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="400" fill="#102C48" text-anchor="start">#000000</text><text x="48" y="901" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="400" fill="#52646D" text-anchor="start">Для 16–32 px: более толстые спицы и обод, ровная заливка.</text><text x="1272" y="901" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="400" fill="#52646D" text-anchor="end">SVG → make icons</text></svg>

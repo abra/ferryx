@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title">
+<title id="title">B — Переправа</title>
+<defs><linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F1EEE7"/><stop offset="1" stop-color="#DBE5DF"/></linearGradient><linearGradient id="mark" gradientUnits="userSpaceOnUse" x1="48" y1="36" x2="190" y2="216"><stop stop-color="#155A62"/><stop offset="1" stop-color="#073F4B"/></linearGradient></defs>
+<path d="M24 82C24 43 43 24 82 24H174C213 24 232 43 232 82V174C232 213 213 232 174 232H82C43 232 24 213 24 174Z" fill="url(#tile)"/><g fill="url(#mark)"><path d="M68 44H172Q188 44 188 60V76H92V108L124 140L100 164L52 116V60Q52 44 68 44Z"/><path d="M68 44H172Q188 44 188 60V76H92V108L124 140L100 164L52 116V60Q52 44 68 44Z" transform="rotate(180 128 128)"/></g>
+</svg>

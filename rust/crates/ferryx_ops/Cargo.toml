@@ -17,6 +17,8 @@ parking_lot.workspace = true
 regex.workspace = true
 serde.workspace = true
 walkdir.workspace = true
+same-file.workspace = true
+cap-std.workspace = true
 zip.workspace = true
 # Every core for a verified copy's and a big file's BLAKE3 (rayon is in
 # the build already).

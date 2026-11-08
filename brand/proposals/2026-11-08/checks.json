@@ -1,0 +1,49 @@
+{
+  "rounds": [
+    "v1: silhouettes and initial tile placement",
+    "v2: wider negative spaces, optical placement and consistent lighting"
+  ],
+  "renders_inspected": [
+    "previews/v1-shapes.png",
+    "previews/v1-icons.png",
+    "previews/v2-icons.png",
+    "previews/shape-checks.png",
+    "icon-comparison.png"
+  ],
+  "sizes": [
+    16,
+    32,
+    64,
+    512
+  ],
+  "checks": [
+    "black and reversed silhouettes",
+    "small-size rendering",
+    "mirror and 180-degree rotation",
+    "light and dark backgrounds",
+    "before/after at matching sizes",
+    "SVG structure and geometry"
+  ],
+  "svg_audit": {
+    "A": {
+      "score": 100,
+      "failures": 0
+    },
+    "B": {
+      "score": 100,
+      "failures": 0
+    },
+    "C": {
+      "score": 98,
+      "failures": 0,
+      "notes": "Intentional rightward optical correction for the F; a letter has a narrower bounding box than the radial helm."
+    }
+  },
+  "audit_note": "Scores are structural heuristics, not a guarantee of design quality or distinctiveness.",
+  "observations": {
+    "A": "Strong continuity and much higher mark/background contrast; wheel detail remains denser at 16 px.",
+    "B": "The widened diagonal gap keeps the two forms separate. The silhouette can also suggest an S.",
+    "C": "The simplest silhouette at small sizes; recognition shifts to the initial rather than the nautical symbol."
+  },
+  "recommendation": "A for an evolutionary update of the existing Ferryx icon."
+}

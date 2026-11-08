@@ -241,7 +241,10 @@ Rules:
   `operation_progress` and `list_operations` answer them whole.
   A question (`Conflict` with both sides, `Error` with retry/skip/stop)
   puts the operation in `Waiting` until `answer_operation`; an "…All"
-  answer sticks for the rest of the operation.
+  answer sticks for the rest of the operation within its conflict kind.
+  Folder merges and file replacements remember separate answers, reused
+  only when offered by the next question; "Merge All" never authorizes
+  overwriting the files inside those folders.
 - A move on one volume renames each item whole and counts it as one
   (nothing is walked); a copy, or a move across volumes, counts the bytes
   and items under the sources first. A file whose attributes are kept is
@@ -252,6 +255,13 @@ Rules:
   Verifying hashes the source (BLAKE3) while copying and reads the copy
   back past the page cache (`F_NOCACHE`; on Linux written out and dropped
   from it); a clone, sharing its source's blocks, is not read back.
+  Before a copy or move can replace anything, source and destination are
+  checked for identity (including hard links and path aliases) and a
+  folder's destination is resolved to reject a copy inside itself.
+  Across volumes each source file is removed only after its copy succeeds
+  (and verifies, when enabled). Source folders are removed only when
+  empty; skipped, failed or newly arrived children stay in place. A stop
+  leaves completed moves on the journal and unfinished sources intact.
 - Folder sizes are an operation (`CalcSizes`) whose events bring the
   sizes done since the last; the panel merges them into its rows by name.
   A pool of up to eight threads reads the trees (`getattrlistbulk` on
@@ -288,7 +298,12 @@ Tests: `cargo test --workspace`. `ferryx_api/tests/api_flow.rs` runs the
 bridge end to end (listings, resorting, the watcher's event, archives,
 operations with a question answered, folder sizes, batch rename, find);
 the tests take turns on the process-wide state. `terminal_flow.rs` runs a
-`/bin/sh` session through the bridge.
+`/bin/sh` session through the bridge. `ferryx_ops/tests/copy_safety.rs`
+covers self-copy and independent conflict answers; `extraction_safety.rs`
+covers links in ZIP/TAR members and in existing destination folders.
+The copy unit tests force the cross-volume branch on a single disk to
+exercise skips, verification failures, concurrent arrivals, cancellation
+and undo/redo without requiring an extra mount.
 
 ### Archives
 
@@ -348,7 +363,15 @@ tar is a tar, and ⌘↓ (`detect_archive`) opens an archive of any name;
   fails asks to skip or stop (a stream cannot retry), a missing or wrong
   password passes that archive by with an error, folders are made even
   when empty, modes and times are kept, symbolic links are made as links,
-  and member paths never climb out of the destination (`..` is dropped).
+  and member paths never climb out of the destination. `extract::Destination`
+  opens the user-selected root once with `cap-std`; all member paths and
+  archive-named subfolders are relative to that handle. A member's parent
+  stays open through conflict resolution, creation and cleanup, so a
+  symlink cannot redirect those writes outside the root. Files are created
+  exclusively and metadata is applied through the open file, preventing
+  a replacement link from redirecting a write or attribute change. Links
+  remain links; their streamed targets are bounded to 64 KiB. Folder
+  creation is cached, while member parents are opened anew under the root.
 - **Crates.** All pure Rust except zstd and the zip crate's bzip2, which
   were in already: `sevenz-rust2` 0.20 (the last release for Rust 1.85;
   AES, LZMA/LZMA2, BZip2, Deflate, PPMd, Zstd), `unrar-rs` (a Rust port of
@@ -954,7 +977,7 @@ saved checksum file) record through `tasks::record`. A step is a list of
 | `Created` (a copy, a new folder, an archive, an extraction) | moving it to the trash | putting it back |
 | `Moved` (a move, a rename) | the move back (a rename, across volumes a copy and a delete) | the move again |
 | `Trashed` (with the trash's receipt) | putting it back | trashing it again |
-| `FolderRemoved` (a merge emptied it) | making it again | trashing it (empty) |
+| `FolderRemoved` (a move emptied it) | making it again | trashing it (empty) |
 | `Overwritten` | nothing: its contents are gone | nothing |
 
 Undoing walks the step last change first and records what it did as the
@@ -962,7 +985,10 @@ redo step (`Journal::finish_walk`); redo is the same walk over that.
 Created items go to the trash, not away, so an undo loses nothing. A copy
 records only the topmost item it made (what is inside needs no record of
 its own); a merge records each item it made inside the folder that was
-there; an item moved across volumes turns the copy's records into moves.
+there. Across volumes each file or link becomes a `Moved` record only
+after its source is removed; emptied source folders get `FolderRemoved`
+records after their children. Undo therefore recreates the source folders
+before moving files back, including after a skip, error or cancellation.
 Names that swapped (a batch rename) go back through temporary names. A
 step keeps up to 200 000 changes, beyond that it is on record as too big
 to undo; the stack keeps 100 steps; a new step empties redo. Permanent

@@ -8,6 +8,7 @@
 
 pub mod checksum;
 pub mod compress;
+mod conflicts;
 pub mod copy;
 pub mod delete;
 pub mod duplicates;

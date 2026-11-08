@@ -1,0 +1,30 @@
+{
+  "brand": "Ferryx",
+  "request": "Explore an improved desktop app icon, with several alternatives.",
+  "confirmed_direction": "Compare a refreshed helm with bolder alternatives.",
+  "product": "A keyboard-driven, dual-pane file manager for macOS, Windows and Linux.",
+  "attributes": ["precise", "capable", "calm", "recognizable"],
+  "existing_equity": ["nautical helm", "deep blue", "warm metal"],
+  "problems_to_address": [
+    "Brown spokes have low contrast against the blue tile.",
+    "Two concentric rims and small highlights compete at small sizes.",
+    "The existing wheel nearly touches the tile edges."
+  ],
+  "avoid": ["stock folder", "generic sync arrows", "unmodified font initial", "detail-dependent silhouette"],
+  "longlist": [
+    {"idea": "One clean brass helm with generous spacing and a single rim.", "type": "pictorial", "score": 23, "selected": "A"},
+    {"idea": "Two opposing piers with a diagonal passage between the panels.", "type": "abstract", "score": 22, "selected": "B"},
+    {"idea": "A custom F with forward-cut decks and a keel-like stem.", "type": "letterform", "score": 21, "selected": "C"},
+    {"idea": "A compass needle formed by two file panes.", "type": "pictorial", "score": 18},
+    {"idea": "A ferry bow with an open passage in its negative space.", "type": "pictorial", "score": 17},
+    {"idea": "A continuous route joining two dock points.", "type": "abstract", "score": 16},
+    {"idea": "An FX ligature with a shared diagonal.", "type": "lettermark", "score": 16},
+    {"idea": "A four-spoke helm with a central panel divider.", "type": "pictorial", "score": 15},
+    {"idea": "Two sails shaped into an open F.", "type": "letterform", "score": 15},
+    {"idea": "A bracketed route in a circular instrument dial.", "type": "abstract", "score": 14}
+  ],
+  "score_basis": "Five criteria, each 1–5: clarity, distinction, simplicity, relevance, small-size strength.",
+  "scope": "Concept SVGs, rendered comparison, and small-size/monochrome checks. Platform export kits follow a direction choice.",
+  "references_studied": ["Kubernetes", "Codeship", "Mapbox", "Framer", "Pagekit", "Rocky Linux"],
+  "reference_policy": "Study construction and avoid collisions; no tracing or third-party artwork in the proposed marks."
+}

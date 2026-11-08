@@ -12,17 +12,21 @@
 use std::cell::RefCell;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Read, Seek, SeekFrom, Write};
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 use ferryx_vfs::error::{IoAt, VfsError, VfsErrorKind};
 use ferryx_vfs::native;
 use walkdir::WalkDir;
 
+use crate::conflicts::{file_choice, FileChoice};
 use crate::journal::Change;
 use crate::runner::{copy_name, free_name, OpContext};
 use crate::types::*;
 
 const BUFFER: usize = 1024 * 1024;
+
+#[cfg(test)]
+mod safety_tests;
 
 thread_local! {
     /// The copy buffer of the operation on this thread: made at its first
@@ -66,12 +70,8 @@ fn copy_or_move(ctx: &OpContext, request: &OpRequest, moving: bool) -> Result<()
         };
         jobs.push(Job { source: source.clone(), target: dest_dir.join(name) });
     }
-    // Copying a folder into itself would never end.
     for job in &jobs {
-        if job.source.is_dir() && (job.target.starts_with(&job.source)) {
-            ctx.record_error(&job.source, format!("cannot copy {} into itself", job.source.display()));
-            return Err(Abort::Stopped);
-        }
+        check_destination(ctx, &job.source, &job.target)?;
     }
     if let Err(e) = fs::create_dir_all(dest_dir) {
         ctx.record_error(dest_dir, VfsError::io(&e, dest_dir).message);
@@ -143,6 +143,114 @@ fn file_name(path: &Path) -> String {
         .unwrap_or_else(|| path.to_string_lossy().into_owned())
 }
 
+/// Refuses a destructive self-copy, including aliases and hard links,
+/// and a folder inside itself. Called before any conflict can remove an
+/// item; callers which replace a target themselves must check first too.
+pub(crate) fn check_destination(ctx: &OpContext, source: &Path, target: &Path) -> Result<(), Abort> {
+    let same = source == target
+        || if target.symlink_metadata().is_ok() {
+            match same_item(source, target) {
+                Ok(same) => same,
+                Err(e) if e.kind() == io::ErrorKind::NotFound => false,
+                Err(e) => {
+                    ctx.record_error(source, VfsError::io(&e, source).message);
+                    return Err(Abort::Stopped);
+                }
+            }
+        } else {
+            false
+        };
+    let inside = if source.symlink_metadata().is_ok_and(|m| m.is_dir()) {
+        match fs::canonicalize(source)
+            .and_then(|source| resolved_target(target).map(|t| t.starts_with(source)))
+        {
+            Ok(inside) => inside,
+            Err(e) => {
+                ctx.record_error(target, VfsError::io(&e, target).message);
+                return Err(Abort::Stopped);
+            }
+        }
+    } else {
+        false
+    };
+    if same || inside {
+        ctx.record_error(source, format!("cannot copy or move {} into itself", source.display()));
+        return Err(Abort::Stopped);
+    }
+    Ok(())
+}
+
+fn same_item(source: &Path, target: &Path) -> io::Result<bool> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        // Do not open a file to identify it: it may be unreadable, a
+        // dangling link, or a FIFO that would block until a writer comes.
+        let from = fs::symlink_metadata(source)?;
+        let to = fs::symlink_metadata(target)?;
+        Ok(from.dev() == to.dev() && from.ino() == to.ino())
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
+        const FILE_FLAG_OPEN_REPARSE_POINT: u32 = 0x0020_0000;
+        let handle = |path: &Path| {
+            // Identify the entry itself, even a dangling link or a file
+            // with no permission to read its data. Also opens folders.
+            let file = OpenOptions::new()
+                .access_mode(0)
+                .custom_flags(FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT)
+                .open(path)?;
+            same_file::Handle::from_file(file)
+        };
+        Ok(handle(source)? == handle(target)?)
+    }
+    #[cfg(not(any(unix, windows)))]
+    same_file::is_same_file(source, target)
+}
+
+/// Resolves the existing part before appending a destination not made
+/// yet. Resolving first matters for `alias/../new`, where `alias` is a
+/// link and `..` belongs to its target's parent.
+fn resolved_target(path: &Path) -> io::Result<PathBuf> {
+    let absolute = std::path::absolute(path)?;
+    let mut ancestor = absolute.as_path();
+    loop {
+        match fs::canonicalize(ancestor) {
+            Ok(mut resolved) => {
+                for part in absolute.strip_prefix(ancestor).expect("an ancestor").components() {
+                    match part {
+                        Component::ParentDir => {
+                            resolved.pop();
+                        }
+                        Component::Normal(name) => resolved.push(name),
+                        _ => {}
+                    }
+                }
+                return Ok(resolved);
+            }
+            Err(e) if e.kind() == io::ErrorKind::NotFound => {
+                ancestor = ancestor.parent().ok_or(e)?;
+            }
+            Err(e) => return Err(e),
+        }
+    }
+}
+
+/// What an item wrote, and whether every item under it was handled. A
+/// skipped or failed child leaves a move's source folder in place.
+struct Outcome {
+    written: Option<PathBuf>,
+    complete: bool,
+}
+
+impl Outcome {
+    fn of(written: Option<PathBuf>) -> Outcome {
+        Outcome { complete: written.is_some(), written }
+    }
+}
+
 /// Copies `source` to `target` (the item's own new path). Answers whether
 /// anything was written.
 fn copy_item(ctx: &OpContext, source: &Path, target: &Path, options: &OpOptions) -> Result<bool, Abort> {
@@ -158,19 +266,22 @@ pub(crate) fn copy_item_to(
     target: &Path,
     options: &OpOptions,
 ) -> Result<Option<PathBuf>, Abort> {
-    copy_entry(ctx, source, target, options, false)
+    check_destination(ctx, source, target)?;
+    copy_entry(ctx, source, target, options, false, false).map(|o| o.written)
 }
 
 /// [`copy_item_to`]; `fresh` when `target`'s folder was made by this copy,
 /// so its name needs no look for a conflict first (one found all the
 /// same, say of two names the volume folds together, is asked about).
+/// A move removes and records each source only once its copy succeeds.
 fn copy_entry(
     ctx: &OpContext,
     source: &Path,
     target: &Path,
     options: &OpOptions,
     fresh: bool,
-) -> Result<Option<PathBuf>, Abort> {
+    moving: bool,
+) -> Result<Outcome, Abort> {
     ctx.check()?;
     ctx.set_current(source);
     let meta = loop {
@@ -178,32 +289,46 @@ fn copy_entry(
             Ok(meta) => break meta,
             Err(e) => {
                 if !ctx.ask_error(source, &VfsError::io(&e, source))? {
-                    return Ok(None);
+                    return Ok(Outcome::of(None));
                 }
             }
         }
     };
     let file_type = meta.file_type();
     if file_type.is_dir() {
-        return copy_dir(ctx, source, target, &meta, options, fresh);
+        return copy_dir(ctx, source, target, &meta, options, fresh, moving);
     }
-    if file_type.is_symlink() {
-        let Some(target) = resolve_file_conflict(ctx, target, &meta, options)? else { return Ok(None) };
+    let mark = ctx.record_mark();
+    let written = if file_type.is_symlink() {
+        let Some(target) = resolve_file_conflict(ctx, target, &meta, options)? else {
+            return Ok(Outcome::of(None));
+        };
         loop {
             match copy_symlink(source, &target) {
                 Ok(()) => break,
                 Err(e) => {
                     if !ctx.ask_error(source, &e)? {
-                        return Ok(None);
+                        return Ok(Outcome::of(None));
                     }
                 }
             }
         }
         ctx.record_created(&target);
         ctx.item_done();
-        return Ok(Some(target));
+        Some(target)
+    } else {
+        copy_regular(ctx, source, target, &meta, options, fresh)?
+    };
+    let mut outcome = Outcome::of(written);
+    if moving {
+        if let Some(written) = &outcome.written {
+            outcome.complete = remove_source(ctx, source, false)?;
+            if outcome.complete {
+                ctx.record_moved_by_copy(mark, source, written);
+            }
+        }
     }
-    copy_regular(ctx, source, target, &meta, options, fresh)
+    Ok(outcome)
 }
 
 fn copy_dir(
@@ -213,18 +338,21 @@ fn copy_dir(
     meta: &fs::Metadata,
     options: &OpOptions,
     fresh: bool,
-) -> Result<Option<PathBuf>, Abort> {
+    moving: bool,
+) -> Result<Outcome, Abort> {
     let (target, made) = if fresh && fs::create_dir(target).is_ok() {
         (target.to_path_buf(), true)
     } else {
-        let Some(target) = resolve_dir_conflict(ctx, source, target, options)? else { return Ok(None) };
+        let Some(target) = resolve_dir_conflict(ctx, source, target, options)? else {
+            return Ok(Outcome::of(None));
+        };
         let made = target.symlink_metadata().is_err();
         loop {
             match fs::create_dir_all(&target) {
                 Ok(()) => break,
                 Err(e) => {
                     if !ctx.ask_error(&target, &VfsError::io(&e, &target))? {
-                        return Ok(None);
+                        return Ok(Outcome::of(None));
                     }
                 }
             }
@@ -232,25 +360,66 @@ fn copy_dir(
         (target, made)
     };
     if made {
-        // Before its contents, which then need no record of their own.
+        // Before its contents, so undo empties it before taking it away.
+        // Ordinary copies need no creation records for its children.
         ctx.record_created(&target);
     }
-    let children = match fs::read_dir(source) {
-        Ok(read) => read.filter_map(Result::ok).map(|e| e.path()).collect::<Vec<_>>(),
-        Err(e) => {
-            ctx.ask_error(source, &VfsError::io(&e, source))?;
-            return Ok(None);
-        }
-    };
+    let (children, mut complete) = read_children(ctx, source)?;
     for child in children {
         let child_target = target.join(file_name(&child));
-        copy_entry(ctx, &child, &child_target, options, made)?;
+        complete &= copy_entry(ctx, &child, &child_target, options, made, moving)?.complete;
     }
     if options.preserve_attributes {
         preserve_dir(source, &target, meta);
     }
+    if moving && complete {
+        complete = remove_source(ctx, source, true)?;
+        if complete {
+            ctx.record(Change::FolderRemoved { path: source.to_path_buf() });
+        }
+    }
     ctx.item_done();
-    Ok(Some(target))
+    Ok(Outcome { written: Some(target), complete })
+}
+
+/// Collect before moving children: deleting while enumerating a folder
+/// can miss entries on some file systems. A read error never means empty.
+fn read_children(ctx: &OpContext, source: &Path) -> Result<(Vec<PathBuf>, bool), Abort> {
+    let read = loop {
+        ctx.check()?;
+        match fs::read_dir(source) {
+            Ok(read) => break read,
+            Err(e) if ctx.ask_error(source, &VfsError::io(&e, source))? => continue,
+            Err(_) => return Ok((Vec::new(), false)),
+        }
+    };
+    let mut children = Vec::new();
+    let mut complete = true;
+    for entry in read {
+        ctx.check()?;
+        match entry {
+            Ok(entry) => children.push(entry.path()),
+            Err(e) => {
+                ctx.ask_skip(source, &VfsError::io(&e, source))?;
+                complete = false;
+            }
+        }
+    }
+    Ok((children, complete))
+}
+
+/// Remove only the item just copied. A directory must be empty: a file
+/// skipped, unreadable or added during the move must never be deleted.
+fn remove_source(ctx: &OpContext, source: &Path, directory: bool) -> Result<bool, Abort> {
+    loop {
+        ctx.check()?;
+        let result = if directory { fs::remove_dir(source) } else { fs::remove_file(source) };
+        match result {
+            Ok(()) => return Ok(true),
+            Err(e) if ctx.ask_error(source, &VfsError::io(&e, source))? => continue,
+            Err(_) => return Ok(false),
+        }
+    }
 }
 
 fn copy_regular(
@@ -591,40 +760,21 @@ pub(crate) fn resolve_conflict(
     options: &OpOptions,
 ) -> Result<Option<PathBuf>, Abort> {
     let Ok(existing) = fs::symlink_metadata(target) else { return Ok(Some(target.to_path_buf())) };
-    let existing_modified = existing.modified().ok().and_then(native::system_time_ms);
-    let decision = match options.conflicts {
-        ConflictPolicy::Overwrite => Answer::Overwrite,
-        ConflictPolicy::OverwriteOlder => Answer::OverwriteOlderAll,
-        ConflictPolicy::Skip => Answer::Skip,
-        ConflictPolicy::KeepBoth => Answer::KeepBoth,
-        ConflictPolicy::Ask => ctx.ask_conflict(
-            ConflictSide {
-                path: String::new(),
-                size: source_size,
-                modified_ms: source_modified,
-                is_dir: false,
-            },
-            ConflictSide {
-                path: target.to_string_lossy().into_owned(),
-                size: Some(existing.len()),
-                modified_ms: existing_modified,
-                is_dir: existing.is_dir(),
-            },
-            vec![
-                Answer::Overwrite,
-                Answer::OverwriteAll,
-                Answer::OverwriteOlderAll,
-                Answer::Skip,
-                Answer::SkipAll,
-                Answer::KeepBoth,
-                Answer::KeepBothAll,
-                Answer::Abort,
-            ],
-        )?,
-    };
+    let decision = file_choice(
+        ctx,
+        source_size,
+        source_modified,
+        ConflictSide {
+            path: target.to_string_lossy().into_owned(),
+            size: Some(existing.len()),
+            modified_ms: existing.modified().ok().and_then(native::system_time_ms),
+            is_dir: existing.is_dir(),
+        },
+        options.conflicts,
+    )?;
     match decision {
-        Answer::Overwrite | Answer::OverwriteAll | Answer::Merge | Answer::MergeAll => {
-            if let Err(e) = remove_any(target) {
+        FileChoice::Replace => {
+            while let Err(e) = remove_any(target) {
                 if !ctx.ask_error(target, &e)? {
                     return Ok(None);
                 }
@@ -632,29 +782,11 @@ pub(crate) fn resolve_conflict(
             ctx.record_overwritten(target);
             Ok(Some(target.to_path_buf()))
         }
-        Answer::OverwriteOlderAll => {
-            let newer = match (source_modified, existing_modified) {
-                (Some(s), Some(e)) => s > e,
-                _ => false,
-            };
-            if newer {
-                if let Err(e) = remove_any(target) {
-                    if !ctx.ask_error(target, &e)? {
-                        return Ok(None);
-                    }
-                }
-                ctx.record_overwritten(target);
-                Ok(Some(target.to_path_buf()))
-            } else {
-                Ok(None)
-            }
-        }
-        Answer::KeepBoth | Answer::KeepBothAll => {
+        FileChoice::KeepBoth => {
             let dir = target.parent().unwrap_or(Path::new("."));
             Ok(Some(free_name(dir, &file_name(target))))
         }
-        Answer::Abort => Err(Abort::Stopped),
-        _ => Ok(None),
+        FileChoice::Skip => Ok(None),
     }
 }
 
@@ -788,6 +920,7 @@ pub(crate) fn move_item(
     target: &Path,
     options: &OpOptions,
 ) -> Result<bool, Abort> {
+    check_destination(ctx, source, target)?;
     move_job(ctx, source, target, options, same_volume(source, target))
 }
 
@@ -810,17 +943,9 @@ fn move_job(
     if source == target {
         return Ok(false);
     }
-    // Across volumes: copy, then remove what was copied.
-    let mark = ctx.record_mark();
-    let merging = source.is_dir() && target.is_dir();
-    let Some(written) = copy_item_to(ctx, source, target, options)? else { return Ok(false) };
-    match remove_any(source) {
-        Ok(()) if merging && written == target => ctx.record_merged(mark, source, &written),
-        Ok(()) => ctx.record_moved_by_copy(mark, source, &written),
-        // Left in place: on record it is a copy.
-        Err(e) => ctx.record_error(source, e.message),
-    }
-    Ok(true)
+    // Across volumes, each successful copy removes and records its own
+    // source. Directories go only after all children have moved.
+    Ok(copy_entry(ctx, source, target, options, false, true)?.complete)
 }
 
 /// Renames `source` to `target` on its volume; a folder onto a folder
@@ -1458,8 +1583,8 @@ mod tests {
             let mut req = request(OpKind::Copy, vec![file.clone()], &dest);
             req.options.conflicts = policy;
             let ctx = OpContext::detached(&req);
-            let got = copy_entry(&ctx, &file, &dest.join("a"), &req.options, true).unwrap();
-            assert_eq!(got, written, "{policy:?}");
+            let got = copy_entry(&ctx, &file, &dest.join("a"), &req.options, true, false).unwrap();
+            assert_eq!(got.written, written, "{policy:?}");
             assert_eq!(fs::read(dest.join("a")).unwrap(), kept, "{policy:?}");
         }
         assert_eq!(fs::read(dest.join("a 2")).unwrap(), b"new");

@@ -20,5 +20,6 @@ X11 is the bundle's `data/app_icon.png`, the 256 px hicolor PNG that
 Not here yet: AppStream metainfo (`dev.ferryx.ferryx.metainfo.xml` in
 `share/metainfo/`), which Flatpak and software centres need.
 
-The icons are generated: edit the masters in `../../brand` and run
-`make icons`.
+The icons are generated: edit the [masters in `../../brand`](../../brand/README.md)
+and run `make icons`. Sizes up to 32 px use the dedicated small drawing; the
+scalable and symbolic SVGs are copied from their respective masters.

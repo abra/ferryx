@@ -8,11 +8,12 @@ librsvg2-bin`) and nothing else: PNGs come from it, the Windows .ico is
 packed here with the standard library.
 
 Each platform gets its own drawing, after its own rules:
-  macOS      ferryx-macos.svg         the tile with depth, 1024 grid / 824 body
-             ferryx-macos-small.svg   16 and 32 px: one bullet, one line
-  Windows    ferryx-windows.svg       Fluent: the object without a plate
-             ferryx-windows-small.svg 16-32 px
-  Linux      ferryx-gnome.svg         GNOME HIG: front-facing, palette, lips
+  macOS      ferryx-macos.svg         brass helm, 1024 grid / 824 body
+             ferryx-macos-small.svg   16 and 32 px: flat, heavier geometry
+  Windows    ferryx-windows.svg       transparent helm with a navy edge
+             ferryx-windows-small.svg 16-32 px: flat, stronger edge
+  Linux      ferryx-gnome.svg         front-facing tile with a lower lip
+             ferryx-gnome-small.svg   16-32 px: flat, heavier geometry
              ferryx-symbolic.svg      one colour, recoloured by the desktop
 """
 import os
@@ -73,7 +74,8 @@ def windows() -> None:
 def linux() -> None:
     """The hicolor theme a package installs, plus the scalable masters."""
     for size in (16, 24, 32, 48, 64, 128, 256, 512):
-        png("ferryx-gnome.svg", size,
+        svg = "ferryx-gnome-small.svg" if size <= 32 else "ferryx-gnome.svg"
+        png(svg, size,
             os.path.join(LINUX_ICONS, f"{size}x{size}/apps/{APP_ID}.png"))
     for svg, name in (("ferryx-gnome.svg", f"{APP_ID}.svg"),
                       ("ferryx-symbolic.svg", f"{APP_ID}-symbolic.svg")):

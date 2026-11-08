@@ -1,0 +1,377 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1760" height="1090" viewBox="0 0 1760 1090"><title>Ferryx — варианты иконки</title><rect x="0" y="0" width="1760" height="1090" rx="0" fill="#F3F3EF" stroke="none"/><text x="56" y="65" font-family="Arial,Helvetica,sans-serif" font-size="25" font-weight="700" fill="#172B35" text-anchor="start">Ferryx</text><text x="56" y="111" font-family="Arial,Helvetica,sans-serif" font-size="34" font-weight="700" fill="#172B35" text-anchor="start">Три направления иконки приложения</text><text x="1704" y="65" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="400" fill="#64747B" text-anchor="end">КОНЦЕПЦИИ  /  08.11.2026</text><text x="1704" y="105" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="400" fill="#64747B" text-anchor="end">Сравнение в одинаковом масштабе</text><rect x="56" y="157" width="394" height="849" rx="22" fill="#FFFFFF" stroke="#D8DEDA"/><text x="81" y="193" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="700" fill="#64747B" text-anchor="start">ИСХОДНАЯ ИКОНКА</text><text x="81" y="233" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="700" fill="#172B35" text-anchor="start">Сейчас</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="296" height="296" x="105" y="266">
+<title>Ferryx</title>
+
+<defs>
+  <linearGradient id="hero0-helm_bg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#27549B" />
+    <stop offset="1" stop-color="#0C1C44" />
+  </linearGradient>
+  <radialGradient id="hero0-helm_vignette" cx="0.5" cy="0.9" r="0.8">
+    <stop offset="0" stop-color="#000000" stop-opacity="0.28" />
+    <stop offset="1" stop-color="#000000" stop-opacity="0" />
+  </radialGradient>
+  <radialGradient id="hero0-helm_sheen" cx="0.3" cy="0.08" r="0.9">
+    <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18" />
+    <stop offset="0.6" stop-color="#FFFFFF" stop-opacity="0" />
+  </radialGradient>
+  <linearGradient id="hero0-helm_wood" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#A8622F" />
+    <stop offset="0.5" stop-color="#6E3B16" />
+    <stop offset="1" stop-color="#3E2009" />
+  </linearGradient>
+  <linearGradient id="hero0-helm_woodHandle" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#B86F38" />
+    <stop offset="1" stop-color="#5A2E10" />
+  </linearGradient>
+  <radialGradient id="hero0-helm_brass" cx="0.35" cy="0.3" r="0.85">
+    <stop offset="0" stop-color="#FFEDB5" />
+    <stop offset="0.45" stop-color="#DBAA4C" />
+    <stop offset="1" stop-color="#7E5217" />
+  </radialGradient>
+  <radialGradient id="hero0-helm_brassDeep" cx="0.4" cy="0.35" r="0.9">
+    <stop offset="0" stop-color="#C08A33" />
+    <stop offset="1" stop-color="#5E3C0F" />
+  </radialGradient>
+  <clipPath id="hero0-helm_tile"><path d="M100 332 C100 178 178 100 332 100 H692 C846 100 924 178 924 332 V692 C924 846 846 924 692 924 H332 C178 924 100 846 100 692 Z" /></clipPath>
+  <filter id="hero0-helm_shadow" x="-15%" y="-15%" width="130%" height="140%">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="18" />
+    <feOffset dy="26" result="o" />
+    <feComponentTransfer><feFuncA type="linear" slope="0.45" /></feComponentTransfer>
+    <feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge>
+  </filter>
+  
+  <g id="hero0-helm_spoke">
+    <rect x="490" y="112" width="44" height="86" rx="22" fill="url(#hero0-helm_woodHandle)" />
+    <rect x="496" y="186" width="32" height="250" rx="12" fill="url(#hero0-helm_wood)" />
+    <rect x="500" y="120" width="8" height="60" rx="4" fill="#FFFFFF" fill-opacity="0.28" />
+  </g>
+</defs>
+<g clip-path="url(#hero0-helm_tile)">
+  <rect width="1024" height="1024" fill="url(#hero0-helm_bg)" />
+  <rect width="1024" height="1024" fill="url(#hero0-helm_vignette)" />
+  <rect width="1024" height="1024" fill="url(#hero0-helm_sheen)" />
+</g>
+<g filter="url(#hero0-helm_shadow)">
+  <use href="#hero0-helm_spoke" />
+  <use href="#hero0-helm_spoke" transform="rotate(45 512 512)" />
+  <use href="#hero0-helm_spoke" transform="rotate(90 512 512)" />
+  <use href="#hero0-helm_spoke" transform="rotate(135 512 512)" />
+  <use href="#hero0-helm_spoke" transform="rotate(180 512 512)" />
+  <use href="#hero0-helm_spoke" transform="rotate(225 512 512)" />
+  <use href="#hero0-helm_spoke" transform="rotate(270 512 512)" />
+  <use href="#hero0-helm_spoke" transform="rotate(315 512 512)" />
+  <circle cx="512" cy="512" r="300" fill="none" stroke="url(#hero0-helm_wood)" stroke-width="52" />
+  <circle cx="512" cy="512" r="200" fill="none" stroke="url(#hero0-helm_wood)" stroke-width="28" />
+  <circle cx="512" cy="512" r="96" fill="url(#hero0-helm_brass)" />
+</g>
+
+<path d="M252 362 A300 300 0 0 1 662 252" fill="none" stroke="#FFFFFF" stroke-opacity="0.26" stroke-width="12" stroke-linecap="round" />
+<path d="M339 412 A200 200 0 0 1 612 339" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="8" stroke-linecap="round" />
+<circle cx="512" cy="512" r="56" fill="url(#hero0-helm_brassDeep)" />
+<circle cx="512" cy="512" r="20" fill="#FFEDB5" fill-opacity="0.9" />
+<ellipse cx="486" cy="470" rx="26" ry="14" fill="#FFFFFF" fill-opacity="0.35" transform="rotate(-35 486 470)" />
+</svg><text x="81" y="599" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#172B35" text-anchor="start">Морской характер Ferryx.</text><text x="81" y="626" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#64747B" text-anchor="start">Отправная точка сравнения.</text><text x="81" y="676" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#64747B" text-anchor="start">В СПИСКЕ ПРИЛОЖЕНИЙ</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="64" height="64" x="113" y="699">
+<title>Ferryx</title>
+
+<defs>
+  <linearGradient id="icon0-64-helm_bg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#27549B" />
+    <stop offset="1" stop-color="#0C1C44" />
+  </linearGradient>
+  <radialGradient id="icon0-64-helm_vignette" cx="0.5" cy="0.9" r="0.8">
+    <stop offset="0" stop-color="#000000" stop-opacity="0.28" />
+    <stop offset="1" stop-color="#000000" stop-opacity="0" />
+  </radialGradient>
+  <radialGradient id="icon0-64-helm_sheen" cx="0.3" cy="0.08" r="0.9">
+    <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18" />
+    <stop offset="0.6" stop-color="#FFFFFF" stop-opacity="0" />
+  </radialGradient>
+  <linearGradient id="icon0-64-helm_wood" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#A8622F" />
+    <stop offset="0.5" stop-color="#6E3B16" />
+    <stop offset="1" stop-color="#3E2009" />
+  </linearGradient>
+  <linearGradient id="icon0-64-helm_woodHandle" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#B86F38" />
+    <stop offset="1" stop-color="#5A2E10" />
+  </linearGradient>
+  <radialGradient id="icon0-64-helm_brass" cx="0.35" cy="0.3" r="0.85">
+    <stop offset="0" stop-color="#FFEDB5" />
+    <stop offset="0.45" stop-color="#DBAA4C" />
+    <stop offset="1" stop-color="#7E5217" />
+  </radialGradient>
+  <radialGradient id="icon0-64-helm_brassDeep" cx="0.4" cy="0.35" r="0.9">
+    <stop offset="0" stop-color="#C08A33" />
+    <stop offset="1" stop-color="#5E3C0F" />
+  </radialGradient>
+  <clipPath id="icon0-64-helm_tile"><path d="M100 332 C100 178 178 100 332 100 H692 C846 100 924 178 924 332 V692 C924 846 846 924 692 924 H332 C178 924 100 846 100 692 Z" /></clipPath>
+  <filter id="icon0-64-helm_shadow" x="-15%" y="-15%" width="130%" height="140%">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="18" />
+    <feOffset dy="26" result="o" />
+    <feComponentTransfer><feFuncA type="linear" slope="0.45" /></feComponentTransfer>
+    <feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge>
+  </filter>
+  
+  <g id="icon0-64-helm_spoke">
+    <rect x="490" y="112" width="44" height="86" rx="22" fill="url(#icon0-64-helm_woodHandle)" />
+    <rect x="496" y="186" width="32" height="250" rx="12" fill="url(#icon0-64-helm_wood)" />
+    <rect x="500" y="120" width="8" height="60" rx="4" fill="#FFFFFF" fill-opacity="0.28" />
+  </g>
+</defs>
+<g clip-path="url(#icon0-64-helm_tile)">
+  <rect width="1024" height="1024" fill="url(#icon0-64-helm_bg)" />
+  <rect width="1024" height="1024" fill="url(#icon0-64-helm_vignette)" />
+  <rect width="1024" height="1024" fill="url(#icon0-64-helm_sheen)" />
+</g>
+<g filter="url(#icon0-64-helm_shadow)">
+  <use href="#icon0-64-helm_spoke" />
+  <use href="#icon0-64-helm_spoke" transform="rotate(45 512 512)" />
+  <use href="#icon0-64-helm_spoke" transform="rotate(90 512 512)" />
+  <use href="#icon0-64-helm_spoke" transform="rotate(135 512 512)" />
+  <use href="#icon0-64-helm_spoke" transform="rotate(180 512 512)" />
+  <use href="#icon0-64-helm_spoke" transform="rotate(225 512 512)" />
+  <use href="#icon0-64-helm_spoke" transform="rotate(270 512 512)" />
+  <use href="#icon0-64-helm_spoke" transform="rotate(315 512 512)" />
+  <circle cx="512" cy="512" r="300" fill="none" stroke="url(#icon0-64-helm_wood)" stroke-width="52" />
+  <circle cx="512" cy="512" r="200" fill="none" stroke="url(#icon0-64-helm_wood)" stroke-width="28" />
+  <circle cx="512" cy="512" r="96" fill="url(#icon0-64-helm_brass)" />
+</g>
+
+<path d="M252 362 A300 300 0 0 1 662 252" fill="none" stroke="#FFFFFF" stroke-opacity="0.26" stroke-width="12" stroke-linecap="round" />
+<path d="M339 412 A200 200 0 0 1 612 339" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="8" stroke-linecap="round" />
+<circle cx="512" cy="512" r="56" fill="url(#icon0-64-helm_brassDeep)" />
+<circle cx="512" cy="512" r="20" fill="#FFEDB5" fill-opacity="0.9" />
+<ellipse cx="486" cy="470" rx="26" ry="14" fill="#FFFFFF" fill-opacity="0.35" transform="rotate(-35 486 470)" />
+</svg><text x="145.0" y="788" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#64747B" text-anchor="middle">64 px</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="32" height="32" x="229" y="731">
+<title>Ferryx</title>
+
+<defs>
+  <linearGradient id="icon0-32-helm_bg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#27549B" />
+    <stop offset="1" stop-color="#0C1C44" />
+  </linearGradient>
+  <radialGradient id="icon0-32-helm_vignette" cx="0.5" cy="0.9" r="0.8">
+    <stop offset="0" stop-color="#000000" stop-opacity="0.28" />
+    <stop offset="1" stop-color="#000000" stop-opacity="0" />
+  </radialGradient>
+  <radialGradient id="icon0-32-helm_sheen" cx="0.3" cy="0.08" r="0.9">
+    <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18" />
+    <stop offset="0.6" stop-color="#FFFFFF" stop-opacity="0" />
+  </radialGradient>
+  <linearGradient id="icon0-32-helm_wood" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#A8622F" />
+    <stop offset="0.5" stop-color="#6E3B16" />
+    <stop offset="1" stop-color="#3E2009" />
+  </linearGradient>
+  <linearGradient id="icon0-32-helm_woodHandle" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#B86F38" />
+    <stop offset="1" stop-color="#5A2E10" />
+  </linearGradient>
+  <radialGradient id="icon0-32-helm_brass" cx="0.35" cy="0.3" r="0.85">
+    <stop offset="0" stop-color="#FFEDB5" />
+    <stop offset="0.45" stop-color="#DBAA4C" />
+    <stop offset="1" stop-color="#7E5217" />
+  </radialGradient>
+  <radialGradient id="icon0-32-helm_brassDeep" cx="0.4" cy="0.35" r="0.9">
+    <stop offset="0" stop-color="#C08A33" />
+    <stop offset="1" stop-color="#5E3C0F" />
+  </radialGradient>
+  <clipPath id="icon0-32-helm_tile"><path d="M100 332 C100 178 178 100 332 100 H692 C846 100 924 178 924 332 V692 C924 846 846 924 692 924 H332 C178 924 100 846 100 692 Z" /></clipPath>
+  <filter id="icon0-32-helm_shadow" x="-15%" y="-15%" width="130%" height="140%">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="18" />
+    <feOffset dy="26" result="o" />
+    <feComponentTransfer><feFuncA type="linear" slope="0.45" /></feComponentTransfer>
+    <feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge>
+  </filter>
+  
+  <g id="icon0-32-helm_spoke">
+    <rect x="490" y="112" width="44" height="86" rx="22" fill="url(#icon0-32-helm_woodHandle)" />
+    <rect x="496" y="186" width="32" height="250" rx="12" fill="url(#icon0-32-helm_wood)" />
+    <rect x="500" y="120" width="8" height="60" rx="4" fill="#FFFFFF" fill-opacity="0.28" />
+  </g>
+</defs>
+<g clip-path="url(#icon0-32-helm_tile)">
+  <rect width="1024" height="1024" fill="url(#icon0-32-helm_bg)" />
+  <rect width="1024" height="1024" fill="url(#icon0-32-helm_vignette)" />
+  <rect width="1024" height="1024" fill="url(#icon0-32-helm_sheen)" />
+</g>
+<g filter="url(#icon0-32-helm_shadow)">
+  <use href="#icon0-32-helm_spoke" />
+  <use href="#icon0-32-helm_spoke" transform="rotate(45 512 512)" />
+  <use href="#icon0-32-helm_spoke" transform="rotate(90 512 512)" />
+  <use href="#icon0-32-helm_spoke" transform="rotate(135 512 512)" />
+  <use href="#icon0-32-helm_spoke" transform="rotate(180 512 512)" />
+  <use href="#icon0-32-helm_spoke" transform="rotate(225 512 512)" />
+  <use href="#icon0-32-helm_spoke" transform="rotate(270 512 512)" />
+  <use href="#icon0-32-helm_spoke" transform="rotate(315 512 512)" />
+  <circle cx="512" cy="512" r="300" fill="none" stroke="url(#icon0-32-helm_wood)" stroke-width="52" />
+  <circle cx="512" cy="512" r="200" fill="none" stroke="url(#icon0-32-helm_wood)" stroke-width="28" />
+  <circle cx="512" cy="512" r="96" fill="url(#icon0-32-helm_brass)" />
+</g>
+
+<path d="M252 362 A300 300 0 0 1 662 252" fill="none" stroke="#FFFFFF" stroke-opacity="0.26" stroke-width="12" stroke-linecap="round" />
+<path d="M339 412 A200 200 0 0 1 612 339" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="8" stroke-linecap="round" />
+<circle cx="512" cy="512" r="56" fill="url(#icon0-32-helm_brassDeep)" />
+<circle cx="512" cy="512" r="20" fill="#FFEDB5" fill-opacity="0.9" />
+<ellipse cx="486" cy="470" rx="26" ry="14" fill="#FFFFFF" fill-opacity="0.35" transform="rotate(-35 486 470)" />
+</svg><text x="245.0" y="788" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#64747B" text-anchor="middle">32 px</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="16" height="16" x="333" y="747">
+<title>Ferryx</title>
+
+<defs>
+  <linearGradient id="icon0-16-helm_bg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#27549B" />
+    <stop offset="1" stop-color="#0C1C44" />
+  </linearGradient>
+  <radialGradient id="icon0-16-helm_vignette" cx="0.5" cy="0.9" r="0.8">
+    <stop offset="0" stop-color="#000000" stop-opacity="0.28" />
+    <stop offset="1" stop-color="#000000" stop-opacity="0" />
+  </radialGradient>
+  <radialGradient id="icon0-16-helm_sheen" cx="0.3" cy="0.08" r="0.9">
+    <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18" />
+    <stop offset="0.6" stop-color="#FFFFFF" stop-opacity="0" />
+  </radialGradient>
+  <linearGradient id="icon0-16-helm_wood" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#A8622F" />
+    <stop offset="0.5" stop-color="#6E3B16" />
+    <stop offset="1" stop-color="#3E2009" />
+  </linearGradient>
+  <linearGradient id="icon0-16-helm_woodHandle" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#B86F38" />
+    <stop offset="1" stop-color="#5A2E10" />
+  </linearGradient>
+  <radialGradient id="icon0-16-helm_brass" cx="0.35" cy="0.3" r="0.85">
+    <stop offset="0" stop-color="#FFEDB5" />
+    <stop offset="0.45" stop-color="#DBAA4C" />
+    <stop offset="1" stop-color="#7E5217" />
+  </radialGradient>
+  <radialGradient id="icon0-16-helm_brassDeep" cx="0.4" cy="0.35" r="0.9">
+    <stop offset="0" stop-color="#C08A33" />
+    <stop offset="1" stop-color="#5E3C0F" />
+  </radialGradient>
+  <clipPath id="icon0-16-helm_tile"><path d="M100 332 C100 178 178 100 332 100 H692 C846 100 924 178 924 332 V692 C924 846 846 924 692 924 H332 C178 924 100 846 100 692 Z" /></clipPath>
+  <filter id="icon0-16-helm_shadow" x="-15%" y="-15%" width="130%" height="140%">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="18" />
+    <feOffset dy="26" result="o" />
+    <feComponentTransfer><feFuncA type="linear" slope="0.45" /></feComponentTransfer>
+    <feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge>
+  </filter>
+  
+  <g id="icon0-16-helm_spoke">
+    <rect x="490" y="112" width="44" height="86" rx="22" fill="url(#icon0-16-helm_woodHandle)" />
+    <rect x="496" y="186" width="32" height="250" rx="12" fill="url(#icon0-16-helm_wood)" />
+    <rect x="500" y="120" width="8" height="60" rx="4" fill="#FFFFFF" fill-opacity="0.28" />
+  </g>
+</defs>
+<g clip-path="url(#icon0-16-helm_tile)">
+  <rect width="1024" height="1024" fill="url(#icon0-16-helm_bg)" />
+  <rect width="1024" height="1024" fill="url(#icon0-16-helm_vignette)" />
+  <rect width="1024" height="1024" fill="url(#icon0-16-helm_sheen)" />
+</g>
+<g filter="url(#icon0-16-helm_shadow)">
+  <use href="#icon0-16-helm_spoke" />
+  <use href="#icon0-16-helm_spoke" transform="rotate(45 512 512)" />
+  <use href="#icon0-16-helm_spoke" transform="rotate(90 512 512)" />
+  <use href="#icon0-16-helm_spoke" transform="rotate(135 512 512)" />
+  <use href="#icon0-16-helm_spoke" transform="rotate(180 512 512)" />
+  <use href="#icon0-16-helm_spoke" transform="rotate(225 512 512)" />
+  <use href="#icon0-16-helm_spoke" transform="rotate(270 512 512)" />
+  <use href="#icon0-16-helm_spoke" transform="rotate(315 512 512)" />
+  <circle cx="512" cy="512" r="300" fill="none" stroke="url(#icon0-16-helm_wood)" stroke-width="52" />
+  <circle cx="512" cy="512" r="200" fill="none" stroke="url(#icon0-16-helm_wood)" stroke-width="28" />
+  <circle cx="512" cy="512" r="96" fill="url(#icon0-16-helm_brass)" />
+</g>
+
+<path d="M252 362 A300 300 0 0 1 662 252" fill="none" stroke="#FFFFFF" stroke-opacity="0.26" stroke-width="12" stroke-linecap="round" />
+<path d="M339 412 A200 200 0 0 1 612 339" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="8" stroke-linecap="round" />
+<circle cx="512" cy="512" r="56" fill="url(#icon0-16-helm_brassDeep)" />
+<circle cx="512" cy="512" r="20" fill="#FFEDB5" fill-opacity="0.9" />
+<ellipse cx="486" cy="470" rx="26" ry="14" fill="#FFFFFF" fill-opacity="0.35" transform="rotate(-35 486 470)" />
+</svg><text x="341.0" y="788" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#64747B" text-anchor="middle">16 px</text><text x="81" y="830" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#64747B" text-anchor="start">СИЛУЭТ НА СВЕТЛОМ И ТЁМНОМ ФОНЕ</text><rect x="81" y="848" width="165" height="83" rx="10" fill="#F4F4F0" stroke="none"/><rect x="260" y="848" width="165" height="83" rx="10" fill="#142C3A" stroke="none"/><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="80" height="80" x="123" y="850">
+<title>Ferryx</title>
+
+<g stroke="#241f31" stroke-width="1.5" stroke-linecap="round" fill="none">
+  <circle cx="8" cy="8" r="5.25" />
+  <path d="M8 1.25V3.5M8 12.5v2.25M1.25 8H3.5M12.5 8h2.25M3.227 3.227l1.591 1.591M11.182 11.182l1.591 1.591M3.227 12.773l1.591-1.591M11.182 4.818l1.591-1.591" />
+</g>
+<circle cx="8" cy="8" r="1.9" fill="#241f31" />
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="80" height="80" x="303" y="850">
+<title>Ferryx</title>
+
+<g stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" fill="none">
+  <circle cx="8" cy="8" r="5.25" />
+  <path d="M8 1.25V3.5M8 12.5v2.25M1.25 8H3.5M12.5 8h2.25M3.227 3.227l1.591 1.591M11.182 11.182l1.591 1.591M3.227 12.773l1.591-1.591M11.182 4.818l1.591-1.591" />
+</g>
+<circle cx="8" cy="8" r="1.9" fill="#ffffff" />
+</svg><rect x="474" y="157" width="394" height="849" rx="22" fill="#FFFFFF" stroke="#8AABAA"/><text x="499" y="193" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="700" fill="#64747B" text-anchor="start">ВАРИАНТ A</text><text x="499" y="233" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="700" fill="#172B35" text-anchor="start">Штурвал</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="296" height="296" role="img" aria-labelledby="hero1-title" x="523" y="266">
+<title id="hero1-title">A — Штурвал</title>
+<defs><linearGradient id="hero1-tile" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#143A65" /><stop offset="1" stop-color="#081A31" /></linearGradient><linearGradient id="hero1-mark" gradientUnits="userSpaceOnUse" x1="48" y1="36" x2="190" y2="216"><stop stop-color="#FFE9AE" /><stop offset="1" stop-color="#D2A056" /></linearGradient></defs>
+<path d="M24 82C24 43 43 24 82 24H174C213 24 232 43 232 82V174C232 213 213 232 174 232H82C43 232 24 213 24 174Z" fill="url(#hero1-tile)" /><g fill="url(#hero1-mark)"><path d="M122.00 128.00L122.00 46.00A6 6 0 0 1 134.00 46.00L134.00 128.00Z M123.76 123.76L181.74 65.77A6 6 0 0 1 190.23 74.26L132.24 132.24Z M128.00 122.00L210.00 122.00A6 6 0 0 1 210.00 134.00L128.00 134.00Z M132.24 123.76L190.23 181.74A6 6 0 0 1 181.74 190.23L123.76 132.24Z M134.00 128.00L134.00 210.00A6 6 0 0 1 122.00 210.00L122.00 128.00Z M132.24 132.24L74.26 190.23A6 6 0 0 1 65.77 181.74L123.76 123.76Z M128.00 134.00L46.00 134.00A6 6 0 0 1 46.00 122.00L128.00 122.00Z M123.76 132.24L65.77 74.26A6 6 0 0 1 74.26 65.77L132.24 123.76Z" /><path fill-rule="evenodd" d="M60 128a68 68 0 1 0 136 0a68 68 0 1 0 -136 0ZM74 128a54 54 0 1 0 108 0a54 54 0 1 0 -108 0Z" /><circle cx="128" cy="128" r="18" /></g>
+</svg><text x="499" y="599" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#172B35" text-anchor="start">Один обод, светлая латунь.</text><text x="499" y="626" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#64747B" text-anchor="start">Знакомый образ, чище силуэт.</text><text x="499" y="676" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#64747B" text-anchor="start">В СПИСКЕ ПРИЛОЖЕНИЙ</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="64" height="64" role="img" aria-labelledby="icon1-64-title" x="531" y="699">
+<title id="icon1-64-title">A — Штурвал</title>
+<defs><linearGradient id="icon1-64-tile" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#143A65" /><stop offset="1" stop-color="#081A31" /></linearGradient><linearGradient id="icon1-64-mark" gradientUnits="userSpaceOnUse" x1="48" y1="36" x2="190" y2="216"><stop stop-color="#FFE9AE" /><stop offset="1" stop-color="#D2A056" /></linearGradient></defs>
+<path d="M24 82C24 43 43 24 82 24H174C213 24 232 43 232 82V174C232 213 213 232 174 232H82C43 232 24 213 24 174Z" fill="url(#icon1-64-tile)" /><g fill="url(#icon1-64-mark)"><path d="M122.00 128.00L122.00 46.00A6 6 0 0 1 134.00 46.00L134.00 128.00Z M123.76 123.76L181.74 65.77A6 6 0 0 1 190.23 74.26L132.24 132.24Z M128.00 122.00L210.00 122.00A6 6 0 0 1 210.00 134.00L128.00 134.00Z M132.24 123.76L190.23 181.74A6 6 0 0 1 181.74 190.23L123.76 132.24Z M134.00 128.00L134.00 210.00A6 6 0 0 1 122.00 210.00L122.00 128.00Z M132.24 132.24L74.26 190.23A6 6 0 0 1 65.77 181.74L123.76 123.76Z M128.00 134.00L46.00 134.00A6 6 0 0 1 46.00 122.00L128.00 122.00Z M123.76 132.24L65.77 74.26A6 6 0 0 1 74.26 65.77L132.24 123.76Z" /><path fill-rule="evenodd" d="M60 128a68 68 0 1 0 136 0a68 68 0 1 0 -136 0ZM74 128a54 54 0 1 0 108 0a54 54 0 1 0 -108 0Z" /><circle cx="128" cy="128" r="18" /></g>
+</svg><text x="563.0" y="788" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#64747B" text-anchor="middle">64 px</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="32" height="32" role="img" aria-labelledby="icon1-32-title" x="647" y="731">
+<title id="icon1-32-title">A — Штурвал</title>
+<defs><linearGradient id="icon1-32-tile" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#143A65" /><stop offset="1" stop-color="#081A31" /></linearGradient><linearGradient id="icon1-32-mark" gradientUnits="userSpaceOnUse" x1="48" y1="36" x2="190" y2="216"><stop stop-color="#FFE9AE" /><stop offset="1" stop-color="#D2A056" /></linearGradient></defs>
+<path d="M24 82C24 43 43 24 82 24H174C213 24 232 43 232 82V174C232 213 213 232 174 232H82C43 232 24 213 24 174Z" fill="url(#icon1-32-tile)" /><g fill="url(#icon1-32-mark)"><path d="M122.00 128.00L122.00 46.00A6 6 0 0 1 134.00 46.00L134.00 128.00Z M123.76 123.76L181.74 65.77A6 6 0 0 1 190.23 74.26L132.24 132.24Z M128.00 122.00L210.00 122.00A6 6 0 0 1 210.00 134.00L128.00 134.00Z M132.24 123.76L190.23 181.74A6 6 0 0 1 181.74 190.23L123.76 132.24Z M134.00 128.00L134.00 210.00A6 6 0 0 1 122.00 210.00L122.00 128.00Z M132.24 132.24L74.26 190.23A6 6 0 0 1 65.77 181.74L123.76 123.76Z M128.00 134.00L46.00 134.00A6 6 0 0 1 46.00 122.00L128.00 122.00Z M123.76 132.24L65.77 74.26A6 6 0 0 1 74.26 65.77L132.24 123.76Z" /><path fill-rule="evenodd" d="M60 128a68 68 0 1 0 136 0a68 68 0 1 0 -136 0ZM74 128a54 54 0 1 0 108 0a54 54 0 1 0 -108 0Z" /><circle cx="128" cy="128" r="18" /></g>
+</svg><text x="663.0" y="788" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#64747B" text-anchor="middle">32 px</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="16" height="16" role="img" aria-labelledby="icon1-16-title" x="751" y="747">
+<title id="icon1-16-title">A — Штурвал</title>
+<defs><linearGradient id="icon1-16-tile" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#143A65" /><stop offset="1" stop-color="#081A31" /></linearGradient><linearGradient id="icon1-16-mark" gradientUnits="userSpaceOnUse" x1="48" y1="36" x2="190" y2="216"><stop stop-color="#FFE9AE" /><stop offset="1" stop-color="#D2A056" /></linearGradient></defs>
+<path d="M24 82C24 43 43 24 82 24H174C213 24 232 43 232 82V174C232 213 213 232 174 232H82C43 232 24 213 24 174Z" fill="url(#icon1-16-tile)" /><g fill="url(#icon1-16-mark)"><path d="M122.00 128.00L122.00 46.00A6 6 0 0 1 134.00 46.00L134.00 128.00Z M123.76 123.76L181.74 65.77A6 6 0 0 1 190.23 74.26L132.24 132.24Z M128.00 122.00L210.00 122.00A6 6 0 0 1 210.00 134.00L128.00 134.00Z M132.24 123.76L190.23 181.74A6 6 0 0 1 181.74 190.23L123.76 132.24Z M134.00 128.00L134.00 210.00A6 6 0 0 1 122.00 210.00L122.00 128.00Z M132.24 132.24L74.26 190.23A6 6 0 0 1 65.77 181.74L123.76 123.76Z M128.00 134.00L46.00 134.00A6 6 0 0 1 46.00 122.00L128.00 122.00Z M123.76 132.24L65.77 74.26A6 6 0 0 1 74.26 65.77L132.24 123.76Z" /><path fill-rule="evenodd" d="M60 128a68 68 0 1 0 136 0a68 68 0 1 0 -136 0ZM74 128a54 54 0 1 0 108 0a54 54 0 1 0 -108 0Z" /><circle cx="128" cy="128" r="18" /></g>
+</svg><text x="759.0" y="788" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#64747B" text-anchor="middle">16 px</text><text x="499" y="830" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#64747B" text-anchor="start">СИЛУЭТ НА СВЕТЛОМ И ТЁМНОМ ФОНЕ</text><rect x="499" y="848" width="165" height="83" rx="10" fill="#F4F4F0" stroke="none"/><rect x="678" y="848" width="165" height="83" rx="10" fill="#142C3A" stroke="none"/><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="80" height="80" role="img" aria-labelledby="black1-title" x="541" y="850">
+<title id="black1-title">A — Штурвал</title>
+
+<g fill="#171D24"><path d="M122.00 128.00L122.00 46.00A6 6 0 0 1 134.00 46.00L134.00 128.00Z M123.76 123.76L181.74 65.77A6 6 0 0 1 190.23 74.26L132.24 132.24Z M128.00 122.00L210.00 122.00A6 6 0 0 1 210.00 134.00L128.00 134.00Z M132.24 123.76L190.23 181.74A6 6 0 0 1 181.74 190.23L123.76 132.24Z M134.00 128.00L134.00 210.00A6 6 0 0 1 122.00 210.00L122.00 128.00Z M132.24 132.24L74.26 190.23A6 6 0 0 1 65.77 181.74L123.76 123.76Z M128.00 134.00L46.00 134.00A6 6 0 0 1 46.00 122.00L128.00 122.00Z M123.76 132.24L65.77 74.26A6 6 0 0 1 74.26 65.77L132.24 123.76Z" /><path fill-rule="evenodd" d="M60 128a68 68 0 1 0 136 0a68 68 0 1 0 -136 0ZM74 128a54 54 0 1 0 108 0a54 54 0 1 0 -108 0Z" /><circle cx="128" cy="128" r="18" /></g>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="80" height="80" role="img" aria-labelledby="white1-title" x="721" y="850">
+<title id="white1-title">A — Штурвал</title>
+
+<g fill="#ffffff"><path d="M122.00 128.00L122.00 46.00A6 6 0 0 1 134.00 46.00L134.00 128.00Z M123.76 123.76L181.74 65.77A6 6 0 0 1 190.23 74.26L132.24 132.24Z M128.00 122.00L210.00 122.00A6 6 0 0 1 210.00 134.00L128.00 134.00Z M132.24 123.76L190.23 181.74A6 6 0 0 1 181.74 190.23L123.76 132.24Z M134.00 128.00L134.00 210.00A6 6 0 0 1 122.00 210.00L122.00 128.00Z M132.24 132.24L74.26 190.23A6 6 0 0 1 65.77 181.74L123.76 123.76Z M128.00 134.00L46.00 134.00A6 6 0 0 1 46.00 122.00L128.00 122.00Z M123.76 132.24L65.77 74.26A6 6 0 0 1 74.26 65.77L132.24 123.76Z" /><path fill-rule="evenodd" d="M60 128a68 68 0 1 0 136 0a68 68 0 1 0 -136 0ZM74 128a54 54 0 1 0 108 0a54 54 0 1 0 -108 0Z" /><circle cx="128" cy="128" r="18" /></g>
+</svg><rect x="499" y="955" width="344" height="29" rx="8" fill="#E6F0E9" stroke="none"/><text x="671" y="974" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="700" fill="#275B4B" text-anchor="middle">Рекомендую для обновления Ferryx</text><rect x="892" y="157" width="394" height="849" rx="22" fill="#FFFFFF" stroke="#D8DEDA"/><text x="917" y="193" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="700" fill="#64747B" text-anchor="start">ВАРИАНТ B</text><text x="917" y="233" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="700" fill="#172B35" text-anchor="start">Переправа</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="296" height="296" role="img" aria-labelledby="hero2-title" x="941" y="266">
+<title id="hero2-title">B — Переправа</title>
+<defs><linearGradient id="hero2-tile" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F1EEE7" /><stop offset="1" stop-color="#DBE5DF" /></linearGradient><linearGradient id="hero2-mark" gradientUnits="userSpaceOnUse" x1="48" y1="36" x2="190" y2="216"><stop stop-color="#155A62" /><stop offset="1" stop-color="#073F4B" /></linearGradient></defs>
+<path d="M24 82C24 43 43 24 82 24H174C213 24 232 43 232 82V174C232 213 213 232 174 232H82C43 232 24 213 24 174Z" fill="url(#hero2-tile)" /><g fill="url(#hero2-mark)"><path d="M68 44H172Q188 44 188 60V76H92V108L124 140L100 164L52 116V60Q52 44 68 44Z" /><path d="M68 44H172Q188 44 188 60V76H92V108L124 140L100 164L52 116V60Q52 44 68 44Z" transform="rotate(180 128 128)" /></g>
+</svg><text x="917" y="599" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#172B35" text-anchor="start">Две стороны и проход между ними.</text><text x="917" y="626" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#64747B" text-anchor="start">Более абстрактное направление.</text><text x="917" y="676" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#64747B" text-anchor="start">В СПИСКЕ ПРИЛОЖЕНИЙ</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="64" height="64" role="img" aria-labelledby="icon2-64-title" x="949" y="699">
+<title id="icon2-64-title">B — Переправа</title>
+<defs><linearGradient id="icon2-64-tile" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F1EEE7" /><stop offset="1" stop-color="#DBE5DF" /></linearGradient><linearGradient id="icon2-64-mark" gradientUnits="userSpaceOnUse" x1="48" y1="36" x2="190" y2="216"><stop stop-color="#155A62" /><stop offset="1" stop-color="#073F4B" /></linearGradient></defs>
+<path d="M24 82C24 43 43 24 82 24H174C213 24 232 43 232 82V174C232 213 213 232 174 232H82C43 232 24 213 24 174Z" fill="url(#icon2-64-tile)" /><g fill="url(#icon2-64-mark)"><path d="M68 44H172Q188 44 188 60V76H92V108L124 140L100 164L52 116V60Q52 44 68 44Z" /><path d="M68 44H172Q188 44 188 60V76H92V108L124 140L100 164L52 116V60Q52 44 68 44Z" transform="rotate(180 128 128)" /></g>
+</svg><text x="981.0" y="788" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#64747B" text-anchor="middle">64 px</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="32" height="32" role="img" aria-labelledby="icon2-32-title" x="1065" y="731">
+<title id="icon2-32-title">B — Переправа</title>
+<defs><linearGradient id="icon2-32-tile" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F1EEE7" /><stop offset="1" stop-color="#DBE5DF" /></linearGradient><linearGradient id="icon2-32-mark" gradientUnits="userSpaceOnUse" x1="48" y1="36" x2="190" y2="216"><stop stop-color="#155A62" /><stop offset="1" stop-color="#073F4B" /></linearGradient></defs>
+<path d="M24 82C24 43 43 24 82 24H174C213 24 232 43 232 82V174C232 213 213 232 174 232H82C43 232 24 213 24 174Z" fill="url(#icon2-32-tile)" /><g fill="url(#icon2-32-mark)"><path d="M68 44H172Q188 44 188 60V76H92V108L124 140L100 164L52 116V60Q52 44 68 44Z" /><path d="M68 44H172Q188 44 188 60V76H92V108L124 140L100 164L52 116V60Q52 44 68 44Z" transform="rotate(180 128 128)" /></g>
+</svg><text x="1081.0" y="788" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#64747B" text-anchor="middle">32 px</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="16" height="16" role="img" aria-labelledby="icon2-16-title" x="1169" y="747">
+<title id="icon2-16-title">B — Переправа</title>
+<defs><linearGradient id="icon2-16-tile" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F1EEE7" /><stop offset="1" stop-color="#DBE5DF" /></linearGradient><linearGradient id="icon2-16-mark" gradientUnits="userSpaceOnUse" x1="48" y1="36" x2="190" y2="216"><stop stop-color="#155A62" /><stop offset="1" stop-color="#073F4B" /></linearGradient></defs>
+<path d="M24 82C24 43 43 24 82 24H174C213 24 232 43 232 82V174C232 213 213 232 174 232H82C43 232 24 213 24 174Z" fill="url(#icon2-16-tile)" /><g fill="url(#icon2-16-mark)"><path d="M68 44H172Q188 44 188 60V76H92V108L124 140L100 164L52 116V60Q52 44 68 44Z" /><path d="M68 44H172Q188 44 188 60V76H92V108L124 140L100 164L52 116V60Q52 44 68 44Z" transform="rotate(180 128 128)" /></g>
+</svg><text x="1177.0" y="788" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#64747B" text-anchor="middle">16 px</text><text x="917" y="830" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#64747B" text-anchor="start">СИЛУЭТ НА СВЕТЛОМ И ТЁМНОМ ФОНЕ</text><rect x="917" y="848" width="165" height="83" rx="10" fill="#F4F4F0" stroke="none"/><rect x="1096" y="848" width="165" height="83" rx="10" fill="#142C3A" stroke="none"/><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="80" height="80" role="img" aria-labelledby="black2-title" x="959" y="850">
+<title id="black2-title">B — Переправа</title>
+
+<g fill="#171D24"><path d="M68 44H172Q188 44 188 60V76H92V108L124 140L100 164L52 116V60Q52 44 68 44Z" /><path d="M68 44H172Q188 44 188 60V76H92V108L124 140L100 164L52 116V60Q52 44 68 44Z" transform="rotate(180 128 128)" /></g>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="80" height="80" role="img" aria-labelledby="white2-title" x="1139" y="850">
+<title id="white2-title">B — Переправа</title>
+
+<g fill="#ffffff"><path d="M68 44H172Q188 44 188 60V76H92V108L124 140L100 164L52 116V60Q52 44 68 44Z" /><path d="M68 44H172Q188 44 188 60V76H92V108L124 140L100 164L52 116V60Q52 44 68 44Z" transform="rotate(180 128 128)" /></g>
+</svg><text x="917" y="974" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="400" fill="#64747B" text-anchor="start">Смена образа: штурвал → движение</text><rect x="1310" y="157" width="394" height="849" rx="22" fill="#FFFFFF" stroke="#D8DEDA"/><text x="1335" y="193" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="700" fill="#64747B" text-anchor="start">ВАРИАНТ C</text><text x="1335" y="233" font-family="Arial,Helvetica,sans-serif" font-size="27" font-weight="700" fill="#172B35" text-anchor="start">Курс</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="296" height="296" role="img" aria-labelledby="hero3-title" x="1359" y="266">
+<title id="hero3-title">C — Курс</title>
+<defs><linearGradient id="hero3-tile" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#1C527F" /><stop offset="1" stop-color="#092C4E" /></linearGradient><linearGradient id="hero3-mark" gradientUnits="userSpaceOnUse" x1="48" y1="36" x2="190" y2="216"><stop stop-color="#B9F4E7" /><stop offset="1" stop-color="#63CDBB" /></linearGradient></defs>
+<path d="M24 82C24 43 43 24 82 24H174C213 24 232 43 232 82V174C232 213 213 232 174 232H82C43 232 24 213 24 174Z" fill="url(#hero3-tile)" /><g fill="url(#hero3-mark)"><path d="M88 48H200L168 80H116V108H176L144 140H116V172L80 208V56Q80 48 88 48Z" /></g>
+</svg><text x="1335" y="599" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#172B35" text-anchor="start">Буква F с направленными срезами.</text><text x="1335" y="626" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#64747B" text-anchor="start">Лаконичный знак для малых размеров.</text><text x="1335" y="676" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#64747B" text-anchor="start">В СПИСКЕ ПРИЛОЖЕНИЙ</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="64" height="64" role="img" aria-labelledby="icon3-64-title" x="1367" y="699">
+<title id="icon3-64-title">C — Курс</title>
+<defs><linearGradient id="icon3-64-tile" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#1C527F" /><stop offset="1" stop-color="#092C4E" /></linearGradient><linearGradient id="icon3-64-mark" gradientUnits="userSpaceOnUse" x1="48" y1="36" x2="190" y2="216"><stop stop-color="#B9F4E7" /><stop offset="1" stop-color="#63CDBB" /></linearGradient></defs>
+<path d="M24 82C24 43 43 24 82 24H174C213 24 232 43 232 82V174C232 213 213 232 174 232H82C43 232 24 213 24 174Z" fill="url(#icon3-64-tile)" /><g fill="url(#icon3-64-mark)"><path d="M88 48H200L168 80H116V108H176L144 140H116V172L80 208V56Q80 48 88 48Z" /></g>
+</svg><text x="1399.0" y="788" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#64747B" text-anchor="middle">64 px</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="32" height="32" role="img" aria-labelledby="icon3-32-title" x="1483" y="731">
+<title id="icon3-32-title">C — Курс</title>
+<defs><linearGradient id="icon3-32-tile" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#1C527F" /><stop offset="1" stop-color="#092C4E" /></linearGradient><linearGradient id="icon3-32-mark" gradientUnits="userSpaceOnUse" x1="48" y1="36" x2="190" y2="216"><stop stop-color="#B9F4E7" /><stop offset="1" stop-color="#63CDBB" /></linearGradient></defs>
+<path d="M24 82C24 43 43 24 82 24H174C213 24 232 43 232 82V174C232 213 213 232 174 232H82C43 232 24 213 24 174Z" fill="url(#icon3-32-tile)" /><g fill="url(#icon3-32-mark)"><path d="M88 48H200L168 80H116V108H176L144 140H116V172L80 208V56Q80 48 88 48Z" /></g>
+</svg><text x="1499.0" y="788" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#64747B" text-anchor="middle">32 px</text><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="16" height="16" role="img" aria-labelledby="icon3-16-title" x="1587" y="747">
+<title id="icon3-16-title">C — Курс</title>
+<defs><linearGradient id="icon3-16-tile" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#1C527F" /><stop offset="1" stop-color="#092C4E" /></linearGradient><linearGradient id="icon3-16-mark" gradientUnits="userSpaceOnUse" x1="48" y1="36" x2="190" y2="216"><stop stop-color="#B9F4E7" /><stop offset="1" stop-color="#63CDBB" /></linearGradient></defs>
+<path d="M24 82C24 43 43 24 82 24H174C213 24 232 43 232 82V174C232 213 213 232 174 232H82C43 232 24 213 24 174Z" fill="url(#icon3-16-tile)" /><g fill="url(#icon3-16-mark)"><path d="M88 48H200L168 80H116V108H176L144 140H116V172L80 208V56Q80 48 88 48Z" /></g>
+</svg><text x="1595.0" y="788" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="400" fill="#64747B" text-anchor="middle">16 px</text><text x="1335" y="830" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="700" fill="#64747B" text-anchor="start">СИЛУЭТ НА СВЕТЛОМ И ТЁМНОМ ФОНЕ</text><rect x="1335" y="848" width="165" height="83" rx="10" fill="#F4F4F0" stroke="none"/><rect x="1514" y="848" width="165" height="83" rx="10" fill="#142C3A" stroke="none"/><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="80" height="80" role="img" aria-labelledby="black3-title" x="1377" y="850">
+<title id="black3-title">C — Курс</title>
+
+<g fill="#171D24"><path d="M88 48H200L168 80H116V108H176L144 140H116V172L80 208V56Q80 48 88 48Z" /></g>
+</svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="80" height="80" role="img" aria-labelledby="white3-title" x="1557" y="850">
+<title id="white3-title">C — Курс</title>
+
+<g fill="#ffffff"><path d="M88 48H200L168 80H116V108H176L144 140H116V172L80 208V56Q80 48 88 48Z" /></g>
+</svg><text x="1335" y="974" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="400" fill="#64747B" text-anchor="start">Смена образа: штурвал → буква F</text><text x="56" y="1053" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="400" fill="#64747B" text-anchor="start">A сохраняет преемственность. B и C показывают два варианта более смелого обновления.</text></svg>

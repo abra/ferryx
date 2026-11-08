@@ -572,6 +572,7 @@ pub fn run_sync(ctx: &OpContext, plan: &SyncPlan) -> Result<(), Abort> {
 
 fn copy_one(ctx: &OpContext, plan: &SyncPlan, item: &SyncItem, options: &OpOptions) -> Result<(), Abort> {
     let (source, target, seen_source, seen_target) = ends(plan, item);
+    copy::check_destination(ctx, &source, &target)?;
     ctx.set_current(&source);
     if !unchanged(seen_source, side_now(&source)) {
         ctx.ask_error(&source, &changed_error(&source))?;

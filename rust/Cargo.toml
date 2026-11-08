@@ -34,6 +34,9 @@ tempfile = "3"
 thiserror = "2"
 trash = "5"
 walkdir = "2"
+same-file = "1"
+# Directory handles confine archive writes, including through symlinks.
+cap-std = "4.0.3"
 zip = { version = "2", default-features = false, features = ["deflate", "aes-crypto", "time", "bzip2", "zstd"] }
 bzip2 = "0.6"
 lzma-rust2 = { version = "0.16", default-features = false, features = ["std", "xz", "optimization"] }

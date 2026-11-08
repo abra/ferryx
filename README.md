@@ -176,6 +176,9 @@ make get
 | macOS disk image (`build/Ferryx-<version>.dmg`) | `make dmg` |
 | Publish it as the GitHub release `v<version>` | `make release` |
 
+See the [app icon guide](brand/README.md) for the SVG masters, palette,
+small-size variants and generated platform resources.
+
 ## Releases
 
 `make dmg` builds the app for Apple silicon and Intel and packs it into a

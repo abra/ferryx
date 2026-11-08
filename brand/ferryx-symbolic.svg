@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
-<title>Ferryx</title>
-<!-- One colour, recoloured by the desktop: the rim, eight spokes, the hub. -->
-<g stroke="#241f31" stroke-width="1.5" stroke-linecap="round" fill="none">
-  <circle cx="8" cy="8" r="5.25"/>
-  <path d="M8 1.25V3.5M8 12.5v2.25M1.25 8H3.5M12.5 8h2.25M3.227 3.227l1.591 1.591M11.182 11.182l1.591 1.591M3.227 12.773l1.591-1.591M11.182 4.818l1.591-1.591"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" role="img" aria-labelledby="title">
+<title id="title">Ferryx — symbolic app icon</title>
+<!-- One colour for desktop recolouring, with the same eight-spoke helm. -->
+<g fill="#241F31">
+<path d="M7.425 8L7.425 1.575A0.575 0.575 0 0 1 8.575 1.575L8.575 8Z M7.593 7.593L12.137 3.05A0.575 0.575 0 0 1 12.95 3.863L8.407 8.407Z M8 7.425L14.425 7.425A0.575 0.575 0 0 1 14.425 8.575L8 8.575Z M8.407 7.593L12.95 12.137A0.575 0.575 0 0 1 12.137 12.95L7.593 8.407Z M8.575 8L8.575 14.425A0.575 0.575 0 0 1 7.425 14.425L7.425 8Z M8.407 8.407L3.863 12.95A0.575 0.575 0 0 1 3.05 12.137L7.593 7.593Z M8 8.575L1.575 8.575A0.575 0.575 0 0 1 1.575 7.425L8 7.425Z M7.593 8.407L3.05 3.863A0.575 0.575 0 0 1 3.863 3.05L8.407 7.593Z"/>
+<path fill-rule="evenodd" d="M2.65 8a5.35 5.35 0 1 0 10.7 0a5.35 5.35 0 1 0 -10.7 0ZM4 8a4 4 0 1 0 8 0a4 4 0 1 0 -8 0Z"/>
+<circle cx="8" cy="8" r="1.4"/>
 </g>
-<circle cx="8" cy="8" r="1.9" fill="#241f31"/>
 </svg>

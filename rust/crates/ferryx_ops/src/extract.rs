@@ -5,7 +5,7 @@
 //! decoded once, and no member is held in memory whole.
 
 use std::collections::{HashMap, HashSet};
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::{self, BufWriter, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -13,9 +13,11 @@ use std::sync::Arc;
 use ferryx_vfs::archive::{self, shared, ArchiveIndex, ExtractError, Member, MemberSink, Stop};
 use ferryx_vfs::error::{VfsError, VfsErrorKind, VfsResult};
 
-use crate::copy::{resolve_conflict, set_mode, set_times};
 use crate::runner::OpContext;
 use crate::types::*;
+
+mod destination;
+use destination::{Destination, Target};
 
 /// One archive's part of the operation: the members to write (empty for
 /// the whole archive) and the folder their paths start from.
@@ -38,7 +40,7 @@ pub fn run(ctx: &OpContext, request: &OpRequest) -> Result<(), Abort> {
                 .iter()
                 .map(|s| s.to_string_lossy().replace('\\', "/").trim_matches('/').to_string())
                 .collect(),
-            base: dest_dir.to_path_buf(),
+            base: PathBuf::new(),
         }],
         None => request
             .sources
@@ -47,9 +49,9 @@ pub fn run(ctx: &OpContext, request: &OpRequest) -> Result<(), Abort> {
                 archive: archive.clone(),
                 inners: vec![String::new()],
                 base: if request.options.into_folders {
-                    dest_dir.join(archive::archive_stem(archive))
+                    PathBuf::from(archive::archive_stem(archive))
                 } else {
-                    dest_dir.to_path_buf()
+                    PathBuf::new()
                 },
             })
             .collect(),
@@ -71,14 +73,24 @@ pub fn run(ctx: &OpContext, request: &OpRequest) -> Result<(), Abort> {
         files += f;
     }
     ctx.set_totals(bytes, files);
+    if ready.is_empty() {
+        return Ok(());
+    }
+    let destination = match Destination::open(ctx, dest_dir) {
+        Ok(destination) => destination,
+        Err(e) => {
+            ctx.ask_skip(dest_dir, &VfsError::io(&e, dest_dir))?;
+            return Ok(());
+        }
+    };
     let mut last = None;
     for (job, opened) in &ready {
         ctx.check()?;
-        if extract_job(ctx, job, &opened.index, opened.password.as_deref(), &request.options)? {
-            last = Some(match job.inners.as_slice() {
+        if extract_job(ctx, job, &destination, &opened.index, opened.password.as_deref(), &request.options)? {
+            last = Some(destination.path(&match job.inners.as_slice() {
                 [inner] if !inner.is_empty() => job.base.join(inner.rsplit('/').next().unwrap_or(inner)),
                 _ => job.base.clone(),
-            });
+            }));
         }
     }
     if ready.len() == 1 {
@@ -127,13 +139,15 @@ fn open(ctx: &OpContext, archive: &Path, given: Option<&str>) -> Result<Option<O
 fn extract_job(
     ctx: &OpContext,
     job: &Job,
+    destination: &Destination,
     index: &ArchiveIndex,
     password: Option<&str>,
     options: &OpOptions,
 ) -> Result<bool, Abort> {
-    let mut folders = Folders::default();
+    let mut folders = Folders { destination, known: HashSet::new() };
     if let Err(e) = folders.make(ctx, &job.base) {
-        ctx.ask_skip(&job.base, &VfsError::io(&e, &job.base))?;
+        let path = destination.path(&job.base);
+        ctx.ask_skip(&path, &VfsError::io(&e, &path))?;
         return Ok(false);
     }
     let mut targets = HashMap::new();
@@ -141,6 +155,7 @@ fn extract_job(
         for folder in index.folders_under(inner) {
             let path = job.base.join(&folder);
             if let Err(e) = folders.make(ctx, &path) {
+                let path = destination.path(&path);
                 ctx.ask_skip(&path, &VfsError::io(&e, &path))?;
             }
         }
@@ -168,44 +183,28 @@ fn extract_job(
     }
 }
 
-/// Makes `folder` and the folders above it that are missing, recording the
-/// topmost one made for the journal: what goes inside needs no record of
-/// its own, and an undo takes the whole folder away.
-fn make_folders(ctx: &OpContext, folder: &Path) -> io::Result<()> {
-    let topmost = folder.ancestors().take_while(|p| p.symlink_metadata().is_err()).last();
-    fs::create_dir_all(folder)?;
-    if let Some(top) = topmost {
-        ctx.record_created(top);
-    }
-    Ok(())
-}
-
 /// The folders one archive's extraction made or found, so each is made
 /// once rather than for every file in it.
-#[derive(Default)]
-struct Folders(HashSet<PathBuf>);
+struct Folders<'a> {
+    destination: &'a Destination,
+    known: HashSet<PathBuf>,
+}
 
-impl Folders {
+impl Folders<'_> {
     fn make(&mut self, ctx: &OpContext, folder: &Path) -> io::Result<()> {
-        if !self.0.contains(folder) {
-            make_folders(ctx, folder)?;
-            self.0.insert(folder.to_path_buf());
+        if !self.known.contains(folder) {
+            self.destination.make_folders(ctx, folder)?;
+            self.known.insert(folder.to_path_buf());
         }
         Ok(())
-    }
-
-    /// The folder is gone since (something else took it away): made again.
-    fn make_again(&mut self, ctx: &OpContext, folder: &Path) -> io::Result<()> {
-        self.0.remove(folder);
-        self.make(ctx, folder)
     }
 }
 
 /// The file being written: its writer, where it goes, and a symbolic
 /// link's target gathered from its data.
 enum Open {
-    File { writer: BufWriter<File>, path: PathBuf },
-    Link { target: Vec<u8>, path: PathBuf },
+    File { writer: BufWriter<File>, target: Target },
+    Link { contents: Vec<u8>, target: Target },
 }
 
 /// Writes members to their targets with the operation's conflict policy,
@@ -213,7 +212,7 @@ enum Open {
 struct OpSink<'a> {
     ctx: &'a OpContext,
     targets: HashMap<String, PathBuf>,
-    folders: Folders,
+    folders: Folders<'a>,
     options: &'a OpOptions,
     open: Option<Open>,
     /// Why the whole operation stops (cancelled, or the user stopped it).
@@ -234,17 +233,30 @@ impl MemberSink for OpSink<'_> {
         if let Err(abort) = self.ctx.check() {
             return Err(self.stop(abort));
         }
-        let Some(target) = self.targets.get(&member.path).cloned() else { return Ok(false) };
-        self.ctx.set_current(&target);
-        if let Some(parent) = target.parent() {
-            let _ = self.folders.make(self.ctx, parent);
-        }
-        let resolved =
-            match resolve_conflict(self.ctx, &target, Some(member.size), member.modified_ms, self.options) {
-                Ok(resolved) => resolved,
-                Err(abort) => return Err(self.stop(abort)),
-            };
-        let Some(path) = resolved else {
+        let Some(relative) = self.targets.get(&member.path).cloned() else { return Ok(false) };
+        let path = self.folders.destination.path(&relative);
+        self.ctx.set_current(&path);
+        let prepared = (|| {
+            if let Some(parent) = relative.parent() {
+                self.folders.make(self.ctx, parent)?;
+            }
+            self.folders.destination.target(&relative)
+        })();
+        let target = match prepared {
+            Ok(target) => target,
+            Err(e) => {
+                return match self.ctx.ask_skip(&path, &VfsError::io(&e, &path)) {
+                    Ok(()) => Ok(false),
+                    Err(abort) => Err(self.stop(abort)),
+                }
+            }
+        };
+        let resolved = match target.resolve(self.ctx, member.size, member.modified_ms, self.options.conflicts)
+        {
+            Ok(resolved) => resolved,
+            Err(abort) => return Err(self.stop(abort)),
+        };
+        let Some(target) = resolved else {
             // Skipped: its bytes count as handled.
             self.ctx.add_bytes(member.size);
             self.ctx.item_done();
@@ -252,31 +264,24 @@ impl MemberSink for OpSink<'_> {
         };
         if member.is_symlink {
             if let Some(link) = &member.link {
-                match ferryx_vfs::links::create_symlink(Path::new(link), &path) {
-                    Ok(()) => self.ctx.record_created(&path),
-                    Err(e) => self.ctx.record_error(&path, e.message),
+                match target.symlink(Path::new(link)) {
+                    Ok(()) => self.ctx.record_created(&target.path),
+                    Err(e) => self.ctx.record_error(&target.path, VfsError::io(&e, &target.path).message),
                 }
                 self.ctx.item_done();
                 return Ok(false);
             }
-            self.open = Some(Open::Link { target: Vec::new(), path });
+            self.open = Some(Open::Link { contents: Vec::new(), target });
             return Ok(true);
         }
-        let created = File::create(&path).or_else(|e| match path.parent() {
-            Some(parent) if e.kind() == io::ErrorKind::NotFound => {
-                self.folders.make_again(self.ctx, parent)?;
-                File::create(&path)
-            }
-            _ => Err(e),
-        });
-        match created {
+        match target.create() {
             Ok(file) => {
-                self.open = Some(Open::File { writer: BufWriter::with_capacity(1 << 20, file), path });
+                self.open = Some(Open::File { writer: BufWriter::with_capacity(1 << 20, file), target });
                 Ok(true)
             }
             Err(e) => {
-                let error = VfsError::io(&e, &path);
-                match self.ctx.ask_skip(&path, &error) {
+                let error = VfsError::io(&e, &target.path);
+                match self.ctx.ask_skip(&target.path, &error) {
                     Ok(()) => Ok(false),
                     Err(abort) => Err(self.stop(abort)),
                 }
@@ -290,7 +295,15 @@ impl MemberSink for OpSink<'_> {
         }
         match self.open.as_mut() {
             Some(Open::File { writer, .. }) => writer.write_all(bytes)?,
-            Some(Open::Link { target, .. }) => target.extend_from_slice(bytes),
+            Some(Open::Link { contents, .. }) => {
+                if contents.len().saturating_add(bytes.len()) > 64 * 1024 {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "symbolic link target is too long",
+                    ));
+                }
+                contents.extend_from_slice(bytes);
+            }
             None => {}
         }
         self.ctx.add_bytes(bytes.len() as u64);
@@ -298,36 +311,39 @@ impl MemberSink for OpSink<'_> {
     }
 
     fn end(&mut self, member: &Member, outcome: VfsResult<u64>) -> Result<(), Stop> {
-        let (path, finished) = match self.open.take() {
-            Some(Open::File { mut writer, path }) => {
-                let flushed = writer.flush().map_err(|e| VfsError::io(&e, &path));
-                (Some(path), outcome.and_then(|n| flushed.map(|_| n)))
+        let (target, finished, cleanup) = match self.open.take() {
+            Some(Open::File { mut writer, target }) => {
+                let flushed = writer.flush().map_err(|e| VfsError::io(&e, &target.path));
+                let finished = outcome.and_then(|n| flushed.map(|_| n));
+                if finished.is_ok() {
+                    preserve(writer.get_ref(), member);
+                }
+                (target, finished, true)
             }
-            Some(Open::Link { target, path }) => {
+            Some(Open::Link { contents, target }) => {
                 let made = outcome.and_then(|n| {
-                    let target = String::from_utf8_lossy(&target).into_owned();
-                    ferryx_vfs::links::create_symlink(Path::new(&target), &path).map(|_| n)
+                    let link = String::from_utf8_lossy(&contents);
+                    target
+                        .symlink(Path::new(link.as_ref()))
+                        .map(|_| n)
+                        .map_err(|e| VfsError::io(&e, &target.path))
                 });
-                (Some(path), made)
+                (target, made, false)
             }
-            None => (None, outcome),
+            None => return Ok(()),
         };
-        let path = path.unwrap_or_default();
+        let path = &target.path;
         match finished {
             Ok(_) => {
-                if !member.is_symlink {
-                    set_mode(&path, member.mode);
-                    if let Some(ms) = member.modified_ms {
-                        set_times(&path, Some(ms), None);
-                    }
-                }
                 // Complete, so its fingerprint is the one an undo checks.
-                self.ctx.record_created(&path);
+                self.ctx.record_created(path);
                 self.ctx.item_done();
                 Ok(())
             }
             Err(e) => {
-                let _ = fs::remove_file(&path);
+                if cleanup {
+                    let _ = target.remove_file();
+                }
                 if let Err(abort) = self.ctx.check() {
                     return Err(self.stop(abort));
                 }
@@ -335,7 +351,7 @@ impl MemberSink for OpSink<'_> {
                     self.archive_failed = Some(e);
                     return Err(Stop);
                 }
-                match self.ctx.ask_skip(&path, &e) {
+                match self.ctx.ask_skip(path, &e) {
                     Ok(()) => Ok(()),
                     Err(abort) => Err(self.stop(abort)),
                 }
@@ -344,9 +360,31 @@ impl MemberSink for OpSink<'_> {
     }
 }
 
+/// Apply metadata through the open file, so a renamed parent or replaced
+/// name cannot redirect chmod or the timestamp update to another file.
+fn preserve(file: &File, member: &Member) {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = file.set_permissions(std::fs::Permissions::from_mode(member.mode & 0o7777));
+    }
+    #[cfg(not(unix))]
+    if let Ok(meta) = file.metadata() {
+        let mut permissions = meta.permissions();
+        permissions.set_readonly(member.mode & 0o200 == 0);
+        let _ = file.set_permissions(permissions);
+    }
+    if let Some(ms) = member.modified_ms {
+        let modified =
+            filetime::FileTime::from_unix_time(ms.div_euclid(1000), (ms.rem_euclid(1000) * 1_000_000) as u32);
+        let _ = filetime::set_file_handle_times(file, Some(filetime::FileTime::now()), Some(modified));
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
 
     fn zip_at(path: &Path, files: &[(&str, &[u8])], password: Option<&str>) {
         let mut zip = zip::ZipWriter::new(File::create(path).unwrap());

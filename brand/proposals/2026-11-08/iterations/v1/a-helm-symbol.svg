@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title">
+<title id="title">A — Штурвал</title>
+
+<g fill="#171D24"><rect x="122" y="40" width="12" height="88" rx="6" transform="rotate(0 128 128)"/><rect x="122" y="40" width="12" height="88" rx="6" transform="rotate(45 128 128)"/><rect x="122" y="40" width="12" height="88" rx="6" transform="rotate(90 128 128)"/><rect x="122" y="40" width="12" height="88" rx="6" transform="rotate(135 128 128)"/><rect x="122" y="40" width="12" height="88" rx="6" transform="rotate(180 128 128)"/><rect x="122" y="40" width="12" height="88" rx="6" transform="rotate(225 128 128)"/><rect x="122" y="40" width="12" height="88" rx="6" transform="rotate(270 128 128)"/><rect x="122" y="40" width="12" height="88" rx="6" transform="rotate(315 128 128)"/><path fill-rule="evenodd" d="M58 128a70 70 0 1 0 140 0a70 70 0 1 0 -140 0ZM74 128a54 54 0 1 0 108 0a54 54 0 1 0 -108 0Z"/><circle cx="128" cy="128" r="21"/></g>
+</svg>

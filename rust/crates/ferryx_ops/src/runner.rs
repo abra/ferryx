@@ -196,7 +196,8 @@ fn run(ctx: &OpContext, request: OpRequest) -> Result<(), Abort> {
 
 #[derive(Default)]
 struct Sticky {
-    conflicts: Option<Answer>,
+    files: Option<Answer>,
+    directories: Option<Answer>,
     errors: Option<Answer>,
 }
 
@@ -468,7 +469,8 @@ impl OpContext {
     }
 
     /// Asks about a conflict at `existing` and waits for the answer; an
-    /// "…All" answer is remembered and answers the next conflicts itself.
+    /// "…All" answer applies to the same kind of conflict: merging folders
+    /// never authorizes replacing files inside them.
     /// Answers `Err` when the operation is to stop.
     pub fn ask_conflict(
         &self,
@@ -476,8 +478,17 @@ impl OpContext {
         existing: ConflictSide,
         answers: Vec<Answer>,
     ) -> Result<Answer, Abort> {
-        if let Some(sticky) = self.sticky.lock().conflicts {
-            return Ok(sticky);
+        let directories = source.is_dir && existing.is_dir;
+        let remembered = {
+            let sticky = self.sticky.lock();
+            if directories {
+                sticky.directories
+            } else {
+                sticky.files
+            }
+        };
+        if let Some(answer) = remembered.filter(|a| answers.contains(a)) {
+            return Ok(answer);
         }
         let message = format!(
             "“{}” already exists in the destination",
@@ -495,7 +506,12 @@ impl OpContext {
                 | Answer::KeepBothAll
                 | Answer::MergeAll
         ) {
-            self.sticky.lock().conflicts = Some(answer);
+            let mut sticky = self.sticky.lock();
+            if directories {
+                sticky.directories = Some(answer);
+            } else {
+                sticky.files = Some(answer);
+            }
         }
         Ok(answer)
     }
@@ -660,62 +676,22 @@ impl OpContext {
         self.recorder.lock().changes.len()
     }
 
-    /// Records the item at `from` as moved to `to` by a copy and a delete:
-    /// what the copy recorded since `mark` at `to` (or inside it) becomes
-    /// the move of the item it came from.
+    /// After a copied file or link is removed from its source, replace
+    /// its creation with a move. Keep any overwrite on record. Folders
+    /// have their own creation/removal records, even for a partial move.
     pub(crate) fn record_moved_by_copy(&self, mark: usize, from: &Path, to: &Path) {
-        self.convert_to_moves(mark, from, to, true);
-    }
-
-    /// Records the items of the folder `from` as moved into the folder
-    /// `to` that was there before (a merge across volumes): only what the
-    /// copy recorded since `mark` inside `to` moved, never `to` itself.
-    pub(crate) fn record_merged(&self, mark: usize, from: &Path, to: &Path) {
-        self.convert_to_moves(mark, from, to, false);
-    }
-
-    /// Rewrites the changes recorded since `mark` (the copy of one item):
-    /// no more than that copy recorded is ever looked at.
-    fn convert_to_moves(&self, mark: usize, from: &Path, to: &Path, whole: bool) {
         let mut recorder = self.recorder.lock();
-        let source_of = |path: &Path| {
-            path.strip_prefix(to).ok().map(|rest| {
-                if rest.as_os_str().is_empty() {
-                    from.to_path_buf()
-                } else {
-                    from.join(rest)
-                }
-            })
-        };
-        let mut converted = false;
         let mark = mark.min(recorder.changes.len());
-        let copied = recorder.changes.split_off(mark);
-        for change in copied {
-            match change {
-                Change::Created { path, fingerprint } => match source_of(&path) {
-                    Some(source) => {
-                        converted = true;
-                        recorder.created.remove(&path);
-                        recorder.changes.push(Change::Moved { from: source, to: path });
-                    }
-                    None => recorder.changes.push(Change::Created { path, fingerprint }),
-                },
-                Change::Overwritten { path } => {
-                    let source = source_of(&path);
-                    recorder.changes.push(Change::Overwritten { path: path.clone() });
-                    if let Some(source) = source {
-                        converted = true;
-                        recorder.changes.push(Change::Moved { from: source, to: path });
-                    }
-                }
-                other => recorder.changes.push(other),
-            }
+        let created = recorder.changes[mark..]
+            .iter()
+            .position(|c| matches!(c, Change::Created { path, .. } if path == to));
+        if let Some(offset) = created {
+            recorder.changes.remove(mark + offset);
+            recorder.created.remove(to);
         }
         // Even into a folder this operation made: the item came from
         // elsewhere, and going back it must leave before the folder goes.
-        if whole && !converted {
-            recorder.push(Change::Moved { from: from.to_path_buf(), to: to.to_path_buf() });
-        }
+        recorder.push(Change::Moved { from: from.to_path_buf(), to: to.to_path_buf() });
     }
 
     /// Walking a step: records `change` as not done, for the next walk.
@@ -901,13 +877,17 @@ mod tests {
         let ctx = OpContext::detached(&request(OpKind::Move));
         // An item before it, renamed: not the copy's.
         ctx.record_moved(Path::new("/v2/a"), Path::new("/v2/dest/a"));
-        // A merge into the folder there: items made, one overwritten.
+        // Each successfully copied and removed file records its move.
         let mark = ctx.record_mark();
         ctx.record_created(&to.join("new"));
+        ctx.record_moved_by_copy(mark, &from.join("new"), &to.join("new"));
+        let mark = ctx.record_mark();
         ctx.record_overwritten(&to.join("old"));
+        ctx.record_moved_by_copy(mark, &from.join("old"), &to.join("old"));
         ctx.record_created(&to.join("deep"));
+        let mark = ctx.record_mark();
         ctx.record_created(&to.join("deep/inner"));
-        ctx.record_merged(mark, from, to);
+        ctx.record_moved_by_copy(mark, &from.join("deep/inner"), &to.join("deep/inner"));
         assert_eq!(
             ctx.recorded(),
             vec![
@@ -915,7 +895,8 @@ mod tests {
                 Change::Moved { from: from.join("new"), to: to.join("new") },
                 Change::Overwritten { path: to.join("old") },
                 Change::Moved { from: from.join("old"), to: to.join("old") },
-                Change::Moved { from: from.join("deep"), to: to.join("deep") },
+                Change::Created { path: to.join("deep"), fingerprint: None },
+                Change::Moved { from: from.join("deep/inner"), to: to.join("deep/inner") },
             ]
         );
 
