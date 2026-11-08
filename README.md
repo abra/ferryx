@@ -7,12 +7,7 @@ orthodox two-panel workflow of the classic commanders with a compact blue
 interface and each desktop's conventions. The interface is Flutter; file
 listings, operations and the filesystem core are Rust.
 
-![Ferryx Balanced light theme with two file panels, folder tabs, separate cursor and selection, and contextual keyboard hints](docs/screenshots/ferryx-balanced-light.png)
-
-Flutter UI with sample files, rendered at 1280 × 800 using macOS metrics;
-native window buttons are outside this preview.
-[Dark appearance](docs/screenshots/ferryx-balanced-dark.png) ·
-[Earlier macOS window screenshot](docs/screenshots/ferryx-macos.png).
+![Ferryx on macOS in the Balanced light theme, with pocketbook and afrog/v1 directories, folder tabs and contextual keyboard hints](docs/screenshots/ferryx-macos.png)
 
 ## Features
 
