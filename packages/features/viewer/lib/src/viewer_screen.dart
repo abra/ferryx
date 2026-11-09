@@ -16,7 +16,7 @@ import 'hex_format.dart';
 import 'line_layout.dart';
 import 'text_window.dart';
 import 'viewer_cubit.dart';
-import 'viewer_exit_hints.dart';
+import 'viewer_footer.dart';
 import 'viewer_source.dart';
 import 'viewer_state.dart';
 import 'viewer_views.dart';
@@ -509,14 +509,12 @@ class _Frame extends StatelessWidget {
             ),
           ),
         ),
-        ViewerExitHints(
-          shortcutMap: shortcutMap,
-          showFiles: onFocusFiles != null,
-        ),
         _StatusBar(
           state: state,
           topLine: topLine,
           document: isDocumentName(source.displayName),
+          shortcutMap: shortcutMap,
+          showFiles: onFocusFiles != null,
         ),
       ],
     );
@@ -732,23 +730,33 @@ class _FileTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          name,
-          style: context.text.titleSmall,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+    final title = context.text.titleSmall!;
+    final detail = context.text.bodySmall!.copyWith(
+      color: context.appColors.textMuted,
+    );
+    final scaler = MediaQuery.textScalerOf(context);
+    final twoLines =
+        scaler.scale(title.fontSize!) * title.height! +
+        scaler.scale(detail.fontSize!) * detail.height!;
+    return AppTooltip(
+      message: path.isEmpty ? name : path,
+      child: LayoutBuilder(
+        builder: (context, constraints) => Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              style: title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            // Keep the bar aligned with the file panel at large text sizes.
+            if (path.isNotEmpty && twoLines <= constraints.maxHeight)
+              AppMiddleEllipsis(path, style: detail),
+          ],
         ),
-        if (path.isNotEmpty)
-          AppMiddleEllipsis(
-            path,
-            style: context.text.bodySmall!.copyWith(color: colors.textMuted),
-          ),
-      ],
+      ),
     );
   }
 }
@@ -1083,26 +1091,25 @@ class _BinaryHint extends StatelessWidget {
 
 /// Under the content: where in the file the top line is (a hex offset in
 /// hex mode), the line's number, the encoding, and the part shown of a
-/// large file; each its own text, a gap apart.
+/// large file, alongside the keys that return to the file list.
 class _StatusBar extends StatelessWidget {
   const _StatusBar({
     required this.state,
     required this.topLine,
     required this.document,
+    required this.shortcutMap,
+    required this.showFiles,
   });
 
   final ViewerState state;
   final int topLine;
   final bool document;
+  final ShortcutMap shortcutMap;
+  final bool showFiles;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final colors = context.appColors;
-    final muted = context.text.bodySmall?.copyWith(
-      color: colors.textMuted,
-      fontFeatures: const [FontFeature.tabularFigures()],
-    );
     final lineStarts = state.window.lineStarts;
     final topOffset = switch (state.mode) {
       ViewerMode.text =>
@@ -1134,34 +1141,10 @@ class _StatusBar extends StatelessWidget {
           l10n.fileSize(state.size),
         ),
     ];
-    return Container(
-      height: context.metrics.controlHeight + AppSpacing.xs,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      decoration: BoxDecoration(
-        color: colors.windowChrome,
-        border: AppBorder(top: BorderSide(color: colors.line)),
-      ),
-      child: Row(
-        children: [
-          for (var i = 0; i < parts.length; i++) ...[
-            if (i > 0) const SizedBox(width: AppSpacing.lg),
-            // The last part (the longest) gives way; the others keep
-            // their figures.
-            if (i == parts.length - 1)
-              Flexible(
-                child: Text(
-                  parts[i],
-                  style: muted,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                ),
-              )
-            else
-              Text(parts[i], style: muted, maxLines: 1, softWrap: false),
-          ],
-        ],
-      ),
+    return ViewerFooter(
+      status: parts.reduce(l10n.joinedDetails),
+      shortcutMap: shortcutMap,
+      showFiles: showFiles,
     );
   }
 }

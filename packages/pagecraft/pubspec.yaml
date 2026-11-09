@@ -27,6 +27,10 @@ dependencies:
   pdfrx_engine: ^0.4.7
   xml: ^6.5.0
 
+dependency_overrides:
+  pdfium_dart:
+    path: ../pdfium_dart
+
 dev_dependencies:
   archive: ^4.5.0
   ffigen: 20.1.1

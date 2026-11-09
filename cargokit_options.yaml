@@ -1,7 +1,7 @@
 # Read by every cargokit in the build (ours in rust_builder/ and the one
 # super_native_extensions ships). Crates that publish signed precompiled
-# binaries (super_native_extensions, for drag and drop) are downloaded
-# instead of compiled: no Rust build of theirs on a developer's machine or
-# in CI, and no std built for the host's macOS by a Homebrew rustc. Our own
-# crate publishes none, so cargokit keeps building it from source.
+# binaries (super_native_extensions, for drag and drop) prefer downloads.
+# Failed downloads fall back to a source build; macos/Podfile keeps its
+# compiler on rustup's stable toolchain. Our own crate publishes no binaries
+# and is always built from source.
 use_precompiled_binaries: true

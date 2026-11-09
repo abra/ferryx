@@ -35,7 +35,6 @@ import '../native/panel_drag_hooks.dart';
 import '../native/quick_look_pick.dart';
 import '../operations/operations_cards.dart';
 import '../panel/panel_cubit.dart';
-import '../panel/panel_footer.dart';
 import '../panel/panel_side.dart';
 import '../panel/panel_state.dart';
 import '../panel/panel_view.dart';

@@ -12,6 +12,7 @@ pubspec.lock
 !/pubspec.lock
 packages/**/pubspec.lock
 !/packages/pagecraft/pubspec.lock
+!/packages/pdfium_dart/pubspec.lock
 rust_builder/**/pubspec.lock
 
 # FVM

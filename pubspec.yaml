@@ -72,6 +72,11 @@ dependencies:
   screen_retriever: ^0.2.2
   window_manager: ^0.5.0
 
+dependency_overrides:
+  # Local 0.2.5 build-hook fix; keep the reader's PDFium ABI unchanged.
+  pdfium_dart:
+    path: packages/pdfium_dart
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

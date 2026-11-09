@@ -1,0 +1,84 @@
+{
+  "release": "chromium/7811",
+  "source": "https://github.com/bblanchon/pdfium-binaries/releases/tag/chromium/7811",
+  "assets": {
+    "pdfium-android-arm.tgz": {
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7811/pdfium-android-arm.tgz",
+      "api_url": "https://api.github.com/repos/bblanchon/pdfium-binaries/releases/assets/406428654",
+      "sha256": "bb9250eefb33343f56f27f7e60c81ab3236d932c40e21557bf02ca4c276eb832",
+      "size": 2765457
+    },
+    "pdfium-android-arm64.tgz": {
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7811/pdfium-android-arm64.tgz",
+      "api_url": "https://api.github.com/repos/bblanchon/pdfium-binaries/releases/assets/406428652",
+      "sha256": "f51539cadeb5135534305b8bdf8685ce2fbe9991dbbc5b35f553108411b9ed14",
+      "size": 3310815
+    },
+    "pdfium-android-x64.tgz": {
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7811/pdfium-android-x64.tgz",
+      "api_url": "https://api.github.com/repos/bblanchon/pdfium-binaries/releases/assets/406428649",
+      "sha256": "23faaf6f993a39524d9dc7fafbb760e295f8bd5e9ffa46139bad2299fb5c80f3",
+      "size": 3421623
+    },
+    "pdfium-android-x86.tgz": {
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7811/pdfium-android-x86.tgz",
+      "api_url": "https://api.github.com/repos/bblanchon/pdfium-binaries/releases/assets/406428633",
+      "sha256": "3b9f6466f93241b5df4ee932485e128469b98ebf6a4466ae5737ec56e5400074",
+      "size": 3230160
+    },
+    "pdfium-linux-arm.tgz": {
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7811/pdfium-linux-arm.tgz",
+      "api_url": "https://api.github.com/repos/bblanchon/pdfium-binaries/releases/assets/406428595",
+      "sha256": "9bdcf34b4d109f48c2f64527358096bfb9d110b8d1f5b7bb164a54cb068908fb",
+      "size": 3295042
+    },
+    "pdfium-linux-arm64.tgz": {
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7811/pdfium-linux-arm64.tgz",
+      "api_url": "https://api.github.com/repos/bblanchon/pdfium-binaries/releases/assets/406428586",
+      "sha256": "1682079aae24d73fcfb4f1ae115dd7b661780ad31ad43c8804da2d518dc546e8",
+      "size": 3565672
+    },
+    "pdfium-linux-x64.tgz": {
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7811/pdfium-linux-x64.tgz",
+      "api_url": "https://api.github.com/repos/bblanchon/pdfium-binaries/releases/assets/406428505",
+      "sha256": "e76e0a37aefb843d56f04657475ce612157021b1ebc53d801f2fbfcc537ccf64",
+      "size": 3613707
+    },
+    "pdfium-linux-x86.tgz": {
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7811/pdfium-linux-x86.tgz",
+      "api_url": "https://api.github.com/repos/bblanchon/pdfium-binaries/releases/assets/406428503",
+      "sha256": "b1eb95df7692b805779b8f8191c6532266003e94ba956a5011b846639f65dc9f",
+      "size": 3691746
+    },
+    "pdfium-mac-arm64.tgz": {
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7811/pdfium-mac-arm64.tgz",
+      "api_url": "https://api.github.com/repos/bblanchon/pdfium-binaries/releases/assets/406428499",
+      "sha256": "f9bbf1ebdc459e5f5ff25b2d457cc21db55ebfc0cf3d89fc1b90ce5445dac394",
+      "size": 3402604
+    },
+    "pdfium-mac-x64.tgz": {
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7811/pdfium-mac-x64.tgz",
+      "api_url": "https://api.github.com/repos/bblanchon/pdfium-binaries/releases/assets/406428475",
+      "sha256": "b31565aacda1f84393cd98438b06b49f21124888785e7dd1ddf015fa4406bd80",
+      "size": 3581160
+    },
+    "pdfium-win-arm64.tgz": {
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7811/pdfium-win-arm64.tgz",
+      "api_url": "https://api.github.com/repos/bblanchon/pdfium-binaries/releases/assets/406428309",
+      "sha256": "fa52ad62562a7bbe258c19fbf12adb794af2c204daba52a088ac1315a9968211",
+      "size": 3512078
+    },
+    "pdfium-win-x64.tgz": {
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7811/pdfium-win-x64.tgz",
+      "api_url": "https://api.github.com/repos/bblanchon/pdfium-binaries/releases/assets/406428295",
+      "sha256": "2e7af12674ac3716cb0e20369bb9fb269ceadfa2f0b0597097a520e6834175a0",
+      "size": 3718879
+    },
+    "pdfium-win-x86.tgz": {
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7811/pdfium-win-x86.tgz",
+      "api_url": "https://api.github.com/repos/bblanchon/pdfium-binaries/releases/assets/406428280",
+      "sha256": "a8d84dae2afa81a48cf3ded6f64d9e9cabb469897ae0281f4146eedcfce276fb",
+      "size": 3599681
+    }
+  }
+}

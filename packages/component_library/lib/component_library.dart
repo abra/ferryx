@@ -30,6 +30,7 @@ export 'src/app_menu_button.dart';
 export 'src/app_middle_ellipsis.dart';
 export 'src/app_window_activity.dart';
 export 'src/app_spinner.dart';
+export 'src/app_status_bar.dart';
 export 'src/app_control_row.dart';
 export 'src/app_popup_button.dart';
 export 'src/app_nav_item.dart';

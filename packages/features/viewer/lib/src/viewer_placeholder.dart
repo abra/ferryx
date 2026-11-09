@@ -3,7 +3,7 @@ import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:shortcuts/shortcuts.dart';
 
-import 'viewer_exit_hints.dart';
+import 'viewer_footer.dart';
 
 /// Keeps preview navigation available when the file cursor is on a folder.
 class ViewerPlaceholder extends StatefulWidget {
@@ -77,7 +77,12 @@ class _ViewerPlaceholderState extends State<ViewerPlaceholder> {
                   decor.dragArea(
                     Container(
                       height: context.metrics.topBarHeight,
-                      color: context.appColors.windowChrome,
+                      decoration: BoxDecoration(
+                        color: context.appColors.windowChrome,
+                        border: AppBorder(
+                          bottom: BorderSide(color: context.appColors.line),
+                        ),
+                      ),
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.sm,
                       ),
@@ -118,7 +123,8 @@ class _ViewerPlaceholderState extends State<ViewerPlaceholder> {
                       icon: AppIcons.file,
                     ),
                   ),
-                  ViewerExitHints(
+                  ViewerFooter(
+                    status: l10n.viewerModePreview,
                     shortcutMap: widget.shortcutMap,
                     showFiles: true,
                   ),

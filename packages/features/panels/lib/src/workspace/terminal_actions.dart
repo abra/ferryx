@@ -166,7 +166,7 @@ extension _TerminalActions on _WorkspaceScreenState {
   double _panelsMinHeight(BuildContext context) =>
       context.metrics.topBarHeight +
       4 * context.metrics.listRowHeight +
-      PanelFooter.heightOf(context);
+      AppStatusBar.heightOf(context);
 
   int _terminalMaxLines() {
     final terminal = _terminal;
@@ -320,7 +320,7 @@ class _PanelsAndTerminal extends StatelessWidget {
           Positioned(
             key: const ValueKey('operations'),
             right: AppSpacing.md,
-            bottom: AppSpacing.md + PanelFooter.heightOf(context) + under,
+            bottom: AppSpacing.md + AppStatusBar.heightOf(context) + under,
             child: cards!,
           ),
       ],

@@ -10,9 +10,10 @@ Guidance for Claude Code when working in this repository.
   project's pinned SDK).
 - Rust builds inside the Flutter build go through cargokit, which runs
   `rustup run stable cargo`. Keep the rustup toolchain current
-  (`rustup update stable`). `rust_builder/cargokit/build_pod.sh` pins
-  `RUSTC` to the rustup toolchain so a Homebrew Rust ahead on PATH cannot
-  link a std built for the host's macOS.
+  (`rustup update stable`). `macos/Podfile` pins `RUSTC` for every Cargokit
+  script phase, including third-party plugins; the local
+  `rust_builder/cargokit/build_pod.sh` also pins it. A Homebrew Rust ahead
+  on PATH must not select a different std or miss rustup's Intel target.
   The Makefile calls `cargo` from PATH; keep it on that same toolchain.
   The workspace's declared `rust-version = "1.85"` is below the current
   lockfile's requirements: the RAR dependencies require at least 1.97.1.
@@ -22,6 +23,11 @@ Guidance for Claude Code when working in this repository.
   pins its toolchain in `packages/pagecraft/rust/rust-toolchain.toml`;
   the Makefile and native build hook select that compiler explicitly.
   Keep its Dart and Cargo lockfiles; edit the local sources, not Pub's cache.
+- `packages/pdfium_dart` is a local MIT-licensed copy of 0.2.5. Its build
+  hook pins PDFium Chromium 7811 archives and SHA-256 digests, retries downloads
+  and uses the official GitHub asset API as fallback. Keep the path overrides
+  in the app, Pagecraft and viewer together; standalone package resolution
+  does not inherit overrides. Its README documents the persistent cache.
 - `flutter_rust_bridge_codegen` 2.13.0 must match the `flutter_rust_bridge`
   version in `rust/Cargo.toml`, `pubspec.yaml` and
   `packages/ferryx_backend/pubspec.yaml`.

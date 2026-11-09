@@ -33,6 +33,7 @@ PACKAGES = \
 	packages/features/network
 
 ROOT_ANALYZE_PATHS = lib test
+DART_PACKAGES = packages/pdfium_dart
 
 ## Install dependencies for root and all packages
 get:
@@ -40,6 +41,10 @@ get:
 	@set -e; for pkg in $(PACKAGES); do \
 		echo "▶ pub get $$pkg"; \
 		(cd $$pkg && $(FLUTTER) pub get); \
+	done
+	@set -e; for pkg in $(DART_PACKAGES); do \
+		echo "▶ pub get $$pkg"; \
+		(cd $$pkg && $(DART) pub get); \
 	done
 
 ## Regenerate localizations (ARB → Dart)
@@ -73,6 +78,10 @@ analyze:
 		echo "▶ analyze $$pkg"; \
 		(cd $$pkg && $(FLUTTER) analyze); \
 	done
+	@set -e; for pkg in $(DART_PACKAGES); do \
+		echo "▶ analyze $$pkg"; \
+		(cd $$pkg && $(DART) analyze); \
+	done
 	cd rust && $(CARGO) clippy --workspace --all-targets -- -D warnings
 	cd packages/pagecraft/rust && $(PAGECRAFT_RUST_ENV) $(CARGO) clippy --locked --all-targets -- -D warnings
 
@@ -95,6 +104,10 @@ test-dart: core
 			echo "▶ test $$pkg"; \
 			(cd $$pkg && $(FLUTTER) test) || failed="$$failed $$pkg"; \
 		fi; \
+	done; \
+	for pkg in $(DART_PACKAGES); do \
+		echo "▶ test $$pkg"; \
+		(cd $$pkg && $(DART) test) || failed="$$failed $$pkg"; \
 	done; \
 	if [ -n "$$failed" ]; then echo "✗ tests failed in:$$failed"; exit 1; fi
 

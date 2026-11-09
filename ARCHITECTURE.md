@@ -520,6 +520,12 @@ from the list. While preview has focus, workspace file-operation commands
 are excluded from its command chain. The native Quick Look window remains
 a separate service on ⌘Y.
 
+File panels, the viewer (including its empty state) and the workspace hint
+strip share `AppStatusBar` geometry. Viewer metadata and exit hints occupy
+one row, so the bottom content edges meet across the pane divider. The
+height grows with the text scale on both sides; narrow viewers keep exit
+hints before metadata instead of adding another row.
+
 ### Document preview
 
 `documentFormatOf` recognizes EPUB, FB2 (`.fb2`, `.fbz`, `.fb2.zip`), MOBI
@@ -581,11 +587,18 @@ dependencies maintained in this repository; no Readflex checkout or Git
 dependency is involved in resolution. Their READMEs record the original
 source revision. The Pagecraft native hooks build its MOBI backend with
 Rust 1.99.0 and DjVuLibre 3.5.30 with
-C++17, while PDFium is downloaded at build time and bundled. These native
+C++17, while PDFium is downloaded at build time and bundled. The local
+`packages/pdfium_dart` copy of 0.2.5 preserves the Chromium 7811 bindings and
+runtime. Its build-only downloader retries transient failures, falls back to
+the official GitHub asset API, checks pinned archive sizes and SHA-256 digests,
+and atomically publishes the native asset. A verified archive cache outside
+`.dart_tool` survives clean builds (`PDFIUM_DART_CACHE` can override it).
+Root, Pagecraft and viewer pubspecs each override the dependency source so
+standalone package tests use the same hook. These native
 components are included even when only another Pagecraft format is
 imported. Flutter's native-assets/plugin packaging owns their delivery;
 Ferryx's separate Rust workspace still builds through cargokit. The root
-Makefile includes both local Dart packages and Pagecraft's Rust crate in
+Makefile includes these local Dart packages and Pagecraft's Rust crate in
 dependency, analysis, formatting and test commands. The
 vendored DjVu decoder is GPL-2.0-or-later; its original `COPYRIGHT` and
 `COPYING` are registered in Pagecraft's Flutter license bundle. The
@@ -1155,11 +1168,13 @@ application's (local data); `desktop_drop` only takes drops in, with no
 feedback, so drags out would need three native implementations of our own
 (an `NSDraggingSource`, OLE `DoDragDrop` with `CF_HDROP`, a GTK source).
 It builds Rust through its own copy of cargokit; `cargokit_options.yaml`
-at the root opts into its signed precompiled binaries, so no developer or
-CI machine compiles it (and no Homebrew `rustc` links it against the
-host's macOS), while our crate, which publishes none, is still built by
-`rust_builder/`. Under `flutter test` it runs on a mock context, so the
-widget tests need no native library. The plugin stays inside
+at the root opts into its signed precompiled binaries. If their download
+fails, it falls back to a source build. `macos/Podfile` pins the rustup stable
+compiler for every Cargokit phase so Cargo cannot accidentally use Homebrew's
+`rustc` with a different set of target libraries. Our crate, which publishes
+no precompiled binaries, is always built by `rust_builder/`. Under
+`flutter test` the plugin runs on a mock context, so widget tests need no
+native library. The plugin stays inside
 `platform_services`: features see `FileDragSource`, `FileDropTarget` and
 the service.
 

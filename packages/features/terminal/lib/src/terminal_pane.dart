@@ -367,9 +367,8 @@ class TerminalBar extends StatelessWidget {
   final VoidCallback onToggleFullWindow;
   final ValueChanged<Rect> onMenu;
 
-  static double heightOf(BuildContext context, {required bool topRow}) => topRow
-      ? context.metrics.topBarHeight
-      : context.metrics.iconButtonSize.height + AppSpacing.xs;
+  static double heightOf(BuildContext context, {required bool topRow}) =>
+      topRow ? context.metrics.topBarHeight : AppStatusBar.heightOf(context);
 
   @override
   Widget build(BuildContext context) {

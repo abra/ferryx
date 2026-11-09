@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
@@ -54,21 +53,6 @@ class PanelFooter extends StatelessWidget {
 
   /// The server's capsule was clicked while it is out of reach.
   final VoidCallback? onReconnect;
-
-  /// The footer's height at the text size in [context]: the hint line's
-  /// under it, a bar button's and a margin (as Finder's path and status
-  /// bars, 27 and a line on macOS 15, match), taller as the text grows.
-  static double heightOf(BuildContext context) {
-    final line = context.text.bodySmall!;
-    final text = MediaQuery.textScalerOf(
-      context,
-    ).scale(line.fontSize! * line.height!);
-    return math.max(
-          context.metrics.iconButtonSize.height,
-          text + AppSpacing.sm,
-        ) +
-        AppSpacing.xs;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,15 +124,7 @@ class PanelFooter extends StatelessWidget {
         l10n.flatFileCount(count),
       if (free != null) l10n.panelFreeSpace(l10n.fileSize(free)),
     ].reduce(l10n.joinedDetails);
-    return Container(
-      height: heightOf(context),
-      padding: EdgeInsets.symmetric(
-        horizontal: context.metrics.tableRowInset + AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: colors.windowChrome,
-        border: AppBorder(top: BorderSide(color: colors.line)),
-      ),
+    return AppStatusBar(
       child: Row(
         children: [
           if (vim != null) ...[

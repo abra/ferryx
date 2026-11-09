@@ -214,7 +214,6 @@ class KeyHintStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final colors = context.appColors;
     final metrics = context.metrics;
     final platform = Theme.of(context).platform;
     final entries = <AppKeyHint>[];
@@ -256,15 +255,10 @@ class KeyHintStrip extends StatelessWidget {
       platform,
       vim: vim,
     );
-    return Container(
-      height: metrics.iconButtonSize.height + AppSpacing.xs,
+    return AppStatusBar(
       padding: EdgeInsets.only(
         left: metrics.tableRowInset + AppSpacing.sm,
         right: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: colors.windowChrome,
-        border: AppBorder(top: BorderSide(color: colors.line)),
       ),
       child: Row(
         children: [

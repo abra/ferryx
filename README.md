@@ -259,6 +259,20 @@ The Makefile calls `cargo` from PATH, while cargokit uses rustup's stable
 toolchain. Ensure they select the same Rust installation. Generated bridge
 bindings are checked in; normal builds do not require running codegen.
 
+On macOS, the Podfile pins `RUSTC` to rustup's stable compiler for all
+Cargokit build phases, including third-party plugins. This avoids mixing
+rustup's Cargo and target libraries with a Homebrew `rustc`. Universal
+builds need both Rust targets; install them for the same toolchain:
+
+```sh
+rustup target add --toolchain stable aarch64-apple-darwin x86_64-apple-darwin
+```
+
+If a plugin's precompiled binary download fails, Cargokit builds it from
+source. An `E0463` error about missing `std` can mean that the compiler
+and installed targets belong to different Rust installations, even when
+`rustup target list --installed --toolchain stable` lists the target.
+
 The reader engine lives in [packages/pagecraft](packages/pagecraft), with
 its local dependency [native_text_selection](packages/native_text_selection).
 Both packages were copied from Readflex and are part of this repository;
@@ -268,6 +282,16 @@ Git checkout in Pub's cache. The first native build may download Pagecraft's
 pinned Rust toolchain and target libraries,
 Cargo dependencies and PDFium binaries from GitHub. Keep these downloads
 available in CI and on a fresh build machine.
+
+PDFium's build hook is maintained in [packages/pdfium_dart](packages/pdfium_dart),
+based on version 0.2.5 with the same Chromium 7811 binaries. It retries transient
+HTTP errors, falls back to the official GitHub release-asset API, and verifies
+archive size and SHA-256. Verified archives survive `flutter clean`: on macOS
+they live in `~/Library/Caches/pdfium_dart`; `PDFIUM_DART_CACHE` overrides the
+location. Universal macOS builds need both ARM64 and x64 archives. A populated
+cache avoids re-downloading PDFium; a fresh cache still needs GitHub access.
+The app, Pagecraft and viewer each select this local copy through a
+`dependency_overrides` entry, since Dart overrides are not inherited.
 
 Pagecraft bundles PDFium, its Rust MOBI backend and DjVuLibre 3.5.30 even
 when only another format is imported. They ship with the application;
