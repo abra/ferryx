@@ -105,7 +105,11 @@ See `ARCHITECTURE.md`. The rules that matter most:
   (`CommandScope.terminal`), its place in the window and the window's
   chords no program is given: with ⌘ on macOS, with Ctrl+Shift elsewhere
   (`ShortcutMap.terminalShortcuts`). A window command that must work from
-  the terminal needs such a chord; never a plain Ctrl+letter.
+  the terminal needs such a chord; never a plain Ctrl+letter. Its single
+  session moves between panel-bottom, a Terminal tab and window placements
+  through `TerminalDock`. Preserve the view key, focus scope, PTY and emulator.
+  Terminal tabs are presentation state, separate from filesystem tabs, and
+  follow their hosting panel; shell input must not reach panel Vim handlers.
 - A row is known by `FileEntry.key` (its name; in a flat view its path
   under the root, as two folders may hold one name): selection, quick
   search matches and the cursor kept across a re-read use the key, never

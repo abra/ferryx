@@ -248,6 +248,7 @@ class WorkspaceHarness {
     WindowDecor decor = WindowDecor.none,
     Map<AppCommand, VoidCallback> commandHandlers = const {},
     WorkspacePreview? preview,
+    WorkspaceTerminal? terminal,
     ValueChanged<WorkspaceSnapshot>? onSnapshot,
   }) async {
     tester.view.physicalSize = size;
@@ -291,6 +292,7 @@ class WorkspaceHarness {
           platformServices: desktop,
           folderSync: _MockFolderSync(),
           preview: preview,
+          terminal: terminal,
           navigation: WorkspaceNavigation(
             openViewer: (context, location, {preview = false}) async {},
             openFind: (context, root, {required view}) async => null,

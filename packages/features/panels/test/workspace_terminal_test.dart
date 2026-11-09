@@ -227,26 +227,31 @@ void main() {
   final terminalView = find.byKey(const ValueKey('fake terminal'));
   bool terminalFocused() => views.last.focusNode.hasFocus;
 
-  testWidgets('hidden at first; Control-Option-Up shows it under the panels '
-      'with the keys, in the active panel\'s folder', (tester) async {
-    await pump(tester);
-    expect(terminalView, findsNothing);
-    expect(find.byType(PanelView), findsNWidgets(2));
-    await showTerminal(tester);
-    expect(terminalView, findsOneWidget);
-    expect(find.byType(PanelView), findsNWidgets(2));
-    expect(terminal.calls, contains('show /home'));
-    expect(terminalFocused(), isTrue);
-    // Its height: its chrome and twelve lines, under the panels.
-    expect(tester.getSize(terminalView).height, 40 + 12 * 16);
-    expect(
-      tester.getBottomLeft(find.byType(PanelView).first).dy,
-      tester.getTopLeft(terminalView).dy,
-    );
-    // Remembered for the next run.
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(preferences.current.terminal.place, TerminalPlace.overlapped);
-  });
+  testWidgets(
+    'hidden at first; Control-Option-Up shows it inside the active panel '
+    'with the keys, in the active panel\'s folder',
+    (tester) async {
+      await pump(tester);
+      expect(terminalView, findsNothing);
+      expect(find.byType(PanelView), findsNWidgets(2));
+      await showTerminal(tester);
+      expect(terminalView, findsOneWidget);
+      expect(find.byType(PanelView), findsNWidgets(2));
+      expect(terminal.calls, contains('show /home'));
+      expect(terminalFocused(), isTrue);
+      // Its height: its chrome and twelve lines, under the panels.
+      expect(tester.getSize(terminalView).height, 40 + 12 * 16);
+      expect(
+        tester.getBottomLeft(find.byType(PanelView).first).dy,
+        tester.getBottomLeft(terminalView).dy,
+      );
+      expect(tester.getSize(terminalView).width, lessThan(1200));
+      // Remembered for the next run.
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(preferences.current.terminal.place, TerminalPlace.overlapped);
+      expect(preferences.current.terminal.host, TerminalHost.left);
+    },
+  );
 
   testWidgets('pressed again where the keys are, a line taller', (
     tester,

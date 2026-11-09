@@ -138,15 +138,24 @@ Vim mode is optional and off by default.
   any other operation. On macOS, ⌥ forces
   copy and ⌘ forces move. Windows drag modifiers are not reported by the
   drag-and-drop plugin, so the volume rule determines the operation.
-- **Integrated terminal**, as in Nimble Commander: your shell under the
-  panels (⌃\` shows it and gives it the keys, again for a taller one, ⌃⇧\`
+- **Integrated terminal**: your shell below the files in the active panel
+  (⌃\` shows it and gives it the keys, again for a taller one, ⌃⇧\`
   hides it; Nimble Commander's ⌃⌥↑ and ⌃⌥↓ work too where no window
-  manager takes them; the edge between them drags or takes the keys), the panels
-  hidden over it (⌃⌥O) or the whole window (⌥⌘O). On macOS and Linux, it follows
-  the active local folder while waiting at its prompt, and a `cd` typed in it
+  manager takes them; the edge between files and terminal drags or takes the
+  keys), the panels hidden over it (⌃⌥O) or the whole window (⌥⌘O). On macOS
+  and Linux, it follows its panel's local folder while waiting at its prompt,
+  and a `cd` typed in it
   takes the panel along; programs (vim, top, ssh) are left alone. Windows
-  does not synchronize the shell and panel folders. Copy, paste and clear
-  (⌘C, ⌘V, ⌘K) work as in Terminal.app; shell control keys reach the shell,
+  does not synchronize the shell and panel folders. A panel's menu also opens
+  the terminal. Its bar switches between the bottom area and a **Terminal** tab
+  with a terminal icon; the actions menu and tab context menu move it to the
+  left/right panel or across both panels. Moving it preserves the running shell,
+  output and scroll position. Terminal tabs reorder and cycle with file tabs
+  (`gt` / `gT` in Vim mode while the file list has focus). Closing the terminal
+  tab hides the session until it is opened again. A terminal attached to one
+  panel follows that panel's folder; across both panels it follows the active one.
+  Copy, paste and clear (⌘C, ⌘V, ⌘K) work as in Terminal.app;
+  shell control keys reach the shell,
   while terminal controls and supported window shortcuts remain available.
   The terminal bar's actions menu also exposes Copy, Paste, Select All and Clear.
   There is one terminal session per window.

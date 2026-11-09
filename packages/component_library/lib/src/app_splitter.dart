@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/services.dart';
 
 import 'app_key_hints.dart';
@@ -254,6 +255,8 @@ class _AppSplitterState extends State<AppSplitter> {
                 onExit: (_) => setState(() => _hovered = false),
                 child: GestureDetector(
                   behavior: HitTestBehavior.translucent,
+                  // Include the first delta when a panel tap also competes.
+                  dragStartBehavior: DragStartBehavior.down,
                   onHorizontalDragStart: vertical ? null : (_) => dragStart(),
                   onHorizontalDragUpdate: vertical
                       ? null

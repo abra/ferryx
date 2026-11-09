@@ -7,6 +7,40 @@ import 'package:shortcuts/shortcuts.dart';
 void main() {
   group('TerminalDockCubit', () {
     blocTest<TerminalDockCubit, TerminalDock>(
+      'a panel tab keeps its host, order and selection across full-window mode',
+      build: () => TerminalDockCubit(const TerminalDock(lines: 20)),
+      act: (dock) => dock
+        ..moveTo(TerminalHost.right, asTab: true)
+        ..moveTab(0)
+        ..selectTab(false)
+        ..toggleFullWindow()
+        ..toggleFullWindow(),
+      verify: (dock) {
+        expect(dock.state.mode, TerminalPlace.panelTab);
+        expect(dock.state.host, TerminalHost.right);
+        expect(dock.state.lines, 20);
+        expect(dock.state.tabPosition(3), 0);
+        expect(dock.state.tabSelected, isFalse);
+        expect(dock.state.visible, isFalse);
+      },
+    );
+
+    blocTest<TerminalDockCubit, TerminalDock>(
+      'moving a tab below files or across panels keeps its height',
+      build: () => TerminalDockCubit(const TerminalDock(lines: 18)),
+      act: (dock) => dock
+        ..moveTo(TerminalHost.left, asTab: true)
+        ..moveTo(TerminalHost.right)
+        ..moveTo(TerminalHost.window, asTab: true),
+      verify: (dock) {
+        expect(dock.state.mode, TerminalPlace.overlapped);
+        expect(dock.state.host, TerminalHost.window);
+        expect(dock.state.lines, 18);
+        expect(dock.state.inPanel, isFalse);
+      },
+    );
+
+    blocTest<TerminalDockCubit, TerminalDock>(
       'shown under the panels, then hidden; hiding twice is nothing',
       build: TerminalDockCubit.new,
       act: (dock) => dock

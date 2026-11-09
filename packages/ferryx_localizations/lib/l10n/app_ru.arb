@@ -1138,5 +1138,10 @@
   "networkCapsuleLost": "Связь потеряна",
   "networkCapsuleClosed": "Не подключено",
   "syncConfirmUndoDeleted": "{key} отменит её: копии уйдут в Корзину, а удалённое вернётся из неё.",
-  "@syncConfirmUndoDeleted": {"placeholders": {"key": {"type": "String"}}}
+  "@syncConfirmUndoDeleted": {"placeholders": {"key": {"type": "String"}}},
+  "cmdTerminalInLeftPanel": "Терминал в левой панели",
+  "cmdTerminalInRightPanel": "Терминал в правой панели",
+  "cmdTerminalAsTab": "Перенести терминал в таб",
+  "cmdTerminalBelowFiles": "Терминал под списком файлов",
+  "cmdTerminalAcrossPanels": "Терминал под обеими панелями"
 }

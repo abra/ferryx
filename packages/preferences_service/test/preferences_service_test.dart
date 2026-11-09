@@ -52,6 +52,9 @@ void main() {
           scrollback: 20000,
           lines: 20,
           place: TerminalPlace.fullWindow,
+          host: TerminalHost.right,
+          tabIndex: 2,
+          tabSelected: false,
         ),
       );
       expect(Preferences.fromJson(prefs.toJson()), prefs);
@@ -83,6 +86,9 @@ void main() {
           'scrollback': 5,
           'lines': -3,
           'place': 'sideways',
+          'host': 'unknown',
+          'tabIndex': -100,
+          'tabSelected': 'invalid',
         }),
         const TerminalPreferences(
           shell: '/bin/zsh',

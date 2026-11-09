@@ -359,6 +359,13 @@ class _Menus {
         AppCommand.hideTerminal,
         AppCommand.togglePanelsOverTerminal,
       ],
+      [
+        AppCommand.terminalInLeftPanel,
+        AppCommand.terminalInRightPanel,
+        AppCommand.terminalAsTab,
+        AppCommand.terminalBelowFiles,
+        AppCommand.terminalAcrossPanels,
+      ],
       [AppCommand.terminalClear],
     ]),
     PlatformMenu(

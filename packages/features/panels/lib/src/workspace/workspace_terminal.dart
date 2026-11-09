@@ -1,5 +1,6 @@
 import 'package:component_library/component_library.dart';
 import 'package:flutter/widgets.dart';
+import 'package:shortcuts/shortcuts.dart';
 
 /// The integrated terminal as the composition root hands it to the window:
 /// the panels never import the terminal feature.
@@ -57,12 +58,18 @@ class WorkspaceTerminalView {
     required this.onHide,
     required this.onTogglePanels,
     required this.onToggleFullWindow,
+    this.inPanel = false,
+    this.asTab = false,
+    this.placementActions = const {},
   });
 
   /// The terminal's keys: the window moves the focus here.
   final FocusNode focusNode;
   final bool panelsHidden;
   final bool fullWindow;
+  final bool inPanel;
+  final bool asTab;
+  final Map<AppCommand, VoidCallback> placementActions;
 
   /// The window's buttons, for a bar in the window's top row.
   final WindowDecor decor;

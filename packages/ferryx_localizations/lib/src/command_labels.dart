@@ -136,6 +136,11 @@ extension CommandLabels on FerryxLocalizations {
     AppCommand.toggleTerminal => cmdToggleTerminal,
     AppCommand.showTerminal => cmdShowTerminal,
     AppCommand.hideTerminal => cmdHideTerminal,
+    AppCommand.terminalInLeftPanel => cmdTerminalInLeftPanel,
+    AppCommand.terminalInRightPanel => cmdTerminalInRightPanel,
+    AppCommand.terminalAsTab => cmdTerminalAsTab,
+    AppCommand.terminalBelowFiles => cmdTerminalBelowFiles,
+    AppCommand.terminalAcrossPanels => cmdTerminalAcrossPanels,
     AppCommand.togglePanelsOverTerminal => cmdTogglePanelsOverTerminal,
     // ─── Files core ───
     AppCommand.extractTo => cmdExtractTo,

@@ -10,6 +10,9 @@ class TerminalDock extends Equatable {
     this.mode = TerminalPlace.hidden,
     this.lines = defaultLines,
     this.beforeFullWindow = TerminalPlace.hidden,
+    this.host = TerminalHost.window,
+    this.tabIndex = -1,
+    this.tabSelected = true,
   });
 
   static const defaultLines = 12;
@@ -23,31 +26,69 @@ class TerminalDock extends Equatable {
 
   /// Where the terminal goes back to from the whole window.
   final TerminalPlace beforeFullWindow;
+  final TerminalHost host;
+  final int tabIndex;
+  final bool tabSelected;
 
   bool get shown => mode != TerminalPlace.hidden;
 
   /// The panels are on screen.
   bool get panelsShown =>
-      mode == TerminalPlace.hidden || mode == TerminalPlace.overlapped;
+      mode == TerminalPlace.hidden ||
+      mode == TerminalPlace.overlapped ||
+      mode == TerminalPlace.panelTab;
+
+  bool get inPanel => host != TerminalHost.window && panelsShown;
+  bool get visible => shown && (mode != TerminalPlace.panelTab || tabSelected);
+
+  int tabPosition(int fileTabs) =>
+      tabIndex < 0 ? fileTabs : tabIndex.clamp(0, fileTabs);
 
   TerminalDock copyWith({
     TerminalPlace? mode,
     int? lines,
     TerminalPlace? beforeFullWindow,
+    TerminalHost? host,
+    int? tabIndex,
+    bool? tabSelected,
   }) => TerminalDock(
     mode: mode ?? this.mode,
     lines: lines ?? this.lines,
     beforeFullWindow: beforeFullWindow ?? this.beforeFullWindow,
+    host: host ?? this.host,
+    tabIndex: tabIndex ?? this.tabIndex,
+    tabSelected: tabSelected ?? this.tabSelected,
   );
 
   @override
-  List<Object?> get props => [mode, lines, beforeFullWindow];
+  List<Object?> get props => [
+    mode,
+    lines,
+    beforeFullWindow,
+    host,
+    tabIndex,
+    tabSelected,
+  ];
 }
 
 /// The moves between the terminal's places; where the keys go after each
 /// is the window's business.
 class TerminalDockCubit extends Cubit<TerminalDock> {
   TerminalDockCubit([super.initialState = const TerminalDock()]);
+
+  void moveTo(TerminalHost host, {bool asTab = false}) => emit(
+    state.copyWith(
+      host: host,
+      mode: asTab && host != TerminalHost.window
+          ? TerminalPlace.panelTab
+          : TerminalPlace.overlapped,
+      tabSelected: true,
+    ),
+  );
+
+  void selectTab(bool selected) => emit(state.copyWith(tabSelected: selected));
+
+  void moveTab(int index) => emit(state.copyWith(tabIndex: index));
 
   /// ⌃` (⌃⌥↑) on a hidden terminal: under the panels.
   void show() {

@@ -18,6 +18,8 @@ class TerminalPlacement {
     this.panelsHidden = false,
     this.fullWindow = false,
     this.decor = WindowDecor.none,
+    this.inPanel = false,
+    this.asTab = false,
   });
 
   /// The panels are hidden over the terminal (it takes their place).
@@ -25,6 +27,8 @@ class TerminalPlacement {
 
   /// The terminal takes the whole window.
   final bool fullWindow;
+  final bool inPanel;
+  final bool asTab;
 
   /// The window's buttons, when the terminal's bar is the window's top row.
   final WindowDecor decor;
@@ -51,6 +55,7 @@ class TerminalPane extends StatefulWidget {
     required this.onTogglePanels,
     required this.onToggleFullWindow,
     this.fontFamily = '',
+    this.placementActions = const {},
     super.key,
   });
 
@@ -63,6 +68,7 @@ class TerminalPane extends StatefulWidget {
   final VoidCallback onHide;
   final VoidCallback onTogglePanels;
   final VoidCallback onToggleFullWindow;
+  final Map<AppCommand, VoidCallback> placementActions;
 
   /// The height of one line of the terminal's text at [fontSize], for
   /// sizing the terminal by lines.
@@ -90,6 +96,8 @@ class _TerminalPaneState extends State<TerminalPane> {
   final _look = TerminalLook();
   final _scroll = ScrollController();
   final _view = GlobalKey<TerminalViewState>();
+  // Stop panel Vim/search shortcuts after the emulator has handled its keys.
+  final _shellShortcuts = ShortcutManager(modal: true);
   TerminalKeys? _keys;
 
   TerminalSessionCubit get _cubit => widget.cubit;
@@ -97,6 +105,7 @@ class _TerminalPaneState extends State<TerminalPane> {
   @override
   void dispose() {
     _scroll.dispose();
+    _shellShortcuts.dispose();
     super.dispose();
   }
 
@@ -136,6 +145,7 @@ class _TerminalPaneState extends State<TerminalPane> {
   }
 
   Map<AppCommand, VoidCallback> _handlers() => {
+    ...widget.placementActions,
     AppCommand.terminalCopy: () => unawaited(_copy()),
     AppCommand.terminalPaste: () => unawaited(_paste()),
     AppCommand.terminalSelectAll: _cubit.selectAll,
@@ -210,6 +220,25 @@ class _TerminalPaneState extends State<TerminalPane> {
           shortcut: key(AppCommand.terminalClear),
         ),
         const AppMenuSeparator(),
+        if (widget.placementActions.isNotEmpty) ...[
+          for (final command in widget.placementActions.keys)
+            AppMenuAction(
+              value: command,
+              label: l10n.commandLabel(command),
+              icon: command == AppCommand.terminalAsTab
+                  ? AppIcons.terminalTab
+                  : AppIcons.terminalDock,
+              checked: switch (command) {
+                AppCommand.terminalAsTab => widget.placement.asTab,
+                AppCommand.terminalBelowFiles =>
+                  widget.placement.inPanel && !widget.placement.asTab,
+                AppCommand.terminalAcrossPanels =>
+                  !widget.placement.inPanel && !widget.placement.topRow,
+                _ => false,
+              },
+            ),
+          const AppMenuSeparator(),
+        ],
         AppMenuAction(
           value: AppCommand.hideTerminal,
           label: l10n.commandLabel(AppCommand.hideTerminal),
@@ -247,20 +276,27 @@ class _TerminalPaneState extends State<TerminalPane> {
                   onTogglePanels: widget.onTogglePanels,
                   onToggleFullWindow: widget.onToggleFullWindow,
                   onMenu: (anchor) => unawaited(_menu(anchor)),
+                  onMove:
+                      widget.placementActions[widget.placement.asTab
+                          ? AppCommand.terminalBelowFiles
+                          : AppCommand.terminalAsTab],
                 ),
                 Expanded(
-                  child: _Screen(
-                    terminal: _cubit.terminal,
-                    selection: _cubit.selection,
-                    look: _look,
-                    fontFamily: widget.fontFamily,
-                    fontSize: widget.fontSize,
-                    focusNode: widget.focusNode,
-                    scroll: _scroll,
-                    viewKey: _view,
-                    onKey: _onKey,
-                    onSecondaryTap: (position) =>
-                        unawaited(_menu(position & Size.zero)),
+                  child: Shortcuts.manager(
+                    manager: _shellShortcuts,
+                    child: _Screen(
+                      terminal: _cubit.terminal,
+                      selection: _cubit.selection,
+                      look: _look,
+                      fontFamily: widget.fontFamily,
+                      fontSize: widget.fontSize,
+                      focusNode: widget.focusNode,
+                      scroll: _scroll,
+                      viewKey: _view,
+                      onKey: _onKey,
+                      onSecondaryTap: (position) =>
+                          unawaited(_menu(position & Size.zero)),
+                    ),
                   ),
                 ),
                 if (state.ended)
@@ -355,6 +391,7 @@ class TerminalBar extends StatelessWidget {
     required this.onTogglePanels,
     required this.onToggleFullWindow,
     required this.onMenu,
+    this.onMove,
     super.key,
   });
 
@@ -366,6 +403,7 @@ class TerminalBar extends StatelessWidget {
   final VoidCallback onTogglePanels;
   final VoidCallback onToggleFullWindow;
   final ValueChanged<Rect> onMenu;
+  final VoidCallback? onMove;
 
   static double heightOf(BuildContext context, {required bool topRow}) =>
       topRow ? context.metrics.topBarHeight : AppStatusBar.heightOf(context);
@@ -413,6 +451,17 @@ class TerminalBar extends StatelessWidget {
             ],
           ),
           trailing: [
+            if (onMove != null)
+              _BarButton(
+                command: placement.asTab
+                    ? AppCommand.terminalBelowFiles
+                    : AppCommand.terminalAsTab,
+                icon: placement.asTab
+                    ? AppIcons.terminalDock
+                    : AppIcons.terminalTab,
+                shortcutMap: shortcutMap,
+                onPressed: onMove!,
+              ),
             Builder(
               builder: (context) => AppIconButton(
                 icon: AppIcons.more,

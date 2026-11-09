@@ -1330,5 +1330,10 @@
   "networkCapsuleLost": "Connection lost",
   "networkCapsuleClosed": "Not connected",
   "syncConfirmUndoDeleted": "{key} undoes it: the copies go to the Trash and what went there comes back.",
-  "@syncConfirmUndoDeleted": {"placeholders": {"key": {"type": "String"}}}
+  "@syncConfirmUndoDeleted": {"placeholders": {"key": {"type": "String"}}},
+  "cmdTerminalInLeftPanel": "Move Terminal to Left Panel",
+  "cmdTerminalInRightPanel": "Move Terminal to Right Panel",
+  "cmdTerminalAsTab": "Move Terminal to Tab",
+  "cmdTerminalBelowFiles": "Dock Terminal Below Files",
+  "cmdTerminalAcrossPanels": "Dock Terminal Across Panels"
 }

@@ -13,7 +13,13 @@ enum TerminalPlace {
 
   /// Over the whole window.
   fullWindow,
+
+  /// A tab beside the file tabs of the hosting panel.
+  panelTab,
 }
+
+/// The terminal can share the window width or belong to one file panel.
+enum TerminalHost { window, left, right }
 
 /// The integrated terminal's settings and its place in the window.
 @immutable
@@ -25,6 +31,9 @@ class TerminalPreferences extends Equatable {
     this.scrollback = 10000,
     this.lines = defaultLines,
     this.place = TerminalPlace.hidden,
+    this.host = TerminalHost.window,
+    this.tabIndex = -1,
+    this.tabSelected = true,
   });
 
   static const defaultLines = 12;
@@ -51,6 +60,11 @@ class TerminalPreferences extends Equatable {
 
   /// Where the terminal was when the window closed.
   final TerminalPlace place;
+  final TerminalHost host;
+
+  /// Position among file tabs; -1 appends the terminal after them.
+  final int tabIndex;
+  final bool tabSelected;
 
   TerminalPreferences copyWith({
     String? shell,
@@ -59,6 +73,9 @@ class TerminalPreferences extends Equatable {
     int? scrollback,
     int? lines,
     TerminalPlace? place,
+    TerminalHost? host,
+    int? tabIndex,
+    bool? tabSelected,
   }) => TerminalPreferences(
     shell: shell ?? this.shell,
     fontFamily: fontFamily ?? this.fontFamily,
@@ -66,6 +83,9 @@ class TerminalPreferences extends Equatable {
     scrollback: scrollback ?? this.scrollback,
     lines: lines ?? this.lines,
     place: place ?? this.place,
+    host: host ?? this.host,
+    tabIndex: tabIndex ?? this.tabIndex,
+    tabSelected: tabSelected ?? this.tabSelected,
   );
 
   Map<String, Object?> toJson() => {
@@ -75,6 +95,9 @@ class TerminalPreferences extends Equatable {
     'scrollback': scrollback,
     'lines': lines,
     'place': place.name,
+    'host': host.name,
+    'tabIndex': tabIndex,
+    'tabSelected': tabSelected,
   };
 
   /// Tolerant: what is missing or malformed takes its default, numbers are
@@ -104,6 +127,14 @@ class TerminalPreferences extends Equatable {
         defaults.lines,
       ).round().clamp(minLines, maxLines),
       place: TerminalPlace.values.asNameMap()[json['place']] ?? defaults.place,
+      host: TerminalHost.values.asNameMap()[json['host']] ?? defaults.host,
+      tabIndex: numberOr(
+        json['tabIndex'],
+        defaults.tabIndex,
+      ).round().clamp(-1, 10000),
+      tabSelected: json['tabSelected'] is bool
+          ? json['tabSelected']! as bool
+          : defaults.tabSelected,
     );
   }
 
@@ -115,5 +146,8 @@ class TerminalPreferences extends Equatable {
     scrollback,
     lines,
     place,
+    host,
+    tabIndex,
+    tabSelected,
   ];
 }

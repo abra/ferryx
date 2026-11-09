@@ -40,7 +40,22 @@ extension _WorkspaceActions on _WorkspaceScreenState {
   }
 
   Map<AppCommand, VoidCallback> _globalHandlers(BuildContext context) =>
-      _previewFocus.hasFocus || _previewController.state.fullWindow
+      _terminalScope.hasFocus
+      ? {
+          ..._terminalHandlers(),
+          AppCommand.newTab: () => unawaited(_newFileTab()),
+          AppCommand.closeTab: () => unawaited(_closeCurrentTab()),
+          AppCommand.nextTab: () => _cyclePanelTab(_workspace.state.active, 1),
+          AppCommand.previousTab: () =>
+              _cyclePanelTab(_workspace.state.active, -1),
+          AppCommand.focusLeftPanel: () => _focusPanel(PanelSide.left),
+          AppCommand.focusRightPanel: () => _focusPanel(PanelSide.right),
+          AppCommand.openSettings: () =>
+              unawaited(widget.navigation.openSettings(context)),
+          AppCommand.cheatSheet: () =>
+              unawaited(widget.navigation.openCheatSheet(context)),
+        }
+      : _previewFocus.hasFocus || _previewController.state.fullWindow
       ? {
           AppCommand.preview: _closePreview,
           AppCommand.internalViewer: _togglePreviewWindow,
@@ -60,12 +75,12 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     AppCommand.newFolderWithSelection: () =>
         unawaited(_newFolderWithSelection()),
     AppCommand.newFile: () => unawaited(_newItem(folder: false)),
-    AppCommand.newTab: () => unawaited(_active.newTab()),
-    AppCommand.closeTab: () => unawaited(_active.closeTab()),
+    AppCommand.newTab: () => unawaited(_newFileTab()),
+    AppCommand.closeTab: () => unawaited(_closeCurrentTab()),
     AppCommand.closeOtherTabs: () => unawaited(_active.closeOtherTabs()),
     AppCommand.reopenClosedTab: () => unawaited(_active.reopenClosedTab()),
-    AppCommand.nextTab: _active.nextTab,
-    AppCommand.previousTab: _active.previousTab,
+    AppCommand.nextTab: () => _cyclePanelTab(_workspace.state.active, 1),
+    AppCommand.previousTab: () => _cyclePanelTab(_workspace.state.active, -1),
     AppCommand.toggleTabBar: () => unawaited(
       widget.preferences.update(
         (p) => p.copyWith(showTabBarAlways: !p.showTabBarAlways),
@@ -762,20 +777,39 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     final picked = await showAppMenu<AppCommand>(
       context: context,
       anchor: anchor,
-      entries: panelMenuEntries(
-        context,
-        showHidden: _prefs.showHiddenFiles,
-        singlePane: _workspace.state.singlePane,
-        stacked: _panelsStacked(_prefs, MediaQuery.sizeOf(context)),
-        native: tab?.location.isNative ?? false,
-        map: widget.shortcutMap,
-        journal: widget.operations.currentJournal,
-        flat: tab?.isFlat ?? false,
-        remote: tab?.location.isRemote ?? false,
-        isFavorite: _isFavoriteLocation,
-        canGoBack: tab?.canGoBack ?? false,
-        canGoForward: tab?.canGoForward ?? false,
-      ),
+      entries: [
+        ...panelMenuEntries(
+          context,
+          showHidden: _prefs.showHiddenFiles,
+          singlePane: _workspace.state.singlePane,
+          stacked: _panelsStacked(_prefs, MediaQuery.sizeOf(context)),
+          native: tab?.location.isNative ?? false,
+          map: widget.shortcutMap,
+          journal: widget.operations.currentJournal,
+          flat: tab?.isFlat ?? false,
+          remote: tab?.location.isRemote ?? false,
+          isFavorite: _isFavoriteLocation,
+          canGoBack: tab?.canGoBack ?? false,
+          canGoForward: tab?.canGoForward ?? false,
+        ),
+        if (_terminal != null) ...[
+          const AppMenuSeparator(),
+          AppMenuAction(
+            value: AppCommand.showTerminal,
+            label: _l10n.cmdShowTerminal,
+            icon: AppIcons.terminal,
+            shortcut: widget.shortcutMap.labelOf(
+              AppCommand.showTerminal,
+              Theme.of(context).platform,
+            ),
+          ),
+          AppMenuAction(
+            value: AppCommand.terminalAsTab,
+            label: _l10n.cmdTerminalAsTab,
+            icon: AppIcons.terminalTab,
+          ),
+        ],
+      ],
     );
     if (picked == null || !mounted) return;
     _globalHandlers(context)[picked]?.call();

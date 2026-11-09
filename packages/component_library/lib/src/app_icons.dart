@@ -207,6 +207,8 @@ abstract final class AppIcons {
 
   // ─── Terminal ───
   static const IconData terminalHide = LucideIcons.panelBottomClose;
+  static const IconData terminalTab = LucideIcons.squareTerminal;
+  static const IconData terminalDock = LucideIcons.panelBottomOpen;
   static const IconData panelsHide = LucideIcons.panelTopClose;
   static const IconData panelsShow = LucideIcons.panelTopOpen;
   static const IconData clear = LucideIcons.eraser;

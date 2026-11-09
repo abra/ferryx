@@ -4084,4 +4084,19 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String syncConfirmUndoDeleted(String key) {
     return '$key undoes it: the copies go to the Trash and what went there comes back.';
   }
+
+  @override
+  String get cmdTerminalInLeftPanel => 'Move Terminal to Left Panel';
+
+  @override
+  String get cmdTerminalInRightPanel => 'Move Terminal to Right Panel';
+
+  @override
+  String get cmdTerminalAsTab => 'Move Terminal to Tab';
+
+  @override
+  String get cmdTerminalBelowFiles => 'Dock Terminal Below Files';
+
+  @override
+  String get cmdTerminalAcrossPanels => 'Dock Terminal Across Panels';
 }

@@ -651,6 +651,11 @@ const _defaults = <AppCommand, List<Chord>>{
   AppCommand.toggleTerminal: [
     Chord(LogicalKeyboardKey.keyO, primary: true, alt: true),
   ],
+  AppCommand.terminalInLeftPanel: [],
+  AppCommand.terminalInRightPanel: [],
+  AppCommand.terminalAsTab: [],
+  AppCommand.terminalBelowFiles: [],
+  AppCommand.terminalAcrossPanels: [],
   AppCommand.showTerminal: [
     Chord(LogicalKeyboardKey.backquote, control: true),
     Chord(LogicalKeyboardKey.arrowUp, control: true, alt: true),

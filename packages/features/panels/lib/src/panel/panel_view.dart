@@ -15,6 +15,7 @@ import 'panel_footer.dart';
 import 'panel_header.dart';
 import 'panel_row.dart';
 import 'panel_state.dart';
+import 'panel_terminal.dart';
 import 'rows_brief.dart';
 import 'rows_list.dart';
 import 'vim_command_line.dart';
@@ -103,6 +104,7 @@ class PanelView extends StatefulWidget {
     this.registerNote,
     this.windowDecor = WindowDecor.none,
     this.cursorRowKey,
+    this.terminal,
     super.key,
   });
 
@@ -129,6 +131,7 @@ class PanelView extends StatefulWidget {
   /// Set on the cursor's row while it is in view, so the window can open
   /// a menu by it (the menu key, Open With).
   final GlobalKey? cursorRowKey;
+  final PanelTerminal? terminal;
 
   @override
   State<PanelView> createState() => _PanelViewState();
@@ -313,9 +316,61 @@ class _PanelViewState extends State<PanelView> {
   /// `{count}gt` shows tab `count`.
   void _nextTab() {
     if (widget.vimMode && _vim.hasCount) {
-      _cubit.showTab(_vim.takeCount() - 1);
+      _selectTab(_vim.takeCount() - 1);
+    } else if (widget.terminal case final terminal? when terminal.asTab) {
+      terminal.onCycleTab(1);
     } else {
       _cubit.nextTab();
+    }
+  }
+
+  int _terminalIndex(PanelState state) =>
+      widget.terminal!.tabIndex.clamp(0, state.tabs.length);
+
+  int _fileTabIndex(int index, PanelState state) =>
+      widget.terminal?.asTab == true && index > _terminalIndex(state)
+      ? index - 1
+      : index;
+
+  void _selectTab(int index) {
+    final terminal = widget.terminal;
+    if (terminal != null && terminal.asTab) {
+      terminal.onSelectTab(index);
+    } else {
+      _cubit.showTab(index);
+    }
+  }
+
+  void _closeTab(int index, PanelState state) {
+    final terminal = widget.terminal;
+    if (terminal?.asTab == true && index == _terminalIndex(state)) {
+      terminal!.onClose();
+    } else {
+      unawaited(_cubit.closeTab(_fileTabIndex(index, state)));
+    }
+  }
+
+  void _moveTab(int from, int to, PanelState state) {
+    final terminal = widget.terminal;
+    if (terminal == null || !terminal.asTab) {
+      _cubit.moveTab(from, to);
+      return;
+    }
+    final order = <int?>[for (var i = 0; i < state.tabs.length; i++) i]
+      ..insert(_terminalIndex(state), null);
+    final moved = order.removeAt(from);
+    order.insert(to, moved);
+    terminal.onReorder(order.indexOf(null));
+    if (moved != null) {
+      _cubit.moveTab(moved, order.whereType<int>().toList().indexOf(moved));
+    }
+  }
+
+  void _tabMenu(int index, Rect anchor, PanelState state) {
+    if (widget.terminal?.asTab == true && index == _terminalIndex(state)) {
+      widget.terminal!.onMenu(anchor);
+    } else {
+      unawaited(_tabsMenu(anchor, state, _fileTabIndex(index, state)));
     }
   }
 
@@ -731,7 +786,9 @@ class _PanelViewState extends State<PanelView> {
       final l10n = context.l10n;
       if (tab == null) return const SizedBox.shrink();
       final layout = _layoutOf(tab);
-      final showTabs = widget.showTabBarAlways || state.tabs.length > 1;
+      final terminalTab = widget.terminal?.asTab ?? false;
+      final showTabs =
+          widget.showTabBarAlways || state.tabs.length > 1 || terminalTab;
       final callbacks = RowCallbacks(
         onTapDown: _onTapDown,
         onDoubleTap: _onDoubleTap,
@@ -748,13 +805,20 @@ class _PanelViewState extends State<PanelView> {
         behavior: HitTestBehavior.translucent,
         onTapDown: (_) {
           widget.hooks.onActivate();
-          if (!widget.focusNode.hasFocus && !_commandLine) {
+          if (!widget.focusNode.hasFocus &&
+              !_commandLine &&
+              widget.terminal?.focusScope.hasFocus != true) {
             widget.focusNode.requestFocus();
           }
         },
         child: AppFocusArea(
           child: CommandHandlers(
-            handlers: _handlers(),
+            handlers: widget.terminal?.focusScope.hasFocus == true
+                ? {
+                    AppCommand.commandPalette: () =>
+                        unawaited(_openCommandPalette()),
+                  }
+                : _handlers(),
             child: Focus(
               focusNode: widget.focusNode,
               onKeyEvent: _onKey,
@@ -786,21 +850,46 @@ class _PanelViewState extends State<PanelView> {
                   if (showTabs)
                     AppTabStrip(
                       tabs: [
-                        for (final t in state.tabs)
-                          AppTab(
-                            id: t.id,
-                            label: t.location.name,
-                            tooltip: t.location.display,
-                            icon: _tabIcon(t.location),
-                          ),
+                        for (var i = 0; i <= state.tabs.length; i++) ...[
+                          if (terminalTab && i == _terminalIndex(state))
+                            AppTab(
+                              id: 'terminal',
+                              label: l10n.terminalTitle,
+                              icon: AppIcons.terminal,
+                              tooltip: l10n.terminalTitle,
+                            ),
+                          if (i < state.tabs.length)
+                            AppTab(
+                              id: state.tabs[i].id,
+                              label: state.tabs[i].location.name,
+                              tooltip: state.tabs[i].location.display,
+                              icon: _tabIcon(state.tabs[i].location),
+                            ),
+                        ],
                       ],
-                      active: state.activeIndex,
-                      onSelect: _cubit.showTab,
-                      onClose: (index) => unawaited(_cubit.closeTab(index)),
-                      onReorder: _cubit.moveTab,
-                      onMenu: (index, anchor) =>
-                          unawaited(_tabsMenu(anchor, state, index)),
-                      onNewTab: () => unawaited(_cubit.newTab()),
+                      active: terminalTab && widget.terminal!.selected
+                          ? _terminalIndex(state)
+                          : state.activeIndex +
+                                (terminalTab &&
+                                        state.activeIndex >=
+                                            _terminalIndex(state)
+                                    ? 1
+                                    : 0),
+                      onSelect: _selectTab,
+                      onClose: (index) => _closeTab(index, state),
+                      onReorder: (from, to) => _moveTab(from, to, state),
+                      onMenu: (index, anchor) => _tabMenu(index, anchor, state),
+                      onNewTab: () {
+                        if (terminalTab) {
+                          widget.terminal!.onSelectTab(
+                            state.activeIndex +
+                                (state.activeIndex >= _terminalIndex(state)
+                                    ? 1
+                                    : 0),
+                          );
+                        }
+                        unawaited(_cubit.newTab());
+                      },
                       closeTooltip: l10n.tabClose,
                       newTabTooltip: l10n.tabNew,
                       listTooltip: l10n.tabList,
@@ -813,12 +902,10 @@ class _PanelViewState extends State<PanelView> {
                       wrapTab: (index, item) => Builder(
                         builder: (context) => CommandHandlers(
                           handlers: {
-                            AppCommand.contextMenu: () => unawaited(
-                              _tabsMenu(
-                                keyboardMenuAnchor(context),
-                                state,
-                                index,
-                              ),
+                            AppCommand.contextMenu: () => _tabMenu(
+                              index,
+                              keyboardMenuAnchor(context),
+                              state,
                             ),
                           },
                           child: item,
@@ -826,70 +913,86 @@ class _PanelViewState extends State<PanelView> {
                       ),
                       onLeave: widget.focusNode.requestFocus,
                     ),
-                  // The rows on the content colour, white or near black,
-                  // as a table's in an AppKit window (Finder's list).
                   Expanded(
-                    child: ColoredBox(
-                      color: context.colors.surface,
-                      child: Stack(
+                    child: PanelTerminalBody(
+                      terminal: widget.terminal,
+                      files: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Positioned.fill(
-                            child: PanelDropZone(
-                              hooks: widget.hooks.drag,
-                              folder: tab.location,
-                              child: ValueListenableBuilder<DropSpot?>(
-                                valueListenable:
-                                    widget.hooks.drag?.highlight ?? _noDrop,
-                                builder: (context, spot, _) =>
-                                    layout.mode == ViewMode.list
-                                    ? RowsList(
-                                        tab: tab,
-                                        layout: layout,
-                                        active: widget.active,
-                                        callbacks: callbacks,
-                                        rename: rename,
-                                        cursorKey: widget.cursorRowKey,
-                                        dropRow: spot?.row,
-                                        onSort: (field) => unawaited(
-                                          _cubit.toggleSortField(field),
-                                        ),
-                                        onGeometry: (g) => _cubit.geometry = g,
-                                      )
-                                    : RowsBrief(
-                                        tab: tab,
-                                        layout: layout,
-                                        active: widget.active,
-                                        callbacks: callbacks,
-                                        rename: rename,
-                                        cursorKey: widget.cursorRowKey,
-                                        dropRow: spot?.row,
-                                        onSort: (field) => unawaited(
-                                          _cubit.toggleSortField(field),
-                                        ),
-                                        onGeometry: (g) => _cubit.geometry = g,
+                          // The rows on the content colour, white or near black,
+                          // as a table's in an AppKit window (Finder's list).
+                          Expanded(
+                            child: ColoredBox(
+                              color: context.colors.surface,
+                              child: Stack(
+                                children: [
+                                  Positioned.fill(
+                                    child: PanelDropZone(
+                                      hooks: widget.hooks.drag,
+                                      folder: tab.location,
+                                      child: ValueListenableBuilder<DropSpot?>(
+                                        valueListenable:
+                                            widget.hooks.drag?.highlight ??
+                                            _noDrop,
+                                        builder: (context, spot, _) =>
+                                            layout.mode == ViewMode.list
+                                            ? RowsList(
+                                                tab: tab,
+                                                layout: layout,
+                                                active: widget.active,
+                                                callbacks: callbacks,
+                                                rename: rename,
+                                                cursorKey: widget.cursorRowKey,
+                                                dropRow: spot?.row,
+                                                onSort: (field) => unawaited(
+                                                  _cubit.toggleSortField(field),
+                                                ),
+                                                onGeometry: (g) =>
+                                                    _cubit.geometry = g,
+                                              )
+                                            : RowsBrief(
+                                                tab: tab,
+                                                layout: layout,
+                                                active: widget.active,
+                                                callbacks: callbacks,
+                                                rename: rename,
+                                                cursorKey: widget.cursorRowKey,
+                                                dropRow: spot?.row,
+                                                onSort: (field) => unawaited(
+                                                  _cubit.toggleSortField(field),
+                                                ),
+                                                onGeometry: (g) =>
+                                                    _cubit.geometry = g,
+                                              ),
                                       ),
+                                    ),
+                                  ),
+                                  if (tab.loading && tab.listing == null)
+                                    const Positioned.fill(
+                                      child: _LoadingVeil(),
+                                    ),
+                                ],
                               ),
                             ),
                           ),
-                          if (tab.loading && tab.listing == null)
-                            const Positioned.fill(child: _LoadingVeil()),
+                          if (tab.error case final error?)
+                            _ErrorArea(
+                              text: errorStripOf(l10n, tab, error),
+                              onRetry: _retryOf(tab),
+                            ),
+                          PanelFooter(
+                            tab: tab,
+                            active: widget.active,
+                            vim: _vimLine(tab),
+                            shelfNote: widget.registerNote,
+                            onLeaveFlat: () =>
+                                unawaited(_cubit.leaveFlatView()),
+                            serverState: state.serverStateOf(tab),
+                            onReconnect: () => unawaited(_cubit.reconnect()),
+                          ),
                         ],
                       ),
                     ),
-                  ),
-                  if (tab.error case final error?)
-                    _ErrorArea(
-                      text: errorStripOf(l10n, tab, error),
-                      onRetry: _retryOf(tab),
-                    ),
-                  PanelFooter(
-                    tab: tab,
-                    active: widget.active,
-                    vim: _vimLine(tab),
-                    shelfNote: widget.registerNote,
-                    onLeaveFlat: () => unawaited(_cubit.leaveFlatView()),
-                    serverState: state.serverStateOf(tab),
-                    onReconnect: () => unawaited(_cubit.reconnect()),
                   ),
                 ],
               ),

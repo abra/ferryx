@@ -177,7 +177,7 @@ List<PanelHint> _browsingHints(
 /// The keys worth knowing while the terminal has them: where it goes from
 /// here, and its own clear.
 List<PanelHint> terminalHintsFor(TerminalPlace mode) =>
-    mode == TerminalPlace.overlapped
+    (mode == TerminalPlace.overlapped || mode == TerminalPlace.panelTab)
     ? const [
         CommandHint(AppCommand.hideTerminal),
         CommandHint(AppCommand.togglePanelsOverTerminal),

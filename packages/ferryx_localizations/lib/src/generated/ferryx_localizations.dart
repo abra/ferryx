@@ -6715,6 +6715,36 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'{key} undoes it: the copies go to the Trash and what went there comes back.'**
   String syncConfirmUndoDeleted(String key);
+
+  /// No description provided for @cmdTerminalInLeftPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Terminal to Left Panel'**
+  String get cmdTerminalInLeftPanel;
+
+  /// No description provided for @cmdTerminalInRightPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Terminal to Right Panel'**
+  String get cmdTerminalInRightPanel;
+
+  /// No description provided for @cmdTerminalAsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Terminal to Tab'**
+  String get cmdTerminalAsTab;
+
+  /// No description provided for @cmdTerminalBelowFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Dock Terminal Below Files'**
+  String get cmdTerminalBelowFiles;
+
+  /// No description provided for @cmdTerminalAcrossPanels.
+  ///
+  /// In en, this message translates to:
+  /// **'Dock Terminal Across Panels'**
+  String get cmdTerminalAcrossPanels;
 }
 
 class _FerryxLocalizationsDelegate

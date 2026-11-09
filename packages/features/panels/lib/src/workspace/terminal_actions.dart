@@ -10,11 +10,21 @@ extension _TerminalActions on _WorkspaceScreenState {
       TerminalDock(
         mode: saved.place,
         lines: saved.lines,
+        host:
+            saved.place == TerminalPlace.panelTab &&
+                saved.host == TerminalHost.window
+            ? TerminalHost.left
+            : saved.host,
+        tabIndex: saved.tabIndex,
+        tabSelected: saved.tabSelected,
       ),
     );
     final terminal = widget.terminal?.create();
     _terminal = terminal;
     if (terminal == null) return;
+    _terminalScope.addListener(() {
+      if (_terminalScope.hasFocus && mounted) _activate(_terminalSide);
+    });
     // Esc on the edge puts back the height the keys found.
     _terminalEdgeFocus.addListener(() {
       if (_terminalEdgeFocus.hasFocus) _linesBeforeKeys = _dock.state.lines;
@@ -26,7 +36,9 @@ extension _TerminalActions on _WorkspaceScreenState {
       _workspace.stream.listen((_) => _followActiveFolder()),
       // A cd typed in the shell takes the active panel along.
       terminal.shellFolders.listen((folder) {
-        if (mounted) unawaited(_active.open(Location.native(folder)));
+        if (mounted) {
+          unawaited(_cubitOf(_terminalSide).open(Location.native(folder)));
+        }
       }),
     ]);
   }
@@ -40,13 +52,14 @@ extension _TerminalActions on _WorkspaceScreenState {
     unawaited(_terminal?.dispose());
     unawaited(_dock.close());
     _terminalFocus.dispose();
+    _terminalScope.dispose();
     _terminalEdgeFocus.dispose();
   }
 
   /// The active panel's folder on disk; `null` inside an archive or
   /// before it has one.
   String? _activeFolder() {
-    final location = _active.state.active?.location;
+    final location = _cubitOf(_terminalSide).state.active?.location;
     return location != null && location.isNative ? location.path : null;
   }
 
@@ -72,6 +85,7 @@ extension _TerminalActions on _WorkspaceScreenState {
           AppCommand.hideTerminal: _hideTerminal,
           AppCommand.togglePanelsOverTerminal: _togglePanelsOverTerminal,
           AppCommand.toggleTerminal: _toggleTerminalWindow,
+          ..._terminalPlacementHandlers(),
         };
 
   /// ⌃` (Nimble Commander's ⌃⌥↑): reveals the terminal under the panels and
@@ -79,7 +93,7 @@ extension _TerminalActions on _WorkspaceScreenState {
   void _showTerminal() {
     final dock = _dock.state;
     if (dock.mode == TerminalPlace.hidden) {
-      _dock.show();
+      _dock.moveTo(_terminalHost(_workspace.state.active));
     } else if (_terminalFocus.hasFocus &&
         dock.mode == TerminalPlace.overlapped) {
       _dock.setLines(dock.lines + 1, maxLines: _terminalMaxLines());
@@ -92,7 +106,9 @@ extension _TerminalActions on _WorkspaceScreenState {
   void _vimTerminal(String command) {
     final terminal = _terminal;
     if (terminal == null) return;
-    _dock.show();
+    if (!_dock.state.shown) {
+      _dock.moveTo(_terminalHost(_workspace.state.active));
+    }
     _dockChanged(focusTerminal: true);
     if (command.isNotEmpty && !terminal.run(command)) {
       showAppNotice(context, _l10n.terminalBusy);
@@ -125,15 +141,18 @@ extension _TerminalActions on _WorkspaceScreenState {
   void _dockChanged({required bool focusTerminal}) {
     final terminal = _terminal;
     if (terminal == null) return;
-    if (_dock.state.shown) {
+    if (_dock.state.visible) {
       _followed = _activeFolder();
       terminal.show(_followed);
     } else {
       terminal.hide();
     }
-    if (focusTerminal && _dock.state.shown) {
+    if (focusTerminal && _dock.state.visible) {
       // Taken once the view is built, if it is not yet.
       _terminalFocus.requestFocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _dock.state.visible) _terminalFocus.requestFocus();
+      });
     } else {
       _focusOf(_workspace.state.active).requestFocus();
     }
@@ -149,14 +168,157 @@ extension _TerminalActions on _WorkspaceScreenState {
     _dockTimer?.cancel();
     final dock = _dock.state;
     final saved = widget.preferences.current.terminal;
-    if (saved.lines == dock.lines && saved.place == dock.mode) return;
+    if (saved.lines == dock.lines &&
+        saved.place == dock.mode &&
+        saved.host == dock.host &&
+        saved.tabIndex == dock.tabIndex &&
+        saved.tabSelected == dock.tabSelected) {
+      return;
+    }
     unawaited(
       widget.preferences.update(
         (p) => p.copyWith(
-          terminal: p.terminal.copyWith(lines: dock.lines, place: dock.mode),
+          terminal: p.terminal.copyWith(
+            lines: dock.lines,
+            place: dock.mode,
+            host: dock.host,
+            tabIndex: dock.tabIndex,
+            tabSelected: dock.tabSelected,
+          ),
         ),
       ),
     );
+  }
+
+  TerminalHost _terminalHost(PanelSide side) =>
+      side == PanelSide.left ? TerminalHost.left : TerminalHost.right;
+
+  PanelSide get _terminalSide => switch (_dock.state.host) {
+    TerminalHost.window => _workspace.state.active,
+    TerminalHost.left => PanelSide.left,
+    TerminalHost.right => PanelSide.right,
+  };
+
+  Map<AppCommand, VoidCallback> _terminalPlacementHandlers() => {
+    AppCommand.terminalInLeftPanel: () => _moveTerminal(TerminalHost.left),
+    AppCommand.terminalInRightPanel: () => _moveTerminal(TerminalHost.right),
+    AppCommand.terminalAsTab: () => _moveTerminal(
+      _dock.state.host == TerminalHost.window
+          ? _terminalHost(_workspace.state.active)
+          : _dock.state.host,
+      asTab: true,
+    ),
+    AppCommand.terminalBelowFiles: () => _moveTerminal(
+      _dock.state.host == TerminalHost.window
+          ? _terminalHost(_workspace.state.active)
+          : _dock.state.host,
+      asTab: false,
+    ),
+    AppCommand.terminalAcrossPanels: () => _moveTerminal(TerminalHost.window),
+  };
+
+  void _moveTerminal(TerminalHost host, {bool? asTab}) {
+    if (_terminal == null) return;
+    final tab = asTab ?? _dock.state.mode == TerminalPlace.panelTab;
+    _dock.moveTo(host, asTab: tab);
+    if (host != TerminalHost.window) {
+      if (_previewController.state.source?.opposite == _terminalSide) {
+        _closePreview();
+      }
+      _activate(_terminalSide);
+    }
+    _dockChanged(focusTerminal: true);
+  }
+
+  void _selectPanelTab(PanelSide side, int index) {
+    final cubit = _cubitOf(side);
+    final dock = _dock.state;
+    if (dock.mode == TerminalPlace.panelTab &&
+        dock.host == _terminalHost(side)) {
+      final terminalIndex = dock.tabPosition(cubit.state.tabs.length);
+      _dock.selectTab(index == terminalIndex);
+      if (index != terminalIndex) {
+        cubit.showTab(index > terminalIndex ? index - 1 : index);
+      }
+      _activate(side);
+      _dockChanged(focusTerminal: index == terminalIndex);
+    } else {
+      cubit.showTab(index);
+    }
+  }
+
+  void _cyclePanelTab(PanelSide side, int delta) {
+    final cubit = _cubitOf(side);
+    final dock = _dock.state;
+    if (dock.mode != TerminalPlace.panelTab ||
+        dock.host != _terminalHost(side)) {
+      if (delta > 0) {
+        cubit.nextTab();
+      } else {
+        cubit.previousTab();
+      }
+      return;
+    }
+    final terminalIndex = dock.tabPosition(cubit.state.tabs.length);
+    final current = dock.tabSelected
+        ? terminalIndex
+        : cubit.state.activeIndex +
+              (cubit.state.activeIndex >= terminalIndex ? 1 : 0);
+    _selectPanelTab(side, (current + delta) % (cubit.state.tabs.length + 1));
+  }
+
+  Future<void> _newFileTab() async {
+    if (_dock.state.mode == TerminalPlace.panelTab &&
+        _dock.state.host == _terminalHost(_workspace.state.active)) {
+      _dock.selectTab(false);
+      _dockChanged(focusTerminal: false);
+    }
+    await _active.newTab();
+    _focusOf(_workspace.state.active).requestFocus();
+  }
+
+  Future<void> _closeCurrentTab() async {
+    if (_terminalScope.hasFocus ||
+        _dock.state.mode == TerminalPlace.panelTab &&
+            _dock.state.tabSelected &&
+            _dock.state.host == _terminalHost(_workspace.state.active)) {
+      _hideTerminal();
+    } else {
+      await _active.closeTab();
+    }
+  }
+
+  Future<void> _terminalTabMenu(Rect anchor) async {
+    final actions = _terminalPlacementHandlers();
+    final picked = await showAppMenu<AppCommand>(
+      context: context,
+      anchor: anchor,
+      entries: [
+        for (final command in [
+          AppCommand.terminalBelowFiles,
+          AppCommand.terminalInLeftPanel,
+          AppCommand.terminalInRightPanel,
+          AppCommand.terminalAcrossPanels,
+        ])
+          AppMenuAction(
+            value: command,
+            label: _l10n.commandLabel(command),
+            icon: AppIcons.terminal,
+          ),
+        const AppMenuSeparator(),
+        AppMenuAction(
+          value: AppCommand.hideTerminal,
+          label: _l10n.tabClose,
+          icon: AppIcons.close,
+        ),
+      ],
+    );
+    if (!mounted || picked == null) return;
+    if (picked == AppCommand.hideTerminal) {
+      _hideTerminal();
+    } else {
+      actions[picked]?.call();
+    }
   }
 
   // ─── Height ───
@@ -187,7 +349,10 @@ extension _TerminalActions on _WorkspaceScreenState {
     final terminal = _terminal!;
     final line = terminal.lineHeight(context);
     final chrome = terminal.chromeHeight(context);
-    final room = area - _panelsMinHeight(context) - chrome;
+    final minimum = _dock.state.inPanel
+        ? 4 * context.metrics.listRowHeight + AppStatusBar.heightOf(context)
+        : _panelsMinHeight(context);
+    final room = area - minimum - chrome;
     final fit = math.max(TerminalDock.minLines, (room / line).floor());
     final lines = math.min(_dock.state.lines, fit);
     return math.min(area, (chrome + lines * line).roundToDouble());

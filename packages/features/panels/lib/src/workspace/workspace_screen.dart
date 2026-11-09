@@ -37,6 +37,7 @@ import '../operations/operations_cards.dart';
 import '../panel/panel_cubit.dart';
 import '../panel/panel_side.dart';
 import '../panel/panel_state.dart';
+import '../panel/panel_terminal.dart';
 import '../panel/panel_view.dart';
 import '../panel/saved_panel.dart';
 import '../path_text.dart';
@@ -287,6 +288,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   WorkspaceTerminalController? _terminal;
   late final TerminalDockCubit _dock;
   final _terminalFocus = FocusNode(debugLabel: 'terminal');
+  final _terminalScope = FocusScopeNode(debugLabel: 'terminal area');
+  final _terminalKey = GlobalKey(debugLabel: 'terminal view');
   final _terminalEdgeFocus = FocusNode(debugLabel: 'terminal edge');
   final _terminalSubscriptions = <StreamSubscription<Object?>>[];
   Timer? _dockTimer;
@@ -328,7 +331,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       // A terminal left over the panels' place keeps the keys.
-      if (_terminal != null && !_dock.state.panelsShown) {
+      if (_terminal != null &&
+          (!_dock.state.panelsShown ||
+              _dock.state.mode == TerminalPlace.panelTab &&
+                  _dock.state.tabSelected)) {
         _terminalFocus.requestFocus();
       } else {
         _focusOf(_workspace.state.active).requestFocus();
@@ -413,7 +419,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       return;
     }
     _activate(side);
-    _focusOf(side).requestFocus();
+    if (_dock.state.host == _terminalHost(side) &&
+        _dock.state.mode == TerminalPlace.panelTab &&
+        _dock.state.tabSelected) {
+      _terminalFocus.requestFocus();
+    } else {
+      _focusOf(side).requestFocus();
+    }
   }
 
   // ─── Persistence ───
@@ -456,7 +468,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         builder: (context, workspace) => BlocBuilder<WorkspacePreviewCubit, WorkspacePreviewState>(
           bloc: _previewController,
           builder: (context, preview) => ListenableBuilder(
-            listenable: _previewFocus,
+            listenable: Listenable.merge([_previewFocus, _terminalScope]),
             builder: (context, _) => BlocBuilder<TerminalDockCubit, TerminalDock>(
               bloc: _dock,
               builder: (context, dock) => PreferenceBuilder<Preferences>(
@@ -484,6 +496,79 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                             onToggleFullWindow: _togglePreviewWindow,
                           ),
                           shortcutMap: widget.shortcutMap,
+                        )
+                      : null;
+                  final terminalView = terminalShown
+                      ? KeyedSubtree(
+                          key: _terminalKey,
+                          child: FocusScope(
+                            node: _terminalScope,
+                            child: terminal.builder(
+                              context,
+                              controller,
+                              WorkspaceTerminalView(
+                                focusNode: _terminalFocus,
+                                panelsHidden:
+                                    dock.mode == TerminalPlace.panelsHidden,
+                                fullWindow:
+                                    dock.mode == TerminalPlace.fullWindow,
+                                decor: widget.windowDecor,
+                                inPanel:
+                                    dock.host != TerminalHost.window &&
+                                    dock.panelsShown,
+                                asTab: dock.mode == TerminalPlace.panelTab,
+                                placementActions: _terminalPlacementHandlers(),
+                                onHide: _hideTerminal,
+                                onTogglePanels: _togglePanelsOverTerminal,
+                                onToggleFullWindow: _toggleTerminalWindow,
+                              ),
+                            ),
+                          ),
+                        )
+                      : null;
+                  final terminalEdge = terminalShown
+                      ? AppSplitter(
+                          focusNode: _terminalEdgeFocus,
+                          axis: Axis.vertical,
+                          line: AppSplitterLine.center,
+                          title: l10n.terminalHeightTitle,
+                          value: l10n.terminalLineCount(
+                            dock.lines,
+                          ),
+                          hints: _terminalEdgeHints(
+                            context,
+                          ),
+                          onAction: _onTerminalEdgeAction,
+                          onDragStart: _onTerminalEdgeDragStart,
+                          onDragUpdate: _onTerminalEdgeDrag,
+                          onDragEnd: _saveDockSoon,
+                        )
+                      : null;
+                  final panelTerminal = terminalShown && dock.inPanel
+                      ? PanelTerminal(
+                          child: terminalView!,
+                          focusScope: _terminalScope,
+                          asTab: dock.mode == TerminalPlace.panelTab,
+                          selected: dock.tabSelected,
+                          tabIndex: dock.tabPosition(
+                            _cubitOf(_terminalSide).state.tabs.length,
+                          ),
+                          heightOf: (context, area) {
+                            _terminalArea = area;
+                            return _terminalHeight(context, area);
+                          },
+                          edge: terminalEdge!,
+                          onSelectTab: (index) =>
+                              _selectPanelTab(_terminalSide, index),
+                          onCycleTab: (delta) =>
+                              _cyclePanelTab(_terminalSide, delta),
+                          onReorder: (index) {
+                            _dock.moveTab(index);
+                            _saveDockSoon();
+                          },
+                          onClose: _hideTerminal,
+                          onMenu: (anchor) =>
+                              unawaited(_terminalTabMenu(anchor)),
                         )
                       : null;
                   return Scaffold(
@@ -561,6 +646,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                                     leftCursor: _leftCursor,
                                                     rightCursor: _rightCursor,
                                                     hooksFor: _hooksFor,
+                                                    terminal: panelTerminal,
+                                                    terminalSide: _terminalSide,
                                                     registerNote: _shelfNote(
                                                       l10n,
                                                       workspace.shelf,
@@ -592,53 +679,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                                 },
                                               ),
                                             ),
-                                            terminal: terminalShown
-                                                ? terminal.builder(
-                                                    context,
-                                                    controller,
-                                                    WorkspaceTerminalView(
-                                                      focusNode: _terminalFocus,
-                                                      panelsHidden:
-                                                          dock.mode ==
-                                                          TerminalPlace
-                                                              .panelsHidden,
-                                                      fullWindow:
-                                                          dock.mode ==
-                                                          TerminalPlace
-                                                              .fullWindow,
-                                                      decor: widget.windowDecor,
-                                                      onHide: _hideTerminal,
-                                                      onTogglePanels:
-                                                          _togglePanelsOverTerminal,
-                                                      onToggleFullWindow:
-                                                          _toggleTerminalWindow,
-                                                    ),
-                                                  )
+                                            terminal:
+                                                terminalShown && !dock.inPanel
+                                                ? terminalView
                                                 : null,
-                                            edge: terminalShown
-                                                ? AppSplitter(
-                                                    focusNode:
-                                                        _terminalEdgeFocus,
-                                                    axis: Axis.vertical,
-                                                    line:
-                                                        AppSplitterLine.center,
-                                                    title: l10n
-                                                        .terminalHeightTitle,
-                                                    value: l10n
-                                                        .terminalLineCount(
-                                                          dock.lines,
-                                                        ),
-                                                    hints: _terminalEdgeHints(
-                                                      context,
-                                                    ),
-                                                    onAction:
-                                                        _onTerminalEdgeAction,
-                                                    onDragStart:
-                                                        _onTerminalEdgeDragStart,
-                                                    onDragUpdate:
-                                                        _onTerminalEdgeDrag,
-                                                    onDragEnd: _saveDockSoon,
-                                                  )
+                                            edge: terminalShown && !dock.inPanel
+                                                ? terminalEdge
                                                 : null,
                                             cards: workspace.operationsShown
                                                 ? ListenableBuilder(
@@ -979,6 +1025,8 @@ class _KeyHintsLine extends StatelessWidget {
 class _Panels extends StatelessWidget {
   const _Panels({
     required this.workspace,
+    this.terminal,
+    this.terminalSide = PanelSide.left,
     required this.stacked,
     required this.prefs,
     required this.cubitOf,
@@ -1007,6 +1055,8 @@ class _Panels extends StatelessWidget {
   static const double splitterLineWidth = 1;
 
   final WorkspaceState workspace;
+  final PanelTerminal? terminal;
+  final PanelSide terminalSide;
 
   /// The left panel above the right one, not beside it.
   final bool stacked;
@@ -1042,6 +1092,7 @@ class _Panels extends StatelessWidget {
       return _SidePanel(
         key: left ? leftPanel : rightPanel,
         side: workspace.active,
+        terminal: terminalSide == workspace.active ? terminal : null,
         leading: true,
         trailing: true,
         cubit: cubitOf(workspace.active),
@@ -1071,6 +1122,7 @@ class _Panels extends StatelessWidget {
                 child: _SidePanel(
                   key: leftPanel,
                   side: PanelSide.left,
+                  terminal: terminalSide == PanelSide.left ? terminal : null,
                   // Above, it has the window's top row to itself.
                   leading: true,
                   trailing: stacked,
@@ -1096,6 +1148,7 @@ class _Panels extends StatelessWidget {
                 child: _SidePanel(
                   key: rightPanel,
                   side: PanelSide.right,
+                  terminal: terminalSide == PanelSide.right ? terminal : null,
                   // Below, its bar is not the window's: no buttons beside
                   // it, and it does not move the window.
                   leading: false,
@@ -1157,6 +1210,7 @@ bool _panelsStacked(Preferences prefs, Size window) =>
 class _SidePanel extends StatelessWidget {
   const _SidePanel({
     required this.side,
+    this.terminal,
     required this.leading,
     required this.trailing,
     required this.cubit,
@@ -1172,6 +1226,7 @@ class _SidePanel extends StatelessWidget {
   });
 
   final PanelSide side;
+  final PanelTerminal? terminal;
 
   /// The panel's bar meets the window's buttons at its start, at its end.
   final bool leading;
@@ -1205,6 +1260,7 @@ class _SidePanel extends StatelessWidget {
       hooks: hooks,
       windowDecor: decor,
       cursorRowKey: cursorKey,
+      terminal: terminal,
     ),
   );
 }

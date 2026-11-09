@@ -4179,4 +4179,19 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String syncConfirmUndoDeleted(String key) {
     return '$key отменит её: копии уйдут в Корзину, а удалённое вернётся из неё.';
   }
+
+  @override
+  String get cmdTerminalInLeftPanel => 'Терминал в левой панели';
+
+  @override
+  String get cmdTerminalInRightPanel => 'Терминал в правой панели';
+
+  @override
+  String get cmdTerminalAsTab => 'Перенести терминал в таб';
+
+  @override
+  String get cmdTerminalBelowFiles => 'Терминал под списком файлов';
+
+  @override
+  String get cmdTerminalAcrossPanels => 'Терминал под обеими панелями';
 }

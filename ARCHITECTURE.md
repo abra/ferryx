@@ -984,8 +984,9 @@ no dimming and gives the focus back before the caller acts.
 
 ### The integrated terminal
 
-Nimble Commander's terminal: the user's shell under the panels, in their
-place, or over the whole window, in step with the active panel's folder.
+The user's shell below one panel's files, in a terminal tab, across both
+panels, in their place, or over the whole window. One session per window
+moves between these placements without replacing the PTY or emulator.
 
 - **Core** (`ferryx_term`). `Session::spawn` resolves the shell (the
   settings' path or a name on `PATH`, checked, else `$SHELL`, the passwd
@@ -1050,31 +1051,44 @@ place, or over the whole window, in step with the active panel's folder.
   matched first. ⌘ chords the window does not bind are swallowed, never
   typed. On Windows and Linux the terminal's places are Ctrl+\` (whole
   window), Ctrl+Shift+↑/↓ and Ctrl+Shift+\`, as Ctrl+Alt is AltGr there.
-- **Folder sync** (`FolderSync`). Panel to shell: when the active panel
-  (or which panel is active) changes and the terminal is on screen, `cd`
+- **Folder sync** (`FolderSync`). A terminal attached to one panel follows
+  that panel; a terminal across the window follows the active panel.
+  Panel to shell: when its panel's folder changes and the terminal is on screen, `cd`
   is typed if the shell waits at its prompt with nothing typed on its line
   (the cubit watches what the user types: Return, ⌃C, ⌃U, ⌃D clear the
   line, a program ending leaves a fresh prompt); a hidden terminal follows
   when it is shown again; a folder inside an archive is never sent. Shell
   to panel: when the shell comes back to its prompt in another folder than
-  at its last prompt, the active panel opens it. While a `cd` the terminal
+  at its last prompt, its hosting panel opens it. While a `cd` the terminal
   typed is under way (until the shell reports it, or two seconds), the
   shell's folders are not sent back, so a panel moving quickly is never
   pulled back; the panel moving while a program runs is not undone when it
   ends. Known limit: a line continued with PS2 counts as clean.
 - **In the window** (`features/panels`). `TerminalDock` keeps the place
-  (`TerminalPlace`: hidden, overlapped, panels hidden, full window) and
-  the height in lines; the workspace lays the panels and the terminal out
-  in one `Stack` (the panels are unmounted while hidden, so hint mode never
+  (`TerminalPlace`: hidden, overlapped, panel tab, panels hidden, full window),
+  the host (`TerminalHost`: window, left, right), tab order/selection and height
+  in lines. `PanelTerminal` is a presentation contract: terminal tabs do not
+  create filesystem listings or alter `PanelCubit`'s file-tab model. The
+  workspace supplies the view through the composition root and uses one
+  `GlobalKey` and `FocusScopeNode` across moves, retaining the view state.
+  `PanelTerminalBody` keeps covered file content or inactive terminal content
+  mounted, offstage and excluded from focus and semantics. File actions are
+  absent from the terminal's command scope; a modal shortcut boundary prevents
+  panel Vim/search handlers from reading shell input. The workspace lays the
+  panels and the terminal out in a `Stack` (the panels are unmounted while hidden, so hint mode never
   labels them), with a vertical `AppSplitter` between them (drag, or ↑ ↓,
   0, Home/End, Return, Esc; the panels keep a header, four rows and the
-  footer). ⌃` (or NC's ⌃⌥↑) shows the terminal and gives it the keys, and
+  footer). ⌃` (or NC's ⌃⌥↑) opens it below the active panel's files and gives it the keys, and
   when it has them, makes it a line taller; ⌃⇧` (or ⌃⌥↓) hides it from
   anywhere and gives the panel the keys (⌃` and ⌃⇧` come first on macOS
   because window managers such as Rectangle take ⌃⌥↑ and ⌃⌥↓); ⌃⌥O hides the panels over it and brings them back; ⌥⌘O
   takes the whole window (no key hints, no operation cards) and goes back
-  where it was. The place and the height are saved (debounced) and
-  restored. The key hint strip shows the terminal's keys while it has
+  where it was. The terminal bar's move button switches bottom/tab; its
+  actions and tab context menu also move it to either panel or across the
+  window. The Terminal tab has its own icon, reorders with file tabs and shares
+  tab cycling, including Vim's `gt` / `gT` from the file list. Closing it hides
+  the live session. The place, host, tab order/selection and height are saved
+  (debounced) and restored; old preference files retain their window-wide host. The key hint strip shows the terminal's keys while it has
   them. Vim's `:term [command]` shows it and types the command at a clean
   prompt.
 
