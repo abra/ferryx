@@ -198,7 +198,12 @@ void main() {
         'F7',
       );
       expect(map.labelOf(AppCommand.deleteItems, TargetPlatform.macOS), 'F8');
-      expect(map.labelOf(AppCommand.compress, TargetPlatform.macOS), 'F9');
+      expect(map.labelOf(AppCommand.compress, TargetPlatform.macOS), '⌃⌘C');
+      expect(
+        map.chordsFor(AppCommand.compress),
+        contains(const Chord(LogicalKeyboardKey.f9)),
+      );
+      expect(map.labelOf(AppCommand.extractTo, TargetPlatform.macOS), '⌃⌘E');
       expect(
         map.labelOf(AppCommand.internalViewer, TargetPlatform.macOS),
         'F3',

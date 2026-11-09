@@ -6,6 +6,7 @@
 //! through an [`OpContext`] that checks for cancellation, waits while
 //! paused and reports.
 
+pub mod archivers;
 pub mod checksum;
 pub mod compress;
 mod conflicts;

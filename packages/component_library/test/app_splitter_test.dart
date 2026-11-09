@@ -14,31 +14,35 @@ void main() {
   });
   tearDown(() => node.dispose());
 
-  Future<void> pump(WidgetTester tester) => tester.pumpWidget(
-    MaterialApp(
-      theme: AppTheme.of(AppPlatformStyle.macos, Brightness.light),
-      home: Scaffold(
-        body: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(width: 200),
-            AppSplitter(
-              focusNode: node,
-              title: 'Sidebar width',
-              value: '240 pt',
-              hints: const [
-                AppKeyHint(['←', '→'], 'width'),
+  Future<void> pump(WidgetTester tester, {bool reset = false}) =>
+      tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.of(AppPlatformStyle.macos, Brightness.light),
+          home: Scaffold(
+            body: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(width: 200),
+                AppSplitter(
+                  focusNode: node,
+                  title: 'Sidebar width',
+                  value: '240 pt',
+                  hints: const [
+                    AppKeyHint(['←', '→'], 'width'),
+                  ],
+                  onAction: log.add,
+                  onDragStart: () => log.add('start'),
+                  onDragUpdate: (dx) => log.add(dx),
+                  onDragEnd: () => log.add('end'),
+                  onReset: reset ? () => log.add('reset') : null,
+                  resetLabel: reset ? 'Equal panels' : null,
+                  resetHint: reset ? 'Double-click to reset' : null,
+                ),
               ],
-              onAction: log.add,
-              onDragStart: () => log.add('start'),
-              onDragUpdate: (dx) => log.add(dx),
-              onDragEnd: () => log.add('end'),
             ),
-          ],
+          ),
         ),
-      ),
-    ),
-  );
+      );
 
   double lineOpacity(WidgetTester tester) =>
       tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity;
@@ -124,6 +128,11 @@ void main() {
     await drag.moveBy(const Offset(30, 0));
     await tester.pump(const Duration(milliseconds: 200));
     expect(lineOpacity(tester), 1);
+    expect(
+      find.text('240 pt'),
+      findsOneWidget,
+      reason: 'dragging shows the size without taking keyboard focus',
+    );
     await drag.up();
     await tester.pumpAndSettle();
     expect(log.first, 'start');
@@ -131,6 +140,104 @@ void main() {
     final moved = log.whereType<double>().fold<double>(0, (a, b) => a + b);
     expect(moved, greaterThan(0));
     expect(node.hasFocus, isFalse, reason: 'dragging does not take the keys');
+  });
+
+  testWidgets(
+    'hover shows the value and a reset button that can be reached across the gap',
+    (tester) async {
+      await pump(tester, reset: true);
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.moveTo(
+        tester.getBottomLeft(find.byType(AppSplitter)) + const Offset(2, -20),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      expect(find.text('240 pt'), findsOneWidget);
+      expect(
+        tester.getCenter(find.text('240 pt')).dy,
+        greaterThan(400),
+        reason:
+            'the card stays near the pointer even at the end of the divider',
+      );
+      expect(find.text('Double-click to reset'), findsOneWidget);
+      expect(node.hasFocus, isFalse);
+      await mouse.moveTo(tester.getCenter(find.text('Equal panels')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Equal panels'));
+      expect(log, ['reset']);
+      await mouse.removePointer();
+    },
+  );
+
+  testWidgets(
+    'double-click resets; Tab from the focused edge reaches the reset button',
+    (tester) async {
+      await pump(tester, reset: true);
+      final edge = find.byType(AppSplitter);
+      await tester.tap(edge);
+      await tester.pump(kDoubleTapMinTime);
+      await tester.tap(edge);
+      await tester.pumpAndSettle();
+      expect(log, ['reset']);
+      log.clear();
+      node.requestFocus();
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.space);
+      await tester.pumpAndSettle();
+      expect(log, ['reset']);
+    },
+  );
+
+  testWidgets('the size card stays within a small overlay near the far edge', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(400, 300);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(AppPlatformStyle.macos),
+        home: Scaffold(
+          body: Stack(
+            children: [
+              Positioned(
+                left: 350,
+                top: 0,
+                bottom: 0,
+                child: AppSplitter(
+                  focusNode: node,
+                  title: 'Panel sizes',
+                  value: 'Left 80% · Right 20%',
+                  hints: const [],
+                  onAction: log.add,
+                  onDragStart: () {},
+                  onDragUpdate: (_) {},
+                  onDragEnd: () {},
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    node.requestFocus();
+    await tester.pumpAndSettle();
+    final card = tester.getRect(
+      find
+          .ancestor(
+            of: find.text('Panel sizes'),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+    expect(card.left, greaterThanOrEqualTo(0));
+    expect(card.right, lessThanOrEqualTo(400));
+    expect(card.top, greaterThanOrEqualTo(0));
+    expect(card.bottom, lessThanOrEqualTo(300));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('an edge between stacked panes moves with ↑ and ↓, keeps ← '

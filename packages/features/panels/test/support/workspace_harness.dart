@@ -249,6 +249,7 @@ class WorkspaceHarness {
     Map<AppCommand, VoidCallback> commandHandlers = const {},
     WorkspacePreview? preview,
     WorkspaceTerminal? terminal,
+    ArchiverDiscovery? loadArchivers,
     ValueChanged<WorkspaceSnapshot>? onSnapshot,
   }) async {
     tester.view.physicalSize = size;
@@ -293,6 +294,7 @@ class WorkspaceHarness {
           folderSync: _MockFolderSync(),
           preview: preview,
           terminal: terminal,
+          loadArchivers: loadArchivers,
           navigation: WorkspaceNavigation(
             openViewer: (context, location, {preview = false}) async {},
             openFind: (context, root, {required view}) async => null,

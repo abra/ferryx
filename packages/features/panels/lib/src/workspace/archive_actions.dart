@@ -7,6 +7,27 @@ extension _ArchiveActions on _WorkspaceScreenState {
   /// them (names already say for most).
   static const _detectAtMost = 64;
 
+  Future<List<ArchiveTool>> _archiveTools({bool refresh = false}) async {
+    final load = widget.loadArchivers;
+    if (load == null) return const [];
+    try {
+      final prefs = widget.preferences.current.archivers;
+      final tools = await load(prefs.manual, refresh: refresh);
+      return tools
+          .where((t) => !prefs.disabled.contains(t.id))
+          .toList(growable: false);
+    } on FerryxException catch (error) {
+      widget.logger.warn('archiver discovery failed', error: error);
+      return const [];
+    }
+  }
+
+  Future<List<ArchiveTool>> _manageArchivers() async {
+    await (widget.navigation.openArchiverSettings ??
+        widget.navigation.openSettings)(context);
+    return _archiveTools(refresh: true);
+  }
+
   // ─── Extract To ───
 
   /// ⌥F9, `:extract [dir]`: the archives among the targets, each into the
@@ -22,7 +43,8 @@ extension _ArchiveActions on _WorkspaceScreenState {
       await _extractMembers(tab, targets, destination: destination);
       return;
     }
-    final archives = await _archivesAmong(targets);
+    final tools = await _archiveTools();
+    final archives = await _archivesAmong(targets, tools: tools);
     if (!mounted) return;
     if (archives.isEmpty) {
       showAppNotice(context, _l10n.archiveNoArchives);
@@ -46,6 +68,27 @@ extension _ArchiveActions on _WorkspaceScreenState {
           intoFolders: infos.any((i) => i?.wantsFolder ?? true),
           password: null,
           conflicts: ConflictPolicy.ask,
+          engineId: _prefs.archivers.extractTool,
+          archiver: _prefs.archivers.extractTool == builtInArchiverId
+              ? null
+              : tools
+                        .where(
+                          (t) =>
+                              t.id == _prefs.archivers.extractTool &&
+                              archives.every((a) => t.engine.reads(a.path)),
+                        )
+                        .firstOrNull ??
+                    (infos.any((info) => info == null)
+                        ? tools
+                              .where(
+                                (t) =>
+                                    archives.every(
+                                      (a) => t.engine.reads(a.path),
+                                    ) &&
+                                    t.engine.extracts,
+                              )
+                              .firstOrNull
+                        : null),
         );
       }
     }
@@ -55,9 +98,21 @@ extension _ArchiveActions on _WorkspaceScreenState {
       defaultDestination: destination ?? _extractDefault(tab),
       complete: _completeFolder,
       checkPassword: _tryArchivePassword,
+      tools: tools,
+      engineId: _prefs.archivers.extractTool,
+      onManage: widget.loadArchivers == null ? null : _manageArchivers,
     );
     if (choice == null || !mounted) return;
     final chosen = choice;
+    if (_prefs.archivers.extractTool != chosen.engineId) {
+      unawaited(
+        widget.preferences.update(
+          (p) => p.copyWith(
+            archivers: p.archivers.copyWith(extractTool: chosen.engineId),
+          ),
+        ),
+      );
+    }
     await _guarded(() async {
       await widget.operations.start(
         OperationRequest(
@@ -67,6 +122,10 @@ extension _ArchiveActions on _WorkspaceScreenState {
           conflicts: chosen.conflicts,
           password: chosen.password,
           intoFolders: chosen.intoFolders,
+          archiver: chosen.archiver,
+          archiveOptions: _prefs.archivers.optionsFor(
+            chosen.archiver?.id ?? builtInArchiverId,
+          ),
         ),
       );
       _active.clearSelection();
@@ -125,12 +184,16 @@ extension _ArchiveActions on _WorkspaceScreenState {
 
   /// The archives among [targets]: by their names, else (for a few) by
   /// their first bytes.
-  Future<List<FileEntry>> _archivesAmong(List<FileEntry> targets) async {
+  Future<List<FileEntry>> _archivesAmong(
+    List<FileEntry> targets, {
+    List<ArchiveTool> tools = const [],
+  }) async {
     final archives = <FileEntry>[];
     var detected = 0;
     for (final target in targets) {
       if (target.isDir || target.isParent) continue;
-      if (widget.files.isArchive(target.path)) {
+      if (widget.files.isArchive(target.path) ||
+          tools.any((tool) => tool.engine.reads(target.path))) {
         archives.add(target);
       } else if (detected++ < _detectAtMost) {
         try {

@@ -20,6 +20,8 @@ walkdir.workspace = true
 same-file.workspace = true
 cap-std.workspace = true
 zip.workspace = true
+tempfile.workspace = true
+tar.workspace = true
 # Every core for a verified copy's and a big file's BLAKE3 (rayon is in
 # the build already).
 blake3 = { workspace = true, features = ["rayon"] }
@@ -44,3 +46,6 @@ flate2.workspace = true
 tar.workspace = true
 # ─── Network ───
 ferryx_test_servers.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_JobObjects", "Win32_System_Threading"] }

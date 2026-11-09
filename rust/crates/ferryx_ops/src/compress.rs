@@ -53,6 +53,10 @@ pub fn default_archive_name(sources: &[PathBuf]) -> String {
 }
 
 pub fn run(ctx: &OpContext, request: &OpRequest) -> Result<(), Abort> {
+    run_with_level(ctx, request, None)
+}
+
+pub(crate) fn run_with_level(ctx: &OpContext, request: &OpRequest, level: Option<u32>) -> Result<(), Abort> {
     let Some(dest_dir) = request.destination.as_deref() else {
         ctx.record_error(Path::new(""), "no destination".to_string());
         return Err(Abort::Stopped);
@@ -95,7 +99,7 @@ pub fn run(ctx: &OpContext, request: &OpRequest) -> Result<(), Abort> {
         }
     };
     let mut zip = ZipWriter::new(BufWriter::with_capacity(BUFFER, file));
-    let outcome = write_all(ctx, &mut zip, &files, request.options.password.as_deref());
+    let outcome = write_all(ctx, &mut zip, &files, request.options.password.as_deref(), level);
     match outcome {
         Ok(()) => match zip
             .finish()
@@ -125,6 +129,7 @@ fn write_all(
     zip: &mut ZipWriter<BufWriter<File>>,
     files: &[(PathBuf, String, bool)],
     password: Option<&str>,
+    level: Option<u32>,
 ) -> Result<(), Abort> {
     let mut buffer = vec![0u8; BUFFER];
     for (path, relative, is_dir) in files {
@@ -137,9 +142,12 @@ fn write_all(
                 continue;
             }
         };
-        let mut options = SimpleFileOptions::default()
-            .compression_method(method_for(path))
-            .large_file(meta.len() >= u32::MAX as u64);
+        let method = if level == Some(0) { CompressionMethod::Stored } else { method_for(path) };
+        let mut options =
+            SimpleFileOptions::default().compression_method(method).large_file(meta.len() >= u32::MAX as u64);
+        if method == CompressionMethod::Deflated {
+            options = options.compression_level(level.map(i64::from));
+        }
         if let Some(mode) = unix_mode(&meta) {
             options = options.unix_permissions(mode);
         }

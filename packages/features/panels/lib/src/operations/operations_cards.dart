@@ -192,7 +192,10 @@ class _OperationCard extends StatelessWidget {
             ),
             if (!finished) ...[
               const SizedBox(height: AppSpacing.sm),
-              AppProgressBar(value: waiting ? 0 : (progress.fraction ?? 0)),
+              AppProgressBar(
+                value: waiting ? 0 : progress.fraction,
+                animate: !paused,
+              ),
             ],
             if (detail != null) ...[
               const SizedBox(height: AppSpacing.xs),

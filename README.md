@@ -22,7 +22,11 @@ Vim mode is optional and off by default.
   Swap (⌘U) or show the active folder in the other panel (⌥⌘U), or collapse
   to one panel (⇧⌘P). By default the panels sit beside each other in a wide
   window and stack in a tall one; ⌥⌘P changes the arrangement. The edge
-  between them moves by drag or by the keys (⌥⌘\).
+  between them moves by drag or by the keys (⌥⌘\). Hovering or dragging
+  shows both panels' percentages. Double-click the divider, use its Equal
+  panels button or View → Make Panels Equal to restore 50/50; in keyboard
+  resize mode, 0 restores equal panels, Return keeps the size and Esc
+  restores the previous split.
 - **Cursor and selection kept apart**, as orthodox managers have them:
   the arrows move the cursor, ⇧ with them selects, Insert / ⌥Space toggles
   a row, ⌘A / ⌥⌘A / ⌃⌘A select all, none, or invert, ⌘= selects by a mask
@@ -43,7 +47,7 @@ Vim mode is optional and off by default.
   place (⌃F6), new folder (F7, nested paths too), move to Trash (⌘⌫),
   delete dialog (F8, Trash selected by default), permanent-delete dialog
   (⇧F8), duplicate (⌘D), compress to zip with an optional AES-256 password
-  (F9 / ⇧F9), symbolic and hard links.
+  (⌃⌘C / ⌃⇧⌘C on macOS, F9 / ⇧F9 elsewhere), symbolic and hard links.
 - **Batch rename** (⌃M) for local files, with Nimble Commander-style placeholders:
   `[N]` `[E]` `[A]` `[P]` `[G]` with substrings (`[N2-4]`, `[N-5,3]`), dates
   `[d] [Y] [M] [D] [t]…`, counters `[C5+5/2:3]`, case `[U] [L] [F] [n]`, then
@@ -58,13 +62,44 @@ Vim mode is optional and off by default.
   any file whose first bytes say it is one. Encrypted zip, 7z and rar
   archives remember their password for the current app session. Copy out
   of them (F5), open members with their application, or Extract To
-  (⌥F9, `:extract dir`):
+  (⌃⌘E on macOS, ⌥F9 elsewhere; Vim `zx`, `:extract dir` / `:unpack dir`):
   every archive selected into a folder you pick, each into a folder named
   after it by default when it has multiple top-level items, with progress,
   conflict questions and cancellation. Recent archive indexes are cached
   while the files remain unchanged; the first read may require a full pass.
   Editing an extracted copy does not update the archive. Multi-volume RAR
   browsing lists only the first volume's members.
+  **System archivers** are detected automatically: 7-Zip (`7zz`, `7z`,
+  `7za`), tar/bsdtar, ZIP/UnZip, RAR/UnRAR, The Unarchiver (`unar`),
+  zstd, gzip/pigz, bzip2/pbzip2, xz and LZ4,
+  with common package-manager paths checked even after a GUI launch.
+  Settings → Archivers refreshes the list, enables/disables programs and
+  adds named executable paths with a matching command-line adapter.
+  Each program's settings button opens compression level, worker threads,
+  solid mode and additional arguments where supported. Built-in ZIP has
+  its own compression level. Defaults are saved per executable; Reset
+  restores the program's defaults. Additional arguments use one argument
+  per line, without shell quoting; the core accepts supported compression
+  and format switches while keeping operation, input/output and password
+  arguments under its control.
+  Compress offers only formats available from enabled programs: built-in
+  ZIP plus 7z, TAR variants and RAR where an appropriate writer exists.
+  Its format selector updates the name's extension. Automatic selection
+  uses built-in ZIP and the built-in reader for supported archives;
+  other formats select a suitable installed engine. You can override the
+  engine, and format/engine choices are remembered. Both dialogs link to
+  archiver settings. External programs run in the background, with activity
+  indication, cancellation and the usual conflict handling and Undo.
+  Member extraction and archive browsing still use the built-in engine.
+  A dedicated compressor can create a single-file `.gz`, `.bz2`, `.xz`,
+  `.zst` or `.lz4`; folders and multiple files use the corresponding TAR
+  container. Automatic creation prefers dedicated compressors over tar's
+  codec, including pigz/pbzip2 when available. TAR data streams through
+  the compressor without a full intermediate TAR file or archive-sized
+  memory buffer. Source files are preserved.
+  Vim `zc` / `zx` open compression/extraction; `:pack`, `:pack 7z`,
+  `:pack tar.gz`, `:compress` and `:zip` use the compression dialog;
+  `:archivers` opens its settings. Function-key aliases remain on macOS.
 - **Flat view** (⌥⌘B, Vim `zf`, `:flat`): every file under the folder in
   one list, each with its folder beside its name, as Total Commander's
   branch view; sort, select and quick search across the whole tree, with

@@ -1,11 +1,14 @@
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:panels_feature/panels_feature.dart';
 import 'package:panels_feature/src/panel/panel_header.dart';
+import 'package:shortcuts/shortcuts.dart';
+import 'package:ferryx_localizations/ferryx_localizations.dart';
 
 import 'support/workspace_harness.dart';
 
@@ -35,6 +38,97 @@ void main() {
 
   Future<void> turn(WidgetTester tester) =>
       h.press(tester, LogicalKeyboardKey.keyP, meta: true, alt: true);
+
+  for (final vertical in [false, true]) {
+    testWidgets(
+      '${vertical ? 'stacked' : 'side-by-side'}: dragging shows both shares, reset restores equal sizes and persists it',
+      (tester) async {
+        final snapshots = <WorkspaceSnapshot>[];
+        await h.pump(
+          tester,
+          size: vertical ? const Size(800, 1101) : const Size(1101, 800),
+          onSnapshot: snapshots.add,
+        );
+        final en = lookupFerryxLocalizations(const Locale('en'));
+        final before = cubit(tester, 0).state.active!.cursor;
+        final edge = find.byType(AppSplitter);
+        final gesture = await tester.startGesture(
+          tester.getCenter(edge),
+          kind: PointerDeviceKind.mouse,
+        );
+        await gesture.moveBy(
+          vertical ? const Offset(0, 100) : const Offset(100, 0),
+        );
+        await tester.pump();
+        final value = splitter(tester).value;
+        final shares = RegExp(r'(\d+)%')
+            .allMatches(value)
+            .map((m) => int.parse(m[1]!))
+            .toList();
+        expect(shares, hasLength(2));
+        expect(shares.first, greaterThan(50));
+        expect(shares.first + shares.last, 100);
+        expect(find.text(value), findsOneWidget);
+        expect(splitter(tester).focusNode.hasFocus, isFalse);
+        await gesture.up();
+        await gesture.removePointer();
+        await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 450));
+        expect(snapshots.last.splitFraction, greaterThan(0.5));
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        await mouse.addPointer(location: Offset.zero);
+        await mouse.moveTo(tester.getCenter(edge));
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pumpAndSettle();
+        await mouse.moveTo(tester.getCenter(find.text(en.splitterReset)));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(en.splitterReset));
+        await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 450));
+        expect(h.preferences.current.splitFraction, 0.5);
+        expect(snapshots.last.splitFraction, 0.5);
+        final difference = vertical
+            ? panel(tester, 0).height - panel(tester, 1).height
+            : panel(tester, 0).width - panel(tester, 1).width;
+        expect(difference.abs(), lessThanOrEqualTo(1));
+        expect(cubit(tester, 0).state.active!.cursor, before);
+        await mouse.removePointer();
+      },
+    );
+  }
+
+  testWidgets(
+    'the equal-panels command and keyboard zero reset the same split',
+    (tester) async {
+      await h.pump(tester);
+      await h.press(
+        tester,
+        LogicalKeyboardKey.arrowRight,
+        control: true,
+        alt: true,
+      );
+      final target = tester.element(find.byType(PanelView).first);
+      invokeCommand(target, AppCommand.equalizePanels);
+      await tester.pumpAndSettle();
+      expect(h.preferences.current.splitFraction, 0.5);
+      await h.press(
+        tester,
+        LogicalKeyboardKey.arrowRight,
+        control: true,
+        alt: true,
+      );
+      await h.press(
+        tester,
+        LogicalKeyboardKey.backslash,
+        meta: true,
+        alt: true,
+      );
+      await h.press(tester, LogicalKeyboardKey.digit0);
+      expect(splitter(tester).value, contains('50%'));
+      await h.press(tester, LogicalKeyboardKey.enter);
+      expect(splitter(tester).focusNode.hasFocus, isFalse);
+    },
+  );
 
   testWidgets('by the window\'s shape: one above the other in a window '
       'taller than wide, as on a monitor turned upright, side by side in a '

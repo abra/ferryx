@@ -17,6 +17,7 @@ dependencies:
     path: ../monitoring
 
 dev_dependencies:
+  flutter_rust_bridge: 2.13.0
   flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter

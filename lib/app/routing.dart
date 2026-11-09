@@ -96,6 +96,8 @@ GoRouter buildRouter({
                 : SettingsSection.general,
             defaultShell: deps.terminal.defaultShell(),
             loadMonospaceFonts: deps.platformServices.monospaceFontFamilies,
+            loadArchivers: deps.operations.discoverArchivers,
+            validateArchiverOptions: deps.operations.validateArchiverOptions,
             onClose: () => context.pop(),
           ),
         ),
@@ -175,6 +177,7 @@ class _WorkspaceRoute extends StatelessWidget {
               ),
             },
           ),
+          loadArchivers: deps.operations.discoverArchivers,
           terminal: WorkspaceTerminal(
             create: () => TerminalLink(
               service: deps.terminal,
@@ -240,6 +243,8 @@ class _WorkspaceRoute extends StatelessWidget {
               onView: view,
               spotlight: deps.files.capabilities().spotlight,
             ),
+            openArchiverSettings: (context) =>
+                openSettings(context, SettingsSection.archivers),
             openSettings: (context) => openSettings(context),
             openCheatSheet: (context) => showCheatSheet(
               context,

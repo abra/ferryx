@@ -284,10 +284,12 @@ class _Standard extends StatelessWidget {
             Text(dialog.title, style: titleStyle, textAlign: align),
             if (dialog.body != null) ...[
               const SizedBox(height: AppSpacing.sm),
-              DefaultTextStyle.merge(
-                style: bodyStyle?.copyWith(color: bodyColor),
-                textAlign: align,
-                child: dialog.body!,
+              Flexible(
+                child: DefaultTextStyle.merge(
+                  style: bodyStyle?.copyWith(color: bodyColor),
+                  textAlign: align,
+                  child: dialog.body!,
+                ),
               ),
             ],
             SizedBox(
@@ -378,21 +380,25 @@ class _ContentDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(dialog.title, style: context.text.titleLarge),
-                if (dialog.body != null) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  DefaultTextStyle.merge(
-                    style: context.text.bodyMedium,
-                    child: dialog.body!,
-                  ),
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(dialog.title, style: context.text.titleLarge),
+                  if (dialog.body != null) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    Flexible(
+                      child: DefaultTextStyle.merge(
+                        style: context.text.bodyMedium,
+                        child: dialog.body!,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
           DecoratedBox(

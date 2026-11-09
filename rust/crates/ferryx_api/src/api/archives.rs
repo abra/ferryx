@@ -9,6 +9,96 @@ use ferryx_vfs::VfsErrorKind;
 use crate::api::types::ApiResult;
 use crate::app;
 
+/// One installed command-line engine; adapters are fixed, never shell templates.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ArchiverView {
+    pub name: String,
+    pub path: String,
+    pub engine: String,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ArchiverOptionsView {
+    pub level: Option<u32>,
+    pub threads: Option<u32>,
+    pub solid: Option<bool>,
+    pub arguments: Vec<String>,
+}
+
+impl ArchiverOptionsView {
+    fn to_ops(&self) -> ferryx_ops::archivers::Options {
+        ferryx_ops::archivers::Options {
+            level: self.level,
+            threads: self.threads,
+            solid: self.solid,
+            arguments: self.arguments.clone(),
+        }
+    }
+}
+
+pub fn validate_archiver_options(engine: Option<String>, options: ArchiverOptionsView) -> ApiResult<()> {
+    let engine = engine
+        .map(|name| {
+            ferryx_ops::archivers::Engine::parse(&name)
+                .ok_or_else(|| ferryx_vfs::VfsError::unsupported("Unknown archiver adapter"))
+        })
+        .transpose()?;
+    options.to_ops().validate(engine).map_err(|error| ferryx_vfs::VfsError::unsupported(&error))?;
+    Ok(())
+}
+
+pub fn start_configured_zip(
+    request: super::types::OpRequestView,
+    options: ArchiverOptionsView,
+) -> ApiResult<i64> {
+    options.to_ops().validate(None).map_err(|error| ferryx_vfs::VfsError::unsupported(&error))?;
+    Ok(ferryx_ops::archivers::start_configured_zip(app::runner(), request.to_ops(), options.to_ops()) as i64)
+}
+
+/// Runs on a bridge worker. Filesystem-only detection also checks common
+/// package-manager locations absent from a macOS GUI launch's PATH.
+pub fn discover_archivers(manual: Vec<ArchiverView>) -> Vec<ArchiverView> {
+    let manual = manual.into_iter().filter_map(tool_from_view).collect();
+    ferryx_ops::archivers::catalog::discover(manual)
+        .into_iter()
+        .map(|tool| ArchiverView {
+            name: tool.name,
+            path: tool.path.to_string_lossy().into_owned(),
+            engine: tool.engine.name().into(),
+        })
+        .collect()
+}
+
+fn tool_from_view(view: ArchiverView) -> Option<ferryx_ops::archivers::Tool> {
+    Some(ferryx_ops::archivers::Tool {
+        name: view.name,
+        path: view.path.into(),
+        engine: ferryx_ops::archivers::Engine::parse(&view.engine)?,
+    })
+}
+
+/// Uses the normal operation stream, cancellation, conflicts and Undo journal.
+pub fn start_external_archive(
+    request: super::types::OpRequestView,
+    tool: ArchiverView,
+    format: String,
+    options: ArchiverOptionsView,
+) -> ApiResult<i64> {
+    let tool =
+        tool_from_view(tool).ok_or_else(|| ferryx_vfs::VfsError::unsupported("Unknown archiver adapter"))?;
+    options
+        .to_ops()
+        .validate(Some(tool.engine))
+        .map_err(|error| ferryx_vfs::VfsError::unsupported(&error))?;
+    Ok(ferryx_ops::archivers::start_with_options(
+        app::runner(),
+        request.to_ops(),
+        tool,
+        format,
+        options.to_ops(),
+    ) as i64)
+}
+
 /// What Extract To needs to know about an archive before it asks.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ArchiveInfoView {

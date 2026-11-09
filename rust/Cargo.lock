@@ -1350,6 +1350,7 @@ dependencies = [
  "tempfile",
  "unicode-normalization",
  "walkdir",
+ "windows-sys 0.61.2",
  "zip",
 ]
 

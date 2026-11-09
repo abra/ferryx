@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
+import 'archivers.dart';
+
 enum OpKind {
   copy,
   move,
@@ -46,6 +48,9 @@ class OperationRequest extends Equatable {
     this.intoFolders = false,
     this.sourceServer,
     this.destinationServer,
+    this.archiver,
+    this.archiveType = ArchiveType.zip,
+    this.archiveOptions = const ArchiverOptions(),
   });
 
   final OpKind kind;
@@ -79,6 +84,9 @@ class OperationRequest extends Equatable {
 
   /// The server [destination] is on; `null` on disk.
   final String? destinationServer;
+  final ArchiveTool? archiver;
+  final ArchiveType archiveType;
+  final ArchiverOptions archiveOptions;
 
   /// A server is on one side or both: the operation goes over the
   /// network (copy, move, delete and folder sizes only; never on the undo
@@ -99,6 +107,9 @@ class OperationRequest extends Equatable {
     intoFolders,
     sourceServer,
     destinationServer,
+    archiver,
+    archiveType,
+    archiveOptions,
   ];
 }
 

@@ -922,7 +922,7 @@ pub(crate) fn single_member_name(archive: &Path) -> String {
 pub fn archive_stem(archive: &Path) -> String {
     let name = archive.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
     let lower = name.to_lowercase();
-    for suffix in [".tar.gz", ".tar.bz2", ".tar.xz", ".tar.zst", ".tar.zstd"] {
+    for suffix in [".tar.gz", ".tar.bz2", ".tar.xz", ".tar.zst", ".tar.zstd", ".tar.lz4"] {
         if lower.ends_with(suffix) && lower.len() > suffix.len() {
             return name[..name.len() - suffix.len()].to_string();
         }

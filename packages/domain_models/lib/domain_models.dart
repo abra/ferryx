@@ -4,6 +4,7 @@
 library;
 
 export 'src/archives.dart';
+export 'src/archivers.dart';
 export 'src/attributes.dart';
 export 'src/checksums.dart';
 export 'src/duplicates.dart';

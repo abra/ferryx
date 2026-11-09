@@ -72,6 +72,7 @@ class WorkspaceNavigation {
     required this.openViewer,
     required this.openFind,
     required this.openSettings,
+    this.openArchiverSettings,
     required this.openCheatSheet,
     required this.openSync,
     required this.openChecksums,
@@ -95,6 +96,7 @@ class WorkspaceNavigation {
   })
   openFind;
   final Future<void> Function(BuildContext context) openSettings;
+  final Future<void> Function(BuildContext context)? openArchiverSettings;
   final Future<void> Function(BuildContext context) openCheatSheet;
 
   // ─── Operations stream ───
@@ -204,6 +206,7 @@ class WorkspaceScreen extends StatefulWidget {
     required this.frecency,
     required this.platformServices,
     this.terminal,
+    this.loadArchivers,
     this.preview,
     required this.folderSync,
     this.capabilities = const Capabilities(),
@@ -241,6 +244,7 @@ class WorkspaceScreen extends StatefulWidget {
   /// The integrated terminal; none without it (the terminal's commands
   /// then do nothing).
   final WorkspaceTerminal? terminal;
+  final ArchiverDiscovery? loadArchivers;
 
   /// The built-in viewer in the opposite pane or over the whole window.
   final WorkspacePreview? preview;
@@ -623,6 +627,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                                   _panelsExtent = stacked
                                                       ? constraints.maxHeight
                                                       : constraints.maxWidth;
+                                                  final firstPercent =
+                                                      (workspace.splitFraction *
+                                                              100)
+                                                          .round();
+                                                  final secondPercent =
+                                                      100 - firstPercent;
                                                   return _Panels(
                                                     workspace: workspace,
                                                     stacked: stacked,
@@ -652,12 +662,15 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                                       l10n,
                                                       workspace.shelf,
                                                     ),
-                                                    splitterValue: l10n
-                                                        .textSizePercent(
-                                                          (workspace.splitFraction *
-                                                                  100)
-                                                              .round(),
-                                                        ),
+                                                    splitterValue: stacked
+                                                        ? l10n.panelSplitStacked(
+                                                            firstPercent,
+                                                            secondPercent,
+                                                          )
+                                                        : l10n.panelSplitSideBySide(
+                                                            firstPercent,
+                                                            secondPercent,
+                                                          ),
                                                     splitterHints:
                                                         _splitterHints(
                                                           context,
@@ -666,14 +679,21 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                                     onSplitterAction:
                                                         _onSplitterAction,
                                                     onSplitterDrag: (delta) {
-                                                      if (_panelsExtent > 0) {
+                                                      if (_panelsExtent >
+                                                          _Panels
+                                                              .splitterLineWidth) {
                                                         _workspace.moveSplit(
-                                                          delta / _panelsExtent,
+                                                          delta /
+                                                              (_panelsExtent -
+                                                                  _Panels
+                                                                      .splitterLineWidth),
                                                         );
                                                       }
                                                     },
                                                     onSplitterDragEnd:
                                                         _scheduleSnapshot,
+                                                    onSplitterReset:
+                                                        _equalizePanels,
                                                     extent: _panelsExtent,
                                                   );
                                                 },
@@ -1048,6 +1068,7 @@ class _Panels extends StatelessWidget {
     required this.onSplitterAction,
     required this.onSplitterDrag,
     required this.onSplitterDragEnd,
+    required this.onSplitterReset,
     required this.extent,
   });
 
@@ -1080,6 +1101,7 @@ class _Panels extends StatelessWidget {
   final ValueChanged<AppSplitterAction> onSplitterAction;
   final ValueChanged<double> onSplitterDrag;
   final VoidCallback onSplitterDragEnd;
+  final VoidCallback onSplitterReset;
 
   /// The room along the line between the panels.
   final double extent;
@@ -1106,7 +1128,8 @@ class _Panels extends StatelessWidget {
         registerNote: registerNote,
       );
     }
-    final first = (extent * workspace.splitFraction).roundToDouble();
+    final first = ((extent - splitterLineWidth) * workspace.splitFraction)
+        .roundToDouble();
     // One Flex either way, so the panels keep their state as it turns.
     return Stack(
       children: [
@@ -1188,6 +1211,9 @@ class _Panels extends StatelessWidget {
             onDragStart: () {},
             onDragUpdate: onSplitterDrag,
             onDragEnd: onSplitterDragEnd,
+            onReset: onSplitterReset,
+            resetLabel: context.l10n.splitterReset,
+            resetHint: context.l10n.splitterResetHint,
             line: AppSplitterLine.center,
           ),
         ),

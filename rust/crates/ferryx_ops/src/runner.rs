@@ -409,6 +409,11 @@ impl OpContext {
         self.cancelled.load(Ordering::SeqCst)
     }
 
+    /// External workers suspend their process before waiting in `check`.
+    pub fn is_paused(&self) -> bool {
+        *self.paused.lock()
+    }
+
     /// Changes the progress; reports it when the last report is old enough.
     pub fn update(&self, f: impl FnOnce(&mut Progress)) {
         let mut reported = self.progress.lock();

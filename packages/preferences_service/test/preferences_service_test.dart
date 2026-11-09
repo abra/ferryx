@@ -43,6 +43,28 @@ void main() {
         viewerFontSize: 15,
         documentFontSize: 19,
         showTabBarAlways: true,
+        archivers: ArchiverPreferences(
+          format: ArchiveType.sevenZip,
+          compressTool: 'sevenZip:/custom/7zz',
+          extractTool: 'builtin',
+          disabled: ['zip:/usr/bin/zip'],
+          options: {
+            'sevenZip:/custom/7zz': ArchiverOptions(
+              level: 7,
+              threads: 4,
+              solid: true,
+              arguments: ['-md=64m'],
+            ),
+            'builtin': ArchiverOptions(level: 0),
+          },
+          manual: [
+            ArchiveTool(
+              name: 'Portable 7-Zip',
+              path: '/custom/7zz',
+              engine: ArchiverEngine.sevenZip,
+            ),
+          ],
+        ),
         vimMode: true,
         vimMarks: {'a': 'native:/tmp'},
         terminal: TerminalPreferences(

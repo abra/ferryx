@@ -431,6 +431,85 @@ tar is a tar, and ⌘↓ (`detect_archive`) opens an archive of any name;
   reader (`archive/iso.rs`): primary and Joliet descriptors, Rock Ridge
   `NM`/`PX`/`SL`, files of several extents.
 
+### System archive engines
+
+`ferryx_ops::archivers` contains a fixed adapter catalog, executable discovery,
+command construction, process supervision and staged archive jobs. The bridge
+exposes `discover_archivers` and `start_external_archive` in `api/archives.rs`.
+`OperationsService` maps the plain models and shares discovery futures for one
+minute; refresh/manual-profile changes invalidate that cache. Detection checks
+absolute PATH entries, Homebrew/MacPorts/system directories, Windows program
+locations and known Keka 7-Zip helpers. It reads metadata without executing
+programs. Manual entries specify a path and a compatible command-line adapter;
+GUI applications without such an executable are not command-line adapters.
+
+`ArchiveTool`, `ArchiverEngine` and `ArchiveType` are domain models.
+`ArchiverPreferences` keeps manual profiles, disabled tool ids and the last
+compression format and compression/extraction engine selections. The detected
+catalog and passwords are not preferences. Settings and workspace receive the
+discovery callback from the composition root; features do not import each
+other or call native bindings. `compress_dialog.dart` and `extract_dialog.dart`
+share `ArchiveEnginePicker`; only installed writers make additional formats
+available. Format changes rewrite the archive suffix. Automatic uses built-in
+ZIP/the built-in reader where available and an installed adapter otherwise.
+Direct `:unpack dir` applies the remembered extraction preference too.
+
+`ArchiverPreferences.options` maps executable ids (or `builtin`) to typed
+`ArchiverOptions`: optional level, thread count, solid mode and a list of
+additional arguments. Unset values retain the program's defaults. The settings
+dialog validates through an injected `OperationsService` callback; Rust validates
+again before starting an operation. Custom arguments are individual argv entries,
+with an engine-specific allowlist in `archivers/options.rs`; shell quoting,
+passwords, input/output selection, operation switches and executable hooks are
+not user arguments. Read-only adapters apply their supported extraction options;
+compression-only options are omitted on extraction. Built-in ZIP uses the same
+options model and a dedicated bridge call for a configured level, retaining its
+existing heuristic of storing already-compressed file types.
+
+Discovery also includes zstd, gzip/pigz, bzip2/pbzip2, xz and LZ4. BSD tar has a
+separate adapter for its compression-level and zstd-thread options. File-manager
+TAR compression prefers dedicated stream compressors when available. One regular
+file may instead use a plain compression stream; other selections use TAR.
+`archivers/streams.rs` connects file handles or a Rust TAR producer/consumer to
+the supervised child through scoped worker threads. It never spools a full TAR
+or buffers an entire archive; TAR packing and unpacking check cancellation
+between chunks. After TAR ends, the consumer drains the decoder so it can verify
+checksums and finish without a broken pipe. Sources are read through handles and
+are never renamed/deleted by a compressor. Publication still goes through the
+ordinary conflict/Undo path only after successful child and pipe completion.
+
+Adapter references: [zstd CLI](https://github.com/facebook/zstd/blob/dev/programs/zstd.1.md),
+[XZ manual](https://tukaani.org/xz/man/xz.1.html),
+[GNU gzip](https://www.gnu.org/software/gzip/manual/html_node/Invoking-gzip.html),
+[pigz manual](https://www.zlib.net/pigz/pigz.pdf),
+[LZ4 CLI](https://github.com/lz4/lz4/blob/dev/programs/lz4.1.md),
+[BSD tar](https://github.com/libarchive/libarchive/blob/master/tar/bsdtar.1).
+
+External jobs use `Runner::start_job` and the normal progress/event stream.
+Commands are argument vectors without a shell, use literal relative source
+operands, close stdin after any password and drain bounded output tails on
+separate threads. The engine writes into a private temporary directory; the
+core publishes the staged results through `copy::run`, preserving conflict
+questions/policies and Undo records. Failed encoding never publishes a partial
+archive; cancellation cleans staging. Unix process groups and Windows kill-on-
+close jobs include helper processes in cancellation. On Unix pause suspends the
+worker group; on Windows publication waits while paused. During opaque external
+work the progress bar is indeterminate instead of claiming a byte percentage;
+known copy progress resumes during publication, with reduced motion respected.
+
+Passwords go to 7-Zip through stdin, never process arguments. Creating uses
+bare `-p`; reading omits it so the password callback reads stdin (bare `-p` on
+read specifies an empty password). ZIP creation with non-ASCII passwords
+switches to the built-in ZIP engine with an inline explanation; 7z passwords
+retain Unicode support. Other external adapters do not expose password entry.
+Existing native member extraction, archive passwords and browsing remain
+independent of the external catalog.
+
+macOS defaults prefer Control-Command-C / Control-Command-E for compression
+and extraction, retaining function-key aliases; other desktops retain F9 /
+Alt-F9. Vim adds `zc` / `zx`, `:pack [format]`, `:compress`, `:zip`, `:unpack
+[dir]` and `:archivers`, sharing the same dialogs and operation path.
+
 ## Bridge (`packages/ferryx_backend`)
 
 Generated code lives in `lib/src/rust/` and is regenerated with
@@ -501,6 +580,18 @@ state and the keys; the edge between them (`AppSplitter`) moves along the
 same axis with the same share; the upper bar keeps clear of the window's
 buttons at both ends, and the lower one is not the window's top row (no
 inset, it does not move the window).
+
+`AppSplitter` shows its value during pointer dragging, after a hover delay
+and while focused; keyboard hints appear in keyboard mode. The panel edge
+labels both shares (left/right or top/bottom), whose rounded percentages
+sum to 100. Its optional reset button is reachable across the hover gap
+and by Tab from the edge. Double-clicking the divider and the global
+`equalizePanels` command share the same reset/persistence path; keyboard
+0 remains a tentative reset until Return commits or Esc restores the
+previous split. The layout excludes the divider's width before dividing
+available room. The card uses `OverlayPortal.overlayChildLayoutBuilder`
+to follow the moving edge and flip/clamp inside the overlay; no pointer
+drag takes focus away from files or the terminal.
 
 ### Neighboring preview
 

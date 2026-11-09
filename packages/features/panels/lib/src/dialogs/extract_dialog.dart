@@ -9,6 +9,7 @@ import 'package:shortcuts/shortcuts.dart';
 
 import '../path_text.dart';
 import 'dialog_support.dart';
+import 'archive_engine_picker.dart';
 import 'path_field.dart';
 
 /// What Extract To answered.
@@ -18,6 +19,8 @@ class ExtractChoice {
     required this.intoFolders,
     required this.password,
     required this.conflicts,
+    this.archiver,
+    this.engineId = '',
   });
 
   /// The folder written into, as typed (`~` not yet expanded).
@@ -26,9 +29,11 @@ class ExtractChoice {
   /// Each archive into a folder named after it.
   final bool intoFolders;
 
-  /// The password the archives open with, already tried on them.
+  /// The password, checked before submission when using the built-in engine.
   final String? password;
   final ConflictPolicy conflicts;
+  final ArchiveTool? archiver;
+  final String engineId;
 }
 
 /// An archive Extract To works on, with what the core says it holds once
@@ -41,7 +46,7 @@ class ExtractSource {
   final Future<ArchiveInfo?>? info;
 }
 
-/// Extract To (⌥F9): where the archives go, whether each gets a folder of
+/// Extract To: where the archives go, whether each gets a folder of
 /// its own, and their password when they ask for one. [members] is the
 /// number of items picked inside an archive (then there is no folder
 /// option); [checkPassword] tries a password on an archive and answers
@@ -54,6 +59,9 @@ Future<ExtractChoice?> showExtractDialog(
   required Future<FerryxException?> Function(String archive, String password)
   checkPassword,
   int? members,
+  List<ArchiveTool> tools = const [],
+  String engineId = '',
+  Future<List<ArchiveTool>> Function()? onManage,
 }) => showWorkspaceDialog<ExtractChoice>(
   context,
   (context) => ExtractDialog(
@@ -62,6 +70,9 @@ Future<ExtractChoice?> showExtractDialog(
     complete: complete,
     checkPassword: checkPassword,
     members: members,
+    tools: tools,
+    engineId: engineId,
+    onManage: onManage,
   ),
 );
 
@@ -72,6 +83,9 @@ class ExtractDialog extends StatefulWidget {
     required this.complete,
     required this.checkPassword,
     this.members,
+    this.tools = const [],
+    this.engineId = '',
+    this.onManage,
     super.key,
   });
 
@@ -81,6 +95,9 @@ class ExtractDialog extends StatefulWidget {
   final Future<FerryxException?> Function(String archive, String password)
   checkPassword;
   final int? members;
+  final List<ArchiveTool> tools;
+  final String engineId;
+  final Future<List<ArchiveTool>> Function()? onManage;
 
   @override
   State<ExtractDialog> createState() => _ExtractDialogState();
@@ -107,6 +124,32 @@ class _ExtractDialogState extends State<ExtractDialog> {
   /// The archive the password last given did not open.
   String? _wrongFor;
   bool _checking = false;
+  late List<ArchiveTool> _tools = widget.tools;
+  late String _engineId = widget.engineId;
+  List<ArchiveTool> get _candidates => !_wholeArchives
+      ? const []
+      : _tools
+            .where(
+              (tool) =>
+                  tool.engine.extracts &&
+                  widget.archives.every((a) => tool.engine.reads(a.path)) &&
+                  (_locked.isEmpty || tool.engine.passwords),
+            )
+            .toList();
+  String get _chosenId =>
+      _engineId == builtInArchiverId ||
+          _candidates.any((t) => t.id == _engineId)
+      ? _engineId
+      : '';
+  ArchiveTool? get _automatic =>
+      _infos.any((info) => info == null) ? _candidates.firstOrNull : null;
+  ArchiveTool? get _tool => _chosenId == builtInArchiverId
+      ? null
+      : toolById(_candidates, _chosenId) ?? _automatic;
+  Future<void> _manage() async {
+    final tools = await widget.onManage!();
+    if (mounted) setState(() => _tools = tools);
+  }
 
   @override
   void initState() {
@@ -139,7 +182,7 @@ class _ExtractDialogState extends State<ExtractDialog> {
   bool get _intoFoldersShown =>
       _intoFolders ??
       (_infos.every((i) => i == null)
-          ? widget.archives.length > 1
+          ? widget.archives.length > 1 || _candidates.isNotEmpty
           : _infos.any((i) => i?.wantsFolder ?? false));
 
   /// The archives that ask for a password.
@@ -153,7 +196,7 @@ class _ExtractDialogState extends State<ExtractDialog> {
     if (destination.isEmpty || _checking) return;
     final locked = _locked;
     final password = _password.text;
-    if (locked.isNotEmpty) {
+    if (locked.isNotEmpty && _tool == null) {
       if (password.isEmpty) {
         _passwordFocus.requestFocus();
         return;
@@ -184,8 +227,10 @@ class _ExtractDialogState extends State<ExtractDialog> {
       ExtractChoice(
         destination: destination,
         intoFolders: _wholeArchives && _intoFoldersShown,
-        password: locked.isEmpty || password.isEmpty ? null : password,
+        password: password.isEmpty ? null : password,
         conflicts: _conflicts,
+        archiver: _tool,
+        engineId: _chosenId,
       ),
     );
   }
@@ -207,64 +252,76 @@ class _ExtractDialogState extends State<ExtractDialog> {
     final wrongFor = _wrongFor;
     return AppDialog(
       title: title,
-      body: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          PathField(
-            label: l10n.destinationLabel,
-            controller: _destination,
-            autofocus: true,
-            complete: widget.complete,
-            hint: l10n.archiveDestinationHint(
-              Chord.keyLabel(LogicalKeyboardKey.tab, platform),
-            ),
-            onSubmitted: (_) => unawaited(_submit()),
-          ),
-          if (_wholeArchives) ...[
-            dialogRowGap,
-            DialogToggle(
-              label: count == 1
-                  ? l10n.archiveIntoFolder(_folderName(widget.archives.first))
-                  : l10n.archiveIntoFolders,
-              value: _intoFoldersShown,
-              onChanged: (v) => setState(() => _intoFolders = v),
-            ),
-          ],
-          if (locked.isNotEmpty) ...[
-            dialogRowGap,
-            DialogField(
-              label: l10n.archivePasswordLabel,
-              controller: _password,
-              focusNode: _passwordFocus,
-              obscure: true,
-              readOnly: _checking,
+      body: AppDialogScrollBody(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (_wholeArchives) ...[
+              ArchiveEnginePicker(
+                tools: _candidates,
+                value: _chosenId,
+                automaticName: _automatic?.name ?? l10n.archiversBuiltin,
+                onChanged: (value) => setState(() => _engineId = value),
+                onManage: widget.onManage == null ? null : () => _manage(),
+              ),
+              dialogRowGap,
+            ],
+            PathField(
+              label: l10n.destinationLabel,
+              controller: _destination,
+              autofocus: true,
+              complete: widget.complete,
+              hint: l10n.archiveDestinationHint(
+                Chord.keyLabel(LogicalKeyboardKey.tab, platform),
+              ),
               onSubmitted: (_) => unawaited(_submit()),
             ),
-            if (wrongFor != null) ...[
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                l10n.archiveWrongPasswordFor(wrongFor),
-                style: context.text.bodySmall?.copyWith(
-                  color: context.appColors.danger,
-                ),
+            if (_wholeArchives) ...[
+              dialogRowGap,
+              DialogToggle(
+                label: count == 1
+                    ? l10n.archiveIntoFolder(_folderName(widget.archives.first))
+                    : l10n.archiveIntoFolders,
+                value: _intoFoldersShown,
+                onChanged: (v) => setState(() => _intoFolders = v),
               ),
             ],
-          ],
-          const SizedBox(height: AppSpacing.sm),
-          DialogChoice<ConflictPolicy>(
-            label: l10n.conflictsLabel,
-            value: _conflicts,
-            items: [
-              (ConflictPolicy.ask, l10n.conflictAsk),
-              (ConflictPolicy.overwrite, l10n.conflictOverwrite),
-              (ConflictPolicy.overwriteOlder, l10n.conflictOverwriteOlder),
-              (ConflictPolicy.skip, l10n.conflictSkip),
-              (ConflictPolicy.keepBoth, l10n.conflictKeepBoth),
+            if (locked.isNotEmpty || _tool?.engine.passwords == true) ...[
+              dialogRowGap,
+              DialogField(
+                label: l10n.archivePasswordLabel,
+                controller: _password,
+                focusNode: _passwordFocus,
+                obscure: true,
+                readOnly: _checking,
+                onSubmitted: (_) => unawaited(_submit()),
+              ),
+              if (wrongFor != null) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  l10n.archiveWrongPasswordFor(wrongFor),
+                  style: context.text.bodySmall?.copyWith(
+                    color: context.appColors.danger,
+                  ),
+                ),
+              ],
             ],
-            onChanged: (v) => setState(() => _conflicts = v),
-          ),
-        ],
+            const SizedBox(height: AppSpacing.sm),
+            DialogChoice<ConflictPolicy>(
+              label: l10n.conflictsLabel,
+              value: _conflicts,
+              items: [
+                (ConflictPolicy.ask, l10n.conflictAsk),
+                (ConflictPolicy.overwrite, l10n.conflictOverwrite),
+                (ConflictPolicy.overwriteOlder, l10n.conflictOverwriteOlder),
+                (ConflictPolicy.skip, l10n.conflictSkip),
+                (ConflictPolicy.keepBoth, l10n.conflictKeepBoth),
+              ],
+              onChanged: (v) => setState(() => _conflicts = v),
+            ),
+          ],
+        ),
       ),
       actions: [
         OutlinedButton(
@@ -296,6 +353,7 @@ String archiveStem(String name) {
     '.tar.xz',
     '.tar.zst',
     '.tar.zstd',
+    '.tar.lz4',
   ]) {
     if (lower.endsWith(suffix) && lower.length > suffix.length) {
       return name.substring(0, name.length - suffix.length);

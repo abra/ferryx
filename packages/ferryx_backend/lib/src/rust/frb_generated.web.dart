@@ -76,6 +76,12 @@ abstract class FerryxRustLibApiImplPlatform
   ArchiveInfoView dco_decode_archive_info_view(dynamic raw);
 
   @protected
+  ArchiverOptionsView dco_decode_archiver_options_view(dynamic raw);
+
+  @protected
+  ArchiverView dco_decode_archiver_view(dynamic raw);
+
+  @protected
   AttributeChangesView dco_decode_attribute_changes_view(dynamic raw);
 
   @protected
@@ -86,6 +92,12 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   bool dco_decode_bool(dynamic raw);
+
+  @protected
+  ArchiverOptionsView dco_decode_box_autoadd_archiver_options_view(dynamic raw);
+
+  @protected
+  ArchiverView dco_decode_box_autoadd_archiver_view(dynamic raw);
 
   @protected
   AttributeChangesView dco_decode_box_autoadd_attribute_changes_view(
@@ -329,6 +341,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   List<AnswerView> dco_decode_list_answer_view(dynamic raw);
+
+  @protected
+  List<ArchiverView> dco_decode_list_archiver_view(dynamic raw);
 
   @protected
   List<ChecksumFileView> dco_decode_list_checksum_file_view(dynamic raw);
@@ -692,6 +707,14 @@ abstract class FerryxRustLibApiImplPlatform
   ArchiveInfoView sse_decode_archive_info_view(SseDeserializer deserializer);
 
   @protected
+  ArchiverOptionsView sse_decode_archiver_options_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ArchiverView sse_decode_archiver_view(SseDeserializer deserializer);
+
+  @protected
   AttributeChangesView sse_decode_attribute_changes_view(
     SseDeserializer deserializer,
   );
@@ -704,6 +727,16 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   bool sse_decode_bool(SseDeserializer deserializer);
+
+  @protected
+  ArchiverOptionsView sse_decode_box_autoadd_archiver_options_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ArchiverView sse_decode_box_autoadd_archiver_view(
+    SseDeserializer deserializer,
+  );
 
   @protected
   AttributeChangesView sse_decode_box_autoadd_attribute_changes_view(
@@ -1027,6 +1060,11 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   List<AnswerView> sse_decode_list_answer_view(SseDeserializer deserializer);
+
+  @protected
+  List<ArchiverView> sse_decode_list_archiver_view(
+    SseDeserializer deserializer,
+  );
 
   @protected
   List<ChecksumFileView> sse_decode_list_checksum_file_view(
@@ -1487,6 +1525,15 @@ abstract class FerryxRustLibApiImplPlatform
   );
 
   @protected
+  void sse_encode_archiver_options_view(
+    ArchiverOptionsView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_archiver_view(ArchiverView self, SseSerializer serializer);
+
+  @protected
   void sse_encode_attribute_changes_view(
     AttributeChangesView self,
     SseSerializer serializer,
@@ -1506,6 +1553,18 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   void sse_encode_bool(bool self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_archiver_options_view(
+    ArchiverOptionsView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_archiver_view(
+    ArchiverView self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_box_autoadd_attribute_changes_view(
@@ -1924,6 +1983,12 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_list_answer_view(
     List<AnswerView> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_archiver_view(
+    List<ArchiverView> self,
     SseSerializer serializer,
   );
 

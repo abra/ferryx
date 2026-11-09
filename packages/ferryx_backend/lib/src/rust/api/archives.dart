@@ -9,8 +9,45 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 import 'types.dart';
 
-// These functions are ignored because they are not marked as `pub`: `format_name`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `eq`, `fmt`
+// These functions are ignored because they are not marked as `pub`: `format_name`, `to_ops`, `tool_from_view`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`
+
+Future<void> validateArchiverOptions({
+  String? engine,
+  required ArchiverOptionsView options,
+}) => FerryxRustLib.instance.api.crateApiArchivesValidateArchiverOptions(
+  engine: engine,
+  options: options,
+);
+
+Future<PlatformInt64> startConfiguredZip({
+  required OpRequestView request,
+  required ArchiverOptionsView options,
+}) => FerryxRustLib.instance.api.crateApiArchivesStartConfiguredZip(
+  request: request,
+  options: options,
+);
+
+/// Runs on a bridge worker. Filesystem-only detection also checks common
+/// package-manager locations absent from a macOS GUI launch's PATH.
+Future<List<ArchiverView>> discoverArchivers({
+  required List<ArchiverView> manual,
+}) => FerryxRustLib.instance.api.crateApiArchivesDiscoverArchivers(
+  manual: manual,
+);
+
+/// Uses the normal operation stream, cancellation, conflicts and Undo journal.
+Future<PlatformInt64> startExternalArchive({
+  required OpRequestView request,
+  required ArchiverView tool,
+  required String format,
+  required ArchiverOptionsView options,
+}) => FerryxRustLib.instance.api.crateApiArchivesStartExternalArchive(
+  request: request,
+  tool: tool,
+  format: format,
+  options: options,
+);
 
 /// What the archive at `path` holds; an encrypted member list answers
 /// `needs_password` rather than an error.
@@ -94,4 +131,60 @@ class ArchiveInfoView {
           encrypted == other.encrypted &&
           needsPassword == other.needsPassword &&
           hasPassword == other.hasPassword;
+}
+
+class ArchiverOptionsView {
+  final int? level;
+  final int? threads;
+  final bool? solid;
+  final List<String> arguments;
+
+  const ArchiverOptionsView({
+    this.level,
+    this.threads,
+    this.solid,
+    required this.arguments,
+  });
+
+  static Future<ArchiverOptionsView> default_() =>
+      FerryxRustLib.instance.api.crateApiArchivesArchiverOptionsViewDefault();
+
+  @override
+  int get hashCode =>
+      level.hashCode ^ threads.hashCode ^ solid.hashCode ^ arguments.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ArchiverOptionsView &&
+          runtimeType == other.runtimeType &&
+          level == other.level &&
+          threads == other.threads &&
+          solid == other.solid &&
+          arguments == other.arguments;
+}
+
+/// One installed command-line engine; adapters are fixed, never shell templates.
+class ArchiverView {
+  final String name;
+  final String path;
+  final String engine;
+
+  const ArchiverView({
+    required this.name,
+    required this.path,
+    required this.engine,
+  });
+
+  @override
+  int get hashCode => name.hashCode ^ path.hashCode ^ engine.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ArchiverView &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          path == other.path &&
+          engine == other.engine;
 }

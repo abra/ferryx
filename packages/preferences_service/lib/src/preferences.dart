@@ -1,3 +1,5 @@
+import 'archiver_preferences.dart';
+
 import 'package:domain_models/domain_models.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
@@ -46,6 +48,7 @@ class Preferences extends Equatable {
     this.vimMode = false,
     this.vimMarks = const {},
     this.terminal = const TerminalPreferences(),
+    this.archivers = const ArchiverPreferences(),
     this.compareOptions = const CompareOptions(),
     this.servers = const [],
   });
@@ -128,6 +131,7 @@ class Preferences extends Equatable {
 
   /// The integrated terminal: its settings and its height under the panels.
   final TerminalPreferences terminal;
+  final ArchiverPreferences archivers;
 
   /// Compare Folders and Synchronize Folders, as last used.
   final CompareOptions compareOptions;
@@ -182,6 +186,7 @@ class Preferences extends Equatable {
     bool? vimMode,
     Map<String, String>? vimMarks,
     TerminalPreferences? terminal,
+    ArchiverPreferences? archivers,
     CompareOptions? compareOptions,
     List<ServerProfile>? servers,
   }) => Preferences(
@@ -223,6 +228,7 @@ class Preferences extends Equatable {
     vimMode: vimMode ?? this.vimMode,
     vimMarks: vimMarks ?? this.vimMarks,
     terminal: terminal ?? this.terminal,
+    archivers: archivers ?? this.archivers,
     compareOptions: compareOptions ?? this.compareOptions,
     servers: servers ?? this.servers,
   );
@@ -264,6 +270,7 @@ class Preferences extends Equatable {
     'vimMode': vimMode,
     'vimMarks': vimMarks,
     'terminal': terminal.toJson(),
+    'archivers': archivers.toJson(),
     'compareOptions': compareOptions.toJson(),
     'servers': [for (final s in servers) s.toJson()],
   };
@@ -390,6 +397,7 @@ class Preferences extends Equatable {
             })
           : defaults.vimMarks,
       terminal: TerminalPreferences.fromJson(json['terminal']),
+      archivers: ArchiverPreferences.fromJson(json['archivers']),
       compareOptions: CompareOptions.fromJson(json['compareOptions']),
       servers: json['servers'] is List
           ? [
@@ -451,6 +459,7 @@ class Preferences extends Equatable {
     vimMode,
     vimMarks,
     terminal,
+    archivers,
     compareOptions,
     servers,
   ];

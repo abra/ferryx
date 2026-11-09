@@ -40,6 +40,70 @@ class OperationsService {
     _progress.add(report);
   }
 
+  Future<List<ArchiveTool>>? _archiverScan;
+  List<ArchiveTool>? _scannedManual;
+  DateTime? _archiverScanTime;
+
+  /// Cached worker-based discovery; concurrent dialogs share a single scan.
+  Future<List<ArchiveTool>> discoverArchivers(
+    List<ArchiveTool> manual, {
+    bool refresh = false,
+  }) {
+    final same =
+        _scannedManual != null &&
+        manual.length == _scannedManual!.length &&
+        List.generate(
+          manual.length,
+          (i) => manual[i] == _scannedManual![i],
+        ).every((same) => same);
+    if (!refresh &&
+        same &&
+        _archiverScan != null &&
+        DateTime.now().difference(_archiverScanTime!) <
+            const Duration(minutes: 1)) {
+      return _archiverScan!;
+    }
+    _scannedManual = List.of(manual);
+    _archiverScanTime = DateTime.now();
+    return _archiverScan = rust.FerryxBackend.guard(() async {
+      final views = await rust.discoverArchivers(
+        manual: [for (final tool in manual) _archiverView(tool)],
+      );
+      return [
+        for (final tool in views)
+          ArchiveTool(
+            name: tool.name,
+            path: tool.path,
+            engine: ArchiverEngine.values.byName(tool.engine),
+          ),
+      ];
+    });
+  }
+
+  rust.ArchiverView _archiverView(ArchiveTool tool) => rust.ArchiverView(
+    name: tool.name,
+    path: tool.path,
+    engine: tool.engine.name,
+  );
+
+  rust.ArchiverOptionsView _optionsView(ArchiverOptions options) =>
+      rust.ArchiverOptionsView(
+        level: options.level,
+        threads: options.threads,
+        solid: options.solid,
+        arguments: options.arguments,
+      );
+
+  Future<void> validateArchiverOptions(
+    ArchiverEngine? engine,
+    ArchiverOptions options,
+  ) => rust.FerryxBackend.guard(
+    () => rust.validateArchiverOptions(
+      engine: engine?.name,
+      options: _optionsView(options),
+    ),
+  );
+
   /// Starts [request]; its progress follows on [progress]. One with a
   /// server on a side ([OperationRequest.crossesNetwork]) goes over the
   /// network: a copy, a move, a delete or folder sizes, never journaled.
@@ -48,6 +112,19 @@ class OperationsService {
         final id = request.crossesNetwork
             ? await rust.startNetworkOperation(
                 request: rust.networkOperationToView(request),
+              )
+            : request.archiver != null
+            ? await rust.startExternalArchive(
+                request: rust.operationRequestToView(request),
+                tool: _archiverView(request.archiver!),
+                format: request.archiveType.extension,
+                options: _optionsView(request.archiveOptions),
+              )
+            : request.kind == OpKind.compress &&
+                  request.archiveOptions != const ArchiverOptions()
+            ? await rust.startConfiguredZip(
+                request: rust.operationRequestToView(request),
+                options: _optionsView(request.archiveOptions),
               )
             : await rust.startOperation(
                 request: rust.operationRequestToView(request),

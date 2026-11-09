@@ -4099,4 +4099,157 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get cmdTerminalAcrossPanels => 'Dock Terminal Across Panels';
+
+  @override
+  String get settingsArchivers => 'Archivers';
+
+  @override
+  String get archiversIntro =>
+      'Installed archivers are detected automatically. Choose a format when compressing; Ferryx selects a suitable engine. You can also choose one explicitly.';
+
+  @override
+  String get archiversDetected => 'Detected programs';
+
+  @override
+  String get archiversManual => 'Added manually';
+
+  @override
+  String get archiversRescan => 'Refresh list';
+
+  @override
+  String get archiversAdd => 'Add archiver…';
+
+  @override
+  String get archiversAddTitle => 'Add archiver';
+
+  @override
+  String get archiversEditTitle => 'Edit archiver';
+
+  @override
+  String get archiversName => 'Name';
+
+  @override
+  String get archiversPath => 'Executable file';
+
+  @override
+  String get archiversAdapter => 'Program type';
+
+  @override
+  String get archiversEmpty =>
+      'No external archivers found. Built-in ZIP creation and archive extraction are always available.';
+
+  @override
+  String get archiversMissing => 'Executable not found or cannot be run.';
+
+  @override
+  String get archiversBuiltin => 'Built-in';
+
+  @override
+  String get archiversAutomatic => 'Automatic';
+
+  @override
+  String get archiversManage => 'Configure archivers…';
+
+  @override
+  String get archiveEngineLabel => 'Archiver';
+
+  @override
+  String get archiveFormatLabel => 'Format';
+
+  @override
+  String get archivePasswordUnavailable =>
+      'Password protection is available with the built-in ZIP engine and 7-Zip.';
+
+  @override
+  String get archiversReadOnly => 'Extraction only';
+
+  @override
+  String get archiversBuiltinNote =>
+      'ZIP creation, encrypted ZIP, and extraction of supported formats. No extra programs required.';
+
+  @override
+  String get archiversManualHint =>
+      'Choose the command-line executable and the matching program type.';
+
+  @override
+  String get archiversBrowse => 'Choose executable…';
+
+  @override
+  String get cmdManageArchivers => 'Configure Archivers…';
+
+  @override
+  String get archiveProgramUnavailable =>
+      'No installed archiver can create this format. Configure archivers in Settings.';
+
+  @override
+  String get archiveZipUnicodeFallback =>
+      'Built-in ZIP is selected to support this password.';
+
+  @override
+  String archiverOptionsTitle(String name) {
+    return '$name options';
+  }
+
+  @override
+  String get archiverOptionsNote =>
+      'These defaults apply when this program is selected for compression or extraction. Program default keeps its normal behavior.';
+
+  @override
+  String get archiverCompressionLevel => 'Compression level';
+
+  @override
+  String get archiverProgramDefault => 'Program default';
+
+  @override
+  String get archiverThreads => 'Worker threads';
+
+  @override
+  String get archiverTarThreadsNote =>
+      'BSD tar uses this thread setting for TAR + zstd.';
+
+  @override
+  String get archiverSolid => 'Solid compression';
+
+  @override
+  String get archiverSolidNote =>
+      'Applies to 7z and RAR. Grouping files can improve compression, while extracting one file may take longer.';
+
+  @override
+  String get archiverEnabled => 'Enabled';
+
+  @override
+  String get archiverDisabled => 'Disabled';
+
+  @override
+  String get archiverArgumentsLabel => 'Additional arguments';
+
+  @override
+  String get archiverArgumentsHint =>
+      'One argument per line, without shell quoting. Compression and format options are supported. Ferryx supplies paths, passwords and the operation itself.';
+
+  @override
+  String get archiverOptionsInvalid =>
+      'Check the level, thread count and arguments. Only supported compression and format options are allowed; input/output paths and operation switches are managed by Ferryx.';
+
+  @override
+  String get archiverCustomized => 'Custom settings';
+
+  @override
+  String get cmdEqualizePanels => 'Make Panels Equal';
+
+  @override
+  String get splitterReset => 'Equal panels';
+
+  @override
+  String get splitterResetHint => 'Double-click the divider to restore 50/50.';
+
+  @override
+  String panelSplitSideBySide(int first, int second) {
+    return 'Left $first% · Right $second%';
+  }
+
+  @override
+  String panelSplitStacked(int first, int second) {
+    return 'Top $first% · Bottom $second%';
+  }
 }

@@ -4194,4 +4194,158 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get cmdTerminalAcrossPanels => 'Терминал под обеими панелями';
+
+  @override
+  String get settingsArchivers => 'Архиваторы';
+
+  @override
+  String get archiversIntro =>
+      'Установленные архиваторы определяются автоматически. При сжатии выберите формат — Ferryx подберёт подходящий архиватор. Его также можно выбрать вручную.';
+
+  @override
+  String get archiversDetected => 'Найденные программы';
+
+  @override
+  String get archiversManual => 'Добавленные вручную';
+
+  @override
+  String get archiversRescan => 'Обновить список';
+
+  @override
+  String get archiversAdd => 'Добавить архиватор…';
+
+  @override
+  String get archiversAddTitle => 'Добавить архиватор';
+
+  @override
+  String get archiversEditTitle => 'Изменить архиватор';
+
+  @override
+  String get archiversName => 'Название';
+
+  @override
+  String get archiversPath => 'Исполняемый файл';
+
+  @override
+  String get archiversAdapter => 'Тип программы';
+
+  @override
+  String get archiversEmpty =>
+      'Внешние архиваторы не найдены. Встроенное создание ZIP и распаковка архивов всегда доступны.';
+
+  @override
+  String get archiversMissing =>
+      'Исполняемый файл не найден или недоступен для запуска.';
+
+  @override
+  String get archiversBuiltin => 'Встроенный';
+
+  @override
+  String get archiversAutomatic => 'Автоматически';
+
+  @override
+  String get archiversManage => 'Настроить архиваторы…';
+
+  @override
+  String get archiveEngineLabel => 'Архиватор';
+
+  @override
+  String get archiveFormatLabel => 'Формат';
+
+  @override
+  String get archivePasswordUnavailable =>
+      'Защита паролем доступна во встроенном ZIP и 7-Zip.';
+
+  @override
+  String get archiversReadOnly => 'Только распаковка';
+
+  @override
+  String get archiversBuiltinNote =>
+      'Создание ZIP, защита ZIP паролем и распаковка поддерживаемых форматов. Дополнительные программы не требуются.';
+
+  @override
+  String get archiversManualHint =>
+      'Выберите консольный исполняемый файл и соответствующий тип программы.';
+
+  @override
+  String get archiversBrowse => 'Выбрать исполняемый файл…';
+
+  @override
+  String get cmdManageArchivers => 'Настроить архиваторы…';
+
+  @override
+  String get archiveProgramUnavailable =>
+      'Не найден архиватор для создания этого формата. Настройте архиваторы в настройках.';
+
+  @override
+  String get archiveZipUnicodeFallback =>
+      'Для этого пароля выбран встроенный ZIP.';
+
+  @override
+  String archiverOptionsTitle(String name) {
+    return 'Параметры $name';
+  }
+
+  @override
+  String get archiverOptionsNote =>
+      'Эти параметры действуют, когда программа выбрана для сжатия или распаковки. Значение по умолчанию сохраняет обычное поведение программы.';
+
+  @override
+  String get archiverCompressionLevel => 'Уровень сжатия';
+
+  @override
+  String get archiverProgramDefault => 'По умолчанию';
+
+  @override
+  String get archiverThreads => 'Рабочие потоки';
+
+  @override
+  String get archiverTarThreadsNote =>
+      'В BSD tar это число потоков применяется к TAR + zstd.';
+
+  @override
+  String get archiverSolid => 'Непрерывное сжатие (solid)';
+
+  @override
+  String get archiverSolidNote =>
+      'Применяется к 7z и RAR. Объединение файлов может улучшить сжатие, но извлечение одного файла может занять больше времени.';
+
+  @override
+  String get archiverEnabled => 'Включено';
+
+  @override
+  String get archiverDisabled => 'Выключено';
+
+  @override
+  String get archiverArgumentsLabel => 'Дополнительные аргументы';
+
+  @override
+  String get archiverArgumentsHint =>
+      'Один аргумент в строке, без кавычек оболочки. Поддерживаются параметры сжатия и формата. Пути, пароли и саму операцию задаёт Ferryx.';
+
+  @override
+  String get archiverOptionsInvalid =>
+      'Проверьте уровень, число потоков и аргументы. Допускаются поддерживаемые параметры сжатия и формата; входные и выходные пути и команды операции задаёт Ferryx.';
+
+  @override
+  String get archiverCustomized => 'Свои параметры';
+
+  @override
+  String get cmdEqualizePanels => 'Сделать панели равными';
+
+  @override
+  String get splitterReset => 'Поровну';
+
+  @override
+  String get splitterResetHint => 'Двойной щелчок по разделителю вернёт 50/50.';
+
+  @override
+  String panelSplitSideBySide(int first, int second) {
+    return 'Слева $first% · Справа $second%';
+  }
+
+  @override
+  String panelSplitStacked(int first, int second) {
+    return 'Сверху $first% · Снизу $second%';
+  }
 }

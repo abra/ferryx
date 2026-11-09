@@ -200,6 +200,7 @@ class _Menus {
       [
         AppCommand.compress,
         AppCommand.extractTo,
+        AppCommand.manageArchivers,
         AppCommand.share,
         AppCommand.fileAttributes,
       ],
@@ -308,6 +309,8 @@ class _Menus {
           AppCommand.toggleSinglePane,
           AppCommand.togglePanelsStacked,
           AppCommand.swapPanels,
+          AppCommand.equalizePanels,
+          AppCommand.resizePanels,
           AppCommand.toggleShelf,
           AppCommand.toggleOperations,
         ]),

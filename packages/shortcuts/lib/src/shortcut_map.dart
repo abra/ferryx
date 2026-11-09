@@ -243,6 +243,8 @@ class ShortcutMap {
     add(AppCommand.sortByAdded, seq(o, LogicalKeyboardKey.keyA));
     add(AppCommand.sortByAccessed, seq(o, LogicalKeyboardKey.keyX));
     add(AppCommand.vimSortReverse, seq(o, LogicalKeyboardKey.keyR));
+    add(AppCommand.compress, seq(z, c));
+    add(AppCommand.extractTo, seq(z, LogicalKeyboardKey.keyX));
     add(AppCommand.toggleHiddenFiles, seq(z, LogicalKeyboardKey.keyH));
     add(AppCommand.refresh, key(LogicalKeyboardKey.keyR, shift: true));
     add(AppCommand.openItem, seq(g, LogicalKeyboardKey.keyX));
@@ -498,6 +500,7 @@ const _defaults = <AppCommand, List<Chord>>{
   AppCommand.resizePanels: [
     Chord(LogicalKeyboardKey.backslash, primary: true, alt: true),
   ],
+  AppCommand.equalizePanels: [],
   AppCommand.refresh: [Chord(LogicalKeyboardKey.keyR, primary: true)],
   AppCommand.toggleOperations: [
     Chord(LogicalKeyboardKey.keyO, primary: true, control: true),
@@ -585,8 +588,15 @@ const _defaults = <AppCommand, List<Chord>>{
   ],
   AppCommand.deleteItems: [Chord(LogicalKeyboardKey.f8)],
   AppCommand.deletePermanently: [Chord(LogicalKeyboardKey.f8, shift: true)],
-  AppCommand.compress: [Chord(LogicalKeyboardKey.f9)],
-  AppCommand.compressTo: [Chord(LogicalKeyboardKey.f9, shift: true)],
+  AppCommand.manageArchivers: [],
+  AppCommand.compress: [
+    Chord(LogicalKeyboardKey.keyC, primary: true, control: true),
+    Chord(LogicalKeyboardKey.f9),
+  ],
+  AppCommand.compressTo: [
+    Chord(LogicalKeyboardKey.keyC, primary: true, control: true, shift: true),
+    Chord(LogicalKeyboardKey.f9, shift: true),
+  ],
   AppCommand.createSymlink: [],
   AppCommand.createHardlink: [],
   AppCommand.editSymlink: [],
@@ -668,7 +678,10 @@ const _defaults = <AppCommand, List<Chord>>{
     Chord(LogicalKeyboardKey.keyO, control: true, alt: true),
   ],
   // ─── Files core ───
-  AppCommand.extractTo: [Chord(LogicalKeyboardKey.f9, alt: true)],
+  AppCommand.extractTo: [
+    Chord(LogicalKeyboardKey.keyE, primary: true, control: true),
+    Chord(LogicalKeyboardKey.f9, alt: true),
+  ],
   AppCommand.toggleFlatView: [
     Chord(LogicalKeyboardKey.keyB, primary: true, alt: true),
   ],
@@ -826,6 +839,9 @@ const _defaults = <AppCommand, List<Chord>>{
 
 /// Chords Windows and Linux desktops press with another key than a Mac.
 const _otherDesktops = <AppCommand, List<Chord>>{
+  AppCommand.compress: [Chord(LogicalKeyboardKey.f9)],
+  AppCommand.compressTo: [Chord(LogicalKeyboardKey.f9, shift: true)],
+  AppCommand.extractTo: [Chord(LogicalKeyboardKey.f9, alt: true)],
   // Explorer, GNOME Files and Dolphin move the selected item to the trash
   // with Del; a Mac keyboard has no such key, so Finder uses ⌘⌫.
   AppCommand.moveToTrash: [Chord(LogicalKeyboardKey.delete)],

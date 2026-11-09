@@ -3,6 +3,62 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  for (final style in AppPlatformStyle.values) {
+    for (final brightness in Brightness.values) {
+      testWidgets(
+        '${style.name} ${brightness.name}: tall forms scroll while actions stay visible',
+        (tester) async {
+          tester.view.physicalSize = const Size(760, 480);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.reset);
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: AppTheme.of(style, brightness),
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: const TextScaler.linear(1.5),
+                ),
+                child: child!,
+              ),
+              home: Scaffold(
+                body: AppDialog(
+                  title: 'Extract the selected archives into a folder',
+                  body: AppDialogScrollBody(
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < 12; i++)
+                          Padding(
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            child: Text('Archive option $i'),
+                          ),
+                      ],
+                    ),
+                  ),
+                  actions: const [
+                    OutlinedButton(onPressed: _noop, child: Text('Cancel')),
+                    FilledButton(onPressed: _noop, child: Text('Extract')),
+                  ],
+                ),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+          final action = tester.getRect(find.byType(FilledButton));
+          expect(action.bottom, lessThanOrEqualTo(480));
+          expect(find.text('Extract').hitTestable(), findsOneWidget);
+          await tester.scrollUntilVisible(
+            find.text('Archive option 11'),
+            100,
+          );
+          expect(find.text('Archive option 11').hitTestable(), findsOneWidget);
+          expect(find.text('Extract').hitTestable(), findsOneWidget);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
+
   testWidgets('dialog actions keep the button foreground colours', (
     tester,
   ) async {

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 
 import 'dialog_support.dart';
 
+export 'compress_dialog.dart';
+
 /// F7: a folder's name, or a nested path of folders.
 Future<String?> showCreateDirectoryDialog(
   BuildContext context, {
@@ -80,33 +82,6 @@ Future<DeleteChoice?> showDeleteDialog(
     trashDefault: trashDefault && trashAvailable,
     trashAvailable: trashAvailable,
     note: note,
-  ),
-);
-
-/// F9: the archive's name, a password, where it goes.
-class CompressChoice {
-  const CompressChoice({
-    required this.name,
-    required this.password,
-    required this.toOpposite,
-  });
-
-  final String name;
-  final String? password;
-  final bool toOpposite;
-}
-
-Future<CompressChoice?> showCompressDialog(
-  BuildContext context, {
-  required List<String> names,
-  required String defaultName,
-  required bool toOpposite,
-}) => showWorkspaceDialog<CompressChoice>(
-  context,
-  (context) => _CompressDialog(
-    names: names,
-    defaultName: defaultName,
-    toOpposite: toOpposite,
   ),
 );
 
@@ -351,105 +326,6 @@ class _DeleteDialog extends StatelessWidget {
       actions: [
         cancel,
         if (trashDefault) ...[permanent, ?trash] else ...[?trash, permanent],
-      ],
-    );
-  }
-}
-
-class _CompressDialog extends StatefulWidget {
-  const _CompressDialog({
-    required this.names,
-    required this.defaultName,
-    required this.toOpposite,
-  });
-
-  final List<String> names;
-  final String defaultName;
-  final bool toOpposite;
-
-  @override
-  State<_CompressDialog> createState() => _CompressDialogState();
-}
-
-class _CompressDialogState extends State<_CompressDialog> {
-  late final TextEditingController _name = TextEditingController(
-    text: widget.defaultName,
-  );
-  final _password = TextEditingController();
-  late bool _toOpposite = widget.toOpposite;
-
-  @override
-  void initState() {
-    super.initState();
-    final dot = widget.defaultName.lastIndexOf('.');
-    _name.selection = TextSelection(
-      baseOffset: 0,
-      extentOffset: dot > 0 ? dot : widget.defaultName.length,
-    );
-  }
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _password.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final name = _name.text.trim();
-    if (name.isEmpty) return;
-    Navigator.of(context).pop(
-      CompressChoice(
-        name: name,
-        password: _password.text.isEmpty ? null : _password.text,
-        toOpposite: _toOpposite,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return AppDialog(
-      title: l10n.compressTitle(widget.names.length, firstName(widget.names)),
-      body: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DialogField(
-            label: l10n.archiveNameLabel,
-            controller: _name,
-            autofocus: true,
-            onSubmitted: (_) => _submit(),
-          ),
-          dialogRowGap,
-          DialogField(
-            label: l10n.passwordLabel,
-            controller: _password,
-            obscure: true,
-            onSubmitted: (_) => _submit(),
-          ),
-          dialogRowGap,
-          AppSegmentedControl<bool>(
-            options: [
-              (false, l10n.compressHere),
-              (true, l10n.compressToOpposite),
-            ],
-            value: _toOpposite,
-            onChanged: (v) => setState(() => _toOpposite = v),
-          ),
-        ],
-      ),
-      actions: [
-        OutlinedButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.actionCancel),
-        ),
-        DialogSubmitButton(
-          label: l10n.actionCompress,
-          controllers: [_name],
-          onPressed: _submit,
-        ),
       ],
     );
   }

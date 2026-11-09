@@ -219,4 +219,9 @@ See `ARCHITECTURE.md`. The rules that matter most:
   goes in `_VimActions._runVimCommand`. A text field inside the panels is
   wrapped in `PanelTextGuard`. Cheat sheet and Hotkeys use `Chord.vimLabel`
   when Vim keys are on.
+- System archivers use `ferryx_ops::archivers` and `Runner::start_job`:
+  fixed CLI adapters, argument vectors, supervised process groups/jobs and
+  staging, then core publication for conflicts and Undo. Never put archive
+  passwords in argv or execute program discovery probes on the UI thread.
+  Settings/workspace get discovery callbacks from the composition root.
 - The user manages commits. Do not run destructive git operations.

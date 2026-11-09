@@ -82,6 +82,7 @@ enum AppCommand {
   panelsMoveLeft(CommandScope.global),
   panelsMoveRight(CommandScope.global),
   resizePanels(CommandScope.global),
+  equalizePanels(CommandScope.global),
   refresh(CommandScope.global),
   toggleOperations(CommandScope.global),
 
@@ -128,6 +129,7 @@ enum AppCommand {
   deleteItems(CommandScope.global),
   deletePermanently(CommandScope.global),
   compress(CommandScope.global),
+  manageArchivers(CommandScope.global),
   compressTo(CommandScope.global),
   createSymlink(CommandScope.global),
   createHardlink(CommandScope.global),

@@ -42,6 +42,7 @@ void main() {
         SettingsSection.hotkeys => en.settingsHotkeys,
         SettingsSection.editors => en.settingsEditors,
         SettingsSection.tools => en.settingsTools,
+        SettingsSection.archivers => en.settingsArchivers,
         SettingsSection.about => en.settingsAbout,
       };
       await tester.tap(find.widgetWithText(AppNavItem, label));

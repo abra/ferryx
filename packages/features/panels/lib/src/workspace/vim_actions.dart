@@ -185,7 +185,18 @@ extension _VimActions on _WorkspaceScreenState {
       case 'dupes' || 'duplicates':
         await _findDuplicates();
       // ─── Files core ───
-      case 'extract':
+      case 'pack' || 'compress' || 'zip':
+        final format = arg.isEmpty
+            ? (name == 'zip' ? ArchiveType.zip : null)
+            : ArchiveType.parse(arg);
+        if (arg.isNotEmpty && format == null) {
+          showAppNotice(context, _l10n.vimUnknownCommand('$name $arg'));
+          return;
+        }
+        await _compress(toOpposite: false, format: format);
+      case 'archivers':
+        await _manageArchivers();
+      case 'extract' || 'unpack':
         await _extractTo(destination: arg.isEmpty ? null : _vimPath(arg));
       case 'flat':
         if (!_onServer()) await _active.toggleFlatView();
@@ -513,6 +524,11 @@ extension _VimActions on _WorkspaceScreenState {
     'undo',
     // ─── Files core ───
     'extract',
+    'unpack',
+    'pack',
+    'compress',
+    'zip',
+    'archivers',
     'flat',
     'tag',
     // ─── Network ───

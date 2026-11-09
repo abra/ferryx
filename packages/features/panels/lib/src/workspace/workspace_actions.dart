@@ -161,6 +161,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     AppCommand.panelsMoveLeft: () => _moveSplit(-0.05),
     AppCommand.panelsMoveRight: () => _moveSplit(0.05),
     AppCommand.resizePanels: _resizeWithKeys,
+    AppCommand.equalizePanels: _equalizePanels,
     AppCommand.refresh: () => unawaited(_active.refresh()),
     AppCommand.toggleOperations: () {
       _workspace.toggleOperations();
@@ -226,6 +227,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     AppCommand.deletePermanently: () =>
         unawaited(_delete(trashDefault: false, ask: true)),
     AppCommand.compress: () => unawaited(_compress(toOpposite: false)),
+    AppCommand.manageArchivers: () => unawaited(_manageArchivers()),
     AppCommand.compressTo: () => unawaited(_compress(toOpposite: true)),
     AppCommand.createSymlink: () => unawaited(_link(LinkDialogKind.symlink)),
     AppCommand.createHardlink: () => unawaited(_link(LinkDialogKind.hardlink)),
@@ -656,6 +658,14 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     _splitterFocus.requestFocus();
   }
 
+  void _equalizePanels() {
+    _workspace.setSplit(0.5);
+    _workspace.setResizing(false);
+    unawaited(widget.preferences.update((p) => p.copyWith(splitFraction: 0.5)));
+    _scheduleSnapshot();
+    _focusOf(_workspace.state.active).requestFocus();
+  }
+
   Future<void> _swapPanels() async {
     final left = _leftSaved();
     final right = _rightSaved();
@@ -1070,12 +1080,26 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         _active.clearSelection();
       });
 
-  Future<void> _compress({required bool toOpposite}) => _guarded(() async {
+  Future<void> _compress({
+    required bool toOpposite,
+    ArchiveType? format,
+  }) => _guarded(() async {
     final tab = _tab;
     final targets = _targetsOrNotice();
     if (tab == null || targets.isEmpty) return;
     final paths = _nativePaths(targets);
     if (paths == null) return;
+    final tools = await _archiveTools();
+    if (!mounted) return;
+    final singleFile =
+        targets.length == 1 && !targets.first.isDir && !targets.first.isSymlink;
+    if (!singleFile) format = format?.container;
+    if (format != null &&
+        format != ArchiveType.zip &&
+        !tools.any((t) => t.engine.creates.contains(format))) {
+      showAppNotice(context, _l10n.archiveProgramUnavailable);
+      return;
+    }
     final defaultName = targets.length == 1
         ? '${targets.first.stem.isEmpty ? targets.first.name : targets.first.stem}.zip'
         : '${tab.location.name}.zip';
@@ -1084,8 +1108,26 @@ extension _WorkspaceActions on _WorkspaceScreenState {
       names: [for (final t in targets) t.name],
       defaultName: defaultName,
       toOpposite: toOpposite,
+      tools: tools,
+      format: format ?? _prefs.archivers.format,
+      engineId: _prefs.archivers.compressTool,
+      singleFile: singleFile,
+      onManage: widget.loadArchivers == null ? null : _manageArchivers,
     );
-    if (choice == null) return;
+    if (choice == null || !mounted) return;
+    if (_prefs.archivers.format != choice.format ||
+        _prefs.archivers.compressTool != choice.engineId) {
+      unawaited(
+        widget.preferences.update(
+          (p) => p.copyWith(
+            archivers: p.archivers.copyWith(
+              format: choice.format,
+              compressTool: choice.engineId,
+            ),
+          ),
+        ),
+      );
+    }
     final oppositeTab = _opposite.state.active;
     final destination =
         choice.toOpposite && oppositeTab?.location.isNative == true
@@ -1098,6 +1140,11 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         destination: destination,
         newName: choice.name,
         password: choice.password,
+        archiver: choice.archiver,
+        archiveType: choice.format,
+        archiveOptions: _prefs.archivers.optionsFor(
+          choice.archiver?.id ?? builtInArchiverId,
+        ),
       ),
     );
     _active.clearSelection();

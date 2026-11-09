@@ -6745,6 +6745,276 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Dock Terminal Across Panels'**
   String get cmdTerminalAcrossPanels;
+
+  /// No description provided for @settingsArchivers.
+  ///
+  /// In en, this message translates to:
+  /// **'Archivers'**
+  String get settingsArchivers;
+
+  /// No description provided for @archiversIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed archivers are detected automatically. Choose a format when compressing; Ferryx selects a suitable engine. You can also choose one explicitly.'**
+  String get archiversIntro;
+
+  /// No description provided for @archiversDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected programs'**
+  String get archiversDetected;
+
+  /// No description provided for @archiversManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Added manually'**
+  String get archiversManual;
+
+  /// No description provided for @archiversRescan.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh list'**
+  String get archiversRescan;
+
+  /// No description provided for @archiversAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add archiver…'**
+  String get archiversAdd;
+
+  /// No description provided for @archiversAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add archiver'**
+  String get archiversAddTitle;
+
+  /// No description provided for @archiversEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit archiver'**
+  String get archiversEditTitle;
+
+  /// No description provided for @archiversName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get archiversName;
+
+  /// No description provided for @archiversPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Executable file'**
+  String get archiversPath;
+
+  /// No description provided for @archiversAdapter.
+  ///
+  /// In en, this message translates to:
+  /// **'Program type'**
+  String get archiversAdapter;
+
+  /// No description provided for @archiversEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No external archivers found. Built-in ZIP creation and archive extraction are always available.'**
+  String get archiversEmpty;
+
+  /// No description provided for @archiversMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Executable not found or cannot be run.'**
+  String get archiversMissing;
+
+  /// No description provided for @archiversBuiltin.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in'**
+  String get archiversBuiltin;
+
+  /// No description provided for @archiversAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get archiversAutomatic;
+
+  /// No description provided for @archiversManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure archivers…'**
+  String get archiversManage;
+
+  /// No description provided for @archiveEngineLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Archiver'**
+  String get archiveEngineLabel;
+
+  /// No description provided for @archiveFormatLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get archiveFormatLabel;
+
+  /// No description provided for @archivePasswordUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Password protection is available with the built-in ZIP engine and 7-Zip.'**
+  String get archivePasswordUnavailable;
+
+  /// No description provided for @archiversReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Extraction only'**
+  String get archiversReadOnly;
+
+  /// No description provided for @archiversBuiltinNote.
+  ///
+  /// In en, this message translates to:
+  /// **'ZIP creation, encrypted ZIP, and extraction of supported formats. No extra programs required.'**
+  String get archiversBuiltinNote;
+
+  /// No description provided for @archiversManualHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the command-line executable and the matching program type.'**
+  String get archiversManualHint;
+
+  /// No description provided for @archiversBrowse.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose executable…'**
+  String get archiversBrowse;
+
+  /// No description provided for @cmdManageArchivers.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure Archivers…'**
+  String get cmdManageArchivers;
+
+  /// No description provided for @archiveProgramUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No installed archiver can create this format. Configure archivers in Settings.'**
+  String get archiveProgramUnavailable;
+
+  /// No description provided for @archiveZipUnicodeFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in ZIP is selected to support this password.'**
+  String get archiveZipUnicodeFallback;
+
+  /// No description provided for @archiverOptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} options'**
+  String archiverOptionsTitle(String name);
+
+  /// No description provided for @archiverOptionsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'These defaults apply when this program is selected for compression or extraction. Program default keeps its normal behavior.'**
+  String get archiverOptionsNote;
+
+  /// No description provided for @archiverCompressionLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Compression level'**
+  String get archiverCompressionLevel;
+
+  /// No description provided for @archiverProgramDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Program default'**
+  String get archiverProgramDefault;
+
+  /// No description provided for @archiverThreads.
+  ///
+  /// In en, this message translates to:
+  /// **'Worker threads'**
+  String get archiverThreads;
+
+  /// No description provided for @archiverTarThreadsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'BSD tar uses this thread setting for TAR + zstd.'**
+  String get archiverTarThreadsNote;
+
+  /// No description provided for @archiverSolid.
+  ///
+  /// In en, this message translates to:
+  /// **'Solid compression'**
+  String get archiverSolid;
+
+  /// No description provided for @archiverSolidNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies to 7z and RAR. Grouping files can improve compression, while extracting one file may take longer.'**
+  String get archiverSolidNote;
+
+  /// No description provided for @archiverEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get archiverEnabled;
+
+  /// No description provided for @archiverDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get archiverDisabled;
+
+  /// No description provided for @archiverArgumentsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional arguments'**
+  String get archiverArgumentsLabel;
+
+  /// No description provided for @archiverArgumentsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One argument per line, without shell quoting. Compression and format options are supported. Ferryx supplies paths, passwords and the operation itself.'**
+  String get archiverArgumentsHint;
+
+  /// No description provided for @archiverOptionsInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the level, thread count and arguments. Only supported compression and format options are allowed; input/output paths and operation switches are managed by Ferryx.'**
+  String get archiverOptionsInvalid;
+
+  /// No description provided for @archiverCustomized.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom settings'**
+  String get archiverCustomized;
+
+  /// No description provided for @cmdEqualizePanels.
+  ///
+  /// In en, this message translates to:
+  /// **'Make Panels Equal'**
+  String get cmdEqualizePanels;
+
+  /// No description provided for @splitterReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Equal panels'**
+  String get splitterReset;
+
+  /// No description provided for @splitterResetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Double-click the divider to restore 50/50.'**
+  String get splitterResetHint;
+
+  /// No description provided for @panelSplitSideBySide.
+  ///
+  /// In en, this message translates to:
+  /// **'Left {first}% · Right {second}%'**
+  String panelSplitSideBySide(int first, int second);
+
+  /// No description provided for @panelSplitStacked.
+  ///
+  /// In en, this message translates to:
+  /// **'Top {first}% · Bottom {second}%'**
+  String panelSplitStacked(int first, int second);
 }
 
 class _FerryxLocalizationsDelegate

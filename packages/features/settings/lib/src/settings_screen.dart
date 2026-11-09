@@ -6,6 +6,7 @@ import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 
 import 'pages/about_page.dart';
+import 'pages/archivers_page.dart';
 import 'pages/editors_page.dart';
 import 'pages/general_page.dart';
 import 'pages/hotkeys_page.dart';
@@ -23,6 +24,7 @@ enum SettingsSection {
   hotkeys,
   editors,
   tools,
+  archivers,
   about,
 }
 
@@ -38,6 +40,8 @@ class SettingsScreen extends StatefulWidget {
     this.unavailableCommands = const {},
     this.defaultShell = '',
     this.loadMonospaceFonts,
+    this.loadArchivers,
+    this.validateArchiverOptions,
     super.key,
   });
 
@@ -56,6 +60,8 @@ class SettingsScreen extends StatefulWidget {
 
   /// Installed monospace families, read only when the terminal page opens.
   final Future<List<String>> Function()? loadMonospaceFonts;
+  final ArchiverDiscovery? loadArchivers;
+  final ArchiverOptionsValidator? validateArchiverOptions;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -80,7 +86,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       SettingsSection.terminal,
     ],
     [SettingsSection.hotkeys],
-    [SettingsSection.editors, SettingsSection.tools, SettingsSection.about],
+    [
+      SettingsSection.editors,
+      SettingsSection.tools,
+      SettingsSection.archivers,
+      SettingsSection.about,
+    ],
   ];
 
   /// The search narrows the pages; when it leaves the open page out, the
@@ -148,6 +159,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             version: widget.version,
                             defaultShell: widget.defaultShell,
                             loadMonospaceFonts: widget.loadMonospaceFonts,
+                            loadArchivers: widget.loadArchivers,
+                            validateArchiverOptions:
+                                widget.validateArchiverOptions,
                             onClose: widget.onClose,
                           ),
                         ),
@@ -174,6 +188,7 @@ String sectionLabel(FerryxLocalizations l10n, SettingsSection section) =>
       SettingsSection.hotkeys => l10n.settingsHotkeys,
       SettingsSection.editors => l10n.settingsEditors,
       SettingsSection.tools => l10n.settingsTools,
+      SettingsSection.archivers => l10n.settingsArchivers,
       SettingsSection.about => l10n.settingsAbout,
     };
 
@@ -263,6 +278,15 @@ List<String> sectionTerms(
     l10n.editorsAdd,
     for (final editor in prefs.editors) editor.name,
   ],
+  SettingsSection.archivers => [
+    l10n.archiversIntro,
+    l10n.archiversAdd,
+    l10n.archiversRescan,
+    for (final engine in ArchiverEngine.values) engine.label,
+    for (final type in ArchiveType.values) type.label,
+    for (final tool in prefs.archivers.manual) tool.name,
+    for (final tool in prefs.archivers.manual) tool.path,
+  ],
   SettingsSection.tools => [
     l10n.toolsIntro,
     l10n.toolsAdd,
@@ -283,6 +307,7 @@ IconData _sectionIcon(SettingsSection section) => switch (section) {
   SettingsSection.hotkeys => AppIcons.keyboard,
   SettingsSection.editors => AppIcons.edit,
   SettingsSection.tools => AppIcons.wrench,
+  SettingsSection.archivers => AppIcons.fileArchive,
   SettingsSection.about => AppIcons.info,
 };
 
@@ -397,6 +422,8 @@ class _Content extends StatelessWidget {
     required this.version,
     required this.defaultShell,
     required this.loadMonospaceFonts,
+    required this.loadArchivers,
+    required this.validateArchiverOptions,
     required this.onClose,
   });
 
@@ -408,6 +435,8 @@ class _Content extends StatelessWidget {
   final String version;
   final String defaultShell;
   final Future<List<String>> Function()? loadMonospaceFonts;
+  final ArchiverDiscovery? loadArchivers;
+  final ArchiverOptionsValidator? validateArchiverOptions;
   final VoidCallback onClose;
 
   @override
@@ -434,6 +463,12 @@ class _Content extends StatelessWidget {
       ),
       SettingsSection.editors => EditorsPage(prefs: prefs, service: service),
       SettingsSection.tools => ToolsPage(prefs: prefs, service: service),
+      SettingsSection.archivers => ArchiversPage(
+        prefs: prefs,
+        service: service,
+        discover: loadArchivers,
+        validateOptions: validateArchiverOptions,
+      ),
       SettingsSection.about => AboutPage(version: version),
     };
     return Column(
