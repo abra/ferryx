@@ -1,0 +1,42 @@
+Subject: Limit INCL nesting depth to stop stack overflow on bundled cycles
+Origin: https://sources.debian.org/data/main/d/djvulibre/3.5.30.1-1/debian/patches/0009-limit-INCL-nesting-depth.patch
+Upstream-reference: fbb34d
+Pagecraft-adaptation: Use unconditional C++17 thread_local instead of HAVE_GCCTLS/__thread so the guard also protects MSVC builds.
+
+--- a/libdjvu/DjVuFile.cpp
++++ b/libdjvu/DjVuFile.cpp
+@@ -97,6 +97,10 @@
+ 
+ static GP<GPixmap> (*djvu_decode_codec)(ByteStream &bs)=0;
+ 
++// Nesting depth of INCL chunk processing in this thread.
++// C++17 thread_local also covers MSVC without the HAVE_GCCTLS extension.
++static thread_local int incl_depth=0;
++
+ class ProgressByteStream : public ByteStream
+ {
+ public:
+@@ -596,7 +600,22 @@
+     GP<DjVuFile> file;
+     G_TRY
+     {
+-      file=pcaster->id_to_file(this, incl_str);
++      // Included files process their INCL chunks before registration by name.
++      // Cycles would otherwise create fresh files until the stack overflows.
++      if (incl_depth >= 32)
++        G_THROW("DjVuFile: INCL chunks nested too deeply (corrupted file?)");
++      incl_depth++;
++      G_TRY
++      {
++        file=pcaster->id_to_file(this, incl_str);
++      }
++      G_CATCH_ALL
++      {
++        incl_depth--;
++        G_RETHROW;
++      }
++      G_ENDCATCH;
++      incl_depth--;
+     }
+     G_CATCH(ex)
+     {

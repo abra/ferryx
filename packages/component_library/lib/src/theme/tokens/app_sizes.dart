@@ -34,6 +34,9 @@ abstract final class AppSizes {
   static const double splitterBadgeWidth = 320;
   static const double documentMaxWidth = 720;
 
+  /// Room for the page/section position before document actions compact.
+  static const double documentPositionMinWidth = 240;
+
   /// Tallest an image shows inside a rem; the viewer has the whole image.
   static const double imageMaxHeight = 480;
   static const double documentWideMaxWidth = 900;

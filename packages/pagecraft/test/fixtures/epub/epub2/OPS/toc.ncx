@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+  <head><meta name="dtb:uid" content="isbn-0000"/></head>
+  <docTitle><text>Old Style Book</text></docTitle>
+  <navMap>
+    <navPoint id="np1" playOrder="1"><navLabel><text>Front</text></navLabel>
+      <navPoint id="np1a" playOrder="2"><navLabel><text>Title page</text></navLabel><content src="title.html"/></navPoint>
+    </navPoint>
+    <navPoint id="np2" playOrder="3"><navLabel><text>Chapter, One</text></navLabel><content src="ch%2C1.html#start"/>
+      <navPoint id="np2a" playOrder="4"><navLabel><text>  Section   1 </text></navLabel><content src="ch%2C1.html#s1"/></navPoint>
+    </navPoint>
+    <navPoint id="np3" playOrder="5"><navLabel><text>Chapter Two</text></navLabel><content src="sub/ch2.html"/></navPoint>
+  </navMap>
+  <pageList><pageTarget id="pt1" type="normal" value="1"><navLabel><text>1</text></navLabel><content src="ch%2C1.html#p1"/></pageTarget></pageList>
+  <navList><navLabel><text>Figures</text></navLabel><navTarget id="nt1"><navLabel><text>Figure 1</text></navLabel><content src="sub/ch2.html#fig1"/></navTarget></navList>
+</ncx>

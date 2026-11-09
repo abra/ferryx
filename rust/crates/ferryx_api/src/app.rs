@@ -249,6 +249,7 @@ pub fn take_events() -> Vec<AppEvent> {
 }
 
 pub fn reset_for_tests() {
+    crate::api::preview::reset();
     let mut guard = state().lock();
     guard.listings.clear();
     ferryx_vfs::archive::shared::clear();

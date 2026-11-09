@@ -259,6 +259,14 @@ enum AppCommand {
   viewerFindNext(CommandScope.viewer),
   viewerFindPrevious(CommandScope.viewer),
   viewerToggleWrap(CommandScope.viewer),
+  viewerToggleFullWindow(CommandScope.viewer),
+  documentPrevious(CommandScope.viewer),
+  documentNext(CommandScope.viewer),
+  documentContents(CommandScope.viewer),
+  documentGoToPage(CommandScope.viewer),
+  documentFitPage(CommandScope.viewer),
+  documentZoomIn(CommandScope.viewer),
+  documentZoomOut(CommandScope.viewer),
 
   // ─── Terminal ───
   terminalCopy(CommandScope.terminal),

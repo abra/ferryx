@@ -23,6 +23,7 @@ pub mod flat;
 pub mod links;
 pub mod location;
 pub mod native;
+pub mod preview;
 pub mod system;
 pub mod tags;
 pub mod trash;

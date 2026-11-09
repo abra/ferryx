@@ -13,6 +13,12 @@ and its Flutter ⇄ Rust split: a Rust workspace owns the file system and
 every operation on it, Flutter owns presentation, and change notifications
 flow from Rust to Dart through one event stream.
 
+Document Preview has one explicit read-only boundary: Pagecraft opens a
+local path lent by `FileRepository.preparePreview`. Rust owns the lease,
+remote/archive staging and cleanup; Pagecraft owns parsing, rendering and
+its decoder handles. Feature code does not perform filesystem I/O or stage
+copies itself.
+
 ```
 lib/app  ─► features/* Screen or show… dialog entry points
              ─► feature Cubit
@@ -450,14 +456,14 @@ that `ferryx_backend` loads, as part of the Flutter build.
 | `monitoring` | `Logger` and the console observer. |
 | `shortcuts` | `AppCommand` (scopes: global, panel, viewer, lists, dialogs, terminal; `CommandSection` for the palette's groups), `Chord`, `ShortcutMap` (defaults per desktop, `forUser` with overrides), the `CommandHandlers` dispatch chain (`commandsAt` answers what a place handles), `ChordCodec`. |
 | `preferences_service` | Installation preferences (theme, locale, text scale, shortcut overrides, window frame, the panels' state, layouts, sorting defaults, quick search, favorites, editors, tools, confirmations, copy defaults, viewer, the terminal's settings and place) + `PreferencesScope` and `PreferenceBuilder`; beside the blob, under keys of their own (`SideStorage`), `FolderFrecency` (the folders visited) and `RecentItems` (the commands run lately). |
-| `file_repository` | `FileRepository`: listings (open, refresh, resort, close, peek), items (stat, byte ranges, extract to temp, make, rename, links, resolve), the system (volumes, standard folders, free space, open, open with, reveal, eject, applications), attributes; archives (what one holds, its password, detection by its bytes); flat listings (open with their stream of batches, the order of their rows); Finder tags (a listing's, edits) and the desktop's `capabilities`; `directoryChanges` names listings whose folders changed. |
+| `file_repository` | `FileRepository`: listings (open, refresh, resort, close, peek), items (stat, byte ranges, extract to temp, make, rename, links, resolve), `PreviewFileLease` (a cancellable local path for document decoding), the system (volumes, standard folders, free space, open, open with, reveal, eject, applications), attributes; archives (what one holds, its password, detection by its bytes); flat listings (open with their stream of batches, the order of their rows); Finder tags (a listing's, edits) and the desktop's `capabilities`; `directoryChanges` names listings whose folders changed. |
 | `operations_service` | `OperationsService` (start, pause, resume, cancel, answer, forget; `progress` stream and the latest report per operation; `run` waits for one), `FindService` (start, cancel, `updates`), `RenameService` (preview, apply), `TaskSession` (ownership of a streamed task before and after its start reply). |
 | `platform_services` | What only some desktops offer, behind one injected `PlatformServices` (capabilities; Quick Look; the share picker; file drags out of the window): `ChannelPlatformServices` on macOS (the runner's `ferryx/platform` channel), `DesktopPlatformServices` elsewhere (drags only), `FakePlatformServices` for tests (`testing.dart`); `PlatformDropArea`, the window's one drop region (super_drag_and_drop). |
 | `terminal_service` | `TerminalService.start` → a `TerminalSession` (its `updates`: `TerminalOutput`, `TerminalShellState`, `TerminalExited`; write, resize, ack, state, change directory, close) over `ferryx_api`'s terminal; the default shell's name. |
 | `ferryx_localizations` | ARB-generated `FerryxLocalizations`, command and scope labels, formatting helpers (sizes, dates, durations, error titles, operation titles, answers, columns). |
 | `component_library` | Tokens, the platform-adaptive theme and the desktop widgets (see Native look); for drags, `FileDragSource` (past `metrics.dragThreshold`), `FileDropTarget` (found by hit-testing) and `AppDropOutline`. |
-| `features/panels` | The main window (`WorkspaceScreen`): two `PanelView`s with a `PanelCubit` each, the edge between them, the integrated terminal's place (`TerminalDock`, the view injected as a `WorkspaceTerminal`), the operations cards, every file command (`workspace_actions.dart`), the row and panel menus, and the dialogs: copy / move / copy as / move as, new folder, delete, compress, select by mask, go to folder, links, favorites, the Go To pop-up and the quick lists, batch rename, file attributes, Extract To and an archive's password, the tag menu and a new tag, and the questions of operations; a tab's flat view (`FlatView`). |
-| `features/viewer` | The built-in viewer (`ViewerScreen`): text, hex and preview over a `ViewerSource` (a file on disk or an archive member), windows of large files, find and go to. |
+| `features/panels` | The main window (`WorkspaceScreen`): two `PanelView`s with a `PanelCubit` each, the edge between them, neighboring/full-window preview (`WorkspacePreviewCubit`, the view injected as a `WorkspacePreview`), the integrated terminal's place (`TerminalDock`, the view injected as a `WorkspaceTerminal`), the operations cards, every file command (`workspace_actions.dart`), the row and panel menus, and the dialogs: copy / move / copy as / move as, new folder, delete, compress, select by mask, go to folder, links, favorites, the Go To pop-up and the quick lists, batch rename, file attributes, Extract To and an archive's password, the tag menu and a new tag, and the questions of operations; a tab's flat view (`FlatView`). |
+| `features/viewer` | The built-in viewer (`ViewerScreen`): text, hex and preview over a `ViewerSource` (local, archive or remote), windows of large text/binary files, find and go to. `DocumentPreviewScreen` / `DocumentCubit` own Pagecraft sessions and a `DocumentFileSource`'s local file lease. |
 | `features/find` | Find Files (`showFindDialog`, `FindCubit`): the form (with the Spotlight option where the desktop has it), the streaming results, go to a hit or view it. |
 | `features/settings` | The settings window (`SettingsScreen`: General, Panels, Viewer, Terminal, Hotkeys, Editors, Tools, About) and the cheat sheet (`showCheatSheet`). |
 | `features/palette` | The command palette (`showCommandPalette`, `PaletteCubit`, the `fuzzyMatch` scorer). |
@@ -473,8 +479,11 @@ that `ferryx_backend` loads, as part of the Flutter build.
 `routing.dart` → `Screen` → `Cubit` → `View`. Dependencies are injected at
 `routing.dart`; the workspace is given a `WorkspaceNavigation` whose
 callbacks open the viewer route, the find dialog, the settings route and
-the cheat sheet, so the panels feature never imports those features. The
-integrated terminal comes the same way: a `WorkspaceTerminal` (a factory
+the cheat sheet, so the panels feature never imports those features.
+An injected `WorkspacePreview` builder composes `ViewerScreen` inside the
+workspace without a panels-to-viewer import. `WorkspacePreviewView` carries
+the file location, focus scope, placement and close/focus/toggle callbacks.
+The integrated terminal comes the same way: a `WorkspaceTerminal` (a factory
 for its controller and a builder for its view) that `lib/app/terminal_link.dart`
 fills from the terminal feature. The workspace reports its state (`WorkspaceSnapshot`: both panels' tabs, the
 active side, the split) and the routing writes it to the preferences,
@@ -490,6 +499,107 @@ state and the keys; the edge between them (`AppSplitter`) moves along the
 same axis with the same share; the upper bar keeps clear of the window's
 buttons at both ends, and the lower one is not the window's top row (no
 inset, it does not move the window).
+
+### Neighboring preview
+
+Space outside Vim mode, `i` in Vim mode and the global Preview command
+(⇧⌘Y on macOS) show preview in the opposite pane. F3 opens the full-window
+viewer. `WorkspacePreviewCubit` follows the originating panel's focused
+file, using its full `Location`; directories, `..` and empty listings have
+no preview file. Cursor changes are debounced for 150 ms, and changes to
+selection or other state at the same location do not reopen the file.
+
+The displaced panel stays mounted with focus and semantics excluded, so
+closing preview restores its tabs, cursor, selection and scroll position.
+The preview's explicit full-window button changes placement while keeping
+the viewer subtree and document session alive. Tab switches between the
+originating list and preview; from full-window preview it collapses to the
+neighboring pane and focuses the list. Esc closes preview. Opening a
+neighboring preview or finishing a slow document open does not take focus
+from the list. While preview has focus, workspace file-operation commands
+are excluded from its command chain. The native Quick Look window remains
+a separate service on ⌘Y.
+
+### Document preview
+
+`documentFormatOf` recognizes EPUB, FB2 (`.fb2`, `.fbz`, `.fb2.zip`), MOBI
+and AZW3/KF8, CBZ, PDF and DjVu (`.djvu`, `.djv`). `ViewerScreen` starts
+these files in Preview. `ViewerCubit` skips both `size` and `readRange`
+for document Preview, so it neither downloads a server file twice nor
+decodes a binary text window before opening the document. Text and hex
+retain their existing windowed readers; ordinary images retain their
+64 MiB limit.
+
+`DocumentPreviewScreen` injects appearance and an opener into
+`DocumentCubit`; the views receive state and callbacks. `DocumentSession`
+adapts Pagecraft's reflowable `TextPagesController` or fixed-page sources
+(`PdfPages`, `DjvuPages` and Ferryx's `DocumentComicPages`). It exposes
+navigation, contents, position and typed failures. Reflowable status counts
+sections and pages within the current section, not a guessed book-wide
+page total. Fixed documents offer page jumps and zoom. Reflowable books
+offer A− / A+ and reset controls, also present in the actions menu.
+`Preferences.documentFontSize` is persisted separately from `viewerFontSize`,
+clamped to 10–32 with a default of 15, and exposed in Settings → Viewer.
+Changes update appearance and reflow the existing session without reopening
+its file. Primary − / + / 0 decrease, increase and reset book type size;
+the same commands zoom and fit fixed pages.
+The text/hex find controls do not search document contents. Fixed-page views
+render images; Pagecraft's PDF/DjVu text layers are not yet wired to selection
+or annotation controls.
+
+`DocumentComicPageImage` limits encoded comic pages to 64 MiB and asks the
+decoder for an image of at most six million pixels and 8192 pixels on
+either side; limiting width alone would leave long scans unbounded.
+PDF/DjVu render requests use the same pixel/side limits. Tracked page image
+providers are evicted on session close. FB2 opening and its whole-document
+XML parse run in a worker isolate so parsing does not occupy the UI isolate.
+
+`FileRepository.preparePreview` returns a lease synchronously, before
+I/O. Its memoized `path` starts `prepare_preview_file` on a bridge worker:
+native files lend their original path; archive and server files stream
+into a private `ferryx-preview-*` directory. Each preview owns its copy,
+separately from the byte-range archive cache and external-open copies.
+`cancel_preview_file` sets the stop flag synchronously without waiting
+for a bridge worker; `close_preview_file` waits for preparation and removes
+the owned temporary directory. Stop checks cover transfer/decode chunks and
+preceding members skipped in solid archives; shared archive-index creation
+and a codec call already running cannot be interrupted immediately. Native
+originals are never deleted.
+
+`DocumentCubit` retires an old attempt when replaced or closed. Preparation
+is cancelled even if its path has not arrived. If a Pagecraft open is
+already running, its late session is closed before the lease is released;
+it is never published into the replacement state. A published session
+waits for the view to leave the frame before disposing controllers,
+evicting its tracked page images and closing decoder handles. Only then
+may the lease delete its file. Pagecraft opening/rendering itself is not
+forcibly interrupted by the staging cancellation flag.
+
+The engine's source is kept in `packages/pagecraft`, copied from Readflex
+together with `packages/native_text_selection`. Both are local `path`
+dependencies maintained in this repository; no Readflex checkout or Git
+dependency is involved in resolution. Their READMEs record the original
+source revision. The Pagecraft native hooks build its MOBI backend with
+Rust 1.99.0 and DjVuLibre 3.5.30 with
+C++17, while PDFium is downloaded at build time and bundled. These native
+components are included even when only another Pagecraft format is
+imported. Flutter's native-assets/plugin packaging owns their delivery;
+Ferryx's separate Rust workspace still builds through cargokit. The root
+Makefile includes both local Dart packages and Pagecraft's Rust crate in
+dependency, analysis, formatting and test commands. The
+vendored DjVu decoder is GPL-2.0-or-later; its original `COPYRIGHT` and
+`COPYING` are registered in Pagecraft's Flutter license bundle. The
+[local notices](packages/pagecraft/LICENSE)
+describe component licenses; the package is not uniformly MIT.
+
+Pagecraft currently lays out horizontal, reflowable text. Fixed-layout
+EPUB/KF8 and vertical writing produce explicit unsupported errors; CBR
+is not recognized. Password-protected PDF is identified but there is no
+password-entry flow yet. DjVu accepts self-contained single-page and
+bundled documents, not indirect/external components or JPEG-in-DjVu;
+it does not perform OCR. FB2 parses its complete XML and MOBI 6 assembles
+its text stream, so document Preview does not inherit the text viewer's
+bounded byte-window behavior.
 
 ### The panels
 
@@ -664,7 +774,11 @@ elsewhere — features never ask the platform.
   arrows, Return, Backspace, Tab, Space and the function keys reach the
   active panel's handlers and never a dialog's field. The viewer installs
   its own scope; the viewer's ⌘1–⌘3 win over the global quick lists there
-  because the inner `Shortcuts` is consulted first.
+  because the inner `Shortcuts` is consulted first. The embedded preview
+  host forwards only the panel's preview and switch-panel commands to its
+  close/focus callbacks; workspace file commands are unavailable while
+  preview has focus. The originating list's Esc hook closes preview before
+  applying the panel's own search/selection escape behavior.
 - A panel's own `Focus.onKeyEvent` takes typed characters for the quick
   search before the shortcuts see them, so `/` and `~` are commands only
   while no search is on.
@@ -984,7 +1098,8 @@ the hotkeys and the palette. The panels' side is `native_actions.dart`
   visit, adds the bundled Geist Mono and System choices, and previews the
   saved family and size. A failed read can be retried; an unavailable saved
   family remains selected rather than being erased from preferences.
-- **Quick Look** (⌘Y; `preview` moved to ⇧⌘Y, Space keeps it):
+- **Quick Look** (⌘Y; built-in neighboring preview uses ⇧⌘Y, Space outside
+  Vim mode or `i` in Vim mode):
   `NativeServices.swift` in the runner owns a `QLPreviewPanel` (the window
   is its controller in the responder chain) fed with file paths and an
   index. The panel is ordered front without taking the keys, so the
@@ -995,8 +1110,9 @@ the hotkeys and the palette. The panels' side is `native_actions.dart`
   Several selected rows are shown as the list, else the folder's items
   without `..`. Inside an archive the focused file (or the selected
   files) is taken out first through `extractToTemp`, up to 64 MB a member,
-  with a counter so a slow extraction never overtakes a later move. Space,
-  Esc and ⌘Y close it (`PanelHooks.onEscape` before the panel's own Esc);
+  with a counter so a slow extraction never overtakes a later move. The
+  panel's preview key (Space outside Vim mode, `i` in Vim mode), Esc and
+  ⌘Y close it (`PanelHooks.onEscape` before the panel's own Esc);
   when the user clicks the panel and it takes the keys, the runner sends ↑
   and ↓ back as `quickLook.step` and closes on Space, Esc and ⌘Y. Closing
   puts the focus back on the active panel.
@@ -1377,6 +1493,17 @@ survive a failed attempt; per-attempt listeners and services are disposed.
   folders in memory; the jump, shelf and names-editor tests drive it with
   keys. The palette's tests run a command from it through a real chain;
   `app_quick_picker_test` covers the picker's keys and virtualization.
+- Document engines: `features/viewer/test/document_smoke_test.dart` opens
+  generated EPUB, FB2/FBZ/FB2.zip, MOBI 6, KF8/AZW3, CBZ and PDF, plus a
+  small original DjVu artwork fixture. It checks real text layout, native
+  page pixels, navigation, malformed input and fixed/vertical EPUB refusal.
+  It also decodes large comic scans through the actual image provider to
+  check both pixel and side limits. `document_preview_smoke_test` exercises
+  real EPUB/PDF views, mouse/keyboard navigation, refresh and closing during
+  navigation, including a narrow dark Russian UI at double text scale.
+  Native build hooks run for these host tests. Passing them does not establish
+  packaged-app loading on every target; release smoke checks must open a
+  document in the built application too.
 - `test/app/` keeps the code to its rules: no Mac glyph or key name in a
   literal (`key_labels_test`), no hairline drawn by Flutter's own borders
   (`hairline_sources_test`), no method or function that builds widgets
@@ -1425,8 +1552,10 @@ survive a failed attempt; per-attempt listeners and services are disposed.
 - No extended-attributes or process-list virtual file systems; archives
   are read-only, and a rar set of several volumes lists its first
   volume's members only.
-- Closing the viewer does not yet cancel an archive member decode already
-  running in the core; that requires a cancellable viewer-read bridge API.
+- Closing text/hex or ordinary image Preview does not yet cancel a byte-range
+  archive member decode already running in the core. Document Preview has
+  separate cancellable staging; its Pagecraft decoder is closed before its
+  temporary file is released.
 - Servers: a file opened from a server is a copy (edits are not sent
   back); nothing on a server is undone; no flat view, Find Files,
   checksums or synchronize there; WebDAV logs in with Basic auth only (no

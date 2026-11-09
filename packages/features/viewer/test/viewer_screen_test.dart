@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -13,6 +14,24 @@ import 'package:shortcuts/shortcuts.dart';
 import 'package:viewer_feature/viewer_feature.dart';
 
 class _Files extends Mock implements FileRepository {}
+
+class _PendingPreview implements PreviewFileLease {
+  final prepared = Completer<String>();
+  int closes = 0;
+
+  @override
+  Future<String> get path => prepared.future;
+
+  @override
+  Future<void> close() async {
+    closes++;
+    if (!prepared.isCompleted) {
+      prepared.completeError(
+        const FerryxException(FerryxErrorKind.cancelled, 'preview closed'),
+      );
+    }
+  }
+}
 
 void main() {
   const file = Location.native('/tmp/notes.txt');
@@ -31,7 +50,12 @@ void main() {
     );
   });
 
-  Future<_Files> open(WidgetTester tester, {double width = 900}) async {
+  Future<_Files> open(
+    WidgetTester tester, {
+    double width = 900,
+    Location location = file,
+    PreviewFileLease Function()? preparePreview,
+  }) async {
     addTearDown(() async {
       // Finish the stream's close in the widget test's clock.
       final disposed = preferences.dispose();
@@ -39,6 +63,10 @@ void main() {
       await disposed;
     });
     final files = _Files();
+    if (preparePreview != null) {
+      when(() => files.preparePreview(any()))
+          .thenAnswer((_) => preparePreview());
+    }
     when(() => files.fileSize(any())).thenAnswer((_) async => bytes.length);
     when(() => files.readRange(any(), any(), any())).thenAnswer((call) async {
       final offset = call.positionalArguments[1] as int;
@@ -63,7 +91,7 @@ void main() {
           preferences: preferences,
           shortcutMap: ShortcutMap.defaults(TargetPlatform.macOS),
           windowDecor: WindowDecor.none,
-          location: file,
+          location: location,
           onClose: () {},
         ),
       ),
@@ -165,6 +193,57 @@ void main() {
     expect(item(tester, en.cmdRefresh).enabled, isTrue);
     await pick(tester, en.cmdViewerText);
     expect(find.textContaining('quarterly numbers'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('books start in Preview without reading a binary text window; '
+      'switching to Hex cancels preparation', (tester) async {
+    final lease = _PendingPreview();
+    const book = Location.native('/tmp/book.epub');
+    final files = await open(
+      tester,
+      location: book,
+      preparePreview: () => lease,
+    );
+    verify(() => files.preparePreview(book)).called(1);
+    verifyNever(() => files.fileSize(any()));
+    verifyNever(() => files.readRange(any(), any(), any()));
+    await tester.tap(button(en.viewerActions));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(item(tester, en.cmdViewerPreview).checked, isTrue);
+    await pick(tester, en.cmdViewerHex);
+    expect(lease.closes, 1);
+    verify(() => files.readRange(book, 0, bytes.length)).called(1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('refresh replaces a pending document lease and route disposal '
+      'cancels the replacement', (tester) async {
+    final leases = <_PendingPreview>[];
+    await open(
+      tester,
+      location: const Location.inArchive(
+        archive: '/tmp/library.zip',
+        path: 'book.epub',
+      ),
+      preparePreview: () {
+        final lease = _PendingPreview();
+        leases.add(lease);
+        return lease;
+      },
+    );
+    expect(leases, hasLength(1));
+    // A pending document intentionally animates its spinner.
+    await tester.tap(button(en.cmdRefresh));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(leases, hasLength(2));
+    expect(leases.first.closes, 1);
+    expect(leases.last.closes, 0);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+    expect(leases.last.closes, 1);
     expect(tester.takeException(), isNull);
   });
 }

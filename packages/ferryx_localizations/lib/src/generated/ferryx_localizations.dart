@@ -1850,6 +1850,72 @@ abstract class FerryxLocalizations {
   /// **'Could not open the item'**
   String get noticeOpenFailed;
 
+  /// No description provided for @documentFontSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Book font size'**
+  String get documentFontSizeLabel;
+
+  /// No description provided for @documentFontDecrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Decrease Font Size'**
+  String get documentFontDecrease;
+
+  /// No description provided for @documentFontIncrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase Font Size'**
+  String get documentFontIncrease;
+
+  /// No description provided for @documentFontReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Font Size'**
+  String get documentFontReset;
+
+  /// No description provided for @documentFontSizeValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Font size: {size}'**
+  String documentFontSizeValue(int size);
+
+  /// No description provided for @viewerExpand.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand to Full Window'**
+  String get viewerExpand;
+
+  /// No description provided for @viewerAdjacent.
+  ///
+  /// In en, this message translates to:
+  /// **'Show in Adjacent Pane'**
+  String get viewerAdjacent;
+
+  /// No description provided for @viewerCloseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{key} — close preview'**
+  String viewerCloseHint(String key);
+
+  /// No description provided for @viewerFilesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{key} — files'**
+  String viewerFilesHint(String key);
+
+  /// No description provided for @viewerSelectFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a file to preview'**
+  String get viewerSelectFile;
+
+  /// No description provided for @cmdViewerToggleFullWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle Full Window Preview'**
+  String get cmdViewerToggleFullWindow;
+
   /// No description provided for @viewerTitle.
   ///
   /// In en, this message translates to:
@@ -1975,6 +2041,108 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Previous part'**
   String get viewerLoadPrevious;
+
+  /// No description provided for @documentPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get documentPrevious;
+
+  /// No description provided for @documentNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get documentNext;
+
+  /// No description provided for @documentContents.
+  ///
+  /// In en, this message translates to:
+  /// **'Contents'**
+  String get documentContents;
+
+  /// No description provided for @documentActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Document actions'**
+  String get documentActions;
+
+  /// No description provided for @documentExternalLink.
+  ///
+  /// In en, this message translates to:
+  /// **'External link'**
+  String get documentExternalLink;
+
+  /// No description provided for @documentPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {current} of {total}'**
+  String documentPage(int current, int total);
+
+  /// No description provided for @documentSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Section {current} of {total}'**
+  String documentSection(int current, int total);
+
+  /// No description provided for @documentGoToPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to page'**
+  String get documentGoToPage;
+
+  /// No description provided for @documentGoToPageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a page number from 1 to {total}'**
+  String documentGoToPageHint(int total);
+
+  /// No description provided for @documentOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read this document. It may be damaged or use an unsupported format.'**
+  String get documentOpenFailed;
+
+  /// No description provided for @documentPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This PDF requires a password. Open it in a PDF reader to unlock it.'**
+  String get documentPasswordRequired;
+
+  /// No description provided for @documentUnsupportedLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview is not available for books with fixed page layouts.'**
+  String get documentUnsupportedLayout;
+
+  /// No description provided for @documentUnsupportedVertical.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview is not available for books with vertical text.'**
+  String get documentUnsupportedVertical;
+
+  /// No description provided for @documentUnsupportedFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview is not available for this document format.'**
+  String get documentUnsupportedFormat;
+
+  /// No description provided for @documentZoomHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinch or double-click a page to zoom'**
+  String get documentZoomHint;
+
+  /// No description provided for @documentFitPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit page'**
+  String get documentFitPage;
+
+  /// No description provided for @documentPageFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not display page {page}'**
+  String documentPageFailed(int page);
 
   /// No description provided for @findTitle.
   ///
@@ -3763,6 +3931,48 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Wrap Lines'**
   String get cmdViewerToggleWrap;
+
+  /// No description provided for @cmdDocumentPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Page'**
+  String get cmdDocumentPrevious;
+
+  /// No description provided for @cmdDocumentNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Page'**
+  String get cmdDocumentNext;
+
+  /// No description provided for @cmdDocumentContents.
+  ///
+  /// In en, this message translates to:
+  /// **'Contents…'**
+  String get cmdDocumentContents;
+
+  /// No description provided for @cmdDocumentGoToPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Page…'**
+  String get cmdDocumentGoToPage;
+
+  /// No description provided for @cmdDocumentFitPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit Page'**
+  String get cmdDocumentFitPage;
+
+  /// No description provided for @cmdDocumentZoomIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom In'**
+  String get cmdDocumentZoomIn;
+
+  /// No description provided for @cmdDocumentZoomOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom Out'**
+  String get cmdDocumentZoomOut;
 
   /// No description provided for @cmdRenameItem.
   ///

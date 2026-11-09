@@ -1,0 +1,550 @@
+{
+ "epub2": {
+  "sections": [
+   {
+    "id": "OPS/title.html",
+    "size": 147,
+    "cfi": "epubcfi(/6/2)",
+    "linear": "no",
+    "pageSpread": null,
+    "mediaOverlay": null
+   },
+   {
+    "id": "OPS/ch,1.html",
+    "size": 173,
+    "cfi": "epubcfi(/6/4)",
+    "linear": null,
+    "pageSpread": null,
+    "mediaOverlay": null
+   },
+   {
+    "id": "OPS/sub/ch2.html",
+    "size": 139,
+    "cfi": "epubcfi(/6/6)",
+    "linear": null,
+    "pageSpread": null,
+    "mediaOverlay": null
+   }
+  ],
+  "toc": [
+   {
+    "label": "Front",
+    "href": "OPS/title.html",
+    "subitems": [
+     {
+      "label": "Title page",
+      "href": "OPS/title.html",
+      "subitems": null
+     }
+    ]
+   },
+   {
+    "label": "Chapter, One",
+    "href": "OPS/ch,1.html#start",
+    "subitems": [
+     {
+      "label": "Section 1",
+      "href": "OPS/ch,1.html#s1",
+      "subitems": null
+     }
+    ]
+   },
+   {
+    "label": "Chapter Two",
+    "href": "OPS/sub/ch2.html",
+    "subitems": null
+   }
+  ],
+  "pageList": [
+   {
+    "label": "1",
+    "href": "OPS/ch,1.html#p1",
+    "subitems": null
+   }
+  ],
+  "landmarks": [
+   {
+    "label": "Cover",
+    "href": "OPS/title.html",
+    "subitems": null,
+    "type": [
+     "cover"
+    ]
+   },
+   {
+    "label": "Beginning",
+    "href": "OPS/ch,1.html",
+    "subitems": null,
+    "type": [
+     "text"
+    ]
+   }
+  ],
+  "dir": null,
+  "rendition": {},
+  "media": {
+   "narrator": [],
+   "duration": {}
+  },
+  "metadata": {
+   "title": "Old Style Book",
+   "sortAs": null,
+   "language": [
+    "en-GB"
+   ],
+   "identifier": "isbn-0000",
+   "published": null,
+   "modified": null,
+   "subject": [
+    {
+     "name": "Classics",
+     "code": "T1",
+     "scheme": "AUTH"
+    }
+   ],
+   "author": [
+    {
+     "name": "Jane Austen",
+     "sortAs": "Austen, Jane"
+    }
+   ],
+   "editor": [
+    {
+     "name": "Some Editor",
+     "sortAs": null
+    }
+   ]
+  },
+  "cover": {
+   "size": 17,
+   "type": "image/jpeg"
+  },
+  "navPath": null,
+  "ncxPath": "OPS/toc.ncx",
+  "coverHref": "OPS/cover.jpg",
+  "manifest": [
+   {
+    "id": "ncx",
+    "href": "OPS/toc.ncx",
+    "mediaType": "application/x-dtbncx+xml",
+    "properties": null
+   },
+   {
+    "id": "cover-img",
+    "href": "OPS/cover.jpg",
+    "mediaType": "image/jpeg",
+    "properties": null
+   },
+   {
+    "id": "titlepage",
+    "href": "OPS/title.html",
+    "mediaType": "application/xhtml+xml",
+    "properties": null
+   },
+   {
+    "id": "c1",
+    "href": "OPS/ch,1.html",
+    "mediaType": "application/xhtml+xml",
+    "properties": null
+   },
+   {
+    "id": "c2",
+    "href": "OPS/sub/ch2.html",
+    "mediaType": "application/xhtml+xml",
+    "properties": null
+   }
+  ],
+  "resolveHref": {
+   "OEBPS/text/chapter 1.xhtml#part-b": null,
+   "OEBPS/text/chapter%201.xhtml": null,
+   "OEBPS/text/notes.xhtml": null,
+   "OEBPS/missing.xhtml": null,
+   "OPS/ch,1.html#s1": 1,
+   "OPS/ch%2C1.html": null,
+   "OPS/sub/ch2.html": 2,
+   "p2.xhtml#x": null
+  },
+  "resolveCfi": {
+   "epubcfi(/6/4!/4/2/1:0)": 1,
+   "epubcfi(/6/4[first-chapter]!/4)": 1,
+   "epubcfi(/6/4[wrong-id]!/4)": 1,
+   "epubcfi(/6/2,/4/2/1:0,/4/2/1:5)": 0,
+   "epubcfi(/6/99!/4)": -1,
+   "epubcfi(/6/2!/4)": 0
+  }
+ },
+ "epub3": {
+  "sections": [
+   {
+    "id": "OEBPS/text/cover.xhtml",
+    "size": 192,
+    "cfi": "epubcfi(/6/2)",
+    "linear": null,
+    "pageSpread": "right",
+    "mediaOverlay": null
+   },
+   {
+    "id": "OEBPS/text/chapter 1.xhtml",
+    "size": 323,
+    "cfi": "epubcfi(/6/4[first-chapter])",
+    "linear": null,
+    "pageSpread": null,
+    "mediaOverlay": "OEBPS/text/chapter1.smil"
+   },
+   {
+    "id": "OEBPS/text/chapter2.xhtml",
+    "size": 234,
+    "cfi": "epubcfi(/6/6)",
+    "linear": null,
+    "pageSpread": null,
+    "mediaOverlay": null
+   },
+   {
+    "id": "OEBPS/text/notes.xhtml",
+    "size": 149,
+    "cfi": "epubcfi(/6/8)",
+    "linear": "no",
+    "pageSpread": null,
+    "mediaOverlay": null
+   },
+   {
+    "id": "OEBPS/text/drm.xhtml",
+    "size": 181,
+    "cfi": "epubcfi(/6/12)",
+    "linear": null,
+    "pageSpread": null,
+    "mediaOverlay": null
+   }
+  ],
+  "toc": [
+   {
+    "label": "Cover",
+    "href": "OEBPS/text/cover.xhtml",
+    "subitems": null
+   },
+   {
+    "label": "Chapter One",
+    "href": "OEBPS/text/chapter 1.xhtml",
+    "subitems": [
+     {
+      "label": "Part A",
+      "href": "OEBPS/text/chapter 1.xhtml#part-a",
+      "subitems": null
+     },
+     {
+      "label": "Unlinked heading",
+      "href": null,
+      "subitems": [
+       {
+        "label": "Part B",
+        "href": "OEBPS/text/chapter 1.xhtml#part-b",
+        "subitems": null
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "label": "Chapter Two",
+    "href": "OEBPS/text/chapter2.xhtml",
+    "subitems": null
+   }
+  ],
+  "pageList": [
+   {
+    "label": "1",
+    "href": "OEBPS/text/chapter 1.xhtml#pg1",
+    "subitems": null
+   },
+   {
+    "label": "2",
+    "href": "OEBPS/text/chapter2.xhtml#pg2",
+    "subitems": null
+   }
+  ],
+  "landmarks": [
+   {
+    "label": "Cover",
+    "href": "OEBPS/text/cover.xhtml",
+    "subitems": null,
+    "type": [
+     "cover"
+    ]
+   },
+   {
+    "label": "Start",
+    "href": "OEBPS/text/chapter 1.xhtml",
+    "subitems": null,
+    "type": [
+     "bodymatter",
+     "chapter"
+    ]
+   }
+  ],
+  "dir": "ltr",
+  "rendition": {
+   "layout": "reflowable",
+   "orientation": "auto"
+  },
+  "media": {
+   "narrator": [
+    "Narrator One"
+   ],
+   "duration": {
+    "": 90,
+    "ch1-overlay": 45.5
+   },
+   "activeClass": "-epub-media-overlay-active"
+  },
+  "metadata": {
+   "title": "The Fixture Book",
+   "subtitle": "A Subtitle",
+   "sortAs": "Fixture Book, The",
+   "language": [
+    "en",
+    "ru"
+   ],
+   "identifier": "urn:uuid:12345678-90ab-cdef-1234-567890abcdef",
+   "description": "A book assembled for tests.",
+   "publisher": "Fixture Press",
+   "published": "2024-01-02",
+   "modified": "2024-03-04T05:06:07Z",
+   "subject": [
+    {
+     "name": "Testing",
+     "code": "COM051010",
+     "scheme": "BISAC"
+    },
+    {
+     "name": "Reading",
+     "code": null,
+     "scheme": null
+    }
+   ],
+   "rights": "Public domain",
+   "author": [
+    {
+     "name": "Ada Lovelace",
+     "sortAs": "Lovelace, Ada"
+    },
+    {
+     "name": "Grace Hopper",
+     "sortAs": null
+    }
+   ],
+   "illustrator": [
+    {
+     "name": "Ada Lovelace",
+     "sortAs": "Lovelace, Ada"
+    }
+   ],
+   "translator": [
+    {
+     "name": "Alan Turing",
+     "sortAs": null
+    }
+   ],
+   "contributor": [
+    {
+     "name": "Anonymous Helper",
+     "sortAs": null
+    }
+   ]
+  },
+  "cover": {
+   "size": 69,
+   "type": "image/png"
+  },
+  "navPath": "OEBPS/nav.xhtml",
+  "ncxPath": "OEBPS/toc.ncx",
+  "coverHref": "OEBPS/images/cover.png",
+  "manifest": [
+   {
+    "id": "nav",
+    "href": "OEBPS/nav.xhtml",
+    "mediaType": "application/xhtml+xml",
+    "properties": [
+     "nav"
+    ]
+   },
+   {
+    "id": "ncx",
+    "href": "OEBPS/toc.ncx",
+    "mediaType": "application/x-dtbncx+xml",
+    "properties": null
+   },
+   {
+    "id": "cover-image",
+    "href": "OEBPS/images/cover.png",
+    "mediaType": "image/png",
+    "properties": [
+     "cover-image"
+    ]
+   },
+   {
+    "id": "cover",
+    "href": "OEBPS/text/cover.xhtml",
+    "mediaType": "application/xhtml+xml",
+    "properties": null
+   },
+   {
+    "id": "ch1",
+    "href": "OEBPS/text/chapter 1.xhtml",
+    "mediaType": "application/xhtml+xml",
+    "properties": null
+   },
+   {
+    "id": "ch1-overlay",
+    "href": "OEBPS/text/chapter1.smil",
+    "mediaType": "application/smil+xml",
+    "properties": null
+   },
+   {
+    "id": "ch2",
+    "href": "OEBPS/text/chapter2.xhtml",
+    "mediaType": "application/xhtml+xml",
+    "properties": null
+   },
+   {
+    "id": "notes",
+    "href": "OEBPS/text/notes.xhtml",
+    "mediaType": "application/xhtml+xml",
+    "properties": null
+   },
+   {
+    "id": "drm",
+    "href": "OEBPS/text/drm.xhtml",
+    "mediaType": "application/xhtml+xml",
+    "properties": null
+   },
+   {
+    "id": "serif",
+    "href": "OEBPS/fonts/Serif.ttf",
+    "mediaType": "font/ttf",
+    "properties": null
+   },
+   {
+    "id": "sans",
+    "href": "OEBPS/fonts/Sans.ttf",
+    "mediaType": "font/ttf",
+    "properties": null
+   },
+   {
+    "id": "css",
+    "href": "OEBPS/style.css",
+    "mediaType": "text/css",
+    "properties": null
+   }
+  ],
+  "resolveHref": {
+   "OEBPS/text/chapter 1.xhtml#part-b": 1,
+   "OEBPS/text/chapter%201.xhtml": 1,
+   "OEBPS/text/notes.xhtml": 3,
+   "OEBPS/missing.xhtml": null,
+   "OPS/ch,1.html#s1": null,
+   "OPS/ch%2C1.html": null,
+   "OPS/sub/ch2.html": null,
+   "p2.xhtml#x": null
+  },
+  "resolveCfi": {
+   "epubcfi(/6/4!/4/2/1:0)": 1,
+   "epubcfi(/6/4[first-chapter]!/4)": 1,
+   "epubcfi(/6/4[wrong-id]!/4)": 1,
+   "epubcfi(/6/2,/4/2/1:0,/4/2/1:5)": 0,
+   "epubcfi(/6/99!/4)": -1,
+   "epubcfi(/6/2!/4)": 0
+  }
+ },
+ "fixed": {
+  "sections": [
+   {
+    "id": "p1.xhtml",
+    "size": 156,
+    "cfi": "epubcfi(/6/2)",
+    "linear": "no",
+    "pageSpread": null,
+    "mediaOverlay": null
+   },
+   {
+    "id": "p2.xhtml",
+    "size": 156,
+    "cfi": "epubcfi(/6/4)",
+    "linear": null,
+    "pageSpread": "left",
+    "mediaOverlay": null
+   },
+   {
+    "id": "p3.xhtml",
+    "size": 156,
+    "cfi": "epubcfi(/6/6)",
+    "linear": null,
+    "pageSpread": "center",
+    "mediaOverlay": null
+   }
+  ],
+  "toc": null,
+  "pageList": null,
+  "landmarks": null,
+  "dir": "rtl",
+  "rendition": {
+   "layout": "pre-paginated"
+  },
+  "media": {
+   "narrator": [],
+   "duration": {}
+  },
+  "metadata": {
+   "title": "Fixed",
+   "sortAs": null,
+   "language": [
+    "ja"
+   ],
+   "identifier": "fixed-1",
+   "published": null,
+   "modified": null,
+   "subject": []
+  },
+  "cover": null,
+  "navPath": null,
+  "ncxPath": null,
+  "coverHref": null,
+  "manifest": [
+   {
+    "id": "p1",
+    "href": "p1.xhtml",
+    "mediaType": "application/xhtml+xml",
+    "properties": null
+   },
+   {
+    "id": "p2",
+    "href": "p2.xhtml",
+    "mediaType": "application/xhtml+xml",
+    "properties": null
+   },
+   {
+    "id": "p3",
+    "href": "p3.xhtml",
+    "mediaType": "application/xhtml+xml",
+    "properties": null
+   }
+  ],
+  "resolveHref": {
+   "OEBPS/text/chapter 1.xhtml#part-b": null,
+   "OEBPS/text/chapter%201.xhtml": null,
+   "OEBPS/text/notes.xhtml": null,
+   "OEBPS/missing.xhtml": null,
+   "OPS/ch,1.html#s1": null,
+   "OPS/ch%2C1.html": null,
+   "OPS/sub/ch2.html": null,
+   "p2.xhtml#x": 1
+  },
+  "resolveCfi": {
+   "epubcfi(/6/4!/4/2/1:0)": 1,
+   "epubcfi(/6/4[first-chapter]!/4)": 1,
+   "epubcfi(/6/4[wrong-id]!/4)": 1,
+   "epubcfi(/6/2,/4/2/1:0,/4/2/1:5)": 0,
+   "epubcfi(/6/99!/4)": -1,
+   "epubcfi(/6/2!/4)": 0
+  }
+ }
+}

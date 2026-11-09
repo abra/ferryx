@@ -13,6 +13,7 @@ export 'src/dialogs/batch_rename_dialog.dart';
 export 'src/workspace/key_hints.dart';
 export 'src/workspace/terminal_dock.dart';
 export 'src/workspace/workspace_cubit.dart';
+export 'src/workspace/workspace_preview.dart';
 export 'src/workspace/workspace_screen.dart';
 export 'src/workspace/workspace_state.dart';
 export 'src/workspace/workspace_terminal.dart';

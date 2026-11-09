@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" version="3.0"><body><seq id="s1"><par id="p1"><text src="chapter%201.xhtml#pg1"/><audio src="../audio/ch1.mp3" clipBegin="0s" clipEnd="5s"/></par></seq></body></smil>

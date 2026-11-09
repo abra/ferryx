@@ -192,6 +192,12 @@ impl std::fmt::Debug for ArchiveIndex {
 /// Where an extraction's bytes go, member by member; see
 /// [`ArchiveIndex::extract_members`].
 pub trait MemberSink {
+    /// Lets solid decoders stop while passing earlier members or draining
+    /// unread bytes, before another call to `write` is possible.
+    fn cancelled(&self) -> bool {
+        false
+    }
+
     /// Whether to read `member` (`false` passes it by); `Err(Stop)` ends
     /// the extraction.
     fn begin(&mut self, member: &Member) -> Result<bool, Stop>;
@@ -504,12 +510,29 @@ impl ArchiveIndex {
 
     /// Writes the file member `inner` to `out`; answers its byte count.
     pub fn read_member_to(&self, inner: &str, password: Option<&str>, out: &mut dyn Write) -> VfsResult<u64> {
+        self.read_member_to_until(inner, password, out, &crate::remote::never)
+    }
+
+    /// Streams a member, checking cancellation between decoded chunks.
+    pub fn read_member_to_until(
+        &self,
+        inner: &str,
+        password: Option<&str>,
+        out: &mut dyn Write,
+        stop: crate::remote::Stop,
+    ) -> VfsResult<u64> {
+        if stop() {
+            return Err(VfsError::cancelled());
+        }
         let member = self.member(inner).ok_or_else(|| not_in_archive(inner))?;
         if member.is_dir {
             return Err(VfsError::new(VfsErrorKind::IsADirectory, None, format!("{inner} is a folder")));
         }
-        let mut sink = WriterSink { out, outcome: None };
+        let mut sink = WriterSink { out, outcome: None, stop };
         let result = self.extract_members(&[inner.to_string()], password, &mut sink);
+        if stop() {
+            return Err(VfsError::cancelled());
+        }
         match (sink.outcome.take(), result) {
             (Some(outcome), _) => outcome,
             (None, Err(ExtractError::Failed(e))) => Err(e),
@@ -721,14 +744,25 @@ impl MemberSink for FileSink {
 struct WriterSink<'a> {
     out: &'a mut dyn Write,
     outcome: Option<VfsResult<u64>>,
+    stop: crate::remote::Stop<'a>,
 }
 
 impl MemberSink for WriterSink<'_> {
+    fn cancelled(&self) -> bool {
+        (self.stop)()
+    }
+
     fn begin(&mut self, _: &Member) -> Result<bool, Stop> {
+        if self.cancelled() {
+            return Err(Stop);
+        }
         Ok(true)
     }
 
     fn write(&mut self, bytes: &[u8]) -> io::Result<()> {
+        if self.cancelled() {
+            return Err(io::Error::other("archive preview cancelled"));
+        }
         self.out.write_all(bytes)
     }
 

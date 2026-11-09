@@ -1,0 +1,482 @@
+{
+ "eight.azw3": {
+  "kind": "kf8",
+  "metadata": {
+   "identifier": "1234",
+   "title": "Built KF8",
+   "author": [
+    "Someone"
+   ],
+   "publisher": "",
+   "language": "en-US",
+   "description": "",
+   "rights": ""
+  },
+  "cover": null,
+  "sections": [
+   {
+    "size": 198,
+    "linear": null,
+    "pageSpread": "left",
+    "document": {
+     "tag": "html",
+     "attrs": {},
+     "children": [
+      {
+       "tag": "head",
+       "attrs": {},
+       "children": [
+        {
+         "tag": "title",
+         "attrs": {},
+         "children": [
+          "One"
+         ]
+        }
+       ]
+      },
+      {
+       "tag": "body",
+       "attrs": {},
+       "children": [
+        {
+         "tag": "div",
+         "attrs": {
+          "aid": "A"
+         },
+         "children": []
+        },
+        {
+         "tag": "p",
+         "attrs": {
+          "id": "p1"
+         },
+         "children": [
+          "First fragment."
+         ]
+        },
+        {
+         "tag": "p",
+         "attrs": {
+          "aid": "B"
+         },
+         "children": [
+          "Second fragment with ",
+          {
+           "tag": "a",
+           "attrs": {
+            "href": "kindle:pos:fid:0001:off:0000000000"
+           },
+           "children": [
+            "a link"
+           ]
+          },
+          "."
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "size": 52,
+    "linear": null,
+    "pageSpread": "center",
+    "document": {
+     "tag": "html",
+     "attrs": {},
+     "children": [
+      {
+       "tag": "body",
+       "attrs": {},
+       "children": [
+        {
+         "tag": "p",
+         "attrs": {
+          "name": "named"
+         },
+         "children": [
+          "Third."
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "linear": "no"
+   }
+  ],
+  "toc": [
+   {
+    "label": "Chapter One",
+    "href": "kindle:pos:fid:0000:off:0000000000",
+    "subitems": [
+     {
+      "label": "Section",
+      "href": "kindle:pos:fid:0001:off:0000000000",
+      "subitems": null
+     }
+    ]
+   },
+   {
+    "label": "Chapter Two",
+    "href": "kindle:pos:fid:0002:off:0000000000",
+    "subitems": null
+   }
+  ],
+  "landmarks": [
+   {
+    "label": "Start here",
+    "href": "kindle:pos:fid:0000:off:0000000000",
+    "subitems": null,
+    "type": [
+     "text"
+    ]
+   }
+  ],
+  "dir": "rtl",
+  "rendition": {
+   "layout": "pre-paginated",
+   "viewport": {
+    "width": "1200",
+    "height": "1600"
+   }
+  },
+  "resolveHref": {
+   "kindle:pos:fid:0000:off:0000000000": 0,
+   "kindle:pos:fid:0001:off:0000000000": 0,
+   "kindle:pos:fid:0002:off:0000000000": 1
+  }
+ },
+ "six.mobi": {
+  "kind": "mobi6",
+  "metadata": {
+   "identifier": "1234",
+   "title": "Built MOBI <Updated>",
+   "author": [
+    "Ada & Grace",
+    "Alan"
+   ],
+   "publisher": "Press — House",
+   "language": [
+    "en-GB"
+   ],
+   "published": "2024-01-02",
+   "description": "A built book",
+   "subject": [
+    "Testing"
+   ],
+   "rights": "CC0",
+   "contributor": [
+    "Helper"
+   ]
+  },
+  "cover": 7,
+  "sections": [
+   {
+    "size": 187,
+    "linear": null,
+    "pageSpread": null,
+    "document": {
+     "tag": "html",
+     "attrs": {},
+     "children": [
+      {
+       "tag": "head",
+       "attrs": {},
+       "children": []
+      },
+      {
+       "tag": "body",
+       "attrs": {},
+       "children": [
+        {
+         "tag": "guide",
+         "attrs": {},
+         "children": [
+          {
+           "tag": "reference",
+           "attrs": {
+            "type": "toc",
+            "title": "Table of Contents",
+            "filepos": "0000000203"
+           },
+           "children": [
+            {
+             "tag": "reference",
+             "attrs": {
+              "type": "text",
+              "title": "Start",
+              "filepos": "0000000396"
+             },
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "tag": "p",
+         "attrs": {},
+         "children": [
+          "Cover page."
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "size": 192,
+    "linear": null,
+    "pageSpread": null,
+    "document": {
+     "tag": "html",
+     "attrs": {},
+     "children": [
+      {
+       "tag": "head",
+       "attrs": {},
+       "children": []
+      },
+      {
+       "tag": "body",
+       "attrs": {},
+       "children": [
+        {
+         "tag": "a",
+         "attrs": {
+          "id": "filepos0000000203"
+         },
+         "children": []
+        },
+        {
+         "tag": "p",
+         "attrs": {
+          "height": "2em"
+         },
+         "children": [
+          {
+           "tag": "a",
+           "attrs": {
+            "filepos": "0000000396"
+           },
+           "children": [
+            "Chapter One"
+           ]
+          }
+         ]
+        },
+        {
+         "tag": "blockquote",
+         "attrs": {},
+         "children": [
+          {
+           "tag": "p",
+           "attrs": {},
+           "children": [
+            {
+             "tag": "a",
+             "attrs": {
+              "filepos": "0000000513"
+             },
+             "children": [
+              "Section 1.1"
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "tag": "p",
+         "attrs": {},
+         "children": [
+          {
+           "tag": "a",
+           "attrs": {
+            "filepos": "0000000569"
+           },
+           "children": [
+            "Chapter Two"
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "size": 174,
+    "linear": null,
+    "pageSpread": null,
+    "document": {
+     "tag": "html",
+     "attrs": {},
+     "children": [
+      {
+       "tag": "head",
+       "attrs": {},
+       "children": []
+      },
+      {
+       "tag": "body",
+       "attrs": {},
+       "children": [
+        {
+         "tag": "a",
+         "attrs": {
+          "id": "filepos0000000396"
+         },
+         "children": []
+        },
+        {
+         "tag": "h1",
+         "attrs": {},
+         "children": [
+          "Chapter One"
+         ]
+        },
+        {
+         "tag": "p",
+         "attrs": {},
+         "children": [
+          "First chapter text & more."
+         ]
+        },
+        {
+         "tag": "img",
+         "attrs": {
+          "recindex": "00001"
+         },
+         "children": []
+        },
+        {
+         "tag": "p",
+         "attrs": {},
+         "children": [
+          "Padding text to move offsets."
+         ]
+        },
+        {
+         "tag": "a",
+         "attrs": {
+          "id": "filepos0000000513"
+         },
+         "children": []
+        },
+        {
+         "tag": "h2",
+         "attrs": {},
+         "children": [
+          "Section 1.1"
+         ]
+        },
+        {
+         "tag": "p",
+         "attrs": {},
+         "children": [
+          "Section text."
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "size": 72,
+    "linear": null,
+    "pageSpread": null,
+    "document": {
+     "tag": "html",
+     "attrs": {},
+     "children": [
+      {
+       "tag": "head",
+       "attrs": {},
+       "children": []
+      },
+      {
+       "tag": "body",
+       "attrs": {},
+       "children": [
+        {
+         "tag": "a",
+         "attrs": {
+          "id": "filepos0000000569"
+         },
+         "children": []
+        },
+        {
+         "tag": "h1",
+         "attrs": {},
+         "children": [
+          "Chapter Two"
+         ]
+        },
+        {
+         "tag": "p",
+         "attrs": {},
+         "children": [
+          "Second chapter."
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  ],
+  "toc": [
+   {
+    "label": "Chapter One",
+    "href": "filepos:0000000396",
+    "subitems": [
+     {
+      "label": "Section 1.1",
+      "href": "filepos:0000000513",
+      "subitems": null
+     }
+    ]
+   },
+   {
+    "label": "Chapter Two",
+    "href": "filepos:0000000569",
+    "subitems": null
+   }
+  ],
+  "landmarks": [
+   {
+    "label": "Table of Contents",
+    "href": "filepos:0000000203",
+    "subitems": null,
+    "type": [
+     "toc"
+    ]
+   },
+   {
+    "label": "Start",
+    "href": "filepos:0000000396",
+    "subitems": null,
+    "type": [
+     "text"
+    ]
+   }
+  ],
+  "dir": null,
+  "rendition": null,
+  "resolveHref": {
+   "filepos:0000000396": 2,
+   "filepos:0000000513": 2,
+   "filepos:0000000569": 3,
+   "filepos:0000000203": 1
+  }
+ }
+}

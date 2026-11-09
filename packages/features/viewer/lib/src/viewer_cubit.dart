@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:domain_models/domain_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'document_format.dart';
 import 'hex_format.dart';
 import 'text_window.dart';
 import 'viewer_source.dart';
@@ -25,6 +27,7 @@ class ViewerCubit extends Cubit<ViewerState> {
   final ViewerSource source;
   final int windowSize;
   int _reads = 0;
+  bool _hasWindow = false;
 
   /// Reads the window at [offset] (the first by default).
   Future<void> load({
@@ -34,13 +37,37 @@ class ViewerCubit extends Cubit<ViewerState> {
     final read = ++_reads;
     emit(state.copyWith(loading: true, clearError: true));
     try {
+      // Document decoders own their reads and cancellation. Do not read or
+      // decode a binary text window before the first document page.
+      if (state.mode == ViewerMode.preview &&
+          isDocumentName(source.displayName)) {
+        emit(
+          state.copyWith(
+            generation: state.generation + 1,
+            loading: false,
+          ),
+        );
+        return;
+      }
       final size = await source.size();
+      if (read != _reads || isClosed) return;
+      if (state.mode == ViewerMode.preview) {
+        emit(
+          state.copyWith(
+            size: size,
+            generation: state.generation + 1,
+            loading: false,
+          ),
+        );
+        return;
+      }
       final start = math.max(0, math.min(offset, size));
       final bytes = size == 0
           ? Uint8List(0)
           : await source.read(start, math.min(windowSize, size - start));
       if (read != _reads || isClosed) return;
       final window = decodeWindow(bytes);
+      _hasWindow = true;
       emit(
         _withMatches(
           state.copyWith(
@@ -64,8 +91,10 @@ class ViewerCubit extends Cubit<ViewerState> {
   }
 
   /// Reads the shown window again (⌘R, or the file changed).
-  Future<void> refresh() =>
-      load(offset: state.offset, scroll: ViewerScroll.top);
+  Future<void> refresh() {
+    _hasWindow = false;
+    return load(offset: state.offset, scroll: ViewerScroll.top);
+  }
 
   Future<void> loadNext() async {
     if (!state.hasNext) return;
@@ -97,7 +126,19 @@ class ViewerCubit extends Cubit<ViewerState> {
 
   void setMode(ViewerMode mode) {
     if (mode == state.mode) return;
-    emit(_withMatches(state.copyWith(mode: mode), keepCurrent: false));
+    ++_reads;
+    emit(
+      _withMatches(
+        state.copyWith(
+          mode: mode,
+          loading: false,
+          clearError: true,
+          findShown: mode == ViewerMode.preview ? false : state.findShown,
+        ),
+        keepCurrent: false,
+      ),
+    );
+    if (mode == ViewerMode.preview || !_hasWindow) unawaited(load());
   }
 
   void toggleWrap() => emit(state.copyWith(wrap: !state.wrap));

@@ -68,6 +68,21 @@ fn deliver(
     Ok(())
 }
 
+fn skip_until(reader: &mut dyn Read, sink: &dyn MemberSink) -> io::Result<u64> {
+    let mut buffer = [0u8; 64 * 1024];
+    let mut bytes = 0;
+    loop {
+        if sink.cancelled() {
+            return Err(io::Error::other("archive preview cancelled"));
+        }
+        let n = reader.read(&mut buffer)?;
+        if n == 0 {
+            return Ok(bytes);
+        }
+        bytes += n as u64;
+    }
+}
+
 fn mode_or(mode: u32, is_dir: bool) -> u32 {
     if mode & 0o170000 != 0 {
         mode
@@ -232,18 +247,19 @@ pub(crate) fn extract_tar(
         // A plain tar seeks past the members not wanted.
         let mut tar = tar::Archive::new(BufReader::new(file));
         let entries = tar.entries_with_seek().map_err(|e| read_error(archive, e))?;
-        return deliver_tar(job, entries, sink);
+        return deliver_tar(job, entries, sink, false);
     }
     let reader = decoder(BufReader::new(file), compression).at(archive)?;
     let mut tar = tar::Archive::new(reader);
     let entries = tar.entries().map_err(|e| read_error(archive, e))?;
-    deliver_tar(job, entries, sink)
+    deliver_tar(job, entries, sink, true)
 }
 
 fn deliver_tar<R: Read>(
     job: &Job,
     entries: tar::Entries<'_, R>,
     sink: &mut dyn MemberSink,
+    streaming: bool,
 ) -> Result<(), ExtractError> {
     let archive = job.path();
     let mut wanted = vec![false; job.index.members.len()];
@@ -252,12 +268,18 @@ fn deliver_tar<R: Read>(
     }
     let mut remaining = job.picked.len();
     for entry in entries {
+        if sink.cancelled() {
+            return Err(ExtractError::Stopped);
+        }
         let mut entry = entry.map_err(|e| read_error(archive, e))?;
         let path = entry.path().map(|p| normalize(&p.to_string_lossy())).unwrap_or_default();
-        let Some(at) = job.index.position(&path) else { continue };
-        if !wanted[at] {
+        let at = job.index.position(&path).filter(|&at| wanted[at]);
+        let Some(at) = at else {
+            if streaming {
+                skip_until(&mut entry, sink).map_err(|e| read_error(archive, e))?;
+            }
             continue;
-        }
+        };
         wanted[at] = false;
         let member = job.member(at);
         deliver(sink, member, |sink| {
@@ -401,10 +423,14 @@ pub(crate) fn extract_7z(job: &Job, sink: &mut dyn MemberSink) -> Result<(), Ext
         let mut stopped = false;
         let decoded = BlockDecoder::new(sevenz_threads(needed), block, headers, &password, &mut file)
             .for_each_entries(&mut |_, reader| {
+                if sink.cancelled() {
+                    stopped = true;
+                    return Ok(false);
+                }
                 let this = native;
                 native += 1;
                 let Some(&at) = wanted.get(&this) else {
-                    io::copy(reader, &mut io::sink())?;
+                    skip_until(reader, sink)?;
                     return Ok(true);
                 };
                 let member = job.member(at);
@@ -415,25 +441,24 @@ pub(crate) fn extract_7z(job: &Job, sink: &mut dyn MemberSink) -> Result<(), Ext
                         return Ok(false);
                     }
                     Ok(false) => {
-                        io::copy(reader, &mut io::sink())?;
+                        skip_until(reader, sink)?;
                     }
                     Ok(true) => {
                         let outcome = pump(reader, &mut SinkWriter(sink));
                         // What the sink did not take is passed by, so the next
                         // member starts where it should.
-                        let drained = io::copy(reader, &mut io::sink());
                         let outcome = outcome.map_err(|e| read_error(archive, e));
                         if sink.end(member, outcome).is_err() {
                             stopped = true;
                             return Ok(false);
                         }
-                        drained?;
+                        skip_until(reader, sink)?;
                     }
                 }
                 remaining -= 1;
                 Ok(remaining > 0)
             });
-        if stopped {
+        if stopped || sink.cancelled() {
             return Err(ExtractError::Stopped);
         }
         if let Err(e) = decoded {

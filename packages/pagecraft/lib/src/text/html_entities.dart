@@ -1,0 +1,153 @@
+/// HTML character references in metadata strings (`unescapeHTML`, which
+/// `mobi.js` does through a textarea). Numeric references and the named
+/// entities that appear in book metadata are decoded; unknown names are
+/// left as written, as the browser leaves them.
+library;
+
+/// Decodes `&amp;`, `&#8212;`, `&#x2014;` and friends in [text].
+String unescapeHtml(String? text) {
+  if (text == null || text.isEmpty) return '';
+  if (!text.contains('&')) return text;
+  return text.replaceAllMapped(_reference, (match) {
+    final body = match.group(1)!;
+    if (body.startsWith('#')) {
+      final hex = body.length > 1 && (body[1] == 'x' || body[1] == 'X');
+      final code = int.tryParse(
+        body.substring(hex ? 2 : 1),
+        radix: hex ? 16 : 10,
+      );
+      if (code == null || code <= 0 || code > 0x10FFFF) return match.group(0)!;
+      if (code >= 0xD800 && code <= 0xDFFF) return '�';
+      return String.fromCharCode(code);
+    }
+    final named = _named[body];
+    return named ?? match.group(0)!;
+  });
+}
+
+final _reference = RegExp(r'&(#[xX]?[0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]*);');
+
+const _named = <String, String>{
+  'amp': '&',
+  'lt': '<',
+  'gt': '>',
+  'quot': '"',
+  'apos': "'",
+  'nbsp': ' ',
+  'ensp': ' ',
+  'emsp': ' ',
+  'thinsp': ' ',
+  'zwnj': '‌',
+  'zwj': '‍',
+  'shy': '­',
+  'ndash': '–',
+  'mdash': '—',
+  'lsquo': '‘',
+  'rsquo': '’',
+  'sbquo': '‚',
+  'ldquo': '“',
+  'rdquo': '”',
+  'bdquo': '„',
+  'laquo': '«',
+  'raquo': '»',
+  'lsaquo': '‹',
+  'rsaquo': '›',
+  'hellip': '…',
+  'bull': '•',
+  'middot': '·',
+  'copy': '©',
+  'reg': '®',
+  'trade': '™',
+  'deg': '°',
+  'plusmn': '±',
+  'times': '×',
+  'divide': '÷',
+  'frac12': '½',
+  'frac14': '¼',
+  'frac34': '¾',
+  'sup2': '²',
+  'sup3': '³',
+  'micro': 'µ',
+  'para': '¶',
+  'sect': '§',
+  'euro': '€',
+  'pound': '£',
+  'yen': '¥',
+  'cent': '¢',
+  'curren': '¤',
+  'iexcl': '¡',
+  'iquest': '¿',
+  'dagger': '†',
+  'Dagger': '‡',
+  'permil': '‰',
+  'prime': '′',
+  'Prime': '″',
+  'larr': '←',
+  'rarr': '→',
+  'uarr': '↑',
+  'darr': '↓',
+  'harr': '↔',
+  'minus': '−',
+  'ne': '≠',
+  'le': '≤',
+  'ge': '≥',
+  'infin': '∞',
+  'agrave': 'à',
+  'aacute': 'á',
+  'acirc': 'â',
+  'atilde': 'ã',
+  'auml': 'ä',
+  'aring': 'å',
+  'aelig': 'æ',
+  'ccedil': 'ç',
+  'egrave': 'è',
+  'eacute': 'é',
+  'ecirc': 'ê',
+  'euml': 'ë',
+  'igrave': 'ì',
+  'iacute': 'í',
+  'icirc': 'î',
+  'iuml': 'ï',
+  'ntilde': 'ñ',
+  'ograve': 'ò',
+  'oacute': 'ó',
+  'ocirc': 'ô',
+  'otilde': 'õ',
+  'ouml': 'ö',
+  'oslash': 'ø',
+  'ugrave': 'ù',
+  'uacute': 'ú',
+  'ucirc': 'û',
+  'uuml': 'ü',
+  'yacute': 'ý',
+  'yuml': 'ÿ',
+  'szlig': 'ß',
+  'Agrave': 'À',
+  'Aacute': 'Á',
+  'Acirc': 'Â',
+  'Atilde': 'Ã',
+  'Auml': 'Ä',
+  'Aring': 'Å',
+  'AElig': 'Æ',
+  'Ccedil': 'Ç',
+  'Egrave': 'È',
+  'Eacute': 'É',
+  'Ecirc': 'Ê',
+  'Euml': 'Ë',
+  'Igrave': 'Ì',
+  'Iacute': 'Í',
+  'Icirc': 'Î',
+  'Iuml': 'Ï',
+  'Ntilde': 'Ñ',
+  'Ograve': 'Ò',
+  'Oacute': 'Ó',
+  'Ocirc': 'Ô',
+  'Otilde': 'Õ',
+  'Ouml': 'Ö',
+  'Oslash': 'Ø',
+  'Ugrave': 'Ù',
+  'Uacute': 'Ú',
+  'Ucirc': 'Û',
+  'Uuml': 'Ü',
+  'Yacute': 'Ý',
+};

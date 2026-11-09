@@ -1,0 +1,25 @@
+group = 'io.github.abra.native_text_selection'
+version = '1.0'
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    namespace = 'io.github.abra.native_text_selection'
+    compileSdk = 36
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+    defaultConfig {
+        minSdk = 24
+    }
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+}

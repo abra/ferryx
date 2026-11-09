@@ -84,10 +84,33 @@ Vim mode is optional and off by default.
   menus include Manage Favorites, with visible Add and Remove buttons and a
   row menu for renaming and reordering. ⌘B adds a folder; adding it again
   keeps it in favorites. Remove from Favorites is a separate command.
-- **Built-in viewer** (F3, Space): text, hex and image preview modes,
-  windowed reads of large text/binary files, find (⌘F), go to an offset (⌘L).
-  The viewer's actions menu keeps these controls available in narrow windows.
-  Image previews read the whole file and are limited to 64 MiB.
+- **Built-in viewer**: Space outside Vim mode, `i` in Vim mode or ⇧⌘Y
+  opens preview in the neighboring pane, following the file cursor after
+  a short pause. The original pane is kept and restored when preview closes.
+  F3 opens the full-window viewer; an explicit button switches between
+  neighboring and full-window views without reopening the document.
+  Tab moves between the file list and preview (from full window it returns
+  to the list beside preview); Esc closes preview.
+  The viewer supports text, hex, images and document previews.
+  EPUB, FB2 (including `.fbz` and `.fb2.zip`), MOBI, AZW3/KF8, CBZ, PDF and
+  DjVu (`.djvu` / `.djv`) open directly in Preview, with page navigation and
+  contents where available; PDF, comics and DjVu also offer zoom and Go to
+  Page. Reflowable books have A− / A+ controls and a reset to 15, with sizes
+  from 10 to 32; the choice is saved separately from text/hex size and is
+  also available in Settings → Viewer. ⌘− / ⌘+ / ⌘0 change or reset book
+  type size, and zoom or fit fixed pages (Ctrl on Windows/Linux).
+  Files on disk are read in place; archive members and server files
+  use a temporary copy owned by the preview.
+  Text and hex keep windowed reads of large files, find (⌘F) and go to an
+  offset (⌘L). The actions menu keeps these controls available in narrow
+  windows. Image previews read the whole file and are limited to 64 MiB.
+  Document preview uses Pagecraft: reflowable books require horizontal
+  text; fixed-layout EPUB/KF8, vertical writing and CBR are unsupported.
+  Password-protected PDFs report that a password is required; this preview
+  does not yet provide password entry. DjVu must be self-contained; indirect
+  documents and JPEG-in-DjVu are unsupported. There is no OCR or document
+  text search in this preview; PDF/DjVu text selection and annotation tools
+  are not exposed.
 - **Find files** (⌘F): by mask or regular expression, by contents (phrase
   or words, case, not containing), by size; results stream in; go to a
   hit or view it. Searches local folders; on macOS it can use the Spotlight
@@ -106,7 +129,8 @@ Vim mode is optional and off by default.
   as you type (empty, `/`, repeated, taken, a line too many or too few);
   swaps work.
 - **The desktop's own services**: on macOS, Quick Look (⌘Y, as in Finder;
-  built-in preview uses ⇧⌘Y or Space) follows the cursor and
+  built-in neighboring preview uses ⇧⌘Y, Space outside Vim mode or `i`
+  in Vim mode) follows the cursor and
   steps through a selection; Share (⇧⌘S, or Share… on a row) opens the
   system's picker. Drag local files between the panels, onto a folder row,
   or between Ferryx and other applications (macOS, Windows, Linux): a drop
@@ -202,6 +226,7 @@ Vim mode is optional and off by default.
 |------|---------|-------|
 | Flutter | 3.47.7, pinned in [`.fvmrc`](.fvmrc) | Use `fvm flutter` / `fvm dart`; the pinned Flutter includes Dart |
 | Rust | current stable via **rustup** | cargokit uses `rustup run stable`; keep it current with `rustup update stable` |
+| Pagecraft's Rust backend | **1.99.0** via rustup | Independently pinned by the dependency's `rust/rust-toolchain.toml`; native builds also need a C++17 compiler for DjVu |
 | `flutter_rust_bridge_codegen` | 2.13.0 | Only needed when regenerating bindings: `cargo install flutter_rust_bridge_codegen@2.13.0 --locked` |
 
 The workspace still declares `rust-version = "1.85"`, but the locked RAR
@@ -233,6 +258,25 @@ make get
 The Makefile calls `cargo` from PATH, while cargokit uses rustup's stable
 toolchain. Ensure they select the same Rust installation. Generated bridge
 bindings are checked in; normal builds do not require running codegen.
+
+The reader engine lives in [packages/pagecraft](packages/pagecraft), with
+its local dependency [native_text_selection](packages/native_text_selection).
+Both packages were copied from Readflex and are part of this repository;
+the viewer uses a relative `path` dependency. Edit these sources here to
+change the engine used by Ferryx. Building does not require Readflex or a
+Git checkout in Pub's cache. The first native build may download Pagecraft's
+pinned Rust toolchain and target libraries,
+Cargo dependencies and PDFium binaries from GitHub. Keep these downloads
+available in CI and on a fresh build machine.
+
+Pagecraft bundles PDFium, its Rust MOBI backend and DjVuLibre 3.5.30 even
+when only another format is imported. They ship with the application;
+users do not install a system DjVu decoder. The DjVu component is
+GPL-2.0-or-later, with its notices and license registered in Flutter's
+license bundle. See the local
+[Pagecraft notices](packages/pagecraft/LICENSE)
+and [DjVuLibre license](packages/pagecraft/native/djvu/upstream/COPYING)
+for the bundled components' terms.
 
 ## Commands
 
@@ -274,6 +318,10 @@ a release build and a short launch check on Linux and Windows, retaining
 screenshots as artifacts. It runs on pull requests, pushes to `ci/**`
 branches and manual dispatch; ordinary pushes to other branches do not
 trigger it. There is no macOS CI job.
+
+Document smoke tests exercise the native engines with small generated
+fixtures. A successful launch check alone does not exercise those engines;
+release validation must also open a document in the packaged application.
 
 ## Releases
 
@@ -337,7 +385,11 @@ Files opened externally from servers or archives are copied under `Ferryx/`
 in the system temporary directory. These copies do not synchronize changes
 back to their source. The built-in viewer caches large archive members in
 unnamed temporary files, removed when their last handle closes or the app
-exits. Undo history and archive passwords stay in memory and are lost when
+exits. Document previews separately stage archive members and server files
+in private `ferryx-preview-*` temporary directories. Closing or replacing
+the preview cancels pending preparation, closes the decoder and removes
+its owned copy; native originals are never removed. Undo history and
+archive passwords stay in memory and are lost when
 the app exits.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the rules that keep the codebase

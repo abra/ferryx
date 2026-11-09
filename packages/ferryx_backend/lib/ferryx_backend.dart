@@ -20,6 +20,7 @@ export 'src/rust/api/flat.dart';
 export 'src/rust/api/journal.dart';
 export 'src/rust/api/listing.dart';
 export 'src/rust/api/ops.dart';
+export 'src/rust/api/preview.dart';
 export 'src/rust/api/rename.dart';
 export 'src/rust/api/sync.dart';
 export 'src/rust/api/system.dart';

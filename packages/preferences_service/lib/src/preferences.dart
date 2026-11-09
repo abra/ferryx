@@ -39,6 +39,7 @@ class Preferences extends Equatable {
     this.preserveAttributes = true,
     this.viewerWrap = true,
     this.viewerFontSize = 13,
+    this.documentFontSize = defaultDocumentFontSize,
     this.showTabBarAlways = false,
     this.showKeyHints = true,
     this.operationsVisible = true,
@@ -50,6 +51,13 @@ class Preferences extends Equatable {
   });
 
   static const int schemaVersion = 1;
+  static const double defaultDocumentFontSize = 15;
+  static const double minDocumentFontSize = 10;
+  static const double maxDocumentFontSize = 32;
+
+  static double normalizeDocumentFontSize(double value) => value.isFinite
+      ? value.clamp(minDocumentFontSize, maxDocumentFontSize).roundToDouble()
+      : defaultDocumentFontSize;
 
   final AppThemeMode themeMode;
 
@@ -99,6 +107,9 @@ class Preferences extends Equatable {
   final bool preserveAttributes;
   final bool viewerWrap;
   final double viewerFontSize;
+
+  /// Reflowable books have a separate reading size from the text/hex viewer.
+  final double documentFontSize;
   final bool showTabBarAlways;
 
   /// A line under the panels with the keys for what is under the cursor
@@ -164,6 +175,7 @@ class Preferences extends Equatable {
     bool? preserveAttributes,
     bool? viewerWrap,
     double? viewerFontSize,
+    double? documentFontSize,
     bool? showTabBarAlways,
     bool? showKeyHints,
     bool? operationsVisible,
@@ -202,6 +214,9 @@ class Preferences extends Equatable {
     preserveAttributes: preserveAttributes ?? this.preserveAttributes,
     viewerWrap: viewerWrap ?? this.viewerWrap,
     viewerFontSize: viewerFontSize ?? this.viewerFontSize,
+    documentFontSize: documentFontSize == null
+        ? this.documentFontSize
+        : normalizeDocumentFontSize(documentFontSize),
     showTabBarAlways: showTabBarAlways ?? this.showTabBarAlways,
     showKeyHints: showKeyHints ?? this.showKeyHints,
     operationsVisible: operationsVisible ?? this.operationsVisible,
@@ -242,6 +257,7 @@ class Preferences extends Equatable {
     'preserveAttributes': preserveAttributes,
     'viewerWrap': viewerWrap,
     'viewerFontSize': viewerFontSize,
+    'documentFontSize': documentFontSize,
     'showTabBarAlways': showTabBarAlways,
     'showKeyHints': showKeyHints,
     'operationsVisible': operationsVisible,
@@ -353,6 +369,9 @@ class Preferences extends Equatable {
         json['viewerFontSize'],
         defaults.viewerFontSize,
       ).clamp(9, 32),
+      documentFontSize: normalizeDocumentFontSize(
+        _doubleOr(json['documentFontSize'], defaults.documentFontSize),
+      ),
       showTabBarAlways: _boolOr(
         json['showTabBarAlways'],
         defaults.showTabBarAlways,
@@ -425,6 +444,7 @@ class Preferences extends Equatable {
     preserveAttributes,
     viewerWrap,
     viewerFontSize,
+    documentFontSize,
     showTabBarAlways,
     showKeyHints,
     operationsVisible,

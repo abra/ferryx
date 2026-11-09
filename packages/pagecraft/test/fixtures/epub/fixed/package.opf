@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">fixed-1</dc:identifier><dc:title>Fixed</dc:title><dc:language>ja</dc:language></metadata>
+  <manifest>
+    <item id="p1" href="p1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="p2" href="p2.xhtml" media-type="application/xhtml+xml"/>
+    <item id="p3" href="p3.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine page-progression-direction="rtl">
+    <itemref idref="p1" linear="no"/>
+    <itemref idref="p2"/>
+    <itemref idref="p3" properties="rendition:page-spread-center"/>
+  </spine>
+</package>

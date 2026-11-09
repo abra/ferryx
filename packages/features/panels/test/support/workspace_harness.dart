@@ -247,6 +247,8 @@ class WorkspaceHarness {
     AppPlatformStyle style = AppPlatformStyle.macos,
     WindowDecor decor = WindowDecor.none,
     Map<AppCommand, VoidCallback> commandHandlers = const {},
+    WorkspacePreview? preview,
+    ValueChanged<WorkspaceSnapshot>? onSnapshot,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -288,6 +290,7 @@ class WorkspaceHarness {
           windowDecor: decor,
           platformServices: desktop,
           folderSync: _MockFolderSync(),
+          preview: preview,
           navigation: WorkspaceNavigation(
             openViewer: (context, location, {preview = false}) async {},
             openFind: (context, root, {required view}) async => null,
@@ -306,7 +309,7 @@ class WorkspaceHarness {
           savedRight: saved(right),
           savedActive: PanelSide.left,
           fallbackLocation: const Location.native(home),
-          onSnapshot: (_) {},
+          onSnapshot: onSnapshot ?? (_) {},
           frecency: frecency,
         ),
       ),

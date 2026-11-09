@@ -41,6 +41,7 @@ void main() {
         verifyCopies: true,
         viewerWrap: false,
         viewerFontSize: 15,
+        documentFontSize: 19,
         showTabBarAlways: true,
         vimMode: true,
         vimMarks: {'a': 'native:/tmp'},
@@ -54,6 +55,24 @@ void main() {
         ),
       );
       expect(Preferences.fromJson(prefs.toJson()), prefs);
+    });
+
+    test('book size accepts old files and bounds damaged values', () {
+      expect(Preferences.fromJson({'viewerFontSize': 24}).documentFontSize, 15);
+      for (final invalid in ['big', null, double.nan, double.infinity]) {
+        expect(
+          Preferences.fromJson({'documentFontSize': invalid}).documentFontSize,
+          Preferences.defaultDocumentFontSize,
+        );
+      }
+      expect(
+        Preferences.fromJson({'documentFontSize': -1}).documentFontSize,
+        Preferences.minDocumentFontSize,
+      );
+      expect(
+        Preferences.fromJson({'documentFontSize': 99}).documentFontSize,
+        Preferences.maxDocumentFontSize,
+      );
     });
 
     test('the terminal block keeps its numbers in range', () {
@@ -127,6 +146,18 @@ void main() {
   });
 
   group('PreferencesService', () {
+    test('book size persists independently from the text viewer', () async {
+      final storage = InMemoryPreferencesStorage();
+      final service = await PreferencesService.create(storage: storage);
+      await service.update((p) => p.copyWith(documentFontSize: 21));
+      final restored = await PreferencesService.create(storage: storage);
+      expect(restored.current.documentFontSize, 21);
+      expect(restored.current.viewerFontSize, 13);
+      expect(storage.saves, 1);
+      await restored.dispose();
+      await service.dispose();
+    });
+
     test(
       'a font change is saved, restored and can return to the default',
       () async {

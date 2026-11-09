@@ -1,0 +1,107 @@
+[
+ {
+  "text": "power bank keeps",
+  "occurrence": 0,
+  "selected": "power bank keeps",
+  "cfi": "readflex-html-position:%7B%22blockId%22%3A%22block-1-s0%22%2C%22sentenceIndex%22%3A0%2C%22sentenceText%22%3A%22The%20power%20bank%20keeps%20devices%20running.%22%2C%22prefix%22%3A%22%22%2C%22suffix%22%3A%22%22%2C%22rangeRootId%22%3A%22block-1-s0%22%2C%22matchText%22%3A%22power%20bank%20keeps%22%2C%22matchLength%22%3A16%2C%22matchPrefix%22%3A%22The%22%2C%22matchSuffix%22%3A%22devices%20running.%22%2C%22matchIndex%22%3A4%7D",
+  "restored": "power bank keeps"
+ },
+ {
+  "text": "devices",
+  "occurrence": 0,
+  "selected": "devices",
+  "cfi": "readflex-html-position:%7B%22blockId%22%3A%22block-1-s0%22%2C%22sentenceIndex%22%3A0%2C%22sentenceText%22%3A%22The%20power%20bank%20keeps%20devices%20running.%22%2C%22prefix%22%3A%22%22%2C%22suffix%22%3A%22%22%2C%22rangeRootId%22%3A%22block-1-s0%22%2C%22matchText%22%3A%22devices%22%2C%22matchLength%22%3A7%2C%22matchPrefix%22%3A%22The%20power%20bank%20keeps%22%2C%22matchSuffix%22%3A%22running.%22%2C%22matchIndex%22%3A21%7D",
+  "restored": "devices"
+ },
+ {
+  "text": "bank keeps devices running",
+  "occurrence": 0,
+  "selected": "bank keeps devices running",
+  "cfi": "readflex-html-position:%7B%22blockId%22%3A%22block-1-s0%22%2C%22sentenceIndex%22%3A0%2C%22sentenceText%22%3A%22The%20power%20bank%20keeps%20devices%20running.%22%2C%22prefix%22%3A%22%22%2C%22suffix%22%3A%22%22%2C%22rangeRootId%22%3A%22block-1-s0%22%2C%22matchText%22%3A%22bank%20keeps%20devices%20running%22%2C%22matchLength%22%3A26%2C%22matchPrefix%22%3A%22The%20power%22%2C%22matchSuffix%22%3A%22.%22%2C%22matchIndex%22%3A10%7D",
+  "restored": "bank keeps devices running"
+ },
+ {
+  "text": "running.  A second",
+  "occurrence": 0,
+  "selected": "running. A second",
+  "cfi": "readflex-html-position:%7B%22blockId%22%3A%22block-1-s0%22%2C%22sentenceIndex%22%3A0%2C%22sentenceText%22%3A%22The%20power%20bank%20keeps%20devices%20running.%22%2C%22prefix%22%3A%22%22%2C%22suffix%22%3A%22%22%2C%22rangeRootId%22%3A%22block-1%22%2C%22matchText%22%3A%22running.%20A%20second%22%2C%22matchLength%22%3A17%2C%22matchPrefix%22%3A%22The%20power%20bank%20keeps%20devices%22%2C%22matchSuffix%22%3A%22sentence%20follows%20here%2C%20with%20the%20word%20power%20again%22%2C%22matchIndex%22%3A29%7D",
+  "restored": "running.  A second"
+ },
+ {
+  "text": "power",
+  "occurrence": 1,
+  "selected": "power",
+  "cfi": "readflex-html-position:%7B%22blockId%22%3A%22block-1-s1%22%2C%22sentenceIndex%22%3A1%2C%22sentenceText%22%3A%22A%20second%20sentence%20follows%20here%2C%20with%20the%20word%20power%20again.%22%2C%22prefix%22%3A%22%22%2C%22suffix%22%3A%22%22%2C%22rangeRootId%22%3A%22block-1-s1%22%2C%22matchText%22%3A%22power%22%2C%22matchLength%22%3A5%2C%22matchPrefix%22%3A%22A%20second%20sentence%20follows%20here%2C%20with%20the%20word%22%2C%22matchSuffix%22%3A%22again.%22%2C%22matchIndex%22%3A46%7D",
+  "restored": "power"
+ },
+ {
+  "text": "power",
+  "occurrence": 3,
+  "selected": "power",
+  "cfi": "readflex-html-position:%7B%22blockId%22%3A%22block-4-s0%22%2C%22sentenceIndex%22%3A0%2C%22sentenceText%22%3A%22A%20quote%20about%20power%2C%20and%20power%20again.%22%2C%22prefix%22%3A%22%22%2C%22suffix%22%3A%22%22%2C%22rangeRootId%22%3A%22block-4-s0%22%2C%22matchText%22%3A%22power%22%2C%22matchLength%22%3A5%2C%22matchPrefix%22%3A%22A%20quote%20about%20power%2C%20and%22%2C%22matchSuffix%22%3A%22again.%22%2C%22matchIndex%22%3A25%7D",
+  "restored": "power"
+ },
+ {
+  "text": "follows here",
+  "occurrence": 0,
+  "selected": "follows here",
+  "cfi": "readflex-html-position:%7B%22blockId%22%3A%22block-1-s1%22%2C%22sentenceIndex%22%3A1%2C%22sentenceText%22%3A%22A%20second%20sentence%20follows%20here%2C%20with%20the%20word%20power%20again.%22%2C%22prefix%22%3A%22%22%2C%22suffix%22%3A%22%22%2C%22rangeRootId%22%3A%22block-1-s1%22%2C%22matchText%22%3A%22follows%20here%22%2C%22matchLength%22%3A12%2C%22matchPrefix%22%3A%22A%20second%20sentence%22%2C%22matchSuffix%22%3A%22%2C%20with%20the%20word%20power%20again.%22%2C%22matchIndex%22%3A18%7D",
+  "restored": "follows here"
+ },
+ {
+  "text": "Заряд держится 100%",
+  "occurrence": 0,
+  "selected": "Заряд держится 100%",
+  "cfi": "readflex-html-position:%7B%22blockId%22%3A%22block-2-s0%22%2C%22sentenceIndex%22%3A0%2C%22sentenceText%22%3A%22%D0%97%D0%B0%D1%80%D1%8F%D0%B4%20%D0%B4%D0%B5%D1%80%D0%B6%D0%B8%D1%82%D1%81%D1%8F%20100%25%20%D0%B4%D0%BD%D0%B5%D0%B9%20%E2%80%94%20%D0%B4%D0%B0%D0%B6%D0%B5%20%D0%B2%20%D1%85%D0%BE%D0%BB%D0%BE%D0%B4.%22%2C%22prefix%22%3A%22%22%2C%22suffix%22%3A%22%22%2C%22rangeRootId%22%3A%22block-2-s0%22%2C%22matchText%22%3A%22%D0%97%D0%B0%D1%80%D1%8F%D0%B4%20%D0%B4%D0%B5%D1%80%D0%B6%D0%B8%D1%82%D1%81%D1%8F%20100%25%22%2C%22matchLength%22%3A19%2C%22matchPrefix%22%3A%22%22%2C%22matchSuffix%22%3A%22%D0%B4%D0%BD%D0%B5%D0%B9%20%E2%80%94%20%D0%B4%D0%B0%D0%B6%D0%B5%20%D0%B2%20%D1%85%D0%BE%D0%BB%D0%BE%D0%B4.%22%2C%22matchIndex%22%3A0%7D",
+  "restored": "Заряд держится 100%"
+ },
+ {
+  "text": "холод. Power returns",
+  "occurrence": 0,
+  "selected": "холод. Power returns",
+  "cfi": "readflex-html-position:%7B%22blockId%22%3A%22block-2-s0%22%2C%22sentenceIndex%22%3A0%2C%22sentenceText%22%3A%22%D0%97%D0%B0%D1%80%D1%8F%D0%B4%20%D0%B4%D0%B5%D1%80%D0%B6%D0%B8%D1%82%D1%81%D1%8F%20100%25%20%D0%B4%D0%BD%D0%B5%D0%B9%20%E2%80%94%20%D0%B4%D0%B0%D0%B6%D0%B5%20%D0%B2%20%D1%85%D0%BE%D0%BB%D0%BE%D0%B4.%22%2C%22prefix%22%3A%22%22%2C%22suffix%22%3A%22%22%2C%22rangeRootId%22%3A%22block-2%22%2C%22matchText%22%3A%22%D1%85%D0%BE%D0%BB%D0%BE%D0%B4.%20Power%20returns%22%2C%22matchLength%22%3A20%2C%22matchPrefix%22%3A%22%D0%97%D0%B0%D1%80%D1%8F%D0%B4%20%D0%B4%D0%B5%D1%80%D0%B6%D0%B8%D1%82%D1%81%D1%8F%20100%25%20%D0%B4%D0%BD%D0%B5%D0%B9%20%E2%80%94%20%D0%B4%D0%B0%D0%B6%D0%B5%20%D0%B2%22%2C%22matchSuffix%22%3A%22%2C%20as%20it%20always%20does!%22%2C%22matchIndex%22%3A34%7D",
+  "restored": "холод. Power returns"
+ },
+ {
+  "text": "always",
+  "occurrence": 0,
+  "selected": "always",
+  "cfi": "readflex-html-position:%7B%22blockId%22%3A%22block-2-s1%22%2C%22sentenceIndex%22%3A1%2C%22sentenceText%22%3A%22Power%20returns%2C%20as%20it%20always%20does!%22%2C%22prefix%22%3A%22%22%2C%22suffix%22%3A%22%22%2C%22rangeRootId%22%3A%22block-2-s1%22%2C%22matchText%22%3A%22always%22%2C%22matchLength%22%3A6%2C%22matchPrefix%22%3A%22Power%20returns%2C%20as%20it%22%2C%22matchSuffix%22%3A%22does!%22%2C%22matchIndex%22%3A21%7D",
+  "restored": "always"
+ },
+ {
+  "text": "‘quoted’ (parens) *stars* ~tilde~",
+  "occurrence": 0,
+  "selected": "‘quoted’ (parens) *stars* ~tilde~",
+  "cfi": "readflex-html-position:%7B%22blockId%22%3A%22block-3-s0%22%2C%22sentenceIndex%22%3A0%2C%22sentenceText%22%3A%22One%20item%3B%20%E2%80%98quoted%E2%80%99%20(parens)%20*stars*%20~tilde~.%22%2C%22prefix%22%3A%22%22%2C%22suffix%22%3A%22%22%2C%22rangeRootId%22%3A%22block-3-s0%22%2C%22matchText%22%3A%22%E2%80%98quoted%E2%80%99%20(parens)%20*stars*%20~tilde~%22%2C%22matchLength%22%3A33%2C%22matchPrefix%22%3A%22One%20item%3B%22%2C%22matchSuffix%22%3A%22.%22%2C%22matchIndex%22%3A10%7D",
+  "restored": "‘quoted’ (parens) *stars* ~tilde~"
+ },
+ {
+  "text": "🙂 here",
+  "occurrence": 0,
+  "selected": "🙂 here",
+  "cfi": "readflex-html-position:%7B%22blockId%22%3A%22block-3-s1%22%2C%22sentenceIndex%22%3A1%2C%22sentenceText%22%3A%22Two%20items%20%F0%9F%99%82%20here.%22%2C%22prefix%22%3A%22%22%2C%22suffix%22%3A%22%22%2C%22rangeRootId%22%3A%22block-3-s1%22%2C%22matchText%22%3A%22%F0%9F%99%82%20here%22%2C%22matchLength%22%3A7%2C%22matchPrefix%22%3A%22Two%20items%22%2C%22matchSuffix%22%3A%22.%22%2C%22matchIndex%22%3A10%7D",
+  "restored": "🙂 here"
+ },
+ {
+  "text": "again.\nЗаряд",
+  "occurrence": 0,
+  "selected": "again. Заряд",
+  "cfi": "readflex-html-position:%7B%22blockId%22%3A%22block-1-s1%22%2C%22sentenceIndex%22%3A1%2C%22sentenceText%22%3A%22A%20second%20sentence%20follows%20here%2C%20with%20the%20word%20power%20again.%22%2C%22prefix%22%3A%22%22%2C%22suffix%22%3A%22%22%2C%22rangeRootId%22%3A%22article-content%22%2C%22matchText%22%3A%22again.%20%D0%97%D0%B0%D1%80%D1%8F%D0%B4%22%2C%22matchLength%22%3A12%2C%22matchPrefix%22%3A%22econd%20sentence%20follows%20here%2C%20with%20the%20word%20power%22%2C%22matchSuffix%22%3A%22%D0%B4%D0%B5%D1%80%D0%B6%D0%B8%D1%82%D1%81%D1%8F%20100%25%20%D0%B4%D0%BD%D0%B5%D0%B9%20%E2%80%94%20%D0%B4%D0%B0%D0%B6%D0%B5%20%D0%B2%20%D1%85%D0%BE%D0%BB%D0%BE%D0%B4.%20Power%20returns%22%2C%22matchIndex%22%3A125%7D",
+  "restored": "again.\nЗаряд"
+ },
+ {
+  "text": "power again",
+  "occurrence": 1,
+  "selected": "power again",
+  "cfi": "readflex-html-position:%7B%22blockId%22%3A%22block-4-s0%22%2C%22sentenceIndex%22%3A0%2C%22sentenceText%22%3A%22A%20quote%20about%20power%2C%20and%20power%20again.%22%2C%22prefix%22%3A%22%22%2C%22suffix%22%3A%22%22%2C%22rangeRootId%22%3A%22block-4-s0%22%2C%22matchText%22%3A%22power%20again%22%2C%22matchLength%22%3A11%2C%22matchPrefix%22%3A%22A%20quote%20about%20power%2C%20and%22%2C%22matchSuffix%22%3A%22.%22%2C%22matchIndex%22%3A25%7D",
+  "restored": "power again"
+ },
+ {
+  "text": "Power & batteries",
+  "occurrence": 0,
+  "selected": "Power & batteries",
+  "cfi": "readflex-html-position:%7B%22blockId%22%3A%22block-0-s0%22%2C%22sentenceIndex%22%3A0%2C%22sentenceText%22%3A%22Power%20%26%20batteries%3A%20a%20field%20%E2%80%9Cguide%E2%80%9D%22%2C%22prefix%22%3A%22%22%2C%22suffix%22%3A%22%22%2C%22rangeRootId%22%3A%22block-0-s0%22%2C%22matchText%22%3A%22Power%20%26%20batteries%22%2C%22matchLength%22%3A17%2C%22matchPrefix%22%3A%22%22%2C%22matchSuffix%22%3A%22%3A%20a%20field%20%E2%80%9Cguide%E2%80%9D%22%2C%22matchIndex%22%3A0%7D",
+  "restored": "Power & batteries"
+ }
+]

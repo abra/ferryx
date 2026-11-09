@@ -1,5 +1,5 @@
 name: viewer_feature
-description: "The built-in viewer: text, hex and preview modes over any file, on disk or inside an archive."
+description: "The built-in viewer: text, hex, images and Pagecraft document previews over local, archive and remote files."
 publish_to: none
 version: 0.1.0
 
@@ -24,6 +24,8 @@ dependencies:
     path: ../../preferences_service
   shortcuts:
     path: ../../shortcuts
+  pagecraft:
+    path: ../../pagecraft
 
 dev_dependencies:
   bloc_test: ^10.0.0

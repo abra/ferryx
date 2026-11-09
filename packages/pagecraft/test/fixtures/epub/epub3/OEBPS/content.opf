@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="pub-id" xml:lang="en" prefix="rendition: http://www.idpf.org/vocab/rendition/#">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="pub-id">urn:uuid:12345678-90ab-cdef-1234-567890abcdef</dc:identifier>
+    <dc:identifier id="isbn">urn:isbn:9780000000001</dc:identifier>
+    <meta refines="#isbn" property="identifier-type" scheme="onix:codelist5">15</meta>
+    <dc:title id="t1" xml:lang="en" dir="ltr">The  Fixture
+      Book</dc:title>
+    <meta refines="#t1" property="title-type">main</meta>
+    <meta refines="#t1" property="file-as">Fixture Book, The</meta>
+    <meta refines="#t1" property="alternate-script" xml:lang="ru">Книга-фикстура</meta>
+    <dc:title id="t2">A Subtitle</dc:title>
+    <meta refines="#t2" property="title-type">subtitle</meta>
+    <dc:language>en</dc:language>
+    <dc:language>ru</dc:language>
+    <dc:creator id="c1">Ada Lovelace</dc:creator>
+    <meta refines="#c1" property="role" scheme="marc:relators">aut</meta>
+    <meta refines="#c1" property="role" scheme="marc:relators">ill</meta>
+    <meta refines="#c1" property="file-as">Lovelace, Ada</meta>
+    <dc:creator id="c2">Grace Hopper</dc:creator>
+    <meta refines="#c2" property="role" scheme="onix:codelist17">A01</meta>
+    <dc:contributor id="c3">Alan Turing</dc:contributor>
+    <meta refines="#c3" property="role" scheme="marc:relators">trl</meta>
+    <dc:contributor>Anonymous Helper</dc:contributor>
+    <dc:publisher>Fixture Press</dc:publisher>
+    <dc:description>A book   assembled for tests.</dc:description>
+    <dc:rights>Public domain</dc:rights>
+    <dc:date>2024-01-02</dc:date>
+    <meta property="dcterms:modified">2024-03-04T05:06:07Z</meta>
+    <dc:subject id="s1">Testing</dc:subject>
+    <meta refines="#s1" property="authority">BISAC</meta>
+    <meta refines="#s1" property="term">COM051010</meta>
+    <dc:subject>Reading</dc:subject>
+    <dc:subject id="s3"></dc:subject>
+    <dc:source>Original print edition</dc:source>
+    <meta property="belongs-to-collection" id="col">Fixture Series</meta>
+    <meta refines="#col" property="collection-type">series</meta>
+    <meta refines="#col" property="group-position">3</meta>
+    <meta property="rendition:layout">reflowable</meta>
+    <meta property="rendition:orientation">auto</meta>
+    <meta property="media:duration">0:01:30</meta>
+    <meta property="media:duration" refines="#ch1-overlay">45.5s</meta>
+    <meta property="media:active-class">-epub-media-overlay-active</meta>
+    <meta property="media:narrator">Narrator One</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+    <item id="cover-image" href="images/cover.png" media-type="image/png" properties="cover-image"/>
+    <item id="cover" href="text/cover.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ch1" href="text/chapter%201.xhtml" media-type="application/xhtml+xml" media-overlay="ch1-overlay"/>
+    <item id="ch1-overlay" href="text/chapter1.smil" media-type="application/smil+xml"/>
+    <item id="ch2" href="text/chapter2.xhtml" media-type="application/xhtml+xml"/>
+    <item id="notes" href="text/notes.xhtml" media-type="application/xhtml+xml"/>
+    <item id="drm" href="text/drm.xhtml" media-type="application/xhtml+xml"/>
+    <item id="serif" href="fonts/Serif.ttf" media-type="font/ttf"/>
+    <item id="sans" href="fonts/Sans.ttf" media-type="font/ttf"/>
+    <item id="css" href="style.css" media-type="text/css"/>
+  </manifest>
+  <spine toc="ncx" page-progression-direction="ltr">
+    <itemref idref="cover" properties="page-spread-right"/>
+    <itemref idref="ch1" id="first-chapter"/>
+    <itemref idref="ch2"/>
+    <itemref idref="notes" linear="no"/>
+    <itemref idref="ghost"/>
+    <itemref idref="drm"/>
+  </spine>
+  <guide>
+    <reference type="cover" title="Cover page" href="text/cover.xhtml"/>
+  </guide>
+</package>

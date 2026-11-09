@@ -1,0 +1,13 @@
+%!PS
+% Two paragraphs of Latin-1 text with sentence punctuation, for the text
+% layer: lines, words, sentences, accents (caf\351 = cafe with acute).
+/Helvetica findfont dup length dict copy
+  dup /Encoding ISOLatin1Encoding put
+  /HelveticaLatin1 exch definefont pop
+/HelveticaLatin1 findfont 14 scalefont setfont
+72 720 moveto (The quick brown fox jumps over the lazy dog. It was) show
+72 700 moveto (a bright cold day in April, and the clocks were) show
+72 680 moveto (striking thirteen! Did anyone notice? Nobody did.) show
+72 640 moveto (Second paragraph starts here. A caf\351 au lait costs) show
+72 620 moveto (3.50 euros; the na\357ve waiter smiled.) show
+showpage

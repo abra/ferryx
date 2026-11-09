@@ -1,0 +1,15 @@
+%!PS
+% Three text pages: Letter, Letter rotated 90 degrees, and a 400x600 page;
+% a two-level outline and a Title/Author in the Info dictionary.
+[ /Title (Vellum Fixture) /Author (Fixture Author) /DOCINFO pdfmark
+[ /Page 1 /Title (Chapter One) /Count 1 /OUT pdfmark
+[ /Page 2 /Title (Section 1.1) /OUT pdfmark
+[ /Page 3 /Title (Chapter Two) /OUT pdfmark
+/Helvetica findfont 24 scalefont setfont
+72 700 moveto (Hello page one) show showpage
+[ {ThisPage} << /Rotate 90 >> /PUT pdfmark
+/Helvetica findfont 24 scalefont setfont
+72 700 moveto (Second page, rotated) show showpage
+<< /PageSize [400 600] >> setpagedevice
+/Helvetica findfont 24 scalefont setfont
+72 500 moveto (Third page smaller) show showpage

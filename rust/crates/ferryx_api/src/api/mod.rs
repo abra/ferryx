@@ -12,6 +12,7 @@ pub mod flat;
 pub mod journal;
 pub mod listing;
 pub mod ops;
+pub mod preview;
 pub mod rename;
 pub mod sync;
 pub mod system;

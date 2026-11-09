@@ -147,6 +147,34 @@ class _WorkspaceRoute extends StatelessWidget {
               : PanelSide.left,
           fallbackLocation: Location.native(home),
           frecency: deps.frecency,
+          preview: WorkspacePreview(
+            builder: (context, view) => switch (view.location) {
+              final location? => ViewerScreen(
+                key: ValueKey(location),
+                files: deps.files,
+                preferences: deps.preferencesService,
+                shortcutMap: deps.shortcutMap,
+                windowDecor: view.decor,
+                location: location,
+                startInPreview: view.startInPreview,
+                autofocus: false,
+                focusScope: view.focusScope,
+                fullWindow: view.fullWindow,
+                onClose: view.onClose,
+                onFocusFiles: view.onFocusFiles,
+                onToggleFullWindow: view.onToggleFullWindow,
+              ),
+              null => ViewerPlaceholder(
+                focusScope: view.focusScope,
+                shortcutMap: deps.shortcutMap,
+                windowDecor: view.decor,
+                fullWindow: view.fullWindow,
+                onClose: view.onClose,
+                onFocusFiles: view.onFocusFiles,
+                onToggleFullWindow: view.onToggleFullWindow,
+              ),
+            },
+          ),
           terminal: WorkspaceTerminal(
             create: () => TerminalLink(
               service: deps.terminal,

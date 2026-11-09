@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+<description>
+  <title-info>
+    <genre>sf</genre>
+    <genre>prose_contemporary</genre>
+    <author><first-name>Иван</first-name><middle-name>Петрович</middle-name><last-name>Сидоров</last-name></author>
+    <author><nickname>anon42</nickname><first-name>Ignored</first-name></author>
+    <author><first-name>Only</first-name></author>
+    <book-title>  Книга  с  пробелами </book-title>
+    <annotation><p>Первый <strong>абзац</strong> аннотации.</p><empty-line/><p>Второй.</p></annotation>
+    <date value="2020-05-06">6 мая 2020</date>
+    <coverpage><image l:href="#cover.jpg"/></coverpage>
+    <lang>ru</lang>
+    <translator><first-name>Mary</first-name><last-name>Smith</last-name></translator>
+  </title-info>
+  <document-info>
+    <author><nickname>maker</nickname></author>
+    <program-used>FixtureTool 1.0</program-used>
+    <date>2021-01-02</date>
+    <id>fixture-id-001</id>
+  </document-info>
+  <publish-info><publisher>Фикстура Пресс</publisher><year>2020</year></publish-info>
+</description>
+<body>
+  <image l:href="#cover.jpg" alt="Cover" title="The cover"/>
+  <title><p>Часть первая</p><empty-line/><p>Подзаголовок части</p></title>
+  <epigraph><p>Эпиграф книги.</p><text-author>Кто-то</text-author></epigraph>
+  <section id="ch1">
+    <title><p>Глава 1</p></title>
+    <epigraph><p>Эпиграф главы</p></epigraph>
+    <p>Первый абзац с <emphasis>курсивом</emphasis>, <strong>жирным</strong>, <strikethrough>зачёркнутым</strikethrough>, x<sub>2</sub> и x<sup>2</sup>, <code>кодом</code> и <style name="x">стилем</style>.</p>
+    <p>Сноска<a l:href="#n1" type="note">[1]</a> и внешняя <a l:href="https://example.com">ссылка</a>, внутренняя <a l:href="#ch2">ссылка</a>.</p>
+    <empty-line/>
+    <subtitle>Подзаголовок</subtitle>
+    <cite><p>Цитата.</p><text-author>Автор цитаты</text-author></cite>
+    <poem>
+      <title><p>Стих</p></title>
+      <epigraph><p>Эпиграф стиха</p></epigraph>
+      <stanza>
+        <title><p>Строфа</p></title>
+        <subtitle>Подзаголовок строфы</subtitle>
+        <v>Первая строка</v>
+        <v>Вторая строка</v>
+      </stanza>
+      <text-author>Поэт</text-author>
+      <date>1890</date>
+    </poem>
+    <table><tr align="center"><th colspan="2" valign="top">Заголовок</th></tr><tr><td align="right">a</td><td rowspan="2">b</td></tr></table>
+    <image l:href="#pic.png" alt="Picture"/>
+    <image l:href="#missing.png"/>
+    <image l:href="external.png"/>
+    <image/>
+    <section id="ch1-1">
+      <title><p>Глава 1.1</p></title>
+      <p>Вложенная.</p>
+      <unknown-element><p>Dropped</p></unknown-element>
+    </section>
+    <section>
+      <title><p>Глава 1.2</p></title>
+      <p>Ещё.</p>
+    </section>
+    <annotation><p>Аннотация секции</p></annotation>
+  </section>
+  <section id="ch2">
+    <p>Глава без заголовка начинается с абзаца.</p>
+    <section><title><p>Внутренняя</p></title><p>x</p></section>
+  </section>
+  <section id="empty"></section>
+</body>
+<body name="notes">
+  <title><p>Примечания</p></title>
+  <section id="n1"><title><p>1</p></title><p>Текст сноски.</p></section>
+</body>
+<body name="comments"><section id="c1"><p>Комментарий.</p></section></body>
+<binary id="cover.jpg" content-type="image/jpeg">/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=</binary>
+<binary id="pic.png" content-type="image/png">iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVQI12P4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC</binary>
+</FictionBook>

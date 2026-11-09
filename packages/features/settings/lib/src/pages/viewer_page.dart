@@ -5,7 +5,7 @@ import 'package:preferences_service/preferences_service.dart';
 
 import '../settings_rows.dart';
 
-/// The built-in viewer's wrapping and font size.
+/// The built-in viewer's wrapping and separate text and book font sizes.
 class ViewerPage extends StatelessWidget {
   const ViewerPage({required this.prefs, required this.service, super.key});
 
@@ -41,6 +41,27 @@ class ViewerPage extends StatelessWidget {
               },
               onChanged: (value) => service.update(
                 (p) => p.copyWith(viewerFontSize: value.roundToDouble()),
+              ),
+            ),
+            SliderRow(
+              label: l10n.documentFontSizeLabel,
+              value: prefs.documentFontSize,
+              min: Preferences.minDocumentFontSize,
+              max: Preferences.maxDocumentFontSize,
+              divisions:
+                  (Preferences.maxDocumentFontSize -
+                          Preferences.minDocumentFontSize)
+                      .round(),
+              display: switch (context.metrics.lengthUnit) {
+                AppLengthUnit.points => l10n.lengthPoints(
+                  prefs.documentFontSize.round(),
+                ),
+                AppLengthUnit.pixels => l10n.lengthPixels(
+                  prefs.documentFontSize.round(),
+                ),
+              },
+              onChanged: (value) => service.update(
+                (p) => p.copyWith(documentFontSize: value),
               ),
             ),
           ],

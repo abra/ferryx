@@ -19,6 +19,7 @@ import 'api/journal.dart';
 import 'api/listing.dart';
 import 'api/network.dart';
 import 'api/ops.dart';
+import 'api/preview.dart';
 import 'api/rename.dart';
 import 'api/sync.dart';
 import 'api/system.dart';

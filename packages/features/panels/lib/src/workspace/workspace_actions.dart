@@ -39,7 +39,22 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     }
   }
 
-  Map<AppCommand, VoidCallback> _globalHandlers(BuildContext context) => {
+  Map<AppCommand, VoidCallback> _globalHandlers(BuildContext context) =>
+      _previewFocus.hasFocus || _previewController.state.fullWindow
+      ? {
+          AppCommand.preview: _closePreview,
+          AppCommand.internalViewer: _togglePreviewWindow,
+          AppCommand.focusLeftPanel: () => _focusPanel(PanelSide.left),
+          AppCommand.focusRightPanel: () => _focusPanel(PanelSide.right),
+          AppCommand.openSettings: () =>
+              unawaited(widget.navigation.openSettings(context)),
+          AppCommand.cheatSheet: () =>
+              unawaited(widget.navigation.openCheatSheet(context)),
+          if (!_previewController.state.fullWindow) ..._terminalHandlers(),
+        }
+      : _fileHandlers(context);
+
+  Map<AppCommand, VoidCallback> _fileHandlers(BuildContext context) => {
     // File
     AppCommand.newFolder: () => unawaited(_newItem(folder: true)),
     AppCommand.newFolderWithSelection: () =>
@@ -346,6 +361,10 @@ extension _WorkspaceActions on _WorkspaceScreenState {
   }
 
   Future<void> _view({required bool preview}) async {
+    if (widget.preview != null) {
+      await _showPreview(fullWindow: !preview, startInPreview: preview);
+      return;
+    }
     final tab = _tab;
     final focused = tab?.focused;
     if (tab == null || focused == null || focused.isParent || focused.isDir) {
@@ -560,6 +579,14 @@ extension _WorkspaceActions on _WorkspaceScreenState {
   // ─── Panels ───
 
   void _switchPanel() {
+    if (_previewController.state.shown) {
+      if (_previewFocus.hasFocus) {
+        _focusPreviewFiles();
+      } else {
+        _focusPreview();
+      }
+      return;
+    }
     if (_workspace.state.singlePane) {
       _workspace.switchPanel();
       _scheduleSnapshot();

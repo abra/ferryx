@@ -5,6 +5,8 @@ import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_backend/ferryx_backend.dart' as rust;
 import 'package:monitoring/monitoring.dart';
 
+import 'preview_file_lease.dart';
+
 /// Folders and their rows, single items, the volumes and the desktop's
 /// folders. Every listing a panel shows is opened here under an id of the
 /// panel's own and watched until closed; [directoryChanges] names the
@@ -17,6 +19,8 @@ class FileRepository {
   final Logger logger;
   final _changes = StreamController<String>.broadcast();
   StreamSubscription<rust.AppEvent>? _subscription;
+  final _previews = <PreviewFileLease>{};
+  bool _disposed = false;
 
   /// Ids of listings whose folders changed, one per burst of changes.
   Stream<String> get directoryChanges => _changes.stream;
@@ -179,6 +183,15 @@ class FileRepository {
   Future<int> fileSize(Location location) => rust.FerryxBackend.guard(
     () => rust.fileSize(location: rust.locationToView(location)),
   );
+
+  /// Registers ownership immediately; [PreviewFileLease.path] lazily
+  /// prepares a local copy when the location is remote or in an archive.
+  PreviewFileLease preparePreview(Location location) {
+    if (_disposed) throw StateError('file repository is disposed');
+    final lease = CorePreviewFileLease(location, _previews.remove);
+    _previews.add(lease);
+    return lease;
+  }
 
   /// Extracts an archive member to a temporary folder, for opening or
   /// viewing; answers the path written.
@@ -420,7 +433,12 @@ class FileRepository {
       : freeName(folder.path, name);
 
   Future<void> dispose() async {
-    await _subscription?.cancel();
-    await _changes.close();
+    _disposed = true;
+    try {
+      await Future.wait(_previews.toList().map((lease) => lease.close()));
+    } finally {
+      await _subscription?.cancel();
+      await _changes.close();
+    }
   }
 }

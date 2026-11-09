@@ -1176,6 +1176,45 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String get noticeOpenFailed => 'Не удалось открыть объект';
 
   @override
+  String get documentFontSizeLabel => 'Размер шрифта книг';
+
+  @override
+  String get documentFontDecrease => 'Уменьшить шрифт';
+
+  @override
+  String get documentFontIncrease => 'Увеличить шрифт';
+
+  @override
+  String get documentFontReset => 'Сбросить размер шрифта';
+
+  @override
+  String documentFontSizeValue(int size) {
+    return 'Размер шрифта: $size';
+  }
+
+  @override
+  String get viewerExpand => 'На весь экран';
+
+  @override
+  String get viewerAdjacent => 'В соседней панели';
+
+  @override
+  String viewerCloseHint(String key) {
+    return '$key — закрыть просмотр';
+  }
+
+  @override
+  String viewerFilesHint(String key) {
+    return '$key — к файлам';
+  }
+
+  @override
+  String get viewerSelectFile => 'Выберите файл для просмотра';
+
+  @override
+  String get cmdViewerToggleFullWindow => 'Переключить просмотр на весь экран';
+
+  @override
   String get viewerTitle => 'Просмотр';
 
   @override
@@ -1245,6 +1284,71 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get viewerLoadPrevious => 'Предыдущая часть';
+
+  @override
+  String get documentPrevious => 'Предыдущая страница';
+
+  @override
+  String get documentNext => 'Следующая страница';
+
+  @override
+  String get documentContents => 'Оглавление';
+
+  @override
+  String get documentActions => 'Действия с документом';
+
+  @override
+  String get documentExternalLink => 'Внешняя ссылка';
+
+  @override
+  String documentPage(int current, int total) {
+    return 'Страница $current из $total';
+  }
+
+  @override
+  String documentSection(int current, int total) {
+    return 'Раздел $current из $total';
+  }
+
+  @override
+  String get documentGoToPage => 'Перейти к странице';
+
+  @override
+  String documentGoToPageHint(int total) {
+    return 'Введите номер страницы от 1 до $total';
+  }
+
+  @override
+  String get documentOpenFailed =>
+      'Не удалось прочитать документ. Возможно, файл повреждён или использует неподдерживаемый формат.';
+
+  @override
+  String get documentPasswordRequired =>
+      'Для этого PDF нужен пароль. Откройте его в PDF-просмотрщике, чтобы снять защиту.';
+
+  @override
+  String get documentUnsupportedLayout =>
+      'Превью книг с фиксированной разметкой страниц пока недоступно.';
+
+  @override
+  String get documentUnsupportedVertical =>
+      'Превью книг с вертикальным текстом пока недоступно.';
+
+  @override
+  String get documentUnsupportedFormat =>
+      'Превью этого формата документов пока недоступно.';
+
+  @override
+  String get documentZoomHint =>
+      'Сведите или разведите пальцы либо дважды нажмите на страницу для изменения масштаба';
+
+  @override
+  String get documentFitPage => 'Страница целиком';
+
+  @override
+  String documentPageFailed(int page) {
+    return 'Не удалось отобразить страницу $page';
+  }
 
   @override
   String get findTitle => 'Поиск файлов';
@@ -2178,6 +2282,27 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get cmdViewerToggleWrap => 'Переносить строки';
+
+  @override
+  String get cmdDocumentPrevious => 'Предыдущая страница';
+
+  @override
+  String get cmdDocumentNext => 'Следующая страница';
+
+  @override
+  String get cmdDocumentContents => 'Оглавление…';
+
+  @override
+  String get cmdDocumentGoToPage => 'Перейти к странице…';
+
+  @override
+  String get cmdDocumentFitPage => 'Страница целиком';
+
+  @override
+  String get cmdDocumentZoomIn => 'Увеличить';
+
+  @override
+  String get cmdDocumentZoomOut => 'Уменьшить';
 
   @override
   String get cmdRenameItem => 'Переименовать';

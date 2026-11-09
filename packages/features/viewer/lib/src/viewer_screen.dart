@@ -10,16 +10,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 
+import 'document_format.dart';
+import 'document_preview_screen.dart';
 import 'hex_format.dart';
 import 'line_layout.dart';
 import 'text_window.dart';
 import 'viewer_cubit.dart';
+import 'viewer_exit_hints.dart';
 import 'viewer_source.dart';
 import 'viewer_state.dart';
 import 'viewer_views.dart';
 
-/// The built-in viewer over one file: text, hex or preview, filling the
-/// window; Esc goes back to the panels.
+/// One file in the workspace or a route. Keep its key stable when moving
+/// between placements so the reader, scroll position and decoder survive.
 class ViewerScreen extends StatefulWidget {
   const ViewerScreen({
     required this.files,
@@ -29,6 +32,11 @@ class ViewerScreen extends StatefulWidget {
     required this.location,
     required this.onClose,
     this.startInPreview = false,
+    this.autofocus = true,
+    this.focusScope,
+    this.fullWindow = true,
+    this.onToggleFullWindow,
+    this.onFocusFiles,
     super.key,
   });
 
@@ -38,6 +46,11 @@ class ViewerScreen extends StatefulWidget {
   final WindowDecor windowDecor;
   final Location location;
   final bool startInPreview;
+  final bool autofocus;
+  final FocusScopeNode? focusScope;
+  final bool fullWindow;
+  final VoidCallback? onToggleFullWindow;
+  final VoidCallback? onFocusFiles;
   final VoidCallback onClose;
 
   @override
@@ -47,6 +60,11 @@ class ViewerScreen extends StatefulWidget {
 class _ViewerScreenState extends State<ViewerScreen> {
   late final ViewerCubit _cubit;
   final _contentFocus = FocusNode(debugLabel: 'viewer content');
+  final _documentFocus = FocusNode(debugLabel: 'viewer document');
+  FocusScopeNode? _ownedScope;
+  FocusScopeNode get _scope =>
+      widget.focusScope ??
+      (_ownedScope ??= FocusScopeNode(debugLabel: 'viewer'));
   final _findFocus = FocusNode(debugLabel: 'viewer find');
   final _findController = TextEditingController();
   final _scroll = ScrollController();
@@ -59,12 +77,14 @@ class _ViewerScreenState extends State<ViewerScreen> {
     _cubit = ViewerCubit(
       source: FileRepositorySource(widget.files, widget.location),
       wrap: widget.preferences.current.viewerWrap,
-      mode: widget.startInPreview ? ViewerMode.preview : ViewerMode.text,
+      mode: widget.startInPreview || isDocumentName(widget.location.name)
+          ? ViewerMode.preview
+          : ViewerMode.text,
     );
     unawaited(_cubit.load());
     _scroll.addListener(_onScrolled);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _contentFocus.requestFocus();
+      if (mounted && widget.autofocus) _focusContent();
     });
   }
 
@@ -75,9 +95,26 @@ class _ViewerScreenState extends State<ViewerScreen> {
     _findController.dispose();
     _findFocus.dispose();
     _contentFocus.dispose();
+    _documentFocus.dispose();
+    _ownedScope?.dispose();
     _cubit.close();
     super.dispose();
   }
+
+  void _focusContent() {
+    final document =
+        _cubit.state.mode == ViewerMode.preview &&
+        isDocumentName(widget.location.name);
+    (document ? _documentFocus : _contentFocus).requestFocus();
+  }
+
+  void _onScopeFocus(bool focused) {
+    if (focused && _scope.hasPrimaryFocus) _focusContent();
+  }
+
+  void _changeDocumentFontSize(double size) => unawaited(
+    widget.preferences.update((p) => p.copyWith(documentFontSize: size)),
+  );
 
   // ─── Scrolling ───
 
@@ -171,11 +208,15 @@ class _ViewerScreenState extends State<ViewerScreen> {
       if (_findFocus.hasFocus) _find(1);
     },
     AppCommand.dismiss: _dismiss,
+    AppCommand.viewerToggleFullWindow: ?widget.onToggleFullWindow,
+    AppCommand.switchPanel: ?widget.onFocusFiles,
   };
 
   void _setMode(ViewerMode mode) {
     _cubit.setMode(mode);
-    _contentFocus.requestFocus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusContent();
+    });
   }
 
   void _toggleWrap() {
@@ -233,6 +274,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
   }
 
   Future<void> _goTo() async {
+    if (_cubit.state.mode == ViewerMode.preview) return;
     final l10n = context.l10n;
     final answer = await AppDialog.prompt(
       context,
@@ -256,48 +298,74 @@ class _ViewerScreenState extends State<ViewerScreen> {
   @override
   Widget build(BuildContext context) {
     final platform = Theme.of(context).platform;
-    // A page of its own: the Material its buttons' ink needs is here.
-    return Scaffold(
-      backgroundColor: context.appColors.window,
-      body: BlocProvider.value(
-        value: _cubit,
-        child: BlocListener<ViewerCubit, ViewerState>(
-          listenWhen: (before, after) =>
-              before.scrollRequest != after.scrollRequest,
-          listener: (context, state) => _scrollTo(state),
-          child: CommandShortcuts(
-            shortcuts: widget.shortcutMap.toShortcuts(
-              platform,
-              scopes: const {CommandScope.viewer, CommandScope.dialogs},
-            ),
-            child: CommandHandlers(
-              handlers: _handlers(),
-              child: BlocBuilder<ViewerCubit, ViewerState>(
-                builder: (context, state) => _Frame(
-                  state: state,
-                  source: _cubit.source,
-                  decor: widget.windowDecor,
-                  shortcutMap: widget.shortcutMap,
-                  fontSize: widget.preferences.current.viewerFontSize,
-                  topLine: _topLine,
-                  contentFocus: _contentFocus,
-                  findFocus: _findFocus,
-                  findController: _findController,
-                  scroll: _scroll,
-                  onLayout: _onLayout,
-                  onContentKey: _onContentKey,
-                  onMode: _setMode,
-                  onToggleWrap: _toggleWrap,
-                  onFind: _showFind,
-                  onFindChanged: _cubit.setFindQuery,
-                  onFindNext: () => _find(1),
-                  onFindPrevious: () => _find(-1),
-                  onFindClose: _hideFind,
-                  onGoTo: () => unawaited(_goTo()),
-                  onRefresh: () => unawaited(_cubit.refresh()),
-                  onLoadNext: () => unawaited(_cubit.loadNext()),
-                  onLoadPrevious: () => unawaited(_cubit.loadPrevious()),
-                  onClose: widget.onClose,
+    return FocusScope(
+      node: _scope,
+      onFocusChange: _onScopeFocus,
+      child: Scaffold(
+        backgroundColor: context.appColors.window,
+        body: BlocProvider.value(
+          value: _cubit,
+          child: BlocListener<ViewerCubit, ViewerState>(
+            listenWhen: (before, after) =>
+                before.scrollRequest != after.scrollRequest,
+            listener: (context, state) => _scrollTo(state),
+            child: CommandShortcuts(
+              shortcuts: {
+                ...widget.shortcutMap.toShortcuts(
+                  platform,
+                  scopes: const {CommandScope.viewer, CommandScope.dialogs},
+                ),
+                if (widget.onFocusFiles != null)
+                  for (final chord in widget.shortcutMap.chordsFor(
+                    AppCommand.switchPanel,
+                  ))
+                    chord.toShortcutActivator(platform): const CommandIntent(
+                      AppCommand.switchPanel,
+                    ),
+              },
+              child: CommandHandlers(
+                handlers: _handlers(),
+                child: PreferenceBuilder<(double, double)>(
+                  service: widget.preferences,
+                  select: (p) => (p.viewerFontSize, p.documentFontSize),
+                  builder: (context, sizes) =>
+                      BlocBuilder<ViewerCubit, ViewerState>(
+                        builder: (context, state) => _Frame(
+                          state: state,
+                          source: _cubit.source,
+                          decor: widget.windowDecor,
+                          shortcutMap: widget.shortcutMap,
+                          fontSize: sizes.$1,
+                          documentFontSize: sizes.$2,
+                          onDocumentFontSizeChanged: _changeDocumentFontSize,
+                          documentFocus: _documentFocus,
+                          autofocus: widget.autofocus,
+                          fullWindow: widget.fullWindow,
+                          onToggleFullWindow: widget.onToggleFullWindow,
+                          onFocusFiles: widget.onFocusFiles,
+                          topLine: _topLine,
+                          contentFocus: _contentFocus,
+                          findFocus: _findFocus,
+                          findController: _findController,
+                          scroll: _scroll,
+                          onLayout: _onLayout,
+                          onContentKey: _onContentKey,
+                          onFocusContent: _focusContent,
+                          onMode: _setMode,
+                          onToggleWrap: _toggleWrap,
+                          onFind: _showFind,
+                          onFindChanged: _cubit.setFindQuery,
+                          onFindNext: () => _find(1),
+                          onFindPrevious: () => _find(-1),
+                          onFindClose: _hideFind,
+                          onGoTo: () => unawaited(_goTo()),
+                          onRefresh: () => unawaited(_cubit.refresh()),
+                          onLoadNext: () => unawaited(_cubit.loadNext()),
+                          onLoadPrevious: () =>
+                              unawaited(_cubit.loadPrevious()),
+                          onClose: widget.onClose,
+                        ),
+                      ),
                 ),
               ),
             ),
@@ -317,13 +385,19 @@ class _Frame extends StatelessWidget {
     required this.decor,
     required this.shortcutMap,
     required this.fontSize,
+    required this.documentFontSize,
+    required this.onDocumentFontSizeChanged,
+    required this.documentFocus,
+    required this.autofocus,
     required this.topLine,
+    required this.onFocusFiles,
     required this.contentFocus,
     required this.findFocus,
     required this.findController,
     required this.scroll,
     required this.onLayout,
     required this.onContentKey,
+    required this.onFocusContent,
     required this.onMode,
     required this.onToggleWrap,
     required this.onFind,
@@ -336,6 +410,8 @@ class _Frame extends StatelessWidget {
     required this.onLoadNext,
     required this.onLoadPrevious,
     required this.onClose,
+    required this.fullWindow,
+    required this.onToggleFullWindow,
   });
 
   final ViewerState state;
@@ -343,13 +419,19 @@ class _Frame extends StatelessWidget {
   final WindowDecor decor;
   final ShortcutMap shortcutMap;
   final double fontSize;
+  final double documentFontSize;
+  final ValueChanged<double> onDocumentFontSizeChanged;
+  final FocusNode documentFocus;
+  final bool autofocus;
   final int topLine;
+  final VoidCallback? onFocusFiles;
   final FocusNode contentFocus;
   final FocusNode findFocus;
   final TextEditingController findController;
   final ScrollController scroll;
   final ValueChanged<LineLayout> onLayout;
   final KeyEventResult Function(FocusNode node, KeyEvent event) onContentKey;
+  final VoidCallback onFocusContent;
   final ValueChanged<ViewerMode> onMode;
   final VoidCallback onToggleWrap;
   final VoidCallback onFind;
@@ -362,6 +444,8 @@ class _Frame extends StatelessWidget {
   final VoidCallback onLoadNext;
   final VoidCallback onLoadPrevious;
   final VoidCallback onClose;
+  final bool fullWindow;
+  final VoidCallback? onToggleFullWindow;
 
   @override
   Widget build(BuildContext context) {
@@ -381,6 +465,8 @@ class _Frame extends StatelessWidget {
           onGoTo: onGoTo,
           onRefresh: onRefresh,
           onClose: onClose,
+          fullWindow: fullWindow,
+          onToggleFullWindow: onToggleFullWindow,
         ),
         if (state.findShown)
           _FindBar(
@@ -396,26 +482,42 @@ class _Frame extends StatelessWidget {
         Expanded(
           child: ColoredBox(
             color: context.colors.surface,
-            child: AppFocusArea(
-              child: Focus(
-                focusNode: contentFocus,
-                onKeyEvent: onContentKey,
-                child: AppScrollKeys(
-                  child: _Content(
-                    state: state,
-                    source: source,
-                    fontSize: fontSize,
-                    scroll: scroll,
-                    onLayout: onLayout,
-                    onLoadNext: onLoadNext,
-                    onLoadPrevious: onLoadPrevious,
+            child: Listener(
+              onPointerDown: (_) => onFocusContent(),
+              child: AppFocusArea(
+                child: Focus(
+                  focusNode: contentFocus,
+                  onKeyEvent: onContentKey,
+                  child: AppScrollKeys(
+                    child: _Content(
+                      state: state,
+                      source: source,
+                      shortcutMap: shortcutMap,
+                      fontSize: fontSize,
+                      documentFontSize: documentFontSize,
+                      onDocumentFontSizeChanged: onDocumentFontSizeChanged,
+                      documentFocus: documentFocus,
+                      autofocus: autofocus,
+                      scroll: scroll,
+                      onLayout: onLayout,
+                      onLoadNext: onLoadNext,
+                      onLoadPrevious: onLoadPrevious,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
         ),
-        _StatusBar(state: state, topLine: topLine),
+        ViewerExitHints(
+          shortcutMap: shortcutMap,
+          showFiles: onFocusFiles != null,
+        ),
+        _StatusBar(
+          state: state,
+          topLine: topLine,
+          document: isDocumentName(source.displayName),
+        ),
       ],
     );
   }
@@ -434,6 +536,8 @@ class _TopRow extends StatelessWidget {
     required this.onGoTo,
     required this.onRefresh,
     required this.onClose,
+    required this.fullWindow,
+    required this.onToggleFullWindow,
   });
 
   final ViewerState state;
@@ -448,6 +552,8 @@ class _TopRow extends StatelessWidget {
   final VoidCallback onGoTo;
   final VoidCallback onRefresh;
   final VoidCallback onClose;
+  final bool fullWindow;
+  final VoidCallback? onToggleFullWindow;
 
   Future<void> _menu(BuildContext context, Rect anchor) async {
     final l10n = context.l10n;
@@ -465,6 +571,13 @@ class _TopRow extends StatelessWidget {
             label: l10n.commandLabel(command),
             shortcut: chord(command),
             checked: state.mode == mode,
+          ),
+        if (onToggleFullWindow != null)
+          AppMenuAction(
+            value: AppCommand.viewerToggleFullWindow,
+            label: fullWindow ? l10n.viewerAdjacent : l10n.viewerExpand,
+            icon: fullWindow ? AppIcons.dualPane : AppIcons.fillWindow,
+            shortcut: chord(AppCommand.viewerToggleFullWindow),
           ),
         const AppMenuSeparator(),
         AppMenuAction(
@@ -498,6 +611,8 @@ class _TopRow extends StatelessWidget {
     );
     if (!context.mounted) return;
     switch (picked) {
+      case AppCommand.viewerToggleFullWindow:
+        onToggleFullWindow?.call();
       case AppCommand.viewerText:
         onMode(ViewerMode.text);
       case AppCommand.viewerHex:
@@ -579,6 +694,13 @@ class _TopRow extends StatelessWidget {
           [modes],
         ],
         trailing: [
+          if (onToggleFullWindow != null)
+            AppIconButton(
+              icon: fullWindow ? AppIcons.dualPane : AppIcons.fillWindow,
+              tooltip: fullWindow ? l10n.viewerAdjacent : l10n.viewerExpand,
+              shortcut: chord(AppCommand.viewerToggleFullWindow),
+              onPressed: onToggleFullWindow,
+            ),
           Builder(
             builder: (context) => AppIconButton(
               icon: AppIcons.more,
@@ -726,7 +848,12 @@ class _Content extends StatelessWidget {
   const _Content({
     required this.state,
     required this.source,
+    required this.shortcutMap,
     required this.fontSize,
+    required this.documentFontSize,
+    required this.onDocumentFontSizeChanged,
+    required this.documentFocus,
+    required this.autofocus,
     required this.scroll,
     required this.onLayout,
     required this.onLoadNext,
@@ -735,7 +862,12 @@ class _Content extends StatelessWidget {
 
   final ViewerState state;
   final ViewerSource source;
+  final ShortcutMap shortcutMap;
   final double fontSize;
+  final double documentFontSize;
+  final ValueChanged<double> onDocumentFontSizeChanged;
+  final FocusNode documentFocus;
+  final bool autofocus;
   final ScrollController scroll;
   final ValueChanged<LineLayout> onLayout;
   final VoidCallback onLoadNext;
@@ -753,7 +885,23 @@ class _Content extends StatelessWidget {
     }
     switch (state.mode) {
       case ViewerMode.preview:
-        return PreviewView(source: source, size: state.size);
+        final file = source;
+        if (file is DocumentFileSource && isDocumentName(file.displayName)) {
+          return DocumentPreviewScreen(
+            source: file,
+            generation: state.generation,
+            fontSize: documentFontSize,
+            onFontSizeChanged: onDocumentFontSizeChanged,
+            focusNode: documentFocus,
+            autofocus: autofocus,
+            shortcutMap: shortcutMap,
+          );
+        }
+        return PreviewView(
+          source: source,
+          size: state.size,
+          generation: state.generation,
+        );
       case ViewerMode.hex:
         if (state.size == 0) {
           return AppEmptyState(
@@ -937,10 +1085,15 @@ class _BinaryHint extends StatelessWidget {
 /// hex mode), the line's number, the encoding, and the part shown of a
 /// large file; each its own text, a gap apart.
 class _StatusBar extends StatelessWidget {
-  const _StatusBar({required this.state, required this.topLine});
+  const _StatusBar({
+    required this.state,
+    required this.topLine,
+    required this.document,
+  });
 
   final ViewerState state;
   final int topLine;
+  final bool document;
 
   @override
   Widget build(BuildContext context) {
@@ -967,7 +1120,8 @@ class _StatusBar extends StatelessWidget {
           l10n.fileSize(topOffset),
           l10n.fileSize(state.size),
         ),
-        ViewerMode.preview => l10n.fileSize(state.size),
+        ViewerMode.preview =>
+          document ? l10n.viewerModePreview : l10n.fileSize(state.size),
       },
       if (state.mode == ViewerMode.text &&
           state.offset == 0 &&

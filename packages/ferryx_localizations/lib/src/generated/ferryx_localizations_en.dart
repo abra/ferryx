@@ -1142,6 +1142,45 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get noticeOpenFailed => 'Could not open the item';
 
   @override
+  String get documentFontSizeLabel => 'Book font size';
+
+  @override
+  String get documentFontDecrease => 'Decrease Font Size';
+
+  @override
+  String get documentFontIncrease => 'Increase Font Size';
+
+  @override
+  String get documentFontReset => 'Reset Font Size';
+
+  @override
+  String documentFontSizeValue(int size) {
+    return 'Font size: $size';
+  }
+
+  @override
+  String get viewerExpand => 'Expand to Full Window';
+
+  @override
+  String get viewerAdjacent => 'Show in Adjacent Pane';
+
+  @override
+  String viewerCloseHint(String key) {
+    return '$key — close preview';
+  }
+
+  @override
+  String viewerFilesHint(String key) {
+    return '$key — files';
+  }
+
+  @override
+  String get viewerSelectFile => 'Select a file to preview';
+
+  @override
+  String get cmdViewerToggleFullWindow => 'Toggle Full Window Preview';
+
+  @override
   String get viewerTitle => 'Viewer';
 
   @override
@@ -1211,6 +1250,70 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get viewerLoadPrevious => 'Previous part';
+
+  @override
+  String get documentPrevious => 'Previous page';
+
+  @override
+  String get documentNext => 'Next page';
+
+  @override
+  String get documentContents => 'Contents';
+
+  @override
+  String get documentActions => 'Document actions';
+
+  @override
+  String get documentExternalLink => 'External link';
+
+  @override
+  String documentPage(int current, int total) {
+    return 'Page $current of $total';
+  }
+
+  @override
+  String documentSection(int current, int total) {
+    return 'Section $current of $total';
+  }
+
+  @override
+  String get documentGoToPage => 'Go to page';
+
+  @override
+  String documentGoToPageHint(int total) {
+    return 'Enter a page number from 1 to $total';
+  }
+
+  @override
+  String get documentOpenFailed =>
+      'Could not read this document. It may be damaged or use an unsupported format.';
+
+  @override
+  String get documentPasswordRequired =>
+      'This PDF requires a password. Open it in a PDF reader to unlock it.';
+
+  @override
+  String get documentUnsupportedLayout =>
+      'Preview is not available for books with fixed page layouts.';
+
+  @override
+  String get documentUnsupportedVertical =>
+      'Preview is not available for books with vertical text.';
+
+  @override
+  String get documentUnsupportedFormat =>
+      'Preview is not available for this document format.';
+
+  @override
+  String get documentZoomHint => 'Pinch or double-click a page to zoom';
+
+  @override
+  String get documentFitPage => 'Fit page';
+
+  @override
+  String documentPageFailed(int page) {
+    return 'Could not display page $page';
+  }
 
   @override
   String get findTitle => 'Find files';
@@ -2142,6 +2245,27 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get cmdViewerToggleWrap => 'Wrap Lines';
+
+  @override
+  String get cmdDocumentPrevious => 'Previous Page';
+
+  @override
+  String get cmdDocumentNext => 'Next Page';
+
+  @override
+  String get cmdDocumentContents => 'Contents…';
+
+  @override
+  String get cmdDocumentGoToPage => 'Go to Page…';
+
+  @override
+  String get cmdDocumentFitPage => 'Fit Page';
+
+  @override
+  String get cmdDocumentZoomIn => 'Zoom In';
+
+  @override
+  String get cmdDocumentZoomOut => 'Zoom Out';
 
   @override
   String get cmdRenameItem => 'Rename';

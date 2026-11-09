@@ -11,6 +11,7 @@ build/
 pubspec.lock
 !/pubspec.lock
 packages/**/pubspec.lock
+!/packages/pagecraft/pubspec.lock
 rust_builder/**/pubspec.lock
 
 # FVM
@@ -21,6 +22,7 @@ rust_builder/**/pubspec.lock
 
 # Rust
 rust/target/
+packages/pagecraft/rust/target/
 rust_builder/cargokit/build_tool/.dart_tool/
 
 # Generated localizations are checked in; everything else local stays out.

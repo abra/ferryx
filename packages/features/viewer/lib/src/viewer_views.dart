@@ -461,10 +461,16 @@ class _DelayedSpinnerState extends State<DelayedSpinner> {
 /// Preview mode: a picture read through the source (on disk or in an
 /// archive alike), or a word that there is none.
 class PreviewView extends StatefulWidget {
-  const PreviewView({required this.source, required this.size, super.key});
+  const PreviewView({
+    required this.source,
+    required this.size,
+    this.generation = 0,
+    super.key,
+  });
 
   final ViewerSource source;
   final int size;
+  final int generation;
 
   /// Pictures are read whole, up to this.
   static const int maxBytes = 64 * 1024 * 1024;
@@ -488,7 +494,9 @@ class _PreviewViewState extends State<PreviewView> {
   @override
   void didUpdateWidget(PreviewView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.source != widget.source || oldWidget.size != widget.size) {
+    if (oldWidget.source != widget.source ||
+        oldWidget.size != widget.size ||
+        oldWidget.generation != widget.generation) {
       _read();
     }
   }

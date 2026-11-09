@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -8,14 +9,17 @@ import 'package:viewer_feature/viewer_feature.dart';
 
 /// A file held in memory.
 class FakeSource implements ViewerSource {
-  FakeSource(this.bytes, {this.fail = false});
+  FakeSource(this.bytes, {this.fail = false, this.name = 'file.txt'});
 
   final Uint8List bytes;
   final bool fail;
+  final String name;
   int reads = 0;
+  int sizeReads = 0;
 
   @override
   Future<int> size() async {
+    sizeReads++;
     if (fail) throw const FerryxException(FerryxErrorKind.notFound, 'gone');
     return bytes.length;
   }
@@ -28,7 +32,7 @@ class FakeSource implements ViewerSource {
   }
 
   @override
-  String get displayName => 'file.txt';
+  String get displayName => name;
 
   @override
   String get displayPath => '/tmp';
@@ -40,10 +44,102 @@ class FakeSource implements ViewerSource {
   String? get nativePath => '/tmp/file.txt';
 }
 
+class DeferredSource extends FakeSource {
+  DeferredSource(super.bytes) : super(name: 'book.epub');
+
+  final firstRead = Completer<Uint8List>();
+
+  @override
+  Future<Uint8List> read(int offset, int length) {
+    if (reads == 0) {
+      reads++;
+      return firstRead.future;
+    }
+    return super.read(offset, length);
+  }
+}
+
 Uint8List text(String s) => Uint8List.fromList(utf8.encode(s));
 
 void main() {
   group('ViewerCubit', () {
+    test(
+      'document preview leaves all file IO to its cancellable session',
+      () async {
+        final source = FakeSource(text('binary book'), name: 'book.epub');
+        final cubit = ViewerCubit(
+          source: source,
+          wrap: true,
+          mode: ViewerMode.preview,
+        );
+        addTearDown(cubit.close);
+        await cubit.load();
+        await cubit.refresh();
+        expect(source.reads, 0);
+        expect(source.sizeReads, 0);
+        expect(cubit.state.bytes, isEmpty);
+        expect(cubit.state.loading, isFalse);
+        expect(cubit.state.generation, 2);
+      },
+    );
+
+    test(
+      'image preview only reads metadata; switching to Hex loads bytes',
+      () async {
+        final source = FakeSource(text('image bytes'), name: 'picture.png');
+        final cubit = ViewerCubit(
+          source: source,
+          wrap: false,
+          mode: ViewerMode.preview,
+        );
+        addTearDown(cubit.close);
+        await cubit.load();
+        expect(source.reads, 0);
+        expect(cubit.state.size, source.bytes.length);
+        cubit.setMode(ViewerMode.hex);
+        await cubit.stream.firstWhere((state) => !state.loading);
+        expect(source.reads, 1);
+        expect(cubit.state.bytes, source.bytes);
+      },
+    );
+
+    test(
+      'a text read finishing after switching to Preview is discarded',
+      () async {
+        final source = DeferredSource(text('book contents'));
+        final cubit = ViewerCubit(source: source, wrap: false);
+        addTearDown(cubit.close);
+        final pending = cubit.load();
+        await Future<void>.delayed(Duration.zero);
+        expect(source.reads, 1);
+        cubit.setMode(ViewerMode.preview);
+        final generation = cubit.state.generation;
+        source.firstRead.complete(source.bytes);
+        await pending;
+        expect(cubit.state.mode, ViewerMode.preview);
+        expect(cubit.state.bytes, isEmpty);
+        expect(cubit.state.generation, generation);
+        cubit.setMode(ViewerMode.text);
+        await cubit.stream.firstWhere((state) => !state.loading);
+        expect(source.reads, 2);
+        expect(cubit.state.window.lines, ['book contents']);
+      },
+    );
+
+    test('refreshing Preview invalidates the cached text window', () async {
+      final source = FakeSource(text('book contents'), name: 'book.epub');
+      final cubit = ViewerCubit(source: source, wrap: false);
+      addTearDown(cubit.close);
+      await cubit.load();
+      cubit.showFind();
+      cubit.setMode(ViewerMode.preview);
+      expect(cubit.state.findShown, isFalse);
+      await cubit.refresh();
+      cubit.setMode(ViewerMode.text);
+      await cubit.stream.firstWhere((state) => !state.loading);
+      expect(source.reads, 2);
+    });
+
     blocTest<ViewerCubit, ViewerState>(
       'reads the first window and splits it into lines',
       build: () =>

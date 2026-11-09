@@ -1,0 +1,20 @@
+{
+  "name": "DjVuLibre",
+  "version": "3.5.30",
+  "source": "https://downloads.sourceforge.net/project/djvu/DjVuLibre/3.5.30/djvulibre-3.5.30.tar.gz",
+  "archiveSha256": "ee5e457d4cfebe566f94b99e5e3d3cc7f5c79ddb741c2ac2ba2e456f00329644",
+  "license": "GPL-2.0-or-later",
+  "selection": "libdjvu/*.cpp and libdjvu/*.h, COPYING, COPYRIGHT, AUTHORS, README and NEWS; only the documented INCL guard differs from the release",
+  "localSourceChanges": [
+    {
+      "file": "upstream/libdjvu/DjVuFile.cpp",
+      "patch": "patches/0001-limit-incl-nesting-depth.patch",
+      "patchSha256": "92f93837bd2cc9f0f73db809607ea815eebedebb5dc5c927bb7663560a60da49",
+      "patchedFileSha256": "6dbd0fa8917c7c5ecb8b070257c81ea4123346dc4516ba9421e4e328218d59f0",
+      "origin": "https://sources.debian.org/data/main/d/djvulibre/3.5.30.1-1/debian/patches/0009-limit-INCL-nesting-depth.patch",
+      "originSha256": "97b4d2662c823933b337655c8ab7afb9bf8d004fa79e25694b9c7839a6359cb5",
+      "upstreamCommitReference": "fbb34d",
+      "adaptation": "Use unconditional C++17 thread_local instead of HAVE_GCCTLS/__thread so the same depth-32 guard protects every target, including MSVC. Preserve upstream exception-safe counter unwinding."
+    }
+  ]
+}

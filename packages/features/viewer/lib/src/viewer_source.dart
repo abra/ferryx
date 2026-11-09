@@ -21,8 +21,14 @@ abstract interface class ViewerSource {
   String? get nativePath;
 }
 
+/// A source that can lend a local file to a document decoder. Closing the
+/// lease cancels preparation and releases any owned temporary copy.
+abstract interface class DocumentFileSource implements ViewerSource {
+  PreviewFileLease preparePreview();
+}
+
 /// A [Location] read through the file repository.
-class FileRepositorySource implements ViewerSource {
+class FileRepositorySource implements DocumentFileSource {
   const FileRepositorySource(this._files, this.location);
 
   final FileRepository _files;
@@ -46,4 +52,7 @@ class FileRepositorySource implements ViewerSource {
 
   @override
   String? get nativePath => location.isNative ? location.path : null;
+
+  @override
+  PreviewFileLease preparePreview() => _files.preparePreview(location);
 }

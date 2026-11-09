@@ -17,6 +17,11 @@ Guidance for Claude Code when working in this repository.
   The workspace's declared `rust-version = "1.85"` is below the current
   lockfile's requirements: the RAR dependencies require at least 1.97.1.
   CI uses stable and does not verify the declared minimum.
+- The local reader engine lives in `packages/pagecraft`, with its local
+  `native_text_selection` dependency beside it. Its separate Rust crate
+  pins its toolchain in `packages/pagecraft/rust/rust-toolchain.toml`;
+  the Makefile and native build hook select that compiler explicitly.
+  Keep its Dart and Cargo lockfiles; edit the local sources, not Pub's cache.
 - `flutter_rust_bridge_codegen` 2.13.0 must match the `flutter_rust_bridge`
   version in `rust/Cargo.toml`, `pubspec.yaml` and
   `packages/ferryx_backend/pubspec.yaml`.

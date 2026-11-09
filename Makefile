@@ -3,6 +3,8 @@
 FLUTTER ?= fvm flutter
 DART ?= fvm dart
 CARGO ?= cargo
+# Pagecraft pins its compiler separately; keep cargo and rustc on that toolchain.
+PAGECRAFT_RUST_ENV = PATH="$$(dirname "$$(rustup which rustc)"):$$PATH"
 
 PACKAGES = \
 	packages/domain_models \
@@ -16,6 +18,8 @@ PACKAGES = \
 	packages/operations_service \
 	packages/platform_services \
 	packages/terminal_service \
+	packages/native_text_selection \
+	packages/pagecraft \
 	packages/features/panels \
 	packages/features/viewer \
 	packages/features/find \
@@ -54,11 +58,13 @@ codegen:
 format:
 	$(DART) format ./
 	cd rust && $(CARGO) fmt
+	cd packages/pagecraft/rust && $(PAGECRAFT_RUST_ENV) $(CARGO) fmt
 
 ## Check formatting without changing files
 format-check:
 	$(DART) format --output=none --set-exit-if-changed $(ROOT_ANALYZE_PATHS) packages
 	cd rust && $(CARGO) fmt --check
+	cd packages/pagecraft/rust && $(PAGECRAFT_RUST_ENV) $(CARGO) fmt --check
 
 ## Analyze all Dart code and lint Rust
 analyze:
@@ -68,6 +74,7 @@ analyze:
 		(cd $$pkg && $(FLUTTER) analyze); \
 	done
 	cd rust && $(CARGO) clippy --workspace --all-targets -- -D warnings
+	cd packages/pagecraft/rust && $(PAGECRAFT_RUST_ENV) $(CARGO) clippy --locked --all-targets -- -D warnings
 
 ## Run every Dart and Rust test
 test: test-rust test-dart
@@ -75,6 +82,7 @@ test: test-rust test-dart
 ## Rust unit and integration tests
 test-rust:
 	cd rust && $(CARGO) test --workspace
+	cd packages/pagecraft/rust && $(PAGECRAFT_RUST_ENV) $(CARGO) test --locked
 
 ## Build the host dylib the real-core Dart tests load (rust/target/debug)
 core:
@@ -138,6 +146,7 @@ linux:
 clean:
 	$(FLUTTER) clean
 	cd rust && $(CARGO) clean
+	cd packages/pagecraft/rust && $(PAGECRAFT_RUST_ENV) $(CARGO) clean
 
 ## Show available targets
 help:

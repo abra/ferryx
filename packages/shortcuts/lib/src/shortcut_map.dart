@@ -779,6 +779,17 @@ const _defaults = <AppCommand, List<Chord>>{
   AppCommand.viewerToggleWrap: [
     Chord(LogicalKeyboardKey.keyW, primary: true, alt: true),
   ],
+  AppCommand.viewerToggleFullWindow: [],
+  AppCommand.documentPrevious: [Chord(LogicalKeyboardKey.pageUp)],
+  AppCommand.documentNext: [Chord(LogicalKeyboardKey.pageDown)],
+  AppCommand.documentContents: [],
+  AppCommand.documentGoToPage: [],
+  AppCommand.documentFitPage: [Chord(LogicalKeyboardKey.digit0, primary: true)],
+  AppCommand.documentZoomIn: [
+    Chord(LogicalKeyboardKey.equal, primary: true),
+    Chord(LogicalKeyboardKey.equal, primary: true, shift: true),
+  ],
+  AppCommand.documentZoomOut: [Chord(LogicalKeyboardKey.minus, primary: true)],
 
   // ─── Terminal ───
   // Terminal.app's keys; ⌘K clears as there (inside the terminal its own

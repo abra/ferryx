@@ -1,0 +1,2352 @@
+{
+ "chapter.xhtml": {
+  "textCount": 30,
+  "points": [
+   {
+    "text": 0,
+    "offset": 0,
+    "cfi": "epubcfi(/1:0)",
+    "resolved": {
+     "text": 0,
+     "offset": 0
+    }
+   },
+   {
+    "text": 0,
+    "offset": 1,
+    "cfi": "epubcfi(/1:1)",
+    "resolved": {
+     "text": 0,
+     "offset": 1
+    }
+   },
+   {
+    "text": 1,
+    "offset": 0,
+    "cfi": "epubcfi(/2/2/1:0)",
+    "resolved": {
+     "text": 1,
+     "offset": 0
+    }
+   },
+   {
+    "text": 1,
+    "offset": 5,
+    "cfi": "epubcfi(/2/2/1:5)",
+    "resolved": {
+     "text": 1,
+     "offset": 5
+    }
+   },
+   {
+    "text": 1,
+    "offset": 11,
+    "cfi": "epubcfi(/2/2/1:11)",
+    "resolved": {
+     "text": 1,
+     "offset": 11
+    }
+   },
+   {
+    "text": 2,
+    "offset": 0,
+    "cfi": "epubcfi(/3:0)",
+    "resolved": {
+     "text": 2,
+     "offset": 0
+    }
+   },
+   {
+    "text": 2,
+    "offset": 1,
+    "cfi": "epubcfi(/3:1)",
+    "resolved": {
+     "text": 2,
+     "offset": 1
+    }
+   },
+   {
+    "text": 3,
+    "offset": 0,
+    "cfi": "epubcfi(/4/1:0)",
+    "resolved": {
+     "text": 3,
+     "offset": 0
+    }
+   },
+   {
+    "text": 3,
+    "offset": 1,
+    "cfi": "epubcfi(/4/1:1)",
+    "resolved": {
+     "text": 3,
+     "offset": 1
+    }
+   },
+   {
+    "text": 4,
+    "offset": 0,
+    "cfi": "epubcfi(/4/2[title]/1:0)",
+    "resolved": {
+     "text": 4,
+     "offset": 0
+    }
+   },
+   {
+    "text": 4,
+    "offset": 5,
+    "cfi": "epubcfi(/4/2[title]/1:5)",
+    "resolved": {
+     "text": 4,
+     "offset": 5
+    }
+   },
+   {
+    "text": 4,
+    "offset": 11,
+    "cfi": "epubcfi(/4/2[title]/1:11)",
+    "resolved": {
+     "text": 4,
+     "offset": 11
+    }
+   },
+   {
+    "text": 5,
+    "offset": 0,
+    "cfi": "epubcfi(/4/3:0)",
+    "resolved": {
+     "text": 5,
+     "offset": 0
+    }
+   },
+   {
+    "text": 5,
+    "offset": 1,
+    "cfi": "epubcfi(/4/3:1)",
+    "resolved": {
+     "text": 5,
+     "offset": 1
+    }
+   },
+   {
+    "text": 6,
+    "offset": 0,
+    "cfi": "epubcfi(/4/4[p1]/1:0)",
+    "resolved": {
+     "text": 6,
+     "offset": 0
+    }
+   },
+   {
+    "text": 6,
+    "offset": 2,
+    "cfi": "epubcfi(/4/4[p1]/1:2)",
+    "resolved": {
+     "text": 6,
+     "offset": 2
+    }
+   },
+   {
+    "text": 6,
+    "offset": 4,
+    "cfi": "epubcfi(/4/4[p1]/1:4)",
+    "resolved": {
+     "text": 6,
+     "offset": 4
+    }
+   },
+   {
+    "text": 7,
+    "offset": 0,
+    "cfi": "epubcfi(/4/4[p1]/2/1:0)",
+    "resolved": {
+     "text": 7,
+     "offset": 0
+    }
+   },
+   {
+    "text": 7,
+    "offset": 2,
+    "cfi": "epubcfi(/4/4[p1]/2/1:2)",
+    "resolved": {
+     "text": 7,
+     "offset": 2
+    }
+   },
+   {
+    "text": 7,
+    "offset": 5,
+    "cfi": "epubcfi(/4/4[p1]/2/1:5)",
+    "resolved": {
+     "text": 7,
+     "offset": 5
+    }
+   },
+   {
+    "text": 8,
+    "offset": 0,
+    "cfi": "epubcfi(/4/4[p1]/3:0)",
+    "resolved": {
+     "text": 8,
+     "offset": 0
+    }
+   },
+   {
+    "text": 8,
+    "offset": 5,
+    "cfi": "epubcfi(/4/4[p1]/3:5)",
+    "resolved": {
+     "text": 8,
+     "offset": 5
+    }
+   },
+   {
+    "text": 8,
+    "offset": 10,
+    "cfi": "epubcfi(/4/4[p1]/3:10)",
+    "resolved": {
+     "text": 8,
+     "offset": 10
+    }
+   },
+   {
+    "text": 9,
+    "offset": 0,
+    "cfi": "epubcfi(/4/4[p1]/3:10)",
+    "resolved": {
+     "text": 8,
+     "offset": 10
+    }
+   },
+   {
+    "text": 9,
+    "offset": 12,
+    "cfi": "epubcfi(/4/4[p1]/3:22)",
+    "resolved": {
+     "text": 9,
+     "offset": 12
+    }
+   },
+   {
+    "text": 9,
+    "offset": 25,
+    "cfi": "epubcfi(/4/4[p1]/3:35)",
+    "resolved": {
+     "text": 9,
+     "offset": 25
+    }
+   },
+   {
+    "text": 10,
+    "offset": 0,
+    "cfi": "epubcfi(/4/5:0)",
+    "resolved": {
+     "text": 10,
+     "offset": 0
+    }
+   },
+   {
+    "text": 10,
+    "offset": 1,
+    "cfi": "epubcfi(/4/5:1)",
+    "resolved": {
+     "text": 10,
+     "offset": 1
+    }
+   },
+   {
+    "text": 11,
+    "offset": 0,
+    "cfi": "epubcfi(/4/6/1:0)",
+    "resolved": {
+     "text": 11,
+     "offset": 0
+    }
+   },
+   {
+    "text": 11,
+    "offset": 11,
+    "cfi": "epubcfi(/4/6/1:11)",
+    "resolved": {
+     "text": 11,
+     "offset": 11
+    }
+   },
+   {
+    "text": 11,
+    "offset": 22,
+    "cfi": "epubcfi(/4/6/1:22)",
+    "resolved": {
+     "text": 11,
+     "offset": 22
+    }
+   },
+   {
+    "text": 12,
+    "offset": 0,
+    "cfi": "epubcfi(/4/6/2[link]/1:0)",
+    "resolved": {
+     "text": 12,
+     "offset": 0
+    }
+   },
+   {
+    "text": 12,
+    "offset": 3,
+    "cfi": "epubcfi(/4/6/2[link]/1:3)",
+    "resolved": {
+     "text": 12,
+     "offset": 3
+    }
+   },
+   {
+    "text": 12,
+    "offset": 6,
+    "cfi": "epubcfi(/4/6/2[link]/1:6)",
+    "resolved": {
+     "text": 12,
+     "offset": 6
+    }
+   },
+   {
+    "text": 13,
+    "offset": 0,
+    "cfi": "epubcfi(/4/6/3:0)",
+    "resolved": {
+     "text": 13,
+     "offset": 0
+    }
+   },
+   {
+    "text": 13,
+    "offset": 11,
+    "cfi": "epubcfi(/4/6/3:11)",
+    "resolved": {
+     "text": 13,
+     "offset": 11
+    }
+   },
+   {
+    "text": 13,
+    "offset": 23,
+    "cfi": "epubcfi(/4/6/3:23)",
+    "resolved": {
+     "text": 13,
+     "offset": 23
+    }
+   },
+   {
+    "text": 14,
+    "offset": 0,
+    "cfi": "epubcfi(/4/7:0)",
+    "resolved": {
+     "text": 14,
+     "offset": 0
+    }
+   },
+   {
+    "text": 14,
+    "offset": 1,
+    "cfi": "epubcfi(/4/7:1)",
+    "resolved": {
+     "text": 14,
+     "offset": 1
+    }
+   },
+   {
+    "text": 15,
+    "offset": 0,
+    "cfi": "epubcfi(/4/8[wrap]/2[inner]/1:0)",
+    "resolved": {
+     "text": 15,
+     "offset": 0
+    }
+   },
+   {
+    "text": 15,
+    "offset": 3,
+    "cfi": "epubcfi(/4/8[wrap]/2[inner]/1:3)",
+    "resolved": {
+     "text": 15,
+     "offset": 3
+    }
+   },
+   {
+    "text": 15,
+    "offset": 7,
+    "cfi": "epubcfi(/4/8[wrap]/2[inner]/1:7)",
+    "resolved": {
+     "text": 15,
+     "offset": 7
+    }
+   },
+   {
+    "text": 16,
+    "offset": 0,
+    "cfi": "epubcfi(/4/8[wrap]/2[inner]/2/1:0)",
+    "resolved": {
+     "text": 16,
+     "offset": 0
+    }
+   },
+   {
+    "text": 16,
+    "offset": 2,
+    "cfi": "epubcfi(/4/8[wrap]/2[inner]/2/1:2)",
+    "resolved": {
+     "text": 16,
+     "offset": 2
+    }
+   },
+   {
+    "text": 16,
+    "offset": 5,
+    "cfi": "epubcfi(/4/8[wrap]/2[inner]/2/1:5)",
+    "resolved": {
+     "text": 16,
+     "offset": 5
+    }
+   },
+   {
+    "text": 17,
+    "offset": 0,
+    "cfi": "epubcfi(/4/8[wrap]/2[inner]/2/2/1:0)",
+    "resolved": {
+     "text": 17,
+     "offset": 0
+    }
+   },
+   {
+    "text": 17,
+    "offset": 3,
+    "cfi": "epubcfi(/4/8[wrap]/2[inner]/2/2/1:3)",
+    "resolved": {
+     "text": 17,
+     "offset": 3
+    }
+   },
+   {
+    "text": 17,
+    "offset": 6,
+    "cfi": "epubcfi(/4/8[wrap]/2[inner]/2/2/1:6)",
+    "resolved": {
+     "text": 17,
+     "offset": 6
+    }
+   },
+   {
+    "text": 18,
+    "offset": 0,
+    "cfi": "epubcfi(/4/8[wrap]/2[inner]/3:0)",
+    "resolved": {
+     "text": 18,
+     "offset": 0
+    }
+   },
+   {
+    "text": 18,
+    "offset": 3,
+    "cfi": "epubcfi(/4/8[wrap]/2[inner]/3:3)",
+    "resolved": {
+     "text": 18,
+     "offset": 3
+    }
+   },
+   {
+    "text": 18,
+    "offset": 6,
+    "cfi": "epubcfi(/4/8[wrap]/2[inner]/3:6)",
+    "resolved": {
+     "text": 18,
+     "offset": 6
+    }
+   },
+   {
+    "text": 19,
+    "offset": 0,
+    "cfi": "epubcfi(/4/8[wrap]/4/1:0)",
+    "resolved": {
+     "text": 19,
+     "offset": 0
+    }
+   },
+   {
+    "text": 19,
+    "offset": 2,
+    "cfi": "epubcfi(/4/8[wrap]/4/1:2)",
+    "resolved": {
+     "text": 19,
+     "offset": 2
+    }
+   },
+   {
+    "text": 19,
+    "offset": 5,
+    "cfi": "epubcfi(/4/8[wrap]/4/1:5)",
+    "resolved": {
+     "text": 19,
+     "offset": 5
+    }
+   },
+   {
+    "text": 20,
+    "offset": 0,
+    "cfi": "epubcfi(/4/9:0)",
+    "resolved": {
+     "text": 20,
+     "offset": 0
+    }
+   },
+   {
+    "text": 20,
+    "offset": 1,
+    "cfi": "epubcfi(/4/9:1)",
+    "resolved": {
+     "text": 20,
+     "offset": 1
+    }
+   },
+   {
+    "text": 21,
+    "offset": 0,
+    "cfi": "epubcfi(/4/10[cdata]/1:0)",
+    "resolved": {
+     "text": 21,
+     "offset": 0
+    }
+   },
+   {
+    "text": 21,
+    "offset": 13,
+    "cfi": "epubcfi(/4/10[cdata]/1:13)",
+    "resolved": {
+     "text": 21,
+     "offset": 13
+    }
+   },
+   {
+    "text": 21,
+    "offset": 27,
+    "cfi": "epubcfi(/4/10[cdata]/1:27)",
+    "resolved": {
+     "text": 21,
+     "offset": 27
+    }
+   },
+   {
+    "text": 22,
+    "offset": 0,
+    "cfi": "epubcfi(/4/10[cdata]/1:27)",
+    "resolved": {
+     "text": 21,
+     "offset": 27
+    }
+   },
+   {
+    "text": 22,
+    "offset": 3,
+    "cfi": "epubcfi(/4/10[cdata]/1:30)",
+    "resolved": {
+     "text": 22,
+     "offset": 3
+    }
+   },
+   {
+    "text": 22,
+    "offset": 7,
+    "cfi": "epubcfi(/4/10[cdata]/1:34)",
+    "resolved": {
+     "text": 22,
+     "offset": 7
+    }
+   },
+   {
+    "text": 23,
+    "offset": 0,
+    "cfi": "epubcfi(/4/11:0)",
+    "resolved": {
+     "text": 23,
+     "offset": 0
+    }
+   },
+   {
+    "text": 23,
+    "offset": 1,
+    "cfi": "epubcfi(/4/11:1)",
+    "resolved": {
+     "text": 23,
+     "offset": 1
+    }
+   },
+   {
+    "text": 24,
+    "offset": 0,
+    "cfi": "epubcfi(/4/13:0)",
+    "resolved": {
+     "text": 24,
+     "offset": 0
+    }
+   },
+   {
+    "text": 24,
+    "offset": 1,
+    "cfi": "epubcfi(/4/13:1)",
+    "resolved": {
+     "text": 24,
+     "offset": 1
+    }
+   },
+   {
+    "text": 25,
+    "offset": 0,
+    "cfi": "epubcfi(/4/14[spaces]/1:0)",
+    "resolved": {
+     "text": 25,
+     "offset": 0
+    }
+   },
+   {
+    "text": 25,
+    "offset": 11,
+    "cfi": "epubcfi(/4/14[spaces]/1:11)",
+    "resolved": {
+     "text": 25,
+     "offset": 11
+    }
+   },
+   {
+    "text": 25,
+    "offset": 22,
+    "cfi": "epubcfi(/4/14[spaces]/1:22)",
+    "resolved": {
+     "text": 25,
+     "offset": 22
+    }
+   },
+   {
+    "text": 26,
+    "offset": 0,
+    "cfi": "epubcfi(/4/15:0)",
+    "resolved": {
+     "text": 26,
+     "offset": 0
+    }
+   },
+   {
+    "text": 26,
+    "offset": 1,
+    "cfi": "epubcfi(/4/15:1)",
+    "resolved": {
+     "text": 26,
+     "offset": 1
+    }
+   },
+   {
+    "text": 27,
+    "offset": 0,
+    "cfi": "epubcfi(/4/16[escapes]/1:0)",
+    "resolved": {
+     "text": 27,
+     "offset": 0
+    }
+   },
+   {
+    "text": 27,
+    "offset": 14,
+    "cfi": "epubcfi(/4/16[escapes]/1:14)",
+    "resolved": {
+     "text": 27,
+     "offset": 14
+    }
+   },
+   {
+    "text": 27,
+    "offset": 28,
+    "cfi": "epubcfi(/4/16[escapes]/1:28)",
+    "resolved": {
+     "text": 27,
+     "offset": 28
+    }
+   },
+   {
+    "text": 28,
+    "offset": 0,
+    "cfi": "epubcfi(/4/17:0)",
+    "resolved": {
+     "text": 28,
+     "offset": 0
+    }
+   },
+   {
+    "text": 28,
+    "offset": 1,
+    "cfi": "epubcfi(/4/17:1)",
+    "resolved": {
+     "text": 28,
+     "offset": 1
+    }
+   },
+   {
+    "text": 29,
+    "offset": 0,
+    "cfi": "epubcfi(/5:0)",
+    "resolved": {
+     "text": 29,
+     "offset": 0
+    }
+   },
+   {
+    "text": 29,
+    "offset": 1,
+    "cfi": "epubcfi(/5:1)",
+    "resolved": {
+     "text": 29,
+     "offset": 1
+    }
+   }
+  ],
+  "ranges": [
+   {
+    "start": {
+     "text": 0,
+     "offset": 1
+    },
+    "end": {
+     "text": 1,
+     "offset": 2
+    },
+    "cfi": "epubcfi(,/1:1,/2/2/1:2)",
+    "resolved": {
+     "start": {
+      "text": 0,
+      "offset": 1
+     },
+     "end": {
+      "text": 1,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 1,
+     "offset": 1
+    },
+    "end": {
+     "text": 2,
+     "offset": 1
+    },
+    "cfi": "epubcfi(,/2/2/1:1,/3:1)",
+    "resolved": {
+     "start": {
+      "text": 1,
+      "offset": 1
+     },
+     "end": {
+      "text": 2,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 2,
+     "offset": 1
+    },
+    "end": {
+     "text": 3,
+     "offset": 1
+    },
+    "cfi": "epubcfi(,/3:1,/4/1:1)",
+    "resolved": {
+     "start": {
+      "text": 2,
+      "offset": 1
+     },
+     "end": {
+      "text": 3,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 3,
+     "offset": 1
+    },
+    "end": {
+     "text": 4,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4,/1:1,/2[title]/1:2)",
+    "resolved": {
+     "start": {
+      "text": 3,
+      "offset": 1
+     },
+     "end": {
+      "text": 4,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 4,
+     "offset": 1
+    },
+    "end": {
+     "text": 5,
+     "offset": 1
+    },
+    "cfi": "epubcfi(/4,/2[title]/1:1,/3:1)",
+    "resolved": {
+     "start": {
+      "text": 4,
+      "offset": 1
+     },
+     "end": {
+      "text": 5,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 5,
+     "offset": 1
+    },
+    "end": {
+     "text": 6,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4,/3:1,/4[p1]/1:2)",
+    "resolved": {
+     "start": {
+      "text": 5,
+      "offset": 1
+     },
+     "end": {
+      "text": 6,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 6,
+     "offset": 1
+    },
+    "end": {
+     "text": 7,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4/4[p1],/1:1,/2/1:2)",
+    "resolved": {
+     "start": {
+      "text": 6,
+      "offset": 1
+     },
+     "end": {
+      "text": 7,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 7,
+     "offset": 1
+    },
+    "end": {
+     "text": 8,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4/4[p1],/2/1:1,/3:2)",
+    "resolved": {
+     "start": {
+      "text": 7,
+      "offset": 1
+     },
+     "end": {
+      "text": 8,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 8,
+     "offset": 1
+    },
+    "end": {
+     "text": 9,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4/4[p1],/3:1,/3:12)",
+    "resolved": {
+     "start": {
+      "text": 8,
+      "offset": 1
+     },
+     "end": {
+      "text": 9,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 9,
+     "offset": 1
+    },
+    "end": {
+     "text": 10,
+     "offset": 1
+    },
+    "cfi": "epubcfi(/4,/4[p1]/3:11,/5:1)",
+    "resolved": {
+     "start": {
+      "text": 9,
+      "offset": 1
+     },
+     "end": {
+      "text": 10,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 10,
+     "offset": 1
+    },
+    "end": {
+     "text": 11,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4,/5:1,/6/1:2)",
+    "resolved": {
+     "start": {
+      "text": 10,
+      "offset": 1
+     },
+     "end": {
+      "text": 11,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 11,
+     "offset": 1
+    },
+    "end": {
+     "text": 12,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4/6,/1:1,/2[link]/1:2)",
+    "resolved": {
+     "start": {
+      "text": 11,
+      "offset": 1
+     },
+     "end": {
+      "text": 12,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 12,
+     "offset": 1
+    },
+    "end": {
+     "text": 13,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4/6,/2[link]/1:1,/3:2)",
+    "resolved": {
+     "start": {
+      "text": 12,
+      "offset": 1
+     },
+     "end": {
+      "text": 13,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 13,
+     "offset": 1
+    },
+    "end": {
+     "text": 14,
+     "offset": 1
+    },
+    "cfi": "epubcfi(/4,/6/3:1,/7:1)",
+    "resolved": {
+     "start": {
+      "text": 13,
+      "offset": 1
+     },
+     "end": {
+      "text": 14,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 14,
+     "offset": 1
+    },
+    "end": {
+     "text": 15,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4,/7:1,/8[wrap]/2[inner]/1:2)",
+    "resolved": {
+     "start": {
+      "text": 14,
+      "offset": 1
+     },
+     "end": {
+      "text": 15,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 15,
+     "offset": 1
+    },
+    "end": {
+     "text": 16,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4/8[wrap]/2[inner],/1:1,/2/1:2)",
+    "resolved": {
+     "start": {
+      "text": 15,
+      "offset": 1
+     },
+     "end": {
+      "text": 16,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 16,
+     "offset": 1
+    },
+    "end": {
+     "text": 17,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4/8[wrap]/2[inner]/2,/1:1,/2/1:2)",
+    "resolved": {
+     "start": {
+      "text": 16,
+      "offset": 1
+     },
+     "end": {
+      "text": 17,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 17,
+     "offset": 1
+    },
+    "end": {
+     "text": 18,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4/8[wrap]/2[inner],/2/2/1:1,/3:2)",
+    "resolved": {
+     "start": {
+      "text": 17,
+      "offset": 1
+     },
+     "end": {
+      "text": 18,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 18,
+     "offset": 1
+    },
+    "end": {
+     "text": 19,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4/8[wrap],/2[inner]/3:1,/4/1:2)",
+    "resolved": {
+     "start": {
+      "text": 18,
+      "offset": 1
+     },
+     "end": {
+      "text": 19,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 19,
+     "offset": 1
+    },
+    "end": {
+     "text": 20,
+     "offset": 1
+    },
+    "cfi": "epubcfi(/4,/8[wrap]/4/1:1,/9:1)",
+    "resolved": {
+     "start": {
+      "text": 19,
+      "offset": 1
+     },
+     "end": {
+      "text": 20,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 20,
+     "offset": 1
+    },
+    "end": {
+     "text": 21,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4,/9:1,/10[cdata]/1:2)",
+    "resolved": {
+     "start": {
+      "text": 20,
+      "offset": 1
+     },
+     "end": {
+      "text": 21,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 21,
+     "offset": 1
+    },
+    "end": {
+     "text": 22,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4/10[cdata],/1:1,/1:29)",
+    "resolved": {
+     "start": {
+      "text": 21,
+      "offset": 1
+     },
+     "end": {
+      "text": 22,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 22,
+     "offset": 1
+    },
+    "end": {
+     "text": 23,
+     "offset": 1
+    },
+    "cfi": "epubcfi(/4,/10[cdata]/1:28,/11:1)",
+    "resolved": {
+     "start": {
+      "text": 22,
+      "offset": 1
+     },
+     "end": {
+      "text": 23,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 23,
+     "offset": 1
+    },
+    "end": {
+     "text": 24,
+     "offset": 1
+    },
+    "cfi": "epubcfi(/4,/11:1,/13:1)",
+    "resolved": {
+     "start": {
+      "text": 23,
+      "offset": 1
+     },
+     "end": {
+      "text": 24,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 24,
+     "offset": 1
+    },
+    "end": {
+     "text": 25,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4,/13:1,/14[spaces]/1:2)",
+    "resolved": {
+     "start": {
+      "text": 24,
+      "offset": 1
+     },
+     "end": {
+      "text": 25,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 25,
+     "offset": 1
+    },
+    "end": {
+     "text": 26,
+     "offset": 1
+    },
+    "cfi": "epubcfi(/4,/14[spaces]/1:1,/15:1)",
+    "resolved": {
+     "start": {
+      "text": 25,
+      "offset": 1
+     },
+     "end": {
+      "text": 26,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 26,
+     "offset": 1
+    },
+    "end": {
+     "text": 27,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/4,/15:1,/16[escapes]/1:2)",
+    "resolved": {
+     "start": {
+      "text": 26,
+      "offset": 1
+     },
+     "end": {
+      "text": 27,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 27,
+     "offset": 1
+    },
+    "end": {
+     "text": 28,
+     "offset": 1
+    },
+    "cfi": "epubcfi(/4,/16[escapes]/1:1,/17:1)",
+    "resolved": {
+     "start": {
+      "text": 27,
+      "offset": 1
+     },
+     "end": {
+      "text": 28,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 28,
+     "offset": 1
+    },
+    "end": {
+     "text": 29,
+     "offset": 1
+    },
+    "cfi": "epubcfi(,/4/17:1,/5:1)",
+    "resolved": {
+     "start": {
+      "text": 28,
+      "offset": 1
+     },
+     "end": {
+      "text": 29,
+      "offset": 1
+     }
+    }
+   }
+  ],
+  "ids": [
+   "title",
+   "p1",
+   "link",
+   "wrap",
+   "inner",
+   "cdata",
+   "empty",
+   "spaces",
+   "escapes"
+  ],
+  "elementCfis": [
+   {
+    "id": null,
+    "tag": "title",
+    "cfi": "epubcfi(/2/2)",
+    "resolvedTag": "title"
+   },
+   {
+    "id": "title",
+    "tag": "h1",
+    "cfi": "epubcfi(/4/2[title])",
+    "resolvedTag": "h1"
+   },
+   {
+    "id": "p1",
+    "tag": "p",
+    "cfi": "epubcfi(/4/4[p1])",
+    "resolvedTag": "p"
+   },
+   {
+    "id": null,
+    "tag": "em",
+    "cfi": "epubcfi(/4/4[p1]/2)",
+    "resolvedTag": "em"
+   },
+   {
+    "id": null,
+    "tag": "p",
+    "cfi": "epubcfi(/4/6)",
+    "resolvedTag": "p"
+   },
+   {
+    "id": "link",
+    "tag": "a",
+    "cfi": "epubcfi(/4/6/2[link])",
+    "resolvedTag": "a"
+   },
+   {
+    "id": "wrap",
+    "tag": "div",
+    "cfi": "epubcfi(/4/8[wrap])",
+    "resolvedTag": "div"
+   },
+   {
+    "id": "inner",
+    "tag": "p",
+    "cfi": "epubcfi(/4/8[wrap]/2[inner])",
+    "resolvedTag": "p"
+   },
+   {
+    "id": null,
+    "tag": "b",
+    "cfi": "epubcfi(/4/8[wrap]/2[inner]/2)",
+    "resolvedTag": "b"
+   },
+   {
+    "id": null,
+    "tag": "i",
+    "cfi": "epubcfi(/4/8[wrap]/2[inner]/2/2)",
+    "resolvedTag": "i"
+   },
+   {
+    "id": null,
+    "tag": "p",
+    "cfi": "epubcfi(/4/8[wrap]/4)",
+    "resolvedTag": "p"
+   },
+   {
+    "id": "cdata",
+    "tag": "p",
+    "cfi": "epubcfi(/4/10[cdata])",
+    "resolvedTag": "p"
+   },
+   {
+    "id": "empty",
+    "tag": "p",
+    "cfi": "epubcfi(/4/12[empty])",
+    "resolvedTag": "p"
+   },
+   {
+    "id": "spaces",
+    "tag": "p",
+    "cfi": "epubcfi(/4/14[spaces])",
+    "resolvedTag": "p"
+   },
+   {
+    "id": "escapes",
+    "tag": "p",
+    "cfi": "epubcfi(/4/16[escapes])",
+    "resolvedTag": "p"
+   }
+  ],
+  "fromElements": [
+   "epubcfi(/4/2[title])",
+   "epubcfi(/4/4[p1])",
+   "epubcfi(/4/6)",
+   "epubcfi(/4/8[wrap])",
+   "epubcfi(/4/10[cdata])",
+   "epubcfi(/4/12[empty])",
+   "epubcfi(/4/14[spaces])",
+   "epubcfi(/4/16[escapes])"
+  ],
+  "toElement": [
+   {
+    "cfi": "epubcfi(/4/2[title])",
+    "tag": "h1",
+    "id": "title",
+    "resolvedTag": "h1"
+   },
+   {
+    "cfi": "epubcfi(/4/4[p1])",
+    "tag": "p",
+    "id": "p1",
+    "resolvedTag": "p"
+   },
+   {
+    "cfi": "epubcfi(/4/6)",
+    "tag": "p",
+    "id": null,
+    "resolvedTag": "p"
+   },
+   {
+    "cfi": "epubcfi(/4/8[wrap])",
+    "tag": "div",
+    "id": "wrap",
+    "resolvedTag": "div"
+   },
+   {
+    "cfi": "epubcfi(/4/10[cdata])",
+    "tag": "p",
+    "id": "cdata",
+    "resolvedTag": "p"
+   },
+   {
+    "cfi": "epubcfi(/4/12[empty])",
+    "tag": "p",
+    "id": "empty",
+    "resolvedTag": "p"
+   },
+   {
+    "cfi": "epubcfi(/4/14[spaces])",
+    "tag": "p",
+    "id": "spaces",
+    "resolvedTag": "p"
+   },
+   {
+    "cfi": "epubcfi(/4/16[escapes])",
+    "tag": "p",
+    "id": "escapes",
+    "resolvedTag": "p"
+   }
+  ]
+ },
+ "skipped.xhtml": {
+  "textCount": 13,
+  "points": [
+   {
+    "text": 0,
+    "offset": 0,
+    "cfi": "epubcfi(/1:0)",
+    "resolved": {
+     "text": 0,
+     "offset": 0
+    }
+   },
+   {
+    "text": 0,
+    "offset": 1,
+    "cfi": "epubcfi(/1:1)",
+    "resolved": {
+     "text": 0,
+     "offset": 1
+    }
+   },
+   {
+    "text": 1,
+    "offset": 0,
+    "cfi": "epubcfi(/2/1:0)",
+    "resolved": {
+     "text": 1,
+     "offset": 0
+    }
+   },
+   {
+    "text": 1,
+    "offset": 1,
+    "cfi": "epubcfi(/2/1:1)",
+    "resolved": {
+     "text": 1,
+     "offset": 1
+    }
+   },
+   {
+    "text": 2,
+    "offset": 0,
+    "cfi": "epubcfi(/2/2[p]/1:0)",
+    "resolved": {
+     "text": 2,
+     "offset": 0
+    }
+   },
+   {
+    "text": 2,
+    "offset": 3,
+    "cfi": "epubcfi(/2/2[p]/1:3)",
+    "resolved": {
+     "text": 2,
+     "offset": 3
+    }
+   },
+   {
+    "text": 2,
+    "offset": 7,
+    "cfi": "epubcfi(/2/2[p]/1:7)",
+    "resolved": {
+     "text": 2,
+     "offset": 7
+    }
+   },
+   {
+    "text": 3,
+    "offset": 0,
+    "cfi": "epubcfi(/2/2[p]/1:7)",
+    "resolved": {
+     "text": 2,
+     "offset": 7
+    }
+   },
+   {
+    "text": 3,
+    "offset": 4,
+    "cfi": "epubcfi(/2/2[p]/1:11)",
+    "resolved": {
+     "text": 3,
+     "offset": 4
+    }
+   },
+   {
+    "text": 3,
+    "offset": 8,
+    "cfi": "epubcfi(/2/2[p]/1:15)",
+    "resolved": {
+     "text": 3,
+     "offset": 8
+    }
+   },
+   {
+    "text": 4,
+    "offset": 0,
+    "cfi": "epubcfi(/2/2[p]/1:15)",
+    "resolved": {
+     "text": 3,
+     "offset": 8
+    }
+   },
+   {
+    "text": 4,
+    "offset": 2,
+    "cfi": "epubcfi(/2/2[p]/1:17)",
+    "resolved": {
+     "text": 4,
+     "offset": 2
+    }
+   },
+   {
+    "text": 4,
+    "offset": 5,
+    "cfi": "epubcfi(/2/2[p]/1:20)",
+    "resolved": {
+     "text": 4,
+     "offset": 5
+    }
+   },
+   {
+    "text": 5,
+    "offset": 0,
+    "cfi": "epubcfi(/2/2[p]/1:0)",
+    "resolved": {
+     "text": 2,
+     "offset": 0
+    }
+   },
+   {
+    "text": 5,
+    "offset": 4,
+    "cfi": "epubcfi(/2/2[p]/1:4)",
+    "resolved": {
+     "text": 2,
+     "offset": 4
+    }
+   },
+   {
+    "text": 5,
+    "offset": 9,
+    "cfi": "epubcfi(/2/2[p]/1:9)",
+    "resolved": {
+     "text": 3,
+     "offset": 2
+    }
+   },
+   {
+    "text": 6,
+    "offset": 0,
+    "cfi": "epubcfi(/2/2[p]/1:20)",
+    "resolved": {
+     "text": 4,
+     "offset": 5
+    }
+   },
+   {
+    "text": 6,
+    "offset": 2,
+    "cfi": "epubcfi(/2/2[p]/1:22)",
+    "resolved": {
+     "text": 6,
+     "offset": 2
+    }
+   },
+   {
+    "text": 6,
+    "offset": 5,
+    "cfi": "epubcfi(/2/2[p]/1:25)",
+    "resolved": {
+     "text": 6,
+     "offset": 5
+    }
+   },
+   {
+    "text": 7,
+    "offset": 0,
+    "cfi": "epubcfi(/2/3:0)",
+    "resolved": {
+     "text": 7,
+     "offset": 0
+    }
+   },
+   {
+    "text": 7,
+    "offset": 1,
+    "cfi": "epubcfi(/2/3:1)",
+    "resolved": {
+     "text": 7,
+     "offset": 1
+    }
+   },
+   {
+    "text": 8,
+    "offset": 0,
+    "cfi": "epubcfi(/2/4[deep]/1:0)",
+    "resolved": {
+     "text": 8,
+     "offset": 0
+    }
+   },
+   {
+    "text": 8,
+    "offset": 7,
+    "cfi": "epubcfi(/2/4[deep]/1:7)",
+    "resolved": {
+     "text": 8,
+     "offset": 7
+    }
+   },
+   {
+    "text": 8,
+    "offset": 14,
+    "cfi": "epubcfi(/2/4[deep]/1:14)",
+    "resolved": {
+     "text": 8,
+     "offset": 14
+    }
+   },
+   {
+    "text": 9,
+    "offset": 0,
+    "cfi": "epubcfi(/2/5:0)",
+    "resolved": {
+     "text": 9,
+     "offset": 0
+    }
+   },
+   {
+    "text": 9,
+    "offset": 1,
+    "cfi": "epubcfi(/2/5:1)",
+    "resolved": {
+     "text": 9,
+     "offset": 1
+    }
+   },
+   {
+    "text": 10,
+    "offset": 0,
+    "cfi": "epubcfi(/2/6[last]/1:0)",
+    "resolved": {
+     "text": 10,
+     "offset": 0
+    }
+   },
+   {
+    "text": 10,
+    "offset": 2,
+    "cfi": "epubcfi(/2/6[last]/1:2)",
+    "resolved": {
+     "text": 10,
+     "offset": 2
+    }
+   },
+   {
+    "text": 10,
+    "offset": 4,
+    "cfi": "epubcfi(/2/6[last]/1:4)",
+    "resolved": {
+     "text": 10,
+     "offset": 4
+    }
+   },
+   {
+    "text": 11,
+    "offset": 0,
+    "cfi": "epubcfi(/2/7:0)",
+    "resolved": {
+     "text": 11,
+     "offset": 0
+    }
+   },
+   {
+    "text": 11,
+    "offset": 1,
+    "cfi": "epubcfi(/2/7:1)",
+    "resolved": {
+     "text": 11,
+     "offset": 1
+    }
+   },
+   {
+    "text": 12,
+    "offset": 0,
+    "cfi": "epubcfi(/3:0)",
+    "resolved": {
+     "text": 12,
+     "offset": 0
+    }
+   },
+   {
+    "text": 12,
+    "offset": 1,
+    "cfi": "epubcfi(/3:1)",
+    "resolved": {
+     "text": 12,
+     "offset": 1
+    }
+   }
+  ],
+  "ranges": [
+   {
+    "start": {
+     "text": 0,
+     "offset": 1
+    },
+    "end": {
+     "text": 1,
+     "offset": 1
+    },
+    "cfi": "epubcfi(,/1:1,/2/1:1)",
+    "resolved": {
+     "start": {
+      "text": 0,
+      "offset": 1
+     },
+     "end": {
+      "text": 1,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 1,
+     "offset": 1
+    },
+    "end": {
+     "text": 2,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/2,/1:1,/2[p]/1:2)",
+    "resolved": {
+     "start": {
+      "text": 1,
+      "offset": 1
+     },
+     "end": {
+      "text": 2,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 2,
+     "offset": 1
+    },
+    "end": {
+     "text": 3,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/2/2[p],/1:1,/1:9)",
+    "resolved": {
+     "start": {
+      "text": 2,
+      "offset": 1
+     },
+     "end": {
+      "text": 3,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 3,
+     "offset": 1
+    },
+    "end": {
+     "text": 4,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/2/2[p],/1:8,/1:17)",
+    "resolved": {
+     "start": {
+      "text": 3,
+      "offset": 1
+     },
+     "end": {
+      "text": 4,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 4,
+     "offset": 1
+    },
+    "end": {
+     "text": 5,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/2/2[p],/1:16,/1:2)",
+    "resolved": {
+     "start": {
+      "text": 4,
+      "offset": 1
+     },
+     "end": {
+      "text": 2,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 5,
+     "offset": 1
+    },
+    "end": {
+     "text": 6,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/2/2[p],/1:1,/1:22)",
+    "resolved": {
+     "start": {
+      "text": 2,
+      "offset": 1
+     },
+     "end": {
+      "text": 6,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 6,
+     "offset": 1
+    },
+    "end": {
+     "text": 7,
+     "offset": 1
+    },
+    "cfi": "epubcfi(/2,/2[p]/1:21,/3:1)",
+    "resolved": {
+     "start": {
+      "text": 6,
+      "offset": 1
+     },
+     "end": {
+      "text": 7,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 7,
+     "offset": 1
+    },
+    "end": {
+     "text": 8,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/2,/3:1,/4[deep]/1:2)",
+    "resolved": {
+     "start": {
+      "text": 7,
+      "offset": 1
+     },
+     "end": {
+      "text": 8,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 8,
+     "offset": 1
+    },
+    "end": {
+     "text": 9,
+     "offset": 1
+    },
+    "cfi": "epubcfi(/2,/4[deep]/1:1,/5:1)",
+    "resolved": {
+     "start": {
+      "text": 8,
+      "offset": 1
+     },
+     "end": {
+      "text": 9,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 9,
+     "offset": 1
+    },
+    "end": {
+     "text": 10,
+     "offset": 2
+    },
+    "cfi": "epubcfi(/2,/5:1,/6[last]/1:2)",
+    "resolved": {
+     "start": {
+      "text": 9,
+      "offset": 1
+     },
+     "end": {
+      "text": 10,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 10,
+     "offset": 1
+    },
+    "end": {
+     "text": 11,
+     "offset": 1
+    },
+    "cfi": "epubcfi(/2,/6[last]/1:1,/7:1)",
+    "resolved": {
+     "start": {
+      "text": 10,
+      "offset": 1
+     },
+     "end": {
+      "text": 11,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 11,
+     "offset": 1
+    },
+    "end": {
+     "text": 12,
+     "offset": 1
+    },
+    "cfi": "epubcfi(,/2/7:1,/3:1)",
+    "resolved": {
+     "start": {
+      "text": 11,
+      "offset": 1
+     },
+     "end": {
+      "text": 12,
+      "offset": 1
+     }
+    }
+   }
+  ],
+  "ids": [
+   "p",
+   "deep",
+   "last"
+  ],
+  "elementCfis": [
+   {
+    "id": "p",
+    "tag": "p",
+    "cfi": "epubcfi(/2/2[p])",
+    "resolvedTag": "p"
+   },
+   {
+    "id": null,
+    "tag": "span",
+    "cfi": "epubcfi(/2/2[p]/2)",
+    "resolvedTag": "span"
+   },
+   {
+    "id": null,
+    "tag": "span",
+    "cfi": "epubcfi(/2/2[p]/4)",
+    "resolvedTag": "span"
+   },
+   {
+    "id": null,
+    "tag": "div",
+    "cfi": "epubcfi(/2/4)",
+    "resolvedTag": "div"
+   },
+   {
+    "id": "deep",
+    "tag": "p",
+    "cfi": "epubcfi(/2/4/2[deep])",
+    "resolvedTag": "p"
+   },
+   {
+    "id": "last",
+    "tag": "p",
+    "cfi": "epubcfi(/2/6[last])",
+    "resolvedTag": "p"
+   }
+  ],
+  "fromElements": [
+   "epubcfi(/2/2[p])",
+   "epubcfi(/2/4)",
+   "epubcfi(/2/6[last])"
+  ],
+  "toElement": [
+   {
+    "cfi": "epubcfi(/2/2[p])",
+    "tag": "p",
+    "id": "p",
+    "resolvedTag": "p"
+   },
+   {
+    "cfi": "epubcfi(/2/4)",
+    "tag": "div",
+    "id": null,
+    "resolvedTag": "div"
+   },
+   {
+    "cfi": "epubcfi(/2/6[last])",
+    "tag": "p",
+    "id": "last",
+    "resolvedTag": "p"
+   }
+  ]
+ },
+ "spine.opf": {
+  "textCount": 5,
+  "points": [
+   {
+    "text": 0,
+    "offset": 0,
+    "cfi": "epubcfi(/1:0)",
+    "resolved": {
+     "text": 0,
+     "offset": 0
+    }
+   },
+   {
+    "text": 0,
+    "offset": 1,
+    "cfi": "epubcfi(/1:1)",
+    "resolved": {
+     "text": 0,
+     "offset": 1
+    }
+   },
+   {
+    "text": 1,
+    "offset": 0,
+    "cfi": "epubcfi(/2/2/1:0)",
+    "resolved": {
+     "text": 1,
+     "offset": 0
+    }
+   },
+   {
+    "text": 1,
+    "offset": 3,
+    "cfi": "epubcfi(/2/2/1:3)",
+    "resolved": {
+     "text": 1,
+     "offset": 3
+    }
+   },
+   {
+    "text": 1,
+    "offset": 7,
+    "cfi": "epubcfi(/2/2/1:7)",
+    "resolved": {
+     "text": 1,
+     "offset": 7
+    }
+   },
+   {
+    "text": 2,
+    "offset": 0,
+    "cfi": "epubcfi(/3:0)",
+    "resolved": {
+     "text": 2,
+     "offset": 0
+    }
+   },
+   {
+    "text": 2,
+    "offset": 1,
+    "cfi": "epubcfi(/3:1)",
+    "resolved": {
+     "text": 2,
+     "offset": 1
+    }
+   },
+   {
+    "text": 3,
+    "offset": 0,
+    "cfi": "epubcfi(/5:0)",
+    "resolved": {
+     "text": 3,
+     "offset": 0
+    }
+   },
+   {
+    "text": 3,
+    "offset": 1,
+    "cfi": "epubcfi(/5:1)",
+    "resolved": {
+     "text": 3,
+     "offset": 1
+    }
+   },
+   {
+    "text": 4,
+    "offset": 0,
+    "cfi": "epubcfi(/7:0)",
+    "resolved": {
+     "text": 4,
+     "offset": 0
+    }
+   },
+   {
+    "text": 4,
+    "offset": 1,
+    "cfi": "epubcfi(/7:1)",
+    "resolved": {
+     "text": 4,
+     "offset": 1
+    }
+   }
+  ],
+  "ranges": [
+   {
+    "start": {
+     "text": 0,
+     "offset": 1
+    },
+    "end": {
+     "text": 1,
+     "offset": 2
+    },
+    "cfi": "epubcfi(,/1:1,/2/2/1:2)",
+    "resolved": {
+     "start": {
+      "text": 0,
+      "offset": 1
+     },
+     "end": {
+      "text": 1,
+      "offset": 2
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 1,
+     "offset": 1
+    },
+    "end": {
+     "text": 2,
+     "offset": 1
+    },
+    "cfi": "epubcfi(,/2/2/1:1,/3:1)",
+    "resolved": {
+     "start": {
+      "text": 1,
+      "offset": 1
+     },
+     "end": {
+      "text": 2,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 2,
+     "offset": 1
+    },
+    "end": {
+     "text": 3,
+     "offset": 1
+    },
+    "cfi": "epubcfi(,/3:1,/5:1)",
+    "resolved": {
+     "start": {
+      "text": 2,
+      "offset": 1
+     },
+     "end": {
+      "text": 3,
+      "offset": 1
+     }
+    }
+   },
+   {
+    "start": {
+     "text": 3,
+     "offset": 1
+    },
+    "end": {
+     "text": 4,
+     "offset": 1
+    },
+    "cfi": "epubcfi(,/5:1,/7:1)",
+    "resolved": {
+     "start": {
+      "text": 3,
+      "offset": 1
+     },
+     "end": {
+      "text": 4,
+      "offset": 1
+     }
+    }
+   }
+  ],
+  "ids": [
+   "a",
+   "b",
+   "second"
+  ],
+  "elementCfis": [
+   {
+    "id": null,
+    "tag": "title",
+    "cfi": "epubcfi(/2/2)",
+    "resolvedTag": "title"
+   },
+   {
+    "id": "a",
+    "tag": "item",
+    "cfi": "epubcfi(/4/2[a])",
+    "resolvedTag": "item"
+   },
+   {
+    "id": "b",
+    "tag": "item",
+    "cfi": "epubcfi(/4/4[b])",
+    "resolvedTag": "item"
+   },
+   {
+    "id": null,
+    "tag": "itemref",
+    "cfi": "epubcfi(/6/2)",
+    "resolvedTag": "itemref"
+   },
+   {
+    "id": "second",
+    "tag": "itemref",
+    "cfi": "epubcfi(/6/4[second])",
+    "resolvedTag": "itemref"
+   }
+  ],
+  "fromElements": [
+   "epubcfi(/6/2)",
+   "epubcfi(/6/4[second])"
+  ],
+  "toElement": [
+   {
+    "cfi": "epubcfi(/6/2)",
+    "tag": "itemref",
+    "id": null,
+    "resolvedTag": "itemref"
+   },
+   {
+    "cfi": "epubcfi(/6/4[second])",
+    "tag": "itemref",
+    "id": "second",
+    "resolvedTag": "itemref"
+   }
+  ]
+ }
+}

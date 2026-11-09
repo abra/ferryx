@@ -1,0 +1,13 @@
+include: ../../analysis_options.yaml
+
+linter:
+  rules:
+
+formatter:
+  trailing_commas: preserve
+
+analyzer:
+  exclude:
+    - "**/*.*.dart"
+    - "**/generated/**"
+    - "lib/src/formats/mobi/native/rust/**"

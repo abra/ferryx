@@ -236,7 +236,11 @@ List<String> sectionTerms(
     l10n.layoutsReset,
     for (final layout in prefs.layouts) l10n.viewModeName(layout),
   ],
-  SettingsSection.viewer => [l10n.viewerWrapLabel, l10n.viewerFontSizeLabel],
+  SettingsSection.viewer => [
+    l10n.viewerWrapLabel,
+    l10n.viewerFontSizeLabel,
+    l10n.documentFontSizeLabel,
+  ],
   SettingsSection.terminal => [
     l10n.terminalTitle,
     l10n.terminalShellLabel,
