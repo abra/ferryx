@@ -547,6 +547,14 @@ match ranges, the sort options and the layout index. Rules:
 - Tabs: a new tab opens after the active one at the same place; closing
   shows the neighbour and remembers the location for ⇧⌘R; the last tab of
   a panel never closes; each tab's listing is closed in the core with it.
+  The tab menu exposes Close, Close Other Tabs and Reopen Closed Tab. It
+  resolves the clicked tab by id when an action runs; opening or cancelling
+  the menu does not switch tabs.
+- Favorites: the quick list and Go To pop-up both link to Manage Favorites,
+  using the panel that opened the menu. The dialog exposes Add/Remove and
+  each row's menu by mouse and keyboard. Add is idempotent; Remove from
+  Favorites is a separate command. Panel and row menus choose the action
+  for the focused folder, or the current location when no folder is focused.
 - The panels' state is saved to the preferences as the workspace reports
   it (`SavedPanel`: locations, sort, layout, the tab shown, the closed
   ones), and read back at start; a saved folder that is gone falls back
@@ -687,6 +695,8 @@ elsewhere — features never ask the platform.
   browsing hints (`gT`/`gt` with Vim keys). Search, rename and selection keep
   their own hints; text fields, the terminal and the shelf take precedence.
   Closing back to one tab restores the ordinary browsing hints.
+  The Return hint says Open for a file while keeping the Enter command's
+  actual binding; folders keep the Enter label.
   `AppKeyHints(singleLine: true)` measures the actual caps and labels during
   layout and shows a complete leading prefix. The hidden suffix neither
   paints nor enters semantics; resizing or changing the text scale measures
@@ -705,6 +715,8 @@ elsewhere — features never ask the platform.
   names the field and direction in its tooltip. Opening the palette first
   focuses that panel and waits for focus to settle, so both the offered
   commands and the return focus belong to the clicked panel.
+  The panel menu also offers Go to Folder and history-aware Back/Forward,
+  without relying on the macOS menu bar or remembered shortcuts.
 - The panel's key map also holds the window's two-key sequences
   (`toShortcuts(sequencesOf:)`), tried before its own keys, so `gn`, `cd`,
   `gj` complete from a panel instead of running its `n`, `d`, `j`; a

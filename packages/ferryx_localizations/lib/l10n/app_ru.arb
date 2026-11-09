@@ -190,9 +190,11 @@
 
   "favoritesTitle": "Избранное",
   "favoritesAddCurrent": "Добавить текущую папку",
-  "favoritesEmpty": "Избранного пока нет. Добавьте текущую папку через меню панели.",
+  "favoritesEmpty": "Избранного пока нет.",
   "favoritesRenameTitle": "Переименовать",
   "favoriteAdded": "Добавлено в избранное: {name}",
+  "favoriteAlreadyAdded": "Уже в избранном: {name}",
+  "favoriteNotAdded": "Папки нет в избранном: {name}",
   "favoriteRemoved": "Убрано из избранного: {name}",
 
   "attributesTitle": "{count, plural, =1{Атрибуты «{name}»} other{Атрибуты объектов ({count})}}",
@@ -312,6 +314,7 @@
   "noticeOpenFailed": "Не удалось открыть объект",
 
   "viewerTitle": "Просмотр",
+  "viewerActions": "Действия просмотра",
   "viewerModeText": "Текст",
   "viewerModeHex": "Hex",
   "viewerModePreview": "Превью",
@@ -510,6 +513,7 @@
   "cmdCalcAllFolderSizes": "Подсчитать размеры всех папок",
   "cmdDuplicate": "Дублировать",
   "cmdAddToFavorites": "Добавить в избранное",
+  "cmdRemoveFromFavorites": "Убрать из избранного",
   "cmdManageFavorites": "Управление избранным…",
   "cmdFindFiles": "Найти файлы…",
   "cmdCopyPaths": "Копировать",
@@ -783,6 +787,8 @@
   "terminalRestart": "Новая оболочка",
   "terminalRestartHint": "{key} — запустить новую оболочку",
   "terminalTitle": "Терминал",
+  "terminalActions": "Действия терминала",
+  "terminalRestoreLayout": "Вернуть прежнее расположение",
   "terminalBusy": "В терминале работает программа или набрана строка",
   "terminalScrollbackNote": "Столько хранит новая оболочка",
   "paletteSectionTerminal": "Терминал",

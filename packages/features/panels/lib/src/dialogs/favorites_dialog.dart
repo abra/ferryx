@@ -42,6 +42,8 @@ class _FavoritesDialog extends StatefulWidget {
 
 class _FavoritesDialogState extends State<_FavoritesDialog> {
   late List<Favorite> _favorites = [...widget.favorites];
+  final _rowFocus = <Location, FocusNode>{};
+  final _doneFocus = FocusNode(debugLabel: 'favorites done');
 
   /// The row the keys are on: the one with the focus, which Rename,
   /// Delete and Move act on.
@@ -49,8 +51,21 @@ class _FavoritesDialogState extends State<_FavoritesDialog> {
   int? _lastTapIndex;
   DateTime? _lastTapAt;
 
+  @override
+  void dispose() {
+    for (final node in _rowFocus.values) {
+      node.dispose();
+    }
+    _doneFocus.dispose();
+    super.dispose();
+  }
+
   void _set(List<Favorite> next) {
-    setState(() => _favorites = next);
+    setState(() {
+      _favorites = next;
+      _lastTapIndex = null;
+      _lastTapAt = null;
+    });
     widget.onChanged(next);
   }
 
@@ -62,10 +77,24 @@ class _FavoritesDialogState extends State<_FavoritesDialog> {
   void _open(int index) =>
       Navigator.of(context).pop(_favorites[index].location);
 
+  void _focusFavorite(Location location) {
+    final index = _favorites.indexWhere(
+      (favorite) => favorite.location == location,
+    );
+    if (index < 0 || index == _focused) return;
+    setState(() => _focused = index);
+  }
+
   void _remove(int index) {
     final next = [..._favorites]..removeAt(index);
-    _set(next);
     _focused = _focused.clamp(0, next.isEmpty ? 0 : next.length - 1);
+    // On macOS a mouse click on Remove leaves the focus on the deleted row.
+    // Hand it to a surviving control before that row is detached.
+    final focus = next.isEmpty
+        ? _doneFocus
+        : _rowFocus[next[_focused].location];
+    (focus ?? _doneFocus).requestFocus();
+    _set(next);
   }
 
   Future<void> _rename(int index) async {
@@ -210,8 +239,12 @@ class _FavoritesDialogState extends State<_FavoritesDialog> {
                       itemBuilder: (context, index) => _FavoriteRow(
                         key: ValueKey(_favorites[index].location.encode()),
                         favorite: _favorites[index],
+                        focusNode: _rowFocus.putIfAbsent(
+                          _favorites[index].location,
+                          () => FocusNode(debugLabel: 'favorite'),
+                        ),
                         selected: index == _focused,
-                        onFocused: () => setState(() => _focused = index),
+                        onFocused: _focusFavorite,
                         onTap: () => _tap(index),
                         onOpen: () => _open(index),
                         onMenu: (anchor) => _menu(index, anchor),
@@ -219,13 +252,21 @@ class _FavoritesDialogState extends State<_FavoritesDialog> {
                     ),
             ),
             dialogRowGap,
-            Row(
+            Wrap(
               spacing: context.metrics.toolbarSpacing,
+              runSpacing: context.metrics.toolbarSpacing,
               children: [
                 OutlinedButton.icon(
                   onPressed: hasCurrent ? null : _addCurrent,
                   icon: const Icon(AppIcons.add, size: AppIconSize.sm),
                   label: Text(l10n.favoritesAddCurrent),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _favorites.isEmpty
+                      ? null
+                      : () => _remove(_focused),
+                  icon: const Icon(AppIcons.minus, size: AppIconSize.sm),
+                  label: Text(l10n.actionRemove),
                 ),
               ],
             ),
@@ -234,6 +275,7 @@ class _FavoritesDialogState extends State<_FavoritesDialog> {
       ),
       actions: [
         FilledButton(
+          focusNode: _doneFocus,
           onPressed: () => Navigator.of(context).pop(),
           child: Text(l10n.actionDone),
         ),
@@ -248,6 +290,7 @@ class _FavoritesDialogState extends State<_FavoritesDialog> {
 class _FavoriteRow extends StatelessWidget {
   const _FavoriteRow({
     required this.favorite,
+    required this.focusNode,
     required this.selected,
     required this.onFocused,
     required this.onTap,
@@ -257,8 +300,9 @@ class _FavoriteRow extends StatelessWidget {
   });
 
   final Favorite favorite;
+  final FocusNode focusNode;
   final bool selected;
-  final VoidCallback onFocused;
+  final ValueChanged<Location> onFocused;
   final VoidCallback onTap;
   final VoidCallback onOpen;
   final void Function(Rect anchor) onMenu;
@@ -282,24 +326,36 @@ class _FavoriteRow extends StatelessWidget {
         canRequestFocus: false,
         skipTraversal: true,
         onFocusChange: (focused) {
-          if (focused) onFocused();
+          if (focused) onFocused(favorite.location);
         },
         child: Builder(
-          builder: (rowContext) => AppNavItem(
-            label: favorite.label,
-            icon: favorite.location.isNative
-                ? AppIcons.folder
-                : AppIcons.fileArchive,
-            trailing: Text(
-              PathText.shortened(favorite.location.display),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          builder: (rowContext) => CommandHandlers(
+            handlers: {
+              AppCommand.contextMenu: () =>
+                  onMenu(keyboardMenuAnchor(rowContext)),
+            },
+            child: AppNavItem(
+              focusNode: focusNode,
+              label: favorite.label,
+              icon: favorite.location.isNative
+                  ? AppIcons.folder
+                  : AppIcons.fileArchive,
+              trailing: Text(
+                PathText.shortened(favorite.location.display),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              selected: selected,
+              autofocus: selected,
+              onTap: onTap,
+              onSecondaryTap: () => onMenu(keyboardMenuAnchor(rowContext)),
+              action: AppNavAction(
+                icon: AppIcons.more,
+                tooltip: context.l10n.cmdContextMenu,
+                onPressed: onMenu,
+              ),
+              tooltip: favorite.location.display,
             ),
-            selected: selected,
-            autofocus: selected,
-            onTap: onTap,
-            onSecondaryTap: () => onMenu(keyboardMenuAnchor(rowContext)),
-            tooltip: favorite.location.display,
           ),
         ),
       ),

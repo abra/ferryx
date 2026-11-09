@@ -15,6 +15,7 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
   required ShortcutMap map,
   bool archive = false,
   bool tags = false,
+  bool isFavorite = false,
 }) {
   final l10n = context.l10n;
   final platform = Theme.of(context).platform;
@@ -98,8 +99,8 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
     const AppMenuSeparator(),
     if (entry.isDir && (native || remote))
       action(
-        AppCommand.addToFavorites,
-        l10n.cmdAddToFavorites,
+        isFavorite ? AppCommand.removeFromFavorites : AppCommand.addToFavorites,
+        isFavorite ? l10n.cmdRemoveFromFavorites : l10n.cmdAddToFavorites,
         icon: AppIcons.star,
       ),
     if (tags) action(AppCommand.editTags, l10n.cmdEditTags, icon: AppIcons.tag),
@@ -151,6 +152,9 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
   JournalSummary journal = JournalSummary.empty,
   bool flat = false,
   bool remote = false,
+  bool isFavorite = false,
+  bool canGoBack = false,
+  bool canGoForward = false,
 }) {
   final l10n = context.l10n;
   final platform = Theme.of(context).platform;
@@ -158,6 +162,27 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
   final undo = journal.undo;
   final redo = journal.redo;
   return [
+    AppMenuAction(
+      value: AppCommand.goBack,
+      label: l10n.cmdGoBack,
+      icon: AppIcons.back,
+      shortcut: chord(AppCommand.goBack),
+      enabled: canGoBack,
+    ),
+    AppMenuAction(
+      value: AppCommand.goForward,
+      label: l10n.cmdGoForward,
+      icon: AppIcons.forward,
+      shortcut: chord(AppCommand.goForward),
+      enabled: canGoForward,
+    ),
+    AppMenuAction(
+      value: AppCommand.goToFolder,
+      label: l10n.cmdGoToFolder,
+      icon: AppIcons.folderOpen,
+      shortcut: chord(AppCommand.goToFolder),
+    ),
+    const AppMenuSeparator(),
     // ─── Operations ───
     // Named by what they would do, greyed when there is nothing.
     AppMenuAction(
@@ -273,10 +298,14 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
     ),
     const AppMenuSeparator(),
     AppMenuAction(
-      value: AppCommand.addToFavorites,
-      label: l10n.cmdAddToFavorites,
+      value: isFavorite
+          ? AppCommand.removeFromFavorites
+          : AppCommand.addToFavorites,
+      label: isFavorite ? l10n.cmdRemoveFromFavorites : l10n.cmdAddToFavorites,
       icon: AppIcons.star,
-      shortcut: chord(AppCommand.addToFavorites),
+      shortcut: chord(
+        isFavorite ? AppCommand.removeFromFavorites : AppCommand.addToFavorites,
+      ),
     ),
     AppMenuAction(
       value: AppCommand.manageFavorites,

@@ -246,6 +246,7 @@ class _TerminalPaneState extends State<TerminalPane> {
                   onHide: widget.onHide,
                   onTogglePanels: widget.onTogglePanels,
                   onToggleFullWindow: widget.onToggleFullWindow,
+                  onMenu: (anchor) => unawaited(_menu(anchor)),
                 ),
                 Expanded(
                   child: _Screen(
@@ -353,6 +354,7 @@ class TerminalBar extends StatelessWidget {
     required this.onHide,
     required this.onTogglePanels,
     required this.onToggleFullWindow,
+    required this.onMenu,
     super.key,
   });
 
@@ -363,6 +365,7 @@ class TerminalBar extends StatelessWidget {
   final VoidCallback onHide;
   final VoidCallback onTogglePanels;
   final VoidCallback onToggleFullWindow;
+  final ValueChanged<Rect> onMenu;
 
   static double heightOf(BuildContext context, {required bool topRow}) => topRow
       ? context.metrics.topBarHeight
@@ -411,6 +414,13 @@ class TerminalBar extends StatelessWidget {
             ],
           ),
           trailing: [
+            Builder(
+              builder: (context) => AppIconButton(
+                icon: AppIcons.more,
+                tooltip: context.l10n.terminalActions,
+                onPressed: () => onMenu(keyboardMenuAnchor(context)),
+              ),
+            ),
             _BarButton(
               command: AppCommand.togglePanelsOverTerminal,
               icon: placement.panelsHidden || placement.fullWindow
@@ -421,6 +431,9 @@ class TerminalBar extends StatelessWidget {
             ),
             _BarButton(
               command: AppCommand.toggleTerminal,
+              tooltip: placement.fullWindow
+                  ? context.l10n.terminalRestoreLayout
+                  : null,
               icon: placement.fullWindow
                   ? AppIcons.showAsWindow
                   : AppIcons.fillWindow,
@@ -448,17 +461,19 @@ class _BarButton extends StatelessWidget {
     required this.icon,
     required this.shortcutMap,
     required this.onPressed,
+    this.tooltip,
   });
 
   final AppCommand command;
   final IconData icon;
   final ShortcutMap shortcutMap;
   final VoidCallback onPressed;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) => AppIconButton(
     icon: icon,
-    tooltip: context.l10n.commandLabel(command),
+    tooltip: tooltip ?? context.l10n.commandLabel(command),
     shortcut: shortcutMap.labelOf(command, Theme.of(context).platform),
     onPressed: onPressed,
   );

@@ -69,6 +69,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     AppCommand.calcAllFolderSizes: () => unawaited(_active.calcSizes()),
     AppCommand.duplicate: () => unawaited(_duplicate()),
     AppCommand.addToFavorites: () => unawaited(_addToFavorites()),
+    AppCommand.removeFromFavorites: () => unawaited(_removeFromFavorites()),
     AppCommand.manageFavorites: () => unawaited(_manageFavorites()),
     AppCommand.findFiles: () => unawaited(_findFiles()),
     // Edit
@@ -508,6 +509,9 @@ extension _WorkspaceActions on _WorkspaceScreenState {
       case GoToLocation(:final location):
         _focusPanel(side);
         await panel.open(location);
+      case GoToManageFavorites():
+        _focusPanel(side);
+        await _manageFavorites();
       case GoToEject(:final mountPoint):
         await _guarded(() async {
           await widget.files.eject(mountPoint);
@@ -706,6 +710,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         entry: focused,
         location: tab.location,
         severalSelected: tab.selected.length > 1,
+        isFavorite: _isFavoriteLocation,
         map: widget.shortcutMap,
         archive: tab.location.isNative && widget.files.isArchive(focused.path),
         tags: tab.location.isNative && widget.capabilities.finderTags,
@@ -740,6 +745,9 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         journal: widget.operations.currentJournal,
         flat: tab?.isFlat ?? false,
         remote: tab?.location.isRemote ?? false,
+        isFavorite: _isFavoriteLocation,
+        canGoBack: tab?.canGoBack ?? false,
+        canGoForward: tab?.canGoForward ?? false,
       ),
     );
     if (picked == null || !mounted) return;
@@ -1142,24 +1150,23 @@ extension _WorkspaceActions on _WorkspaceScreenState {
 
   // ─── Favorites and find ───
 
-  Future<void> _addToFavorites() async {
+  Location? get _favoriteLocation {
     final tab = _tab;
-    if (tab == null) return;
+    if (tab == null) return null;
     final focused = tab.focused;
-    final location = focused != null && focused.isDir && !focused.isParent
+    return focused != null && focused.isDir && !focused.isParent
         ? tab.locationOf(focused)
         : tab.location;
-    final favorites = _prefs.favorites;
-    if (favorites.any((f) => f.location == location)) {
-      await widget.preferences.update(
-        (p) => p.copyWith(
-          favorites: [
-            for (final f in p.favorites)
-              if (f.location != location) f,
-          ],
-        ),
-      );
-      if (mounted) showAppNotice(context, _l10n.favoriteRemoved(location.name));
+  }
+
+  bool get _isFavoriteLocation =>
+      _prefs.favorites.any((f) => f.location == _favoriteLocation);
+
+  Future<void> _addToFavorites() async {
+    final location = _favoriteLocation;
+    if (location == null) return;
+    if (_isFavoriteLocation) {
+      showAppNotice(context, _l10n.favoriteAlreadyAdded(location.name));
       return;
     }
     await widget.preferences.update(
@@ -1171,6 +1178,24 @@ extension _WorkspaceActions on _WorkspaceScreenState {
       ),
     );
     if (mounted) showAppNotice(context, _l10n.favoriteAdded(location.name));
+  }
+
+  Future<void> _removeFromFavorites() async {
+    final location = _favoriteLocation;
+    if (location == null) return;
+    if (!_isFavoriteLocation) {
+      showAppNotice(context, _l10n.favoriteNotAdded(location.name));
+      return;
+    }
+    await widget.preferences.update(
+      (p) => p.copyWith(
+        favorites: [
+          for (final favorite in p.favorites)
+            if (favorite.location != location) favorite,
+        ],
+      ),
+    );
+    if (mounted) showAppNotice(context, _l10n.favoriteRemoved(location.name));
   }
 
   Future<void> _manageFavorites() async {

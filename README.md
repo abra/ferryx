@@ -80,8 +80,13 @@ Vim mode is optional and off by default.
   (⇧⌘G); Home, Desktop, Documents, Downloads, Applications and Utilities
   on their chords; ⌘↑ up, ⌘↓ into (an archive with any extension), ⌘→ follows
   a symlink.
+  The panel menu also offers Back, Forward and Go to Folder. Both favorites
+  menus include Manage Favorites, with visible Add and Remove buttons and a
+  row menu for renaming and reordering. ⌘B adds a folder; adding it again
+  keeps it in favorites. Remove from Favorites is a separate command.
 - **Built-in viewer** (F3, Space): text, hex and image preview modes,
   windowed reads of large text/binary files, find (⌘F), go to an offset (⌘L).
+  The viewer's actions menu keeps these controls available in narrow windows.
   Image previews read the whole file and are limited to 64 MiB.
 - **Find files** (⌘F): by mask or regular expression, by contents (phrase
   or words, case, not containing), by size; results stream in; go to a
@@ -119,6 +124,7 @@ Vim mode is optional and off by default.
   does not synchronize the shell and panel folders. Copy, paste and clear
   (⌘C, ⌘V, ⌘K) work as in Terminal.app; shell control keys reach the shell,
   while terminal controls and supported window shortcuts remain available.
+  The terminal bar's actions menu also exposes Copy, Paste, Select All and Clear.
   There is one terminal session per window.
   Settings → Terminal offers installed monospaced fonts, the bundled Geist
   Mono and the system default, with a preview and a separate font size.

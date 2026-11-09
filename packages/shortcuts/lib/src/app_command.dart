@@ -40,6 +40,7 @@ enum AppCommand {
   calcAllFolderSizes(CommandScope.global),
   duplicate(CommandScope.global),
   addToFavorites(CommandScope.global),
+  removeFromFavorites(CommandScope.global),
   manageFavorites(CommandScope.global),
   findFiles(CommandScope.global),
 

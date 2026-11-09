@@ -177,7 +177,7 @@ String sectionLabel(FerryxLocalizations l10n, SettingsSection section) =>
       SettingsSection.about => l10n.settingsAbout,
     };
 
-/// The words on a page, for the search: its group titles, row labels and
+/// Searchable words on a page: group titles, labels, notes, choices and
 /// the names of what it lists, besides the page's own name.
 List<String> sectionTerms(
   FerryxLocalizations l10n,
@@ -194,6 +194,8 @@ List<String> sectionTerms(
     l10n.languageEnglish,
     l10n.languageRussian,
     l10n.textSizeLabel,
+    l10n.generalKeyHintsLabel,
+    l10n.generalKeyHintsNote,
     l10n.confirmationsLabel,
     l10n.confirmTrashLabel,
     l10n.confirmDeleteLabel,
@@ -211,9 +213,24 @@ List<String> sectionTerms(
     l10n.panelsCollation,
     for (final c in Collation.values) l10n.collationLabel(c),
     l10n.panelsTabBarAlways,
+    l10n.panelsArrangement,
+    l10n.panelsArrangementHint,
+    l10n.panelsArrangementByWindowShape,
+    l10n.panelsArrangementSideBySide,
+    l10n.panelsArrangementStacked,
     l10n.quickSearchTitle,
     l10n.quickSearchWhere,
+    l10n.quickSearchFuzzy,
+    l10n.quickSearchAnywhere,
+    l10n.quickSearchBeginning,
+    l10n.quickSearchEnding,
+    l10n.quickSearchBeginningOrEnding,
     l10n.quickSearchModifier,
+    l10n.modifierNone,
+    l10n.modifierAlt,
+    l10n.modifierControlAlt,
+    l10n.modifierShiftAlt,
+    l10n.modifierDisabled,
     l10n.quickSearchOnlyMatching,
     l10n.layoutsTitle,
     l10n.layoutsReset,
@@ -223,10 +240,14 @@ List<String> sectionTerms(
   SettingsSection.terminal => [
     l10n.terminalTitle,
     l10n.terminalShellLabel,
+    l10n.terminalShellNote,
+    prefs.terminal.shell,
     l10n.terminalFontLabel,
+    l10n.terminalFontSystem,
     prefs.terminal.fontFamily,
     l10n.terminalFontSizeLabel,
     l10n.terminalScrollbackLabel,
+    l10n.terminalScrollbackNote,
   ],
   SettingsSection.hotkeys => [
     l10n.hotkeysReset,

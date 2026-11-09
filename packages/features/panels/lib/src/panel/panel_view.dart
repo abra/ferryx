@@ -581,11 +581,29 @@ class _PanelViewState extends State<PanelView> {
     if (picked != null) _cubit.setLayout(picked);
   }
 
-  Future<void> _tabsMenu(Rect anchor, PanelState state) async {
-    final picked = await showAppMenu<String>(
+  Future<void> _tabsMenu(Rect anchor, PanelState state, int tabIndex) async {
+    final targetId = state.tabs[tabIndex].id;
+    final l10n = context.l10n;
+    final platform = Theme.of(context).platform;
+    final picked = await showAppMenu<Object>(
       context: context,
       anchor: anchor,
       entries: [
+        for (final command in const [
+          AppCommand.closeTab,
+          AppCommand.closeOtherTabs,
+          AppCommand.reopenClosedTab,
+        ])
+          if (widget.shortcutMap.isAvailable(command))
+            AppMenuAction(
+              value: command,
+              label: l10n.commandLabel(command),
+              shortcut: widget.shortcutMap.labelOf(command, platform),
+              enabled: command == AppCommand.reopenClosedTab
+                  ? state.closedTabs.isNotEmpty
+                  : state.tabs.length > 1,
+            ),
+        const AppMenuSeparator(),
         for (final t in state.tabs)
           AppMenuAction(
             value: t.id,
@@ -595,10 +613,10 @@ class _PanelViewState extends State<PanelView> {
           ),
         if (state.closedTabs.isNotEmpty) ...[
           const AppMenuSeparator(),
-          AppMenuSection(context.l10n.tabRecentlyClosed),
+          AppMenuSection(l10n.tabRecentlyClosed),
           for (var i = 0; i < state.closedTabs.length && i < 8; i++)
             AppMenuAction(
-              value: 'closed:$i',
+              value: state.closedTabs[i],
               label: state.closedTabs[i].display,
               icon: AppIcons.history,
             ),
@@ -606,13 +624,25 @@ class _PanelViewState extends State<PanelView> {
       ],
     );
     if (picked == null || !mounted) return;
-    if (picked.startsWith('closed:')) {
-      final index = int.parse(picked.substring(7));
-      await _cubit.newTab(location: state.closedTabs[index]);
+    if (picked is Location) {
+      await _cubit.newTab(location: picked);
       return;
     }
-    final index = state.tabs.indexWhere((t) => t.id == picked);
-    if (index >= 0) _cubit.showTab(index);
+    if (picked == AppCommand.reopenClosedTab) {
+      await _cubit.reopenClosedTab();
+      return;
+    }
+    // A tab may have moved or closed while its menu was open.
+    final index = _cubit.state.tabs.indexWhere(
+      (t) => t.id == (picked is AppCommand ? targetId : picked),
+    );
+    if (index < 0) return;
+    if (picked == AppCommand.closeTab) {
+      await _cubit.closeTab(index);
+    } else {
+      _cubit.showTab(index);
+      if (picked == AppCommand.closeOtherTabs) await _cubit.closeOtherTabs();
+    }
   }
 
   // ─── Build ───
@@ -769,7 +799,7 @@ class _PanelViewState extends State<PanelView> {
                       onClose: (index) => unawaited(_cubit.closeTab(index)),
                       onReorder: _cubit.moveTab,
                       onMenu: (index, anchor) =>
-                          unawaited(_tabsMenu(anchor, state)),
+                          unawaited(_tabsMenu(anchor, state, index)),
                       onNewTab: () => unawaited(_cubit.newTab()),
                       closeTooltip: l10n.tabClose,
                       newTabTooltip: l10n.tabNew,
@@ -784,7 +814,11 @@ class _PanelViewState extends State<PanelView> {
                         builder: (context) => CommandHandlers(
                           handlers: {
                             AppCommand.contextMenu: () => unawaited(
-                              _tabsMenu(keyboardMenuAnchor(context), state),
+                              _tabsMenu(
+                                keyboardMenuAnchor(context),
+                                state,
+                                index,
+                              ),
                             ),
                           },
                           child: item,

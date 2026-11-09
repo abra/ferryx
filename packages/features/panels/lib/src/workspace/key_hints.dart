@@ -16,9 +16,12 @@ sealed class PanelHint {
 }
 
 final class CommandHint extends PanelHint {
-  const CommandHint(this.command);
+  const CommandHint(this.command, {this.labelCommand});
 
   final AppCommand command;
+
+  /// A contextual label; the key still comes from [command].
+  final AppCommand? labelCommand;
 }
 
 final class KeyHint extends PanelHint {
@@ -160,7 +163,7 @@ List<PanelHint> _browsingHints(
   }
   return [
     ...paste,
-    const CommandHint(AppCommand.enterItem),
+    const CommandHint(AppCommand.enterItem, labelCommand: AppCommand.openItem),
     // A checksum file is checked with the Checksums command.
     if (ChecksumAlgorithm.ofSumsFile(focused.name) != null)
       const CommandHint(AppCommand.checksums),
@@ -217,14 +220,14 @@ class KeyHintStrip extends StatelessWidget {
     final entries = <AppKeyHint>[];
     for (final hint in hints) {
       switch (hint) {
-        case CommandHint(:final command):
+        case CommandHint(:final command, :final labelCommand):
           // A command the user unbound has no key to show.
           final keys = shortcutMap.labelOf(command, platform, vim: vim);
           if (keys != null) {
             entries.add(
               AppKeyHint(
                 [keys],
-                l10n.commandLabel(command),
+                l10n.commandLabel(labelCommand ?? command),
                 // Vim's keys are typed: `l` must not read as a bar.
                 typed:
                     vim &&

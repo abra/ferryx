@@ -649,8 +649,7 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get favoritesAddCurrent => 'Add the current folder';
 
   @override
-  String get favoritesEmpty =>
-      'No favorites yet. Add the current folder from the panel menu.';
+  String get favoritesEmpty => 'No favorites yet.';
 
   @override
   String get favoritesRenameTitle => 'Rename favorite';
@@ -658,6 +657,16 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   @override
   String favoriteAdded(String name) {
     return 'Added to favorites: $name';
+  }
+
+  @override
+  String favoriteAlreadyAdded(String name) {
+    return 'Already in favorites: $name';
+  }
+
+  @override
+  String favoriteNotAdded(String name) {
+    return 'Not in favorites: $name';
   }
 
   @override
@@ -1134,6 +1143,9 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get viewerTitle => 'Viewer';
+
+  @override
+  String get viewerActions => 'Viewer actions';
 
   @override
   String get viewerModeText => 'Text';
@@ -1753,6 +1765,9 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get cmdAddToFavorites => 'Add to Favorites';
+
+  @override
+  String get cmdRemoveFromFavorites => 'Remove from Favorites';
 
   @override
   String get cmdManageFavorites => 'Manage Favorites…';
@@ -2666,6 +2681,12 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get terminalTitle => 'Terminal';
+
+  @override
+  String get terminalActions => 'Terminal actions';
+
+  @override
+  String get terminalRestoreLayout => 'Restore previous layout';
 
   @override
   String get terminalBusy =>

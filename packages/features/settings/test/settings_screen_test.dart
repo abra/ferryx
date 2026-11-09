@@ -143,6 +143,68 @@ void main() {
     expect(service.current.confirmTrash, isTrue);
   });
 
+  for (final l10n in [en, ru]) {
+    testWidgets('search finds labels, notes and unselected choices in '
+        '${l10n.localeName}, then opens the editable setting', (tester) async {
+      final service = await testPreferences();
+      addTearDown(() async {
+        // Finish the stream's close in the widget test's clock.
+        final disposed = service.dispose();
+        await tester.pump();
+        await disposed;
+      });
+      await pumpScreen(
+        tester,
+        locale: Locale(l10n.localeName),
+        SettingsScreen(
+          preferencesService: service,
+          platform: TargetPlatform.macOS,
+          version: '0.1.0',
+          initialSection: SettingsSection.viewer,
+          onClose: () {},
+        ),
+      );
+      for (final query in [
+        l10n.generalKeyHintsLabel,
+        l10n.generalKeyHintsNote,
+      ]) {
+        await tester.enterText(find.byType(AppSearchField), query);
+        await tester.pumpAndSettle();
+        expect(
+          find.widgetWithText(AppNavItem, l10n.settingsGeneral),
+          findsOneWidget,
+        );
+      }
+      final hints = find.ancestor(
+        of: find.text(l10n.generalKeyHintsLabel),
+        matching: find.byType(AppControlRow),
+      );
+      final before = service.current.showKeyHints;
+      await tester.tap(
+        find.descendant(of: hints, matching: find.byType(AppToggle)),
+      );
+      await tester.pumpAndSettle();
+      expect(service.current.showKeyHints, !before);
+
+      for (final query in [
+        l10n.panelsArrangementHint,
+        l10n.panelsArrangementStacked,
+      ]) {
+        await tester.enterText(find.byType(AppSearchField), query);
+        await tester.pumpAndSettle();
+        expect(
+          find.widgetWithText(AppNavItem, l10n.settingsPanels),
+          findsOneWidget,
+        );
+      }
+      await tester.tap(find.text(l10n.panelsArrangementByWindowShape));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.panelsArrangementStacked).last);
+      await tester.pumpAndSettle();
+      expect(service.current.panelArrangement, PanelArrangement.stacked);
+    });
+  }
+
   testWidgets('the theme segments and the panels page write too', (
     tester,
   ) async {

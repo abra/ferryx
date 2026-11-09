@@ -22,6 +22,10 @@ class GoToEject extends GoToPick {
   final String mountPoint;
 }
 
+class GoToManageFavorites extends GoToPick {
+  const GoToManageFavorites();
+}
+
 // ─── Network ───
 
 /// A saved server, connected to with its way of logging in.
@@ -53,15 +57,18 @@ Future<GoToPick?> showGoToPopup(
 }) {
   final l10n = context.l10n;
   final entries = <AppMenuEntry<GoToPick>>[
-    if (favorites.isNotEmpty) ...[
-      AppMenuSection(l10n.sectionFavorites),
-      for (final favorite in favorites)
-        AppMenuAction(
-          value: GoToLocation(favorite.location),
-          label: favorite.label,
-          icon: AppIcons.star,
-        ),
-    ],
+    AppMenuSection(l10n.sectionFavorites),
+    for (final favorite in favorites)
+      AppMenuAction(
+        value: GoToLocation(favorite.location),
+        label: favorite.label,
+        icon: AppIcons.star,
+      ),
+    AppMenuAction(
+      value: const GoToManageFavorites(),
+      label: l10n.cmdManageFavorites,
+      icon: AppIcons.bookmark,
+    ),
     if (volumes.isNotEmpty) ...[
       AppMenuSection(l10n.sectionVolumes),
       for (final volume in volumes)
@@ -107,15 +114,6 @@ Future<GoToPick?> showGoToPopup(
         ),
     ],
   ];
-  if (entries.isEmpty) {
-    entries.add(
-      AppMenuAction(
-        value: const GoToLocation(Location.native('/')),
-        label: l10n.quickListEmpty,
-        enabled: false,
-      ),
-    );
-  }
   return showAppMenu<GoToPick>(
     context: context,
     anchor: anchor,
@@ -207,6 +205,12 @@ Future<GoToPick?> showFavoritesList(
         label: favorite.label,
         icon: AppIcons.star,
       ),
+    const AppMenuSeparator(),
+    AppMenuAction(
+      value: const GoToManageFavorites(),
+      label: context.l10n.cmdManageFavorites,
+      icon: AppIcons.bookmark,
+    ),
   ],
 );
 

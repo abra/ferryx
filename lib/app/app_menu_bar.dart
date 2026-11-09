@@ -334,6 +334,7 @@ class _Menus {
       [
         AppCommand.quickListFavorites,
         AppCommand.addToFavorites,
+        AppCommand.removeFromFavorites,
         AppCommand.manageFavorites,
       ],
       [AppCommand.connectToServer, AppCommand.disconnectServer],

@@ -657,8 +657,7 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String get favoritesAddCurrent => 'Добавить текущую папку';
 
   @override
-  String get favoritesEmpty =>
-      'Избранного пока нет. Добавьте текущую папку через меню панели.';
+  String get favoritesEmpty => 'Избранного пока нет.';
 
   @override
   String get favoritesRenameTitle => 'Переименовать';
@@ -666,6 +665,16 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   @override
   String favoriteAdded(String name) {
     return 'Добавлено в избранное: $name';
+  }
+
+  @override
+  String favoriteAlreadyAdded(String name) {
+    return 'Уже в избранном: $name';
+  }
+
+  @override
+  String favoriteNotAdded(String name) {
+    return 'Папки нет в избранном: $name';
   }
 
   @override
@@ -1168,6 +1177,9 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get viewerTitle => 'Просмотр';
+
+  @override
+  String get viewerActions => 'Действия просмотра';
 
   @override
   String get viewerModeText => 'Текст';
@@ -1789,6 +1801,9 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get cmdAddToFavorites => 'Добавить в избранное';
+
+  @override
+  String get cmdRemoveFromFavorites => 'Убрать из избранного';
 
   @override
   String get cmdManageFavorites => 'Управление избранным…';
@@ -2717,6 +2732,12 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get terminalTitle => 'Терминал';
+
+  @override
+  String get terminalActions => 'Действия терминала';
+
+  @override
+  String get terminalRestoreLayout => 'Вернуть прежнее расположение';
 
   @override
   String get terminalBusy =>

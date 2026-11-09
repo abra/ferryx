@@ -449,6 +449,74 @@ class _TopRow extends StatelessWidget {
   final VoidCallback onRefresh;
   final VoidCallback onClose;
 
+  Future<void> _menu(BuildContext context, Rect anchor) async {
+    final l10n = context.l10n;
+    final picked = await showAppMenu<AppCommand>(
+      context: context,
+      anchor: anchor,
+      entries: [
+        for (final (mode, command) in [
+          (ViewerMode.text, AppCommand.viewerText),
+          (ViewerMode.hex, AppCommand.viewerHex),
+          (ViewerMode.preview, AppCommand.viewerPreview),
+        ])
+          AppMenuAction(
+            value: command,
+            label: l10n.commandLabel(command),
+            shortcut: chord(command),
+            checked: state.mode == mode,
+          ),
+        const AppMenuSeparator(),
+        AppMenuAction(
+          value: AppCommand.viewerToggleWrap,
+          label: l10n.cmdViewerToggleWrap,
+          shortcut: chord(AppCommand.viewerToggleWrap),
+          checked: state.wrap,
+          enabled: state.mode == ViewerMode.text,
+        ),
+        AppMenuAction(
+          value: AppCommand.viewerFind,
+          label: l10n.cmdViewerFind,
+          icon: AppIcons.search,
+          shortcut: chord(AppCommand.viewerFind),
+          enabled: state.mode != ViewerMode.preview,
+        ),
+        AppMenuAction(
+          value: AppCommand.viewerGoTo,
+          label: l10n.cmdViewerGoTo,
+          icon: AppIcons.goTo,
+          shortcut: chord(AppCommand.viewerGoTo),
+          enabled: state.mode != ViewerMode.preview,
+        ),
+        AppMenuAction(
+          value: AppCommand.viewerRefresh,
+          label: l10n.cmdRefresh,
+          icon: AppIcons.refresh,
+          shortcut: chord(AppCommand.viewerRefresh),
+        ),
+      ],
+    );
+    if (!context.mounted) return;
+    switch (picked) {
+      case AppCommand.viewerText:
+        onMode(ViewerMode.text);
+      case AppCommand.viewerHex:
+        onMode(ViewerMode.hex);
+      case AppCommand.viewerPreview:
+        onMode(ViewerMode.preview);
+      case AppCommand.viewerToggleWrap:
+        onToggleWrap();
+      case AppCommand.viewerFind:
+        onFind();
+      case AppCommand.viewerGoTo:
+        onGoTo();
+      case AppCommand.viewerRefresh:
+        onRefresh();
+      default:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -511,6 +579,15 @@ class _TopRow extends StatelessWidget {
           [modes],
         ],
         trailing: [
+          Builder(
+            builder: (context) => AppIconButton(
+              icon: AppIcons.more,
+              tooltip: l10n.viewerActions,
+              onPressed: () => unawaited(
+                _menu(context, keyboardMenuAnchor(context)),
+              ),
+            ),
+          ),
           AppIconButton(
             icon: AppIcons.close,
             tooltip: l10n.actionClose,

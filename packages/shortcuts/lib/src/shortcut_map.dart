@@ -416,6 +416,7 @@ const _defaults = <AppCommand, List<Chord>>{
   ],
   AppCommand.duplicate: [Chord(LogicalKeyboardKey.keyD, primary: true)],
   AppCommand.addToFavorites: [Chord(LogicalKeyboardKey.keyB, primary: true)],
+  AppCommand.removeFromFavorites: [],
   AppCommand.manageFavorites: [
     Chord(LogicalKeyboardKey.keyB, primary: true, control: true),
   ],

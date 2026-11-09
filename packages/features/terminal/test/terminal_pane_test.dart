@@ -363,6 +363,71 @@ void main() {
     expect(placed, ['hide']);
   });
 
+  testWidgets('the bar menu selects and copies output, pastes while running '
+      'and disables paste after the shell exits', (tester) async {
+    await pump(tester);
+    final session = sessions.single;
+    session.emit(TerminalOutput(utf8.encode('menu output\r\n')));
+    await tester.pumpAndSettle();
+    final copied = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copied.add((call.arguments as Map)['text'] as String);
+        }
+        if (call.method == 'Clipboard.getData') {
+          return {'text': 'pasted command'};
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    Future<void> menu() async {
+      await tester.tap(
+        find.byWidgetPredicate(
+          (w) => w is AppIconButton && w.tooltip == en.terminalActions,
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    AppMenuItem item(String label) => tester.widget<AppMenuItem>(
+      find.widgetWithText(AppMenuItem, label),
+    );
+
+    await menu();
+    expect(item(en.cmdTerminalCopy).enabled, isFalse);
+    expect(item(en.cmdTerminalPaste).enabled, isTrue);
+    await tester.tap(find.text(en.cmdTerminalSelectAll));
+    await tester.pumpAndSettle();
+    await menu();
+    expect(item(en.cmdTerminalCopy).enabled, isTrue);
+    await tester.tap(find.text(en.cmdTerminalCopy));
+    await tester.pumpAndSettle();
+    expect(copied.single, contains('menu output'));
+
+    await menu();
+    await tester.tap(find.text(en.cmdTerminalPaste));
+    await tester.pumpAndSettle();
+    expect(session.text, contains('pasted command'));
+    expect(reached, isEmpty);
+
+    session.emit(const TerminalExited(0));
+    await tester.pumpAndSettle();
+    await menu();
+    expect(item(en.cmdTerminalPaste).enabled, isFalse);
+    await tester.tap(find.text(en.cmdTerminalPaste));
+    await tester.pumpAndSettle();
+    expect(find.text(en.cmdTerminalPaste), findsOneWidget);
+    expect(session.text, 'pasted command');
+  });
+
   testWidgets('in the window\'s top row the bar keeps room for the window\'s '
       'buttons', (tester) async {
     await pump(
@@ -383,5 +448,11 @@ void main() {
     final icon = tester.getRect(find.byIcon(AppIcons.terminal).first);
     expect(icon.left, greaterThanOrEqualTo(80));
     expect(find.byIcon(AppIcons.showAsWindow), findsOneWidget);
+    await tester.tap(
+      find.byWidgetPredicate(
+        (w) => w is AppIconButton && w.tooltip == en.terminalRestoreLayout,
+      ),
+    );
+    expect(placed, ['full']);
   });
 }

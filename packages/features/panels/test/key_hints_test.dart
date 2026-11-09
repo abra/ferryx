@@ -298,4 +298,70 @@ void main() {
       }
     }
   });
+
+  testWidgets('files say Open with the enter binding; folders keep Enter', (
+    tester,
+  ) async {
+    const platform = TargetPlatform.macOS;
+    for (final language in ['en', 'ru']) {
+      final locale = Locale(language);
+      final l10n = lookupFerryxLocalizations(locale);
+      for (final vim in [false, true]) {
+        final defaults = ShortcutMap.forUser(
+          platform,
+          vimMotions: vim,
+        ).rebind(AppCommand.openItem, []);
+        for (final (cursor, rebound) in [
+          (2, false),
+          (2, true),
+          (1, false),
+          (0, false),
+        ]) {
+          final map = rebound
+              ? defaults.rebind(AppCommand.enterItem, [
+                  Chord(LogicalKeyboardKey.keyO, primary: true, alt: true),
+                ])
+              : defaults;
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: AppTheme.light(AppPlatformStyle.macos),
+              locale: locale,
+              localizationsDelegates: FerryxSupportedLocales.delegates,
+              supportedLocales: FerryxSupportedLocales.locales,
+              home: Material(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: KeyHintStrip(
+                    hints: hintsFor(
+                      tab: tab(cursor: cursor),
+                      vim: vim,
+                      hasRegister: false,
+                    ),
+                    shortcutMap: map,
+                    vim: vim,
+                    onHide: () {},
+                    onHelp: () {},
+                  ),
+                ),
+              ),
+            ),
+          );
+          final hint = tester.widget<AppKeyHints>(find.byType(AppKeyHints));
+          expect(hint.hints.first.keys, [
+            rebound
+                ? '⌥⌘O'
+                : vim
+                ? 'gl'
+                : Chord.keyLabel(LogicalKeyboardKey.enter, platform),
+          ]);
+          expect(hint.hints.first.typed, vim && !rebound);
+          expect(
+            hint.hints.first.label,
+            cursor == 2 ? l10n.cmdOpenItem : l10n.cmdEnterItem,
+          );
+          expect(tester.takeException(), isNull);
+        }
+      }
+    }
+  });
 }

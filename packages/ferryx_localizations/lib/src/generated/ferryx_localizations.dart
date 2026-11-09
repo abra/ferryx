@@ -1157,7 +1157,7 @@ abstract class FerryxLocalizations {
   /// No description provided for @favoritesEmpty.
   ///
   /// In en, this message translates to:
-  /// **'No favorites yet. Add the current folder from the panel menu.'**
+  /// **'No favorites yet.'**
   String get favoritesEmpty;
 
   /// No description provided for @favoritesRenameTitle.
@@ -1171,6 +1171,18 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Added to favorites: {name}'**
   String favoriteAdded(String name);
+
+  /// No description provided for @favoriteAlreadyAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in favorites: {name}'**
+  String favoriteAlreadyAdded(String name);
+
+  /// No description provided for @favoriteNotAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Not in favorites: {name}'**
+  String favoriteNotAdded(String name);
 
   /// No description provided for @favoriteRemoved.
   ///
@@ -1843,6 +1855,12 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Viewer'**
   String get viewerTitle;
+
+  /// No description provided for @viewerActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewer actions'**
+  String get viewerActions;
 
   /// No description provided for @viewerModeText.
   ///
@@ -3001,6 +3019,12 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Add to Favorites'**
   String get cmdAddToFavorites;
+
+  /// No description provided for @cmdRemoveFromFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Favorites'**
+  String get cmdRemoveFromFavorites;
 
   /// No description provided for @cmdManageFavorites.
   ///
@@ -4633,6 +4657,18 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Terminal'**
   String get terminalTitle;
+
+  /// No description provided for @terminalActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal actions'**
+  String get terminalActions;
+
+  /// No description provided for @terminalRestoreLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore previous layout'**
+  String get terminalRestoreLayout;
 
   /// No description provided for @terminalBusy.
   ///

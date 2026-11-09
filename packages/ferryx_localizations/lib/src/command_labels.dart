@@ -23,6 +23,7 @@ extension CommandLabels on FerryxLocalizations {
     AppCommand.calcAllFolderSizes => cmdCalcAllFolderSizes,
     AppCommand.duplicate => cmdDuplicate,
     AppCommand.addToFavorites => cmdAddToFavorites,
+    AppCommand.removeFromFavorites => cmdRemoveFromFavorites,
     AppCommand.manageFavorites => cmdManageFavorites,
     AppCommand.findFiles => cmdFindFiles,
     AppCommand.copyPaths => cmdCopyPaths,
