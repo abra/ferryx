@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:domain_models/domain_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meta/meta.dart';
@@ -137,14 +135,21 @@ class ChecksumsCubit extends Cubit<ChecksumsState> {
                    : ChecksumAlgorithm.sha256),
          ),
        ) {
-    _subscription = service.updates.listen(_onUpdate);
+    _task = TaskSession<ChecksumUpdate>(
+      updates: service.updates,
+      idOf: (update) => update.taskId,
+      isDone: (update) => update.done,
+      cancel: service.cancel,
+      onUpdate: _onUpdate,
+      onError: _onError,
+      onCleanupError: addError,
+    );
   }
 
   final ChecksumService _service;
   final List<String> paths;
   final String base;
-  StreamSubscription<ChecksumUpdate>? _subscription;
-  int? _taskId;
+  late final TaskSession<ChecksumUpdate> _task;
 
   /// Whether [paths] is one checksum file, which can be checked.
   static bool verifiable(List<String> paths) =>
@@ -158,7 +163,7 @@ class ChecksumsCubit extends Cubit<ChecksumsState> {
 
   /// Starts over with the current mode and options.
   Future<void> start() async {
-    await stop();
+    if (isClosed) return;
     emit(
       ChecksumsState(
         mode: state.mode,
@@ -168,31 +173,26 @@ class ChecksumsCubit extends Cubit<ChecksumsState> {
         revision: state.revision + 1,
       ),
     );
-    final id = state.mode == ChecksumMode.verify
-        ? await _service.verify(paths.single)
-        : await _service.start(
-            ChecksumRequest(
-              paths: paths,
-              base: base,
-              algorithm: state.algorithm,
-              recursive: state.recursive,
+    await _task.start(
+      () => state.mode == ChecksumMode.verify
+          ? _service.verify(paths.single)
+          : _service.start(
+              ChecksumRequest(
+                paths: paths,
+                base: base,
+                algorithm: state.algorithm,
+                recursive: state.recursive,
+              ),
             ),
-          );
-    if (isClosed) return;
-    if (!state.running) {
-      unawaited(_service.cancel(id));
-      return;
-    }
-    _taskId = id;
+    );
   }
 
   Future<void> stop() async {
-    final id = _taskId;
-    _taskId = null;
-    if (state.running) {
+    final stopping = _task.stop();
+    if (!isClosed && state.running) {
       emit(state.copyWith(running: false, clearCurrent: true));
     }
-    if (id != null) await _service.cancel(id);
+    await stopping;
   }
 
   Future<void> setAlgorithm(ChecksumAlgorithm algorithm) async {
@@ -214,8 +214,18 @@ class ChecksumsCubit extends Cubit<ChecksumsState> {
     await start();
   }
 
+  void _onError(Object error, StackTrace stackTrace) {
+    addError(error, stackTrace);
+    emit(
+      state.copyWith(
+        running: false,
+        clearCurrent: true,
+        error: error is FerryxException ? error.message : error.toString(),
+      ),
+    );
+  }
+
   void _onUpdate(ChecksumUpdate update) {
-    if (update.taskId != _taskId || isClosed) return;
     var files = state.files;
     var outcomes = state.outcomes;
     if (update.files.isNotEmpty) {
@@ -230,7 +240,6 @@ class ChecksumsCubit extends Cubit<ChecksumsState> {
         if (outcome.index < outcomes.length) outcomes[outcome.index] = outcome;
       }
     }
-    if (update.done) _taskId = null;
     emit(
       state.copyWith(
         running: !update.done,
@@ -267,9 +276,8 @@ class ChecksumsCubit extends Cubit<ChecksumsState> {
 
   @override
   Future<void> close() async {
-    await _subscription?.cancel();
-    final id = _taskId;
-    if (id != null) unawaited(_service.cancel(id));
-    return super.close();
+    final closing = _task.close();
+    await super.close();
+    await closing;
   }
 }

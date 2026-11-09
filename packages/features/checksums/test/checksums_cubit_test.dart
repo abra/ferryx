@@ -185,4 +185,77 @@ void main() {
     expect(checksums.state.badLines, 2);
     await checksums.close();
   });
+
+  test(
+    'early verification outcomes and done survive a delayed start reply',
+    () async {
+      final reply = Completer<int>();
+      when(() => service.verify(any())).thenAnswer((_) => reply.future);
+      final checksums = cubit(['/home/SHA1SUMS']);
+      final starting = checksums.start();
+      updates.add(
+        const ChecksumUpdate(
+          taskId: 4,
+          algorithm: ChecksumAlgorithm.sha1,
+          files: [ChecksumFile(index: 0, name: 'a', path: '/home/a', size: 3)],
+          filesTotal: 1,
+        ),
+      );
+      updates.add(
+        const ChecksumUpdate(
+          taskId: 4,
+          filesTotal: 1,
+          outcomes: [
+            ChecksumOutcome(index: 0, status: ChecksumStatus.ok, hash: 'abc'),
+          ],
+          done: true,
+        ),
+      );
+      await flush();
+      reply.complete(4);
+      await starting;
+      expect(checksums.state.running, isFalse);
+      expect(checksums.state.files.single.name, 'a');
+      expect(checksums.state.outcomeOf(0)?.hash, 'abc');
+      await checksums.close();
+      verifyNever(() => service.cancel(4));
+    },
+  );
+
+  test(
+    'an algorithm change owns its task when start replies arrive out of order',
+    () async {
+      final first = Completer<int>();
+      final second = Completer<int>();
+      var starts = 0;
+      when(() => service.start(any()))
+          .thenAnswer((_) => starts++ == 0 ? first.future : second.future);
+      final checksums = cubit(['/home/a']);
+      final a = checksums.start();
+      final b = checksums.setAlgorithm(ChecksumAlgorithm.blake3);
+      second.complete(4);
+      await b;
+      first.complete(3);
+      await a;
+      updates.add(const ChecksumUpdate(taskId: 3, error: 'stale', done: true));
+      updates.add(const ChecksumUpdate(taskId: 4, done: true));
+      await flush();
+      expect(checksums.state.algorithm, ChecksumAlgorithm.blake3);
+      expect(checksums.state.error, isNull);
+      expect(checksums.state.running, isFalse);
+      verify(() => service.cancel(3)).called(1);
+      await checksums.close();
+    },
+  );
+
+  test('a verification start failure ends the running state', () async {
+    when(() => service.verify(any())).thenThrow(
+      const FerryxException(FerryxErrorKind.io, 'cannot verify'),
+    );
+    final checksums = cubit(['/home/SHA1SUMS']);
+    await checksums.start();
+    expect(checksums.state.running, isFalse);
+    expect(checksums.state.error, 'cannot verify');
+    await checksums.close();
+  });
 }

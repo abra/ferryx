@@ -358,10 +358,18 @@ tar is a tar, and ⌘↓ (`detect_archive`) opens an archive of any name;
   instead of 12 s, at about 1 GB of memory instead of 40 MB), rar in
   member order, zip members and iso extents forward through the file. No
   member is held whole in memory; the viewer's ranges of a member over
-  4 MiB come from a copy unpacked once to the temporary folder, and a
+  4 MiB come from a copy unpacked to an unnamed temporary file, and a
   smaller member whose reading decodes what lies before it (a compressed
   tar, a 7z or rar block, a compressed file) is kept decoded for the
   next window (the last two such).
+- **Viewer cache ownership.** Concurrent reads of one large member share
+  one decode; only the finished copy enters the LRU cache. Its key includes
+  the archive's path, modification time and length, the member and password.
+  The cache retains at most eight members within a soft 512 MiB budget;
+  one oversized member may stay alone to avoid decoding it on every scroll.
+  Active readers retain their file handles after eviction; their copies and
+  concurrent decodes may temporarily exceed that budget. The OS removes each
+  unnamed file when its last handle closes, including at process exit.
 - **Passwords.** An encrypted member list (7z `-mhe`, rar `-hp`) answers
   `PasswordRequired` until `set_archive_password` gives one that opens it;
   encrypted members (zip AES and ZipCrypto, 7z AES, rar) are read with the
@@ -425,6 +433,11 @@ Rust errors into `FerryxException` (typed `FerryxErrorKind`, the core's
 message and path, no localized text). Timestamps cross as Unix
 milliseconds and become local `DateTime`s in the mapping.
 
+`FerryxBackend.initialize` shares one initialization future and broadcast
+event stream per Dart isolate. A failed bridge initialization disposes its
+partial FRB state and allows another attempt; a successful bridge outlives
+individual bootstrap attempts and their repository subscriptions.
+
 `rust_builder/` (cargokit) compiles `ferryx_api` into the platform library
 that `ferryx_backend` loads, as part of the Flutter build.
 
@@ -438,7 +451,7 @@ that `ferryx_backend` loads, as part of the Flutter build.
 | `shortcuts` | `AppCommand` (scopes: global, panel, viewer, lists, dialogs, terminal; `CommandSection` for the palette's groups), `Chord`, `ShortcutMap` (defaults per desktop, `forUser` with overrides), the `CommandHandlers` dispatch chain (`commandsAt` answers what a place handles), `ChordCodec`. |
 | `preferences_service` | Installation preferences (theme, locale, text scale, shortcut overrides, window frame, the panels' state, layouts, sorting defaults, quick search, favorites, editors, tools, confirmations, copy defaults, viewer, the terminal's settings and place) + `PreferencesScope` and `PreferenceBuilder`; beside the blob, under keys of their own (`SideStorage`), `FolderFrecency` (the folders visited) and `RecentItems` (the commands run lately). |
 | `file_repository` | `FileRepository`: listings (open, refresh, resort, close, peek), items (stat, byte ranges, extract to temp, make, rename, links, resolve), the system (volumes, standard folders, free space, open, open with, reveal, eject, applications), attributes; archives (what one holds, its password, detection by its bytes); flat listings (open with their stream of batches, the order of their rows); Finder tags (a listing's, edits) and the desktop's `capabilities`; `directoryChanges` names listings whose folders changed. |
-| `operations_service` | `OperationsService` (start, pause, resume, cancel, answer, forget; `progress` stream and the latest report per operation; `run` waits for one), `FindService` (start, cancel, `updates`), `RenameService` (preview, apply). |
+| `operations_service` | `OperationsService` (start, pause, resume, cancel, answer, forget; `progress` stream and the latest report per operation; `run` waits for one), `FindService` (start, cancel, `updates`), `RenameService` (preview, apply), `TaskSession` (ownership of a streamed task before and after its start reply). |
 | `platform_services` | What only some desktops offer, behind one injected `PlatformServices` (capabilities; Quick Look; the share picker; file drags out of the window): `ChannelPlatformServices` on macOS (the runner's `ferryx/platform` channel), `DesktopPlatformServices` elsewhere (drags only), `FakePlatformServices` for tests (`testing.dart`); `PlatformDropArea`, the window's one drop region (super_drag_and_drop). |
 | `terminal_service` | `TerminalService.start` → a `TerminalSession` (its `updates`: `TerminalOutput`, `TerminalShellState`, `TerminalExited`; write, resize, ack, state, change directory, close) over `ferryx_api`'s terminal; the default shell's name. |
 | `ferryx_localizations` | ARB-generated `FerryxLocalizations`, command and scope labels, formatting helpers (sizes, dates, durations, error titles, operation titles, answers, columns). |
@@ -516,6 +529,8 @@ match ranges, the sort options and the layout index. Rules:
   tries only the last query's matches where every match of it is one of
   them (fuzzy, anywhere, beginning): 100 000 names went from 0.3–0.5 s a
   key to 20–60 ms.
+  Stepping through matches (`n` / `N`) reduces the count modulo the
+  number of matches and scans at most one full listing, even for `9999n`.
 - The view measures itself (`PanelGeometry`: rows per page and per brief
   column) and tells the cubit, so PageUp/Down and ←/→ in brief mode move
   by what fits. Brief columns sized to their names are measured once per
@@ -527,6 +542,8 @@ match ranges, the sort options and the layout index. Rules:
   are summed once per selection and rows, number and date formats are
   made once per pattern and locale, and a name fitted with a middle
   ellipsis is measured once per text, style and width.
+  The selected-byte memo uses weak row-list and selection keys, so a
+  remembered selection for `gv` does not retain an old directory listing.
 - Tabs: a new tab opens after the active one at the same place; closing
   shows the neighbour and remembers the location for ⇧⌘R; the last tab of
   a panel never closes; each tab's listing is closed in the core with it.
@@ -569,6 +586,8 @@ next run keeps its folder, not its flat view.
   `sort_flat_listing` answers the order as indices into the rows sent, so
   a sort never sends the rows again (by name, rows of one name keep their
   folders' order). A sort asked meanwhile applies when the walk ends.
+  Archive rows are produced lazily from the index: the same cap and
+  cancellation apply without first materializing every row in the subtree.
 - **Refresh.** The tab's folder is watched, not its subfolders: a change
   there, ⌘R, the hidden items shown or not, or an operation that wrote
   into or took from the tree (`PanelCubit._walkFlatViewsUnder`) walks the
@@ -920,12 +939,16 @@ place, or over the whole window, in step with the active panel's folder.
 
 ### Operations in the window
 
-`OperationsService.progress` feeds the workspace: a card per operation
-floats over the panels' corner with its title, progress, speed, time left,
-pause and stop; a finished operation's card goes after a moment unless it
-had errors. A question opens `showQuestionDialog` once (by its id) and
-the answer goes back through the service; the panels refresh from the
-core's directory events, never from the operation's end.
+`WorkspaceOperationsController` owns the `OperationsService.progress`
+subscription, card snapshots, titles, dismissal timers and question ids.
+Its `ListenableBuilder` updates only the operation cards, without rebuilding
+the workspace for each progress event. A card floats over the panels'
+corner with its title, progress, speed, time left, pause and stop; a
+successful card goes after three seconds, while failures stay for review.
+A question opens `showQuestionDialog` once per operation/question pair;
+an answer returned after disposal or after the question changed is ignored.
+Disposal cancels the subscription and timers. Panels refresh through their
+repository and operation subscriptions; completion also rechecks the shelf.
 
 ### The desktop's own services
 
@@ -1013,6 +1036,16 @@ widget tests need no native library. The plugin stays inside
 the service.
 
 ## Operations stream: undo, compare and sync, checksums, duplicates
+
+Find, checksums, duplicates and folder comparison use `TaskSession` in
+their Cubits. It subscribes before launching, buffers up to 128 early
+events until the returned task id can identify them, and replays matching
+events in order. A new start, stop or close invalidates the previous run
+immediately; an id returned later is cancelled. Stale results and failures
+cannot replace the new state. Startup errors and an overflowing early
+buffer explicitly fail the run; cleanup errors go to the Bloc observer.
+Spotlight's reader also has a bounded queue (256 paths), whose receiver is
+dropped on cancellation to release a blocked producer.
 
 ### Undo and redo (⌘Z, ⇧⌘Z; Vim `uu`, `U`; `:undo`, `:redo`)
 
@@ -1269,6 +1302,11 @@ does not follow), Jump to Folder (not counted) or the undo journal
   F8 always asks, and says so); folder sizes. Its sources and destination
   are named `<server key><path>`, so a panel knows which of its tabs to
   read again.
+- FTP/FTPS source scans list each selected parent once and reuse its
+  metadata for sibling sources. This snapshot belongs only to the scan;
+  later operations read fresh metadata. A WebDAV upload is aborted and
+  joined on cancellation or timeout before transfer cleanup removes the
+  incomplete destination.
 - Opening a file on a server (Return, Open) copies it to a temporary
   folder of its own and opens that copy; a notice says that changes stay
   in the copy (nothing is sent back). F3 reads byte ranges from the
@@ -1290,7 +1328,10 @@ init, preferences, the file repository and the services) → `AppScopes` →
 `FerryxApp` (router, theme, locale, global shortcuts); `showWindow` then
 shows the window and `WindowStateSaver` starts. A failure shows
 `InitializationFailedScreen` with retry; the `ResourceDisposer` rolls back
-partially created resources.
+partially created resources in reverse order, including a failure while
+handing completed dependencies to the UI. Repeated retry clicks share one
+in-flight bootstrap. The logger and successfully initialized Rust bridge
+survive a failed attempt; per-attempt listeners and services are disposed.
 
 ## Tests
 
@@ -1372,6 +1413,8 @@ partially created resources.
 - No extended-attributes or process-list virtual file systems; archives
   are read-only, and a rar set of several volumes lists its first
   volume's members only.
+- Closing the viewer does not yet cancel an archive member decode already
+  running in the core; that requires a cancellable viewer-read bridge API.
 - Servers: a file opened from a server is a copy (edits are not sent
   back); nothing on a server is undone; no flat view, Find Files,
   checksums or synchronize there; WebDAV logs in with Basic auth only (no

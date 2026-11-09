@@ -90,38 +90,55 @@ class FindCubit extends Cubit<FindState> {
   FindCubit({required FindService service})
     : _service = service,
       super(const FindState()) {
-    _subscription = service.updates.listen(_onUpdate);
+    _task = TaskSession<FindUpdate>(
+      updates: service.updates,
+      idOf: (update) => update.findId,
+      isDone: (update) => update.done,
+      cancel: service.cancel,
+      onStarted: (id) => emit(state.copyWith(findId: id)),
+      onUpdate: _onUpdate,
+      onError: _onError,
+      onCleanupError: addError,
+    );
   }
 
   /// More hits than this are not kept: the search stops there.
   static const int maxHits = 10000;
 
   final FindService _service;
-  StreamSubscription<FindUpdate>? _subscription;
+  late final TaskSession<FindUpdate> _task;
 
   /// Starts [request], ending a search under way first.
   Future<void> start(FindRequest request) async {
-    await stop();
+    if (isClosed) return;
     emit(
       FindState(request: request, running: true),
     );
-    final id = await _service.start(request);
-    if (isClosed) return;
-    // The search may have been stopped while the core took the request.
-    if (!state.running || state.request != request) return;
-    emit(state.copyWith(findId: id));
+    await _task.start(() => _service.start(request));
   }
 
   /// Ends the search under way; what it found stays.
   Future<void> stop() async {
-    final id = state.findId;
-    if (!state.running) return;
-    emit(state.copyWith(running: false, done: true, clearCurrent: true));
-    if (id != null) await _service.cancel(id);
+    final stopping = _task.stop();
+    if (!isClosed && state.running) {
+      emit(state.copyWith(running: false, done: true, clearCurrent: true));
+    }
+    await stopping;
+  }
+
+  void _onError(Object error, StackTrace stackTrace) {
+    addError(error, stackTrace);
+    emit(
+      state.copyWith(
+        running: false,
+        done: true,
+        clearCurrent: true,
+        error: error is FerryxException ? error.message : error.toString(),
+      ),
+    );
   }
 
   void _onUpdate(FindUpdate update) {
-    if (update.findId != state.findId || !state.running) return;
     if (update.done) {
       emit(
         state.copyWith(
@@ -163,11 +180,8 @@ class FindCubit extends Cubit<FindState> {
 
   @override
   Future<void> close() async {
-    await _subscription?.cancel();
-    final id = state.findId;
-    if (state.running && id != null) {
-      unawaited(_service.cancel(id));
-    }
-    return super.close();
+    final closing = _task.close();
+    await super.close();
+    await closing;
   }
 }

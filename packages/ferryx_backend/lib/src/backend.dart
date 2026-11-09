@@ -17,16 +17,28 @@ class FerryxBackend {
   FerryxBackend._(this._events);
 
   final Stream<rust.AppEvent> _events;
+  static Future<FerryxBackend>? _initialization;
 
-  /// Loads the native library and subscribes to its events.
+  /// Loads the native library and subscribes to its events once per isolate.
+  /// Bootstrap retries reuse this bridge and event stream;
+  /// repositories and their subscriptions belong to each bootstrap attempt.
   ///
   /// [externalLibrary] lets tests point at a locally built `libferryx_api`.
   static Future<FerryxBackend> initialize({
     ExternalLibrary? externalLibrary,
-  }) async {
-    await FerryxRustLib.init(externalLibrary: externalLibrary);
-    final events = subscribeEvents().asBroadcastStream();
-    return FerryxBackend._(events);
+  }) => _initialization ??= _initialize(externalLibrary);
+
+  static Future<FerryxBackend> _initialize(ExternalLibrary? library) async {
+    try {
+      await FerryxRustLib.init(externalLibrary: library);
+      final events = subscribeEvents().asBroadcastStream();
+      return FerryxBackend._(events);
+    } on Object {
+      // FRB may already own ports when its Rust initializer fails.
+      _initialization = null;
+      FerryxRustLib.dispose();
+      rethrow;
+    }
   }
 
   /// Notifications from the core; a broadcast stream.

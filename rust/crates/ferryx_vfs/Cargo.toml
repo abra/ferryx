@@ -19,6 +19,7 @@ parking_lot.workspace = true
 serde.workspace = true
 sysinfo.workspace = true
 tar.workspace = true
+tempfile.workspace = true
 thiserror.workspace = true
 trash.workspace = true
 zip.workspace = true
@@ -65,7 +66,6 @@ keyring = { workspace = true, features = ["windows-native"] }
 keyring = { workspace = true, features = ["async-secret-service", "tokio", "crypto-rust"] }
 
 [dev-dependencies]
-tempfile.workspace = true
 # The tests write the archives they read.
 lzma-rust2 = { workspace = true, features = ["encoder"] }
 sevenz-rust2 = { workspace = true, features = ["compress"] }

@@ -1036,16 +1036,18 @@ class PanelCubit extends Cubit<PanelState> {
   /// the ends.
   void searchStep({required bool forward, int count = 1}) {
     final tab = state.active;
-    if (tab == null || tab.matches.isEmpty || tab.rows.isEmpty) return;
+    if (tab == null || tab.matches.isEmpty || count <= 0) return;
+    // Complete wraps do not change the target. Keep the final traversal
+    // when count is a multiple: the cursor need not be on a matching row.
+    var remaining = (count - 1) % tab.matches.length + 1;
     var at = tab.cursor;
-    for (var n = 0; n < count; n++) {
-      final start = at;
-      do {
-        at = (at + (forward ? 1 : -1) + tab.rows.length) % tab.rows.length;
-        if (tab.matches.containsKey(tab.rows[at].key)) break;
-      } while (at != start);
+    for (var scanned = 0; scanned < tab.rows.length; scanned++) {
+      at = (at + (forward ? 1 : -1) + tab.rows.length) % tab.rows.length;
+      if (tab.matches.containsKey(tab.rows[at].key) && --remaining == 0) {
+        moveCursorTo(at);
+        return;
+      }
     }
-    moveCursorTo(at);
   }
 
   /// `f` / `F`: the next or previous row whose name starts with [char],

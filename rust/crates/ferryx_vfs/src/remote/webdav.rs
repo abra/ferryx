@@ -476,17 +476,7 @@ impl DavWriter {
     /// The request's own failure, once it gave up taking chunks.
     fn outcome(&mut self, stop: Stop) -> VfsResult<()> {
         let Some(task) = self.task.take() else { return Ok(()) };
-        let path = self.path.clone();
-        run(
-            async move {
-                match task.await {
-                    Ok(result) => result,
-                    Err(_) => Err(VfsError::remote(VfsErrorKind::ConnectionLost, Some(&path), path.clone())),
-                }
-            },
-            REQUEST_TIMEOUT,
-            stop,
-        )
+        upload_outcome(task, &self.path, REQUEST_TIMEOUT, stop)
     }
 }
 
@@ -515,9 +505,32 @@ impl RemoteWrite for DavWriter {
 impl Drop for DavWriter {
     fn drop(&mut self) {
         if let Some(task) = self.task.take() {
-            task.abort();
+            abort_upload(task);
         }
     }
+}
+
+fn upload_outcome(
+    mut task: JoinHandle<VfsResult<()>>,
+    path: &str,
+    timeout: Duration,
+    stop: Stop,
+) -> VfsResult<()> {
+    // Keep ownership outside the cancellable wait: dropping a JoinHandle
+    // detaches its upload. Cleanup must wait until that upload has stopped.
+    match run(async { Ok((&mut task).await) }, timeout, stop) {
+        Ok(Ok(result)) => result,
+        Ok(Err(_)) => Err(VfsError::remote(VfsErrorKind::ConnectionLost, Some(path), path.to_string())),
+        Err(error) => {
+            abort_upload(task);
+            Err(error)
+        }
+    }
+}
+
+fn abort_upload(task: JoinHandle<VfsResult<()>>) {
+    task.abort();
+    let _ = runtime::runtime().block_on(task);
 }
 
 // ─── PROPFIND ───
@@ -648,6 +661,48 @@ fn href_path(href: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn pending_upload() -> (JoinHandle<VfsResult<()>>, std::sync::Arc<AtomicBool>) {
+        struct Stopped(std::sync::Arc<AtomicBool>);
+        impl Drop for Stopped {
+            fn drop(&mut self) {
+                self.0.store(true, Ordering::SeqCst);
+            }
+        }
+        let stopped = std::sync::Arc::new(AtomicBool::new(false));
+        let noted = stopped.clone();
+        let (ready, started) = std::sync::mpsc::sync_channel(1);
+        let task = runtime::runtime().spawn(async move {
+            let _stopped = Stopped(noted);
+            ready.send(()).unwrap();
+            std::future::pending().await
+        });
+        started.recv_timeout(Duration::from_secs(5)).unwrap();
+        (task, stopped)
+    }
+
+    #[test]
+    fn cancelled_finish_stops_the_upload_before_returning() {
+        let (task, stopped) = pending_upload();
+        let writer = Box::new(DavWriter { sender: None, task: Some(task), path: "/upload".into() });
+        assert_eq!(writer.finish(&|| true).unwrap_err().kind, VfsErrorKind::Cancelled);
+        assert!(stopped.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn timed_out_finish_stops_the_upload_before_returning() {
+        let (task, stopped) = pending_upload();
+        let result = upload_outcome(task, "/upload", Duration::from_millis(10), &super::super::never);
+        assert_eq!(result.unwrap_err().kind, VfsErrorKind::TimedOut);
+        assert!(stopped.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn abandoning_a_writer_stops_the_upload_before_cleanup() {
+        let (task, stopped) = pending_upload();
+        drop(DavWriter { sender: None, task: Some(task), path: "/upload".into() });
+        assert!(stopped.load(Ordering::SeqCst));
+    }
 
     #[test]
     fn reads_a_multistatus_answer() {

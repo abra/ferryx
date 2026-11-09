@@ -49,6 +49,7 @@ import 'shelf_strip.dart';
 import 'tag_menu.dart';
 import 'terminal_dock.dart';
 import 'workspace_cubit.dart';
+import 'workspace_operations_controller.dart';
 import 'workspace_state.dart';
 import 'workspace_terminal.dart';
 
@@ -262,18 +263,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   /// Asks the disk which shelf items are still there, once changes settle.
   Timer? _shelfCheck;
-  StreamSubscription<OperationProgress>? _progress;
+  late final WorkspaceOperationsController _operations;
   Timer? _snapshotTimer;
-  final _dismissTimers = <int, Timer>{};
-  final _shownOperations = <int>{};
-
-  /// The questions asked, as (operation, question): the core numbers each
-  /// operation's questions from 1.
-  final _askedQuestions = <(int, int)>{};
-
-  /// Titles of the operations' cards that name more than their kind (an
-  /// undo names its step), by operation id.
-  final _operationTitles = <int, String>{};
   double _splitBeforeKeys = 0.5;
 
   /// The panels' room along the line between them: their width side by
@@ -314,13 +305,14 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         _right.start(widget.savedRight, widget.fallbackLocation),
       ]).then((_) => _restoreTerminal()),
     );
-    _progress = widget.operations.progress.listen(_onProgress);
+    _operations = WorkspaceOperationsController(
+      service: widget.operations,
+      ask: _ask,
+      onFinished: _scheduleShelfCheck,
+    );
     _changes = widget.files.directoryChanges.listen(
       (_) => _scheduleShelfCheck(),
     );
-    for (final progress in widget.operations.current.values) {
-      _shownOperations.add(progress.id);
-    }
     _startNative();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -354,14 +346,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   @override
   void dispose() {
-    _progress?.cancel();
+    _operations.dispose();
     _changes?.cancel();
     _shelfCheck?.cancel();
     _native.dispose();
     _snapshotTimer?.cancel();
-    for (final timer in _dismissTimers.values) {
-      timer.cancel();
-    }
     _snapshotNow();
     _disposeTerminal();
     _left.close();
@@ -423,52 +412,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   // ─── Operations ───
 
-  void _onProgress(OperationProgress progress) {
-    if (progress.kind == OpKind.calcSizes) return;
-    final question = progress.question;
-    if (progress.state == OpState.waiting &&
-        question != null &&
-        _askedQuestions.add((progress.id, question.id))) {
-      unawaited(_ask(progress.id, question));
-    }
-    if (!mounted) return;
-    setState(() => _shownOperations.add(progress.id));
-    if (progress.state.isFinished) {
-      // What the operation moved or deleted may have been on the shelf.
-      _scheduleShelfCheck();
-      _dismissTimers[progress.id]?.cancel();
-      final keep =
-          progress.errors.isNotEmpty || progress.state == OpState.failed;
-      if (!keep) {
-        _dismissTimers[progress.id] = Timer(
-          const Duration(seconds: 3),
-          () => _dismissOperation(progress.id),
-        );
-      }
-    }
+  Future<Answer?> _ask(OperationQuestion question) async {
+    // A question may already be waiting when the workspace is created.
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return null;
+    return showQuestionDialog(context, question: question);
   }
-
-  Future<void> _ask(int operationId, OperationQuestion question) async {
-    final answer = await showQuestionDialog(context, question: question);
-    await widget.operations.answer(
-      operationId,
-      question.id,
-      answer ?? Answer.abort,
-    );
-  }
-
-  void _dismissOperation(int id) {
-    _dismissTimers.remove(id)?.cancel();
-    _operationTitles.remove(id);
-    _askedQuestions.removeWhere((asked) => asked.$1 == id);
-    if (!mounted) return;
-    setState(() => _shownOperations.remove(id));
-    unawaited(widget.operations.forget(id));
-  }
-
-  List<OperationProgress> get _operations => [
-    for (final id in _shownOperations) ?widget.operations.current[id],
-  ]..sort((a, b) => a.id.compareTo(b.id));
 
   // ─── Build ───
 
@@ -603,31 +552,30 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                         )
                                       : null,
                                   cards: workspace.operationsShown
-                                      ? OperationsCards(
-                                          operations: _operations,
-                                          titles: _operationTitles,
-                                          onPause: (id) => unawaited(
-                                            widget.operations.pause(id),
-                                          ),
-                                          onResume: (id) => unawaited(
-                                            widget.operations.resume(id),
-                                          ),
-                                          onCancel: (id) => unawaited(
-                                            widget.operations.cancel(id),
-                                          ),
-                                          onDismiss: _dismissOperation,
-                                          onAnswer: (progress) {
-                                            final question = progress.question;
-                                            if (question != null) {
-                                              _askedQuestions.add((
-                                                progress.id,
-                                                question.id,
-                                              ));
-                                              unawaited(
-                                                _ask(progress.id, question),
-                                              );
-                                            }
-                                          },
+                                      ? ListenableBuilder(
+                                          listenable: _operations,
+                                          builder: (context, _) =>
+                                              OperationsCards(
+                                                operations:
+                                                    _operations.operations,
+                                                titles: _operations.titles,
+                                                onPause: (id) => unawaited(
+                                                  widget.operations.pause(id),
+                                                ),
+                                                onResume: (id) => unawaited(
+                                                  widget.operations.resume(id),
+                                                ),
+                                                onCancel: (id) => unawaited(
+                                                  widget.operations.cancel(id),
+                                                ),
+                                                onDismiss: _operations.dismiss,
+                                                onAnswer: (progress) =>
+                                                    unawaited(
+                                                      _operations.ask(
+                                                        progress.id,
+                                                      ),
+                                                    ),
+                                              ),
                                         )
                                       : null,
                                 );

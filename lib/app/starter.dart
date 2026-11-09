@@ -45,6 +45,8 @@ Future<void> starter() async {
         await showWindow(dependencies.preferencesService.current);
       },
       onFailure: (error, stackTrace) async {
+        windowState?.dispose();
+        windowState = null;
         runApp(
           InitializationFailedScreen(
             error: error,

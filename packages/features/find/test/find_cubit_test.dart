@@ -158,4 +158,82 @@ void main() {
     await cubit.close();
     verify(() => service.cancel(7)).called(1);
   });
+
+  test('results and completion can precede the start reply', () async {
+    final reply = Completer<int>();
+    when(() => service.start(request)).thenAnswer((_) => reply.future);
+    final cubit = FindCubit(service: service);
+    final starting = cubit.start(request);
+    updates.add(FindUpdate(findId: 7, hits: [hit('early.md')]));
+    updates.add(const FindUpdate(findId: 7, done: true, scanned: 3));
+    await Future<void>.delayed(Duration.zero);
+    reply.complete(7);
+    await starting;
+    expect(cubit.state.running, isFalse);
+    expect(cubit.state.done, isTrue);
+    expect(cubit.state.hits, [hit('early.md')]);
+    expect(cubit.state.scanned, 3);
+    await cubit.close();
+    verifyNever(() => service.cancel(7));
+  });
+
+  for (final close in [false, true]) {
+    test(
+      '${close ? 'close' : 'stop'} during start cancels the eventual id',
+      () async {
+        final reply = Completer<int>();
+        when(() => service.start(request)).thenAnswer((_) => reply.future);
+        final cubit = FindCubit(service: service);
+        final starting = cubit.start(request);
+        await (close ? cubit.close() : cubit.stop());
+        reply.complete(7);
+        await starting;
+        verify(() => service.cancel(7)).called(1);
+        if (!close) {
+          expect(cubit.state.running, isFalse);
+          await cubit.close();
+        }
+      },
+    );
+  }
+
+  test('restarting the same request ignores a late previous start', () async {
+    final first = Completer<int>();
+    final second = Completer<int>();
+    var starts = 0;
+    when(() => service.start(request))
+        .thenAnswer((_) => starts++ == 0 ? first.future : second.future);
+    final cubit = FindCubit(service: service);
+    final a = cubit.start(request);
+    await cubit.stop();
+    final b = cubit.start(request);
+    second.complete(8);
+    await b;
+    first.complete(7);
+    await a;
+    updates.add(FindUpdate(findId: 7, hits: [hit('stale.md')], done: true));
+    updates.add(FindUpdate(findId: 8, hits: [hit('new.md')]));
+    updates.add(const FindUpdate(findId: 8, done: true));
+    await Future<void>.delayed(Duration.zero);
+    expect(cubit.state.findId, 8);
+    expect(cubit.state.hits, [hit('new.md')]);
+    expect(cubit.state.running, isFalse);
+    verify(() => service.cancel(7)).called(1);
+    await cubit.close();
+  });
+
+  test('a start failure leaves an error state and allows retry', () async {
+    when(() => service.start(request)).thenThrow(
+      const FerryxException(FerryxErrorKind.io, 'cannot start'),
+    );
+    final cubit = FindCubit(service: service);
+    await cubit.start(request);
+    expect(cubit.state.running, isFalse);
+    expect(cubit.state.error, 'cannot start');
+    when(() => service.start(request)).thenAnswer((_) async => 7);
+    await cubit.start(request);
+    expect(cubit.state.running, isTrue);
+    expect(cubit.state.error, isNull);
+    await cubit.close();
+  });
 }

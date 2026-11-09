@@ -20,6 +20,7 @@ mod detect;
 mod formats;
 mod iso;
 pub mod shared;
+mod view_cache;
 
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
@@ -34,7 +35,6 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{IoAt, VfsError, VfsErrorKind, VfsResult};
-use crate::native::system_time_ms;
 
 pub use detect::detect;
 
@@ -372,24 +372,33 @@ impl ArchiveIndex {
     /// `inner` (empty for its own files), for a flat view; members inside
     /// a hidden folder are hidden too.
     pub fn files_in_subtree(&self, inner: &str, show_hidden: bool) -> Vec<(Entry, String)> {
+        self.files_in_subtree_until(inner, show_hidden, &|| false).collect()
+    }
+
+    /// The flat view's rows, made only as requested and stopped even
+    /// while passing over folders or hidden members.
+    pub fn files_in_subtree_until<'a>(
+        &'a self,
+        inner: &str,
+        show_hidden: bool,
+        stop: &'a dyn Fn() -> bool,
+    ) -> impl Iterator<Item = (Entry, String)> + 'a {
         let skip = if inner.is_empty() { 0 } else { inner.len() + 1 };
-        let mut out = Vec::new();
-        for member in self.subtree(inner) {
+        self.subtree(inner).iter().take_while(move |_| !stop()).filter_map(move |member| {
             if member.is_dir {
-                continue;
+                return None;
             }
             let relative = &member.path[skip..];
             let hidden = relative.split('/').any(|c| c.starts_with('.'));
             if hidden && !show_hidden {
-                continue;
+                return None;
             }
             let (folder, name) = match relative.rfind('/') {
                 Some(at) => (&relative[..at], &relative[at + 1..]),
                 None => ("", relative),
             };
-            out.push((entry_of(member, name, name.starts_with('.')), folder.to_string()));
-        }
-        out
+            Some((entry_of(member, name, name.starts_with('.')), folder.to_string()))
+        })
     }
 
     /// Every file member under `inner` (or the member itself), for an
@@ -536,7 +545,7 @@ impl ArchiveIndex {
         let member = self.member(inner).ok_or_else(|| not_in_archive(inner))?;
         if member.size > DECODE_WHOLE || (member.size == 0 && !member.is_dir) {
             let unpacked = self.unpacked_copy(inner, password)?;
-            return crate::native::read_range(&unpacked, offset, len);
+            return unpacked.read_range(offset, len);
         }
         let all = self.decoded(inner, password)?;
         let start = usize::try_from(offset).unwrap_or(usize::MAX).min(all.len());
@@ -584,31 +593,20 @@ impl ArchiveIndex {
             return Ok(member.size);
         }
         let unpacked = self.unpacked_copy(inner, password)?;
-        Ok(fs::metadata(&unpacked).at(&unpacked)?.len())
+        Ok(unpacked.bytes)
     }
 
     /// The member unpacked under the temporary folder, made once per
     /// version of the archive.
-    fn unpacked_copy(&self, inner: &str, password: Option<&str>) -> VfsResult<PathBuf> {
-        let stamp = self.file_modified.and_then(system_time_ms).unwrap_or(0);
-        let dir = temp_dir_for(&self.archive).join(format!(".view-{stamp:x}-{:x}", self.file_len));
-        let target = dir.join(inner);
-        if target.is_file() {
-            return Ok(target);
-        }
-        if let Some(parent) = target.parent() {
-            fs::create_dir_all(parent).at(parent)?;
-        }
-        let partial = target.with_extension("partial");
-        let mut file = File::create(&partial).at(&partial)?;
-        let written = self.read_member_to(inner, password, &mut file);
-        drop(file);
-        if let Err(e) = written {
-            let _ = fs::remove_file(&partial);
-            return Err(e);
-        }
-        fs::rename(&partial, &target).at(&target)?;
-        Ok(target)
+    fn unpacked_copy(&self, inner: &str, password: Option<&str>) -> VfsResult<Arc<view_cache::Unpacked>> {
+        let key = DecodedKey {
+            archive: self.archive.clone(),
+            modified: self.file_modified,
+            len: self.file_len,
+            inner: inner.to_string(),
+            password: password.map(str::to_string),
+        };
+        view_cache::unpacked(key, |file| self.read_member_to(inner, password, file))
     }
 
     /// Extracts the member (a file, or a folder with everything in it) to
@@ -647,7 +645,7 @@ impl ArchiveIndex {
 }
 
 /// Which small member, decoded, [`ArchiveIndex::decoded`] keeps.
-#[derive(PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 struct DecodedKey {
     archive: PathBuf,
     modified: Option<SystemTime>,

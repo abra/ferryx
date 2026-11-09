@@ -124,6 +124,50 @@ fn mtime(path: &Path) -> i64 {
 }
 
 #[test]
+fn ftp_selected_siblings_share_one_fresh_listing_per_scan() {
+    for mlsd in [true, false] {
+        let ftp = FtpServer::start(FtpOptions { mlsd, ..FtpOptions::default() });
+        let server = connect(Protocol::Ftp, ftp.port);
+        let names: Vec<String> = (0..20).map(|i| format!("file {i}.txt")).collect();
+        for name in &names {
+            std::fs::write(ftp.path(name), name).unwrap();
+        }
+        for round in 0..2 {
+            if round == 1 {
+                std::fs::write(ftp.path(&names[0]), "changed between operations").unwrap();
+            }
+            ftp.commands.lock().clear();
+            let local = tempfile::tempdir().unwrap();
+            let (progress, asked) = run(
+                Transfer {
+                    kind: OpKind::Copy,
+                    from: Side::Remote(server.clone()),
+                    sources: names.iter().map(|name| format!("/{name}")).collect(),
+                    to: Some((Side::Native, local.path().to_string_lossy().into_owned())),
+                    new_name: None,
+                    options: options(ConflictPolicy::Ask),
+                },
+                vec![],
+            );
+            assert_eq!(progress.state, OpState::Done, "{:?}", progress.errors);
+            assert!(asked.is_empty());
+            let commands = ftp.commands.lock();
+            let lists = commands.iter().filter(|c| c.starts_with("MLSD") || c.starts_with("LIST")).count();
+            assert_eq!(lists, 1, "{commands:?}");
+            for name in &names {
+                assert_eq!(
+                    std::fs::read(local.path().join(name)).unwrap(),
+                    std::fs::read(ftp.path(name)).unwrap()
+                );
+            }
+            let expected: u64 = names.iter().map(|n| std::fs::metadata(ftp.path(n)).unwrap().len()).sum();
+            assert_eq!(progress.bytes_total, expected);
+        }
+        connection::disconnect(server.key());
+    }
+}
+
+#[test]
 fn uploads_and_downloads_a_tree_with_its_times() {
     let sftp = SftpServer::start(SftpOptions::default());
     let server = connect(Protocol::Sftp, sftp.port);

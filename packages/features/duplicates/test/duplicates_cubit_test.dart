@@ -151,4 +151,42 @@ void main() {
       verify(() => service.cancel(11)).called(1);
     },
   );
+
+  test('early groups and done survive a delayed start reply', () async {
+    final reply = Completer<int>();
+    when(() => service.start(any())).thenAnswer((_) => reply.future);
+    final cubit = DuplicatesCubit(service: service);
+    final starting = cubit.start(const DuplicatesRequest(roots: ['/a']));
+    updates.add(DuplicatesUpdate(taskId: 2, groups: [_small]));
+    updates.add(DuplicatesUpdate(taskId: 2, groups: [_big], done: true));
+    await flush();
+    reply.complete(2);
+    await starting;
+    expect(cubit.state.running, isFalse);
+    expect(cubit.state.groups.map((g) => g.size), [1000, 10]);
+    await cubit.close();
+    verifyNever(() => service.cancel(2));
+  });
+
+  test('closing while start is pending cancels its eventual task', () async {
+    final reply = Completer<int>();
+    when(() => service.start(any())).thenAnswer((_) => reply.future);
+    final cubit = DuplicatesCubit(service: service);
+    final starting = cubit.start(const DuplicatesRequest(roots: ['/a']));
+    await cubit.close();
+    reply.complete(2);
+    await starting;
+    verify(() => service.cancel(2)).called(1);
+  });
+
+  test('a start failure ends the running state', () async {
+    when(() => service.start(any())).thenThrow(
+      const FerryxException(FerryxErrorKind.io, 'cannot search'),
+    );
+    final cubit = DuplicatesCubit(service: service);
+    await cubit.start(const DuplicatesRequest(roots: ['/a']));
+    expect(cubit.state.running, isFalse);
+    expect(cubit.state.error, 'cannot search');
+    await cubit.close();
+  });
 }

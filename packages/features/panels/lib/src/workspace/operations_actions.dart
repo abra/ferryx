@@ -163,7 +163,7 @@ extension _OperationsActions on _WorkspaceScreenState {
           ? await operations.redo(check.step.id)
           : await operations.undo(check.step.id);
       // The card says what was undone; no notice besides.
-      _operationTitles[id] = title;
+      if (mounted) _operations.setTitle(id, title);
     } on FerryxException catch (error) {
       if (!mounted) return;
       if (error.kind == FerryxErrorKind.notFound) {

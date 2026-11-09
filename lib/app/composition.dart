@@ -44,7 +44,7 @@ Future<DependenciesContainer> composeDependencies({
   try {
     final packageInfo = await PackageInfo.fromPlatform();
 
-    // ─── Rust core ───
+    // The bridge outlives bootstrap attempts; the services below do not.
     final backend = await FerryxBackend.initialize();
 
     // ─── Preferences ───
@@ -89,6 +89,10 @@ Future<DependenciesContainer> composeDependencies({
     final latinKeyboard = platformServices.latinKeyboard;
     void followKeyboard() => ChordLayout.latin = latinKeyboard.value;
     latinKeyboard.addListener(followKeyboard);
+    resources.add(
+      'keyboard.removeListener',
+      () => latinKeyboard.removeListener(followKeyboard),
+    );
     followKeyboard();
     // ─── Terminal ───
     final terminal = TerminalService();

@@ -328,10 +328,11 @@ system's OpenSSH files are read without being modified:
 | Linux | `$XDG_CONFIG_HOME/ferryx/known_hosts` (fallback: `~/.config/ferryx/known_hosts`) |
 
 Files opened externally from servers or archives are copied under `Ferryx/`
-in the system temporary directory; large compressed archive members may
-also be unpacked there for the viewer. These copies do not synchronize
-changes back to their source. Undo history and archive passwords stay in
-memory and are lost when the app exits.
+in the system temporary directory. These copies do not synchronize changes
+back to their source. The built-in viewer caches large archive members in
+unnamed temporary files, removed when their last handle closes or the app
+exits. Undo history and archive passwords stay in memory and are lost when
+the app exits.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the rules that keep the codebase
 navigable and [CLAUDE.md](CLAUDE.md) for the working conventions.

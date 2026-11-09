@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:domain_models/domain_models.dart';
@@ -152,13 +151,20 @@ class SyncCubit extends Cubit<SyncState> {
     this._onOptions,
   }) : _service = service,
        super(SyncState(options: options)) {
-    _subscription = service.updates.listen(_onUpdate);
+    _task = TaskSession<CompareUpdate>(
+      updates: service.updates,
+      idOf: (update) => update.taskId,
+      isDone: (update) => update.done,
+      cancel: service.cancel,
+      onUpdate: _onUpdate,
+      onError: _onError,
+      onCleanupError: addError,
+    );
   }
 
   final FolderSyncService _service;
   final void Function(CompareOptions options)? _onOptions;
-  StreamSubscription<CompareUpdate>? _subscription;
-  int? _taskId;
+  late final TaskSession<CompareUpdate> _task;
 
   /// The rows of the comparison under way; states share it.
   List<CompareRow> _rows = [];
@@ -176,14 +182,16 @@ class SyncCubit extends Cubit<SyncState> {
     required String right,
     String mask = '',
   }) async {
-    await stop();
+    if (isClosed) return;
     final problem = left.isEmpty || right.isEmpty
         ? SyncProblem.missingFolder
         : _same(left, right)
         ? SyncProblem.sameFolder
         : null;
     if (problem != null) {
+      final stopping = stop();
       emit(state.copyWith(problem: problem, clearError: true));
+      await stopping;
       return;
     }
     _onOptions?.call(state.options);
@@ -204,25 +212,21 @@ class SyncCubit extends Cubit<SyncState> {
       ),
     );
     final options = state.options;
-    final id = await _service.compare(
-      FolderCompareRequest(
-        left: left,
-        right: right,
-        recursive: options.recursive,
-        compareContent: options.byContent,
-        timeTolerance: Duration(seconds: options.fatTime ? 2 : 1),
-        includeHidden: options.includeHidden,
-        // Names pair as the desktop's file systems usually compare them.
-        caseSensitive: false,
-        nameMask: mask.trim(),
+    await _task.start(
+      () => _service.compare(
+        FolderCompareRequest(
+          left: left,
+          right: right,
+          recursive: options.recursive,
+          compareContent: options.byContent,
+          timeTolerance: Duration(seconds: options.fatTime ? 2 : 1),
+          includeHidden: options.includeHidden,
+          // Names pair as the desktop's file systems usually compare them.
+          caseSensitive: false,
+          nameMask: mask.trim(),
+        ),
       ),
     );
-    if (isClosed) return;
-    if (state.phase != SyncPhase.comparing || state.left != left) {
-      unawaited(_service.cancel(id));
-      return;
-    }
-    _taskId = id;
   }
 
   static bool _same(String a, String b) {
@@ -233,16 +237,25 @@ class SyncCubit extends Cubit<SyncState> {
 
   /// Ends the comparison under way; the rows found stay.
   Future<void> stop() async {
-    final id = _taskId;
-    _taskId = null;
-    if (state.running) {
+    final stopping = _task.stop();
+    if (!isClosed && state.running) {
       emit(state.copyWith(phase: SyncPhase.compared, clearCurrent: true));
     }
-    if (id != null) await _service.cancel(id);
+    await stopping;
+  }
+
+  void _onError(Object error, StackTrace stackTrace) {
+    addError(error, stackTrace);
+    emit(
+      state.copyWith(
+        phase: SyncPhase.compared,
+        clearCurrent: true,
+        error: error is FerryxException ? error.message : error.toString(),
+      ),
+    );
   }
 
   void _onUpdate(CompareUpdate update) {
-    if (update.taskId != _taskId || isClosed) return;
     final options = state.options;
     if (update.rows.isNotEmpty) {
       final start = _rows.length;
@@ -261,7 +274,6 @@ class SyncCubit extends Cubit<SyncState> {
       }
       _actions = grown;
     }
-    if (update.done) _taskId = null;
     emit(
       state.copyWith(
         phase: update.done ? SyncPhase.compared : SyncPhase.comparing,
@@ -423,9 +435,8 @@ class SyncCubit extends Cubit<SyncState> {
 
   @override
   Future<void> close() async {
-    await _subscription?.cancel();
-    final id = _taskId;
-    if (id != null) unawaited(_service.cancel(id));
-    return super.close();
+    final closing = _task.close();
+    await super.close();
+    await closing;
   }
 }

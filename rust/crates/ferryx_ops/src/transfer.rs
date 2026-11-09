@@ -16,7 +16,7 @@
 //! Nothing here goes on the undo journal: a server has no trash to bring
 //! an item back from, and what is replaced there is gone.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -237,6 +237,33 @@ fn native_meta(path: &Path, meta: &fs::Metadata) -> Meta {
     }
 }
 
+fn scan_stat(
+    side: &Side,
+    path: &str,
+    parents: &mut HashMap<String, HashMap<String, Meta>>,
+    wanted: &HashMap<String, HashSet<String>>,
+    stop: Stop,
+) -> VfsResult<Option<Meta>> {
+    let Side::Remote(server) = side else { return side.stat(path, stop) };
+    if !matches!(server.address().protocol, remote::Protocol::Ftp | remote::Protocol::Ftps) {
+        return side.stat(path, stop);
+    }
+    let Some(parent) = remote::address::parent(path) else { return side.stat(path, stop) };
+    if !parents.contains_key(&parent) {
+        let rows = match side.list(&parent, stop) {
+            Ok(rows) => rows,
+            Err(error) if error.kind == VfsErrorKind::NotFound => Vec::new(),
+            Err(error) => return Err(error),
+        };
+        let selected = wanted.get(&parent);
+        parents.insert(
+            parent.clone(),
+            rows.into_iter().filter(|(name, _)| selected.is_some_and(|names| names.contains(name))).collect(),
+        );
+    }
+    Ok(parents.get(&parent).and_then(|rows| rows.get(remote::address::name(path))).cloned())
+}
+
 struct NativeRead(File, PathBuf);
 
 impl RemoteRead for NativeRead {
@@ -352,6 +379,18 @@ impl<'a> Work<'a> {
     /// for one gone.
     fn scan(&mut self) -> Result<Vec<Option<Meta>>, Abort> {
         let from = &self.transfer.from;
+        // FTP stats list their parent. Share that snapshot only within
+        // this scan, before any copy, move or deletion changes the server.
+        let mut parents = HashMap::new();
+        let mut wanted: HashMap<String, HashSet<String>> = HashMap::new();
+        if matches!(from, Side::Remote(s) if matches!(s.address().protocol, remote::Protocol::Ftp | remote::Protocol::Ftps))
+        {
+            for source in &self.transfer.sources {
+                if let Some(parent) = remote::address::parent(source) {
+                    wanted.entry(parent).or_default().insert(remote::address::name(source).to_string());
+                }
+            }
+        }
         let mut bytes = 0u64;
         let mut items = 0u64;
         let mut kinds = Vec::new();
@@ -359,7 +398,7 @@ impl<'a> Work<'a> {
             self.ctx.check()?;
             let meta = loop {
                 let stop = self.stop();
-                match from.stat(source, &stop) {
+                match scan_stat(from, source, &mut parents, &wanted, &stop) {
                     Ok(meta) => break meta,
                     Err(e) => {
                         if !self.ask(from, source, &e)? {

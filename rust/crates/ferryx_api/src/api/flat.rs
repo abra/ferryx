@@ -139,6 +139,9 @@ pub fn stream_flat_listing_with(
     };
     let spawned = std::thread::Builder::new().name(format!("flat {listing_id}")).spawn(move || {
         let mut deliver = |batch: Vec<FlatRow>| {
+            if cancel.load(std::sync::atomic::Ordering::SeqCst) {
+                return;
+            }
             let (entries, folders): (Vec<Entry>, Vec<String>) = batch.into_iter().unzip();
             let views: Vec<EntryView> = entries.iter().map(EntryView::from).collect();
             let count = {
@@ -181,13 +184,18 @@ pub fn stream_flat_listing_with(
                 }
                 let mut end = FlatEnd::Done;
                 if let Ok(index) = app::archive_index(archive) {
-                    for (i, row) in index.files_in_subtree(inner, options.show_hidden).into_iter().enumerate()
+                    let stopped = || cancel.load(std::sync::atomic::Ordering::SeqCst);
+                    for (i, row) in
+                        index.files_in_subtree_until(inner, options.show_hidden, &stopped).enumerate()
                     {
                         if i >= flat::CAP {
                             end = FlatEnd::Capped;
                             break;
                         }
                         batcher.push(row);
+                    }
+                    if stopped() {
+                        end = FlatEnd::Cancelled;
                     }
                 }
                 batcher.flush();

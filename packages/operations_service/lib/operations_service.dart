@@ -7,3 +7,4 @@ export 'src/rename_service.dart';
 export 'src/checksum_service.dart';
 export 'src/duplicates_service.dart';
 export 'src/folder_sync_service.dart';
+export 'src/task_session.dart';

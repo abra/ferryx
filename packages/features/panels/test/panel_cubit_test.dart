@@ -14,6 +14,22 @@ class _Files extends Mock implements FileRepository {}
 
 class _Operations extends Mock implements OperationsService {}
 
+class _CountedFile extends FileEntry {
+  const _CountedFile({
+    required super.name,
+    required super.path,
+    required this.onKeyRead,
+  }) : super(kind: EntryKind.file, isDir: false);
+
+  final void Function() onKeyRead;
+
+  @override
+  String get key {
+    onKeyRead();
+    return super.key;
+  }
+}
+
 /// A file system of names per folder, listed as the core would: sorted by
 /// the options, the `..` row first.
 class _FakeFs {
@@ -595,6 +611,22 @@ void main() {
       expect(cubit.state.active!.selected, {'a.txt', 'b.txt'});
     });
 
+    test(
+      'gv survives navigation and restores only names in the current folder',
+      () async {
+        cubit.clickRow(2, toggle: true);
+        cubit.clickRow(4, toggle: true);
+        expect(cubit.state.active!.selectedBytes, 14);
+        cubit.deselectAll();
+        fs.folders['/home/docs'] = [fs.file('/home/docs', 'a.txt', size: 20)];
+        await cubit.open(const Location.native('/home/docs'));
+        expect(cubit.state.active!.lastSelection, {'a.txt', 'b.txt'});
+        cubit.reselectLast();
+        expect(cubit.state.active!.selected, {'a.txt'});
+        expect(cubit.state.active!.selectedBytes, 20);
+      },
+    );
+
     test('the search prompt keeps its matches for n and N', () {
       cubit.searchOpen();
       expect(cubit.state.active!.searching, isTrue);
@@ -617,6 +649,74 @@ void main() {
       expect(cubit.state.active!.quickSearch, isEmpty);
       expect(cubit.state.active!.matches, isEmpty);
     });
+
+    test('search counts wrap from matched and unmatched cursor rows', () {
+      cubit.quickSearchType('a');
+      for (final (cursor, forward, count, expected) in [
+        (2, true, 4, 2),
+        (3, true, 9999, 2),
+        (2, false, 9999, 3),
+        (4, true, 2, 3),
+        (1, false, 2, 2),
+        (0, false, 1, 3),
+        (5, true, 1, 2),
+        (4, false, 1, 3),
+      ]) {
+        cubit.moveCursorTo(cursor);
+        cubit.searchStep(forward: forward, count: count);
+        expect(
+          cubit.state.active!.cursor,
+          expected,
+          reason: 'cursor=$cursor forward=$forward count=$count',
+        );
+      }
+      for (final count in [0, -1]) {
+        final before = cubit.state;
+        cubit.searchStep(forward: true, count: count);
+        expect(cubit.state, same(before));
+      }
+    });
+
+    test(
+      'search counts scan at most once; nearby matches keep short scans',
+      () async {
+        const length = 20000;
+        var reads = 0;
+        var checking = false;
+        fs.folders['/home'] = [
+          for (var i = 0; i < length; i++)
+            _CountedFile(
+              name: i == length ~/ 2 ? 'match' : 'file-$i',
+              path: '/home/$i',
+              onKeyRead: () {
+                if (!checking) return;
+                if (++reads > length * 2) {
+                  throw StateError('search count repeated the listing scan');
+                }
+              },
+            ),
+        ];
+        await cubit.refresh();
+        cubit.quickSearchType('match');
+        final cursor = cubit.state.active!.cursor;
+        checking = true;
+        for (final forward in [true, false]) {
+          reads = 0;
+          cubit.searchStep(forward: forward, count: 9999);
+          expect(cubit.state.active!.cursor, cursor);
+          expect(reads, lessThanOrEqualTo(length));
+        }
+        checking = false;
+        cubit.clearQuickSearch();
+        cubit.quickSearchType('file');
+        reads = 0;
+        checking = true;
+        final before = cubit.state.active!.cursor;
+        cubit.searchStep(forward: true);
+        expect(cubit.state.active!.cursor, before + 1);
+        expect(reads, 1);
+      },
+    );
 
     test('f and F find the row whose name starts with the letter', () {
       cubit.findRowStartingWith('b', forward: true);

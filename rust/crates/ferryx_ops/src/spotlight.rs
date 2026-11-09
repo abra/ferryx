@@ -20,6 +20,8 @@ use crate::find::{self, FindHit, FindRequest, Matcher, SizeOp};
 /// Where macOS keeps the Spotlight command line.
 pub const MDFIND: &str = "/usr/bin/mdfind";
 
+const QUEUED_PATHS: usize = 256;
+
 /// Why Spotlight could not answer.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SpotlightError {
@@ -121,11 +123,16 @@ pub fn run(
         .map_err(|e| SpotlightError::Unavailable(e.to_string()))?;
     let stdout = child.stdout.take().ok_or_else(|| SpotlightError::Unavailable("no output".into()))?;
     // A thread reads, so a cancel is seen while mdfind is quiet.
-    let (tx, rx) = mpsc::channel::<PathBuf>();
-    let reader = std::thread::Builder::new()
-        .name("mdfind".into())
-        .spawn(move || read_paths(stdout, &tx))
-        .map_err(|e| SpotlightError::Unavailable(e.to_string()))?;
+    let (tx, rx) = mpsc::sync_channel::<PathBuf>(QUEUED_PATHS);
+    let reader =
+        match std::thread::Builder::new().name("mdfind".into()).spawn(move || read_paths(stdout, &tx)) {
+            Ok(reader) => reader,
+            Err(error) => {
+                stop(&mut child);
+                let _ = child.wait();
+                return Err(SpotlightError::Unavailable(error.to_string()));
+            }
+        };
     let mut offered = 0u64;
     let mut cancelled = false;
     let mut offer = |submit: &mut dyn FnMut(FindHit)| loop {
@@ -152,6 +159,8 @@ pub fn run(
         Some((search, check)) => find::check_contents(search, check, cancel, on_hit, offer),
         None => offer(on_hit),
     }
+    // A cancelled consumer may leave the reader waiting on a full queue.
+    drop(rx);
     let _ = reader.join();
     let status = child.wait().map_err(|e| SpotlightError::Unavailable(e.to_string()))?;
     if !cancelled && !status.success() && offered == 0 {
@@ -166,7 +175,7 @@ fn stop(child: &mut Child) {
 
 /// The NUL-separated paths `mdfind -0` prints; a last one without its NUL
 /// was cut short and is dropped.
-fn read_paths(stdout: impl Read, tx: &mpsc::Sender<PathBuf>) {
+fn read_paths(stdout: impl Read, tx: &mpsc::SyncSender<PathBuf>) {
     let mut reader = BufReader::with_capacity(64 * 1024, stdout);
     let mut raw = Vec::new();
     loop {
@@ -231,11 +240,27 @@ mod tests {
 
     #[test]
     fn paths_split_on_nul() {
-        let (tx, rx) = mpsc::channel();
+        let (tx, rx) = mpsc::sync_channel(QUEUED_PATHS);
         read_paths(&b"/a/one\0/b/two words\0\0/c"[..], &tx);
         drop(tx);
         let got: Vec<PathBuf> = rx.iter().collect();
         assert_eq!(got, [PathBuf::from("/a/one"), PathBuf::from("/b/two words")]);
+    }
+
+    #[test]
+    fn a_full_path_queue_releases_its_reader_when_the_search_stops() {
+        let (tx, rx) = mpsc::sync_channel(2);
+        let (done, finished) = mpsc::channel();
+        let reader = std::thread::spawn(move || {
+            let paths = b"/one\0/two\0/three\0/four\0";
+            read_paths(&paths[..], &tx);
+            done.send(()).unwrap();
+        });
+        assert!(finished.recv_timeout(Duration::from_millis(30)).is_err());
+        assert_eq!(rx.recv().unwrap(), PathBuf::from("/one"));
+        drop(rx);
+        finished.recv_timeout(Duration::from_secs(2)).unwrap();
+        reader.join().unwrap();
     }
 
     /// Spotlight on this machine: `cargo test -p ferryx_ops spotlight_live

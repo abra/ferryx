@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:domain_models/domain_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meta/meta.dart';
@@ -186,15 +184,22 @@ class DuplicatesCubit extends Cubit<DuplicatesState> {
   DuplicatesCubit({required DuplicatesService service})
     : _service = service,
       super(const DuplicatesState()) {
-    _subscription = service.updates.listen(_onUpdate);
+    _task = TaskSession<DuplicatesUpdate>(
+      updates: service.updates,
+      idOf: (update) => update.taskId,
+      isDone: (update) => update.done,
+      cancel: service.cancel,
+      onUpdate: _onUpdate,
+      onError: _onError,
+      onCleanupError: addError,
+    );
   }
 
   final DuplicatesService _service;
-  StreamSubscription<DuplicatesUpdate>? _subscription;
-  int? _taskId;
+  late final TaskSession<DuplicatesUpdate> _task;
 
   Future<void> start(DuplicatesRequest request) async {
-    await stop();
+    if (isClosed) return;
     emit(
       DuplicatesState(
         roots: request.roots,
@@ -203,26 +208,29 @@ class DuplicatesCubit extends Cubit<DuplicatesState> {
         revision: state.revision + 1,
       ),
     );
-    final id = await _service.start(request);
-    if (isClosed) return;
-    if (!state.running) {
-      unawaited(_service.cancel(id));
-      return;
-    }
-    _taskId = id;
+    await _task.start(() => _service.start(request));
   }
 
   Future<void> stop() async {
-    final id = _taskId;
-    _taskId = null;
-    if (state.running) {
+    final stopping = _task.stop();
+    if (!isClosed && state.running) {
       emit(state.copyWith(running: false, clearCurrent: true));
     }
-    if (id != null) await _service.cancel(id);
+    await stopping;
+  }
+
+  void _onError(Object error, StackTrace stackTrace) {
+    addError(error, stackTrace);
+    emit(
+      state.copyWith(
+        running: false,
+        clearCurrent: true,
+        error: error is FerryxException ? error.message : error.toString(),
+      ),
+    );
   }
 
   void _onUpdate(DuplicatesUpdate update) {
-    if (update.taskId != _taskId || isClosed) return;
     var groups = state.groups;
     if (update.groups.isNotEmpty) {
       groups = [...groups];
@@ -230,7 +238,6 @@ class DuplicatesCubit extends Cubit<DuplicatesState> {
         groups.insert(_insertAt(groups, group), group);
       }
     }
-    if (update.done) _taskId = null;
     emit(
       state.copyWith(
         running: !update.done,
@@ -317,9 +324,8 @@ class DuplicatesCubit extends Cubit<DuplicatesState> {
 
   @override
   Future<void> close() async {
-    await _subscription?.cancel();
-    final id = _taskId;
-    if (id != null) unawaited(_service.cancel(id));
-    return super.close();
+    final closing = _task.close();
+    await super.close();
+    await closing;
   }
 }

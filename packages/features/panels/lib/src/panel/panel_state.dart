@@ -5,13 +5,11 @@ import 'package:meta/meta.dart';
 import 'flat_view.dart';
 import 'panel_side.dart';
 
-/// [PanelTabState.selectedBytes] by the selection it was summed for: the
-/// footer asks on every emit, and a move of the cursor changes neither the
-/// selection nor the rows.
-final _selectedBytes =
-    Expando<({List<FileEntry> rows, Map<String, int> sizes, int bytes})>(
-      'selected bytes',
-    );
+/// The rows own these sums: a selection remembered for `gv` must not keep
+/// an old listing alive. Both keys are weak; cursor moves reuse the sum.
+final _selectedBytes = Expando<Expando<({Map<String, int> sizes, int bytes})>>(
+  'selected bytes',
+);
 
 /// One tab of a panel: where it is, what it shows, where its cursor and
 /// selection are.
@@ -139,16 +137,15 @@ class PanelTabState extends Equatable {
 
   int get selectedBytes {
     if (selected.isEmpty) return 0;
-    final memo = _selectedBytes[selected];
-    if (memo != null &&
-        identical(memo.rows, rows) &&
-        identical(memo.sizes, folderSizes)) {
+    final sums = _selectedBytes[rows] ??= Expando('selection');
+    final memo = sums[selected];
+    if (memo != null && identical(memo.sizes, folderSizes)) {
       return memo.bytes;
     }
     final bytes = rows
         .where((r) => selected.contains(r.key))
         .fold(0, (sum, r) => sum + (r.size ?? folderSizes[r.name] ?? 0));
-    _selectedBytes[selected] = (rows: rows, sizes: folderSizes, bytes: bytes);
+    sums[selected] = (sizes: folderSizes, bytes: bytes);
     return bytes;
   }
 

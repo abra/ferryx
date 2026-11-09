@@ -611,6 +611,60 @@ fn flat_lists_take_the_subtree_run() {
 }
 
 #[test]
+fn flat_archive_rows_stop_before_materializing_the_rest() {
+    use std::cell::Cell;
+    let dir = tempfile::tempdir().unwrap();
+    let index = ArchiveIndex::open(&make_zip(dir.path())).unwrap();
+    let examined = Cell::new(0);
+    let stop = || {
+        examined.set(examined.get() + 1);
+        false
+    };
+    let first: Vec<_> = index.files_in_subtree_until("", true, &stop).take(1).collect();
+    assert_eq!(first.len(), 1);
+    assert!(examined.get() < index.members.len());
+    let examined = Cell::new(0);
+    let stop = || {
+        examined.set(examined.get() + 1);
+        true
+    };
+    assert_eq!(index.files_in_subtree_until("", false, &stop).count(), 0);
+    assert_eq!(examined.get(), 1);
+}
+
+#[test]
+fn concurrent_large_viewer_members_with_one_stem_keep_their_own_bytes() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("large.zip");
+    let mut zip = zip::ZipWriter::new(File::create(&path).unwrap());
+    let options = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+    let len = 4 * 1024 * 1024 + 1;
+    for (name, byte) in [("same.txt", b'a'), ("same.csv", b'b')] {
+        zip.start_file(name, options).unwrap();
+        zip.write_all(&vec![byte; len]).unwrap();
+    }
+    zip.finish().unwrap();
+    let index = ArchiveIndex::open(&path).unwrap();
+    let ready = std::sync::Barrier::new(4);
+    std::thread::scope(|scope| {
+        let jobs: Vec<_> = [("same.txt", b'a'), ("same.csv", b'b'), ("same.txt", b'a'), ("same.csv", b'b')]
+            .into_iter()
+            .map(|(name, byte)| {
+                let (index, ready) = (&index, &ready);
+                scope.spawn(move || {
+                    ready.wait();
+                    assert_eq!(index.read_range(name, 0, len, None).unwrap(), vec![byte; len]);
+                    assert_eq!(index.read_range(name, len as u64 - 1, 20, None).unwrap(), [byte]);
+                })
+            })
+            .collect();
+        for job in jobs {
+            job.join().unwrap();
+        }
+    });
+}
+
+#[test]
 fn shared_indexes_are_kept_until_the_file_changes() {
     let dir = tempfile::tempdir().unwrap();
     let path = make_zip(dir.path());

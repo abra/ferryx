@@ -214,4 +214,80 @@ void main() {
     await sync.close();
     verify(() => service.cancel(7)).called(1);
   });
+
+  test('early rows and completion survive a delayed compare reply', () async {
+    final reply = Completer<int>();
+    when(() => service.compare(any())).thenAnswer((_) => reply.future);
+    final sync = cubit();
+    final starting = sync.compare(left: '/l', right: '/r');
+    updates.add(
+      CompareUpdate(taskId: 7, rows: [row('a', CompareState.leftOnly)]),
+    );
+    updates.add(
+      CompareUpdate(
+        taskId: 7,
+        rows: [row('b', CompareState.rightOnly)],
+        done: true,
+      ),
+    );
+    await flush();
+    reply.complete(7);
+    await starting;
+    expect(sync.state.phase, SyncPhase.compared);
+    expect(sync.state.rowCount, 2);
+    expect(sync.state.summary.toRight, 1);
+    expect(sync.state.summary.toLeft, 1);
+    await sync.close();
+    verifyNever(() => service.cancel(7));
+  });
+
+  test(
+    'changing only the right folder rejects the old compare reply',
+    () async {
+      final first = Completer<int>();
+      final second = Completer<int>();
+      var starts = 0;
+      when(() => service.compare(any()))
+          .thenAnswer((_) => starts++ == 0 ? first.future : second.future);
+      final sync = cubit();
+      final a = sync.compare(left: '/l', right: '/old');
+      final b = sync.compare(left: '/l', right: '/new');
+      second.complete(8);
+      await b;
+      first.complete(7);
+      await a;
+      updates.add(
+        CompareUpdate(
+          taskId: 7,
+          rows: [row('old', CompareState.leftOnly)],
+          done: true,
+        ),
+      );
+      updates.add(
+        CompareUpdate(
+          taskId: 8,
+          rows: [row('new', CompareState.leftOnly)],
+          done: true,
+        ),
+      );
+      await flush();
+      expect(sync.state.right, '/new');
+      expect(sync.state.rowCount, 1);
+      expect(sync.state.rowAt(0).leftRel, 'new');
+      expect(sync.state.running, isFalse);
+      verify(() => service.cancel(7)).called(1);
+      await sync.close();
+    },
+  );
+
+  test('a compare start failure ends the running state', () async {
+    when(() => service.compare(any())).thenThrow(
+      const FerryxException(FerryxErrorKind.io, 'cannot compare'),
+    );
+    final sync = cubit();
+    await sync.compare(left: '/l', right: '/r');
+    expect(sync.state.phase, SyncPhase.compared);
+    expect(sync.state.error, 'cannot compare');
+    await sync.close();
+  });
 }
