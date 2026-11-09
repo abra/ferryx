@@ -11,7 +11,7 @@ import 'file_icon.dart';
 /// the keys are in or in the other one.
 ///
 /// Orthodox managers tell the cursor from the selection: the cursor row
-/// takes a soft selection and an accent edge; marked rows have a tint
+/// takes a stronger fill and an accent edge; marked rows have a soft tint
 /// and a check mark. Where the keys are not (the other panel, a window
 /// that is not active) both grey to the unemphasized selection with the
 /// normal text, as macOS greys a selection without focus.
@@ -48,7 +48,7 @@ class RowLook {
 
   Color? background(AppColorsExt colors) {
     if (dropTarget) return colors.selectionAccent;
-    if (cursor) return active ? colors.selectionAccent : colors.selectionMuted;
+    if (cursor) return active ? colors.cursorFill : colors.selectionMuted;
     if (selected) return active ? colors.accentSoft : colors.selectionMuted;
     return null;
   }
@@ -60,7 +60,9 @@ class RowLook {
           border: AppBorder(
             left: BorderSide(
               color: colors.accent,
-              width: AppSizes.focusBarHeight,
+              width: dropTarget
+                  ? AppSizes.focusBarHeight
+                  : AppSizes.cursorBarWidth,
             ),
           ),
         )
@@ -69,7 +71,8 @@ class RowLook {
   /// The name's colour; [ink] is the row's own when nothing overrides it.
   Color foreground(BuildContext context, {Color? ink}) {
     final colors = context.appColors;
-    if (emphasized) return colors.onSelection;
+    if (dropTarget) return colors.onSelection;
+    if (cursor && active) return colors.onCursor;
     if (selected && active) return colors.link;
     if (dimmed) return colors.textFaint;
     return ink ?? context.colors.onSurface;
@@ -78,14 +81,16 @@ class RowLook {
   /// The colour of a row's details (size, date) and of its check mark's
   /// companions.
   Color secondary(AppColorsExt colors) {
-    if (emphasized) return colors.onSelectionMuted;
+    if (dropTarget) return colors.onSelectionMuted;
+    if (cursor && active) return colors.onCursorMuted;
     if (dimmed) return colors.textFaint;
     return colors.textMuted;
   }
 
   /// The selection's check mark.
   Color checkMark(AppColorsExt colors) {
-    if (emphasized) return colors.onSelection;
+    if (dropTarget) return colors.onSelection;
+    if (cursor && active) return colors.onCursor;
     return active ? colors.accent : colors.textMuted;
   }
 }
@@ -129,7 +134,7 @@ class RowName extends StatelessWidget {
     // The row drops its fill under a rename's field: the icon keeps its
     // own colour, not the one for the accent.
     final iconColor = look.emphasized && field == null
-        ? colors.onSelection
+        ? look.foreground(context)
         : tint;
     final base = context.text.bodyMedium!.copyWith(
       color: look.foreground(context),
@@ -168,7 +173,7 @@ class RowName extends StatelessWidget {
                   colors: dots,
                   // A contrasting ring separates tags from the cursor fill.
                   ring: look.emphasized
-                      ? colors.onSelection
+                      ? look.foreground(context)
                       : look.background(colors) ?? colors.window,
                   size: dotSize,
                 ),
@@ -214,7 +219,7 @@ class RowName extends StatelessWidget {
     final chars = name.characters.toList();
     final underline = style.copyWith(
       decoration: TextDecoration.underline,
-      decorationColor: look.emphasized ? colors.onSelection : colors.accent,
+      decorationColor: look.emphasized ? style.color : colors.accent,
       decorationThickness: 2,
     );
     final spans = <TextSpan>[];

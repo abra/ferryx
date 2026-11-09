@@ -153,8 +153,9 @@ See `ARCHITECTURE.md`. The rules that matter most:
   `AppMiddleEllipsis`. Selection colours are `selectionAccent` /
   `selectionMuted` through `AppFocusArea.activeOf`, never `accent` for a
   row. Pair soft active selection with `onSelection` / `onSelectionMuted`;
-  `onAccent` belongs on filled accent controls. Keep the file cursor's
-  leading line independent of marked rows and their check marks. File
+  `onAccent` belongs on filled accent controls. The active file cursor uses
+  `cursorFill` with `onCursor` / `onCursorMuted`; keep its leading line
+  independent of marked rows and their check marks. File
   metadata uses `context.mono`, with matching column measurements.
   A table's rows (files, results) take `metrics.tableRowInset` and
   `radius.tableRow`; a sidebar's, picker's or menu's `rowInset` and

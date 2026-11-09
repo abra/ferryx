@@ -28,6 +28,9 @@ class AppColorsExt extends ThemeExtension<AppColorsExt> {
     required this.onSelectionMuted,
     required this.selectionAccent,
     required this.selectionMuted,
+    required this.cursorFill,
+    required this.onCursor,
+    required this.onCursorMuted,
     required this.link,
     required this.accentSoft,
     required this.selection,
@@ -118,6 +121,15 @@ class AppColorsExt extends ThemeExtension<AppColorsExt> {
 
   /// Neutral selection where the focus is in another panel or window.
   final Color selectionMuted;
+
+  /// The current file in the active panel, stronger than marked rows.
+  final Color cursorFill;
+
+  /// File name and icons on [cursorFill].
+  final Color onCursor;
+
+  /// File metadata on [cursorFill].
+  final Color onCursorMuted;
 
   /// Links and references in text: the accent darkened enough to read.
   final Color link;
@@ -237,6 +249,9 @@ class AppColorsExt extends ThemeExtension<AppColorsExt> {
       onSelectionMuted: mix(onSelectionMuted, other.onSelectionMuted),
       selectionAccent: mix(selectionAccent, other.selectionAccent),
       selectionMuted: mix(selectionMuted, other.selectionMuted),
+      cursorFill: mix(cursorFill, other.cursorFill),
+      onCursor: mix(onCursor, other.onCursor),
+      onCursorMuted: mix(onCursorMuted, other.onCursorMuted),
       link: mix(link, other.link),
       accentSoft: mix(accentSoft, other.accentSoft),
       selection: mix(selection, other.selection),

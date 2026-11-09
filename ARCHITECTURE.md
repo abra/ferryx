@@ -85,8 +85,10 @@ The desktop details the library keeps for every screen:
   (the unemphasized grey) everywhere else —
   another panel, or the whole window while it is not the active one
   (`AppWindowActivity` at the app root, read by `AppFocusArea.activeOf`).
-  A file cursor has a leading accent line; independently marked files
-  have `accentSoft` and a check mark. `accent` / `onAccent` remain the
+  The active file cursor uses the stronger `cursorFill`, with `onCursor`
+  text, `onCursorMuted` metadata and a 3 pt leading accent line; independently
+  marked files have `accentSoft` and a check mark. Neither the text weight
+  nor row geometry changes as the cursor moves. `accent` / `onAccent` remain the
   pair for filled buttons, badges and checked controls. Contrast tests
   cover normal and secondary selection text in both appearances.
 - Rows: a table's (a panel's files, the results and comparisons in

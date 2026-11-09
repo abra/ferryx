@@ -24,6 +24,9 @@ abstract final class AppSizes {
   /// in (`AppFocusArea`), as thick as the line a lit panel edge draws.
   static const double focusBarHeight = 2;
 
+  /// Leading marker of the current file, independent of marked selections.
+  static const double cursorBarWidth = 3;
+
   /// How narrow a pane of a split may get by moving the edge between them.
   static const double paneMinWidth = 320;
   static const double rightPanelWidth = 300;

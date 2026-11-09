@@ -285,6 +285,17 @@ void main() {
           expect(contrast(c.accent, background), greaterThanOrEqualTo(3));
         }
         expect(contrast(c.onAccent, c.accent), greaterThanOrEqualTo(4.5));
+        expect(contrast(c.onCursor, c.cursorFill), greaterThanOrEqualTo(4.5));
+        expect(
+          contrast(c.onCursorMuted, c.cursorFill),
+          greaterThanOrEqualTo(4.5),
+        );
+        expect(contrast(c.accent, c.cursorFill), greaterThanOrEqualTo(3));
+        expect(
+          contrast(c.cursorFill, palette.surface),
+          greaterThan(contrast(c.accentSoft, palette.surface)),
+          reason: 'the current file must stand out more than marked files',
+        );
         expect(
           contrast(c.textMuted, c.selectionMuted),
           greaterThanOrEqualTo(4.5),

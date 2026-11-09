@@ -39,15 +39,15 @@ void main() {
     dimmed: dimmed,
   );
 
-  testWidgets('the cursor row of the active panel takes the emphasized '
-      'selection with its own text colours', (tester) async {
+  testWidgets('the cursor row of the active panel takes the stronger '
+      'fill with its own text colours', (tester) async {
     await pump(tester);
     final row = look(cursor: true);
     expect(row.emphasized, isTrue);
-    expect(row.background(colors), colors.selectionAccent);
-    expect(row.foreground(context), colors.onSelection);
-    expect(row.secondary(colors), colors.onSelectionMuted);
-    expect(row.checkMark(colors), colors.onSelection);
+    expect(row.background(colors), colors.cursorFill);
+    expect(row.foreground(context), colors.onCursor);
+    expect(row.secondary(colors), colors.onCursorMuted);
+    expect(row.checkMark(colors), colors.onCursor);
   });
 
   testWidgets('the cursor row elsewhere greys and keeps the normal text', (
@@ -79,7 +79,7 @@ void main() {
     await pump(tester);
     expect(
       look(cursor: true, selected: true).background(colors),
-      colors.selectionAccent,
+      colors.cursorFill,
     );
     expect(look().background(colors), isNull);
     expect(look().foreground(context), context.colors.onSurface);
@@ -112,7 +112,7 @@ void main() {
       return tester.widget<Icon>(find.byType(Icon)).color;
     }
 
-    expect(await iconColor(), colors.onSelection);
-    expect(await iconColor(field: const SizedBox()), isNot(colors.onSelection));
+    expect(await iconColor(), colors.onCursor);
+    expect(await iconColor(field: const SizedBox()), isNot(colors.onCursor));
   });
 }
