@@ -20,9 +20,11 @@ abstract final class AppSizes {
   static const double sidebarCollapseWidth = 120;
   static const double resizeHandleWidth = 6;
 
-  /// The accent bar across the top of the part of the window the keys are
-  /// in (`AppFocusArea`), as thick as the line a lit panel edge draws.
+  /// Short accent bars: active tabs, drop targets and editor cursors.
   static const double focusBarHeight = 2;
+
+  /// Inset outline around the area receiving keys (`AppFocusArea`).
+  static const double focusFrameWidth = 2;
 
   /// Leading marker of the current file, independent of marked selections.
   static const double cursorBarWidth = 3;

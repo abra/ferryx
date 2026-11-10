@@ -38,6 +38,10 @@ Each panel keeps its own tabs, history, sorting and view mode. Panels sit
 beside each other in a wide window and stack in a tall one; **⌥⌘P** or
 Settings → Panels fixes the arrangement you prefer.
 
+An accent outline identifies the area receiving keyboard input: a file
+panel, the terminal or preview. It follows focus after a click or Tab;
+opening a menu keeps the last area indicated.
+
 Drag the divider to resize. Hovering or dragging shows both percentages.
 Double-click it, click **Equal panels**, or use **View → Make Panels Equal**
 to restore **50/50**. The split is remembered.

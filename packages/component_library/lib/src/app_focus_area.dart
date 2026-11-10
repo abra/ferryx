@@ -2,11 +2,12 @@ import 'package:flutter/widgets.dart';
 
 import 'app_window_activity.dart';
 import 'theme/extensions/build_context_ext.dart';
+import 'theme/hairlines.dart';
 import 'theme/tokens/app_sizes.dart';
 
 /// A part of the window the keys can be in: the sidebar, a pane, a PDF's
-/// pages or its notes, a panel. The one holding the focus draws a bar in
-/// the accent across its top, and what it selects takes the accent
+/// pages or its notes, a panel. The one holding the focus draws an inset
+/// accent outline, and what it selects takes the accent
 /// ([activeOf]); the others grey their selections, as macOS greys one
 /// without focus. So it is plain where the next key goes.
 ///
@@ -80,30 +81,23 @@ class _AppFocusAreaState extends State<AppFocusArea> {
   @override
   Widget build(BuildContext context) {
     final active = _active == this && AppWindowActivity.of(context);
-    // One shape either way: a change of focus repaints the bar and the
-    // selections, it never remounts what the area holds.
+    // Foreground paint keeps the outline over opaque content without
+    // changing its layout, hit testing or mounted state as focus moves.
     return _ActiveArea(
       active: active,
       child: Focus(
         focusNode: _node,
-        child: Stack(
-          fit: StackFit.passthrough,
-          children: [
-            widget.child,
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: AppSizes.focusBarHeight,
-              child: IgnorePointer(
-                child: ColoredBox(
-                  color: active
-                      ? context.appColors.accent
-                      : const Color(0x00000000),
-                ),
-              ),
+        child: DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: BoxDecoration(
+            border: AppBorder.all(
+              color: active
+                  ? context.appColors.accent
+                  : const Color(0x00000000),
+              width: AppSizes.focusFrameWidth,
             ),
-          ],
+          ),
+          child: widget.child,
         ),
       ),
     );

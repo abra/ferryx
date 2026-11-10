@@ -152,6 +152,10 @@ The desktop details the library keeps for every screen:
   on any focus (`AppOutlineInputBorder.halo`); buttons, pop-ups, boxes and
   switches draw `FocusRing` in keyboard mode only (a ⌘ or ⌃ chord does not
   switch that mode on).
+  `AppFocusArea` marks the innermost area receiving keys with a 2 pt inset
+  accent outline, painted in the foreground through `AppBorder`. It adds
+  no padding or hit target and keeps its child mounted when focus moves.
+  Menus retain the last active area; an inactive window clears its outline.
 - Dialogs: `AppDialog` runs the default (last) action on Return whatever
   has the focus, keeps Return for a focused field's submit, leaves on Esc
   and ⌘., holds the focus itself when nothing asked for it, never makes a

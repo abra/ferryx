@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru" data-theme="light" data-variant="combined" data-layout="columns">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Ferryx — активная панель</title>
+    <link rel="icon" href="../../../brand/ferryx-symbolic.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="prototype.css">
+    <script src="prototype.js" defer></script>
+  </head>
+  <body>
+    <header class="study-header">
+      <div class="study-title">
+        <span class="wordmark">FERRYX</span>
+        <h1>Какая панель активна?</h1>
+        <span class="study-note">Прототип · демоданные</span>
+      </div>
+      <div class="study-controls">
+        <div class="segmented variants" role="group" aria-label="Оформление активной панели">
+          <button data-variant-choice="current" aria-pressed="false">Сейчас</button>
+          <button data-variant-choice="header" aria-pressed="false"><b>A</b> Шапка</button>
+          <button data-variant-choice="frame" aria-pressed="false"><b>B</b> Контур</button>
+          <button data-variant-choice="combined" aria-pressed="true"><b>C</b> Вместе</button>
+        </div>
+        <div class="control-options">
+          <label>Тема <select id="theme"><option value="light">Светлая</option><option value="dark">Тёмная</option></select></label>
+          <label>Панели <select id="layout"><option value="columns">Рядом</option><option value="rows">Одна над другой</option></select></label>
+          <label class="checkbox-label"><input id="empty-folder" type="checkbox"> Пустая папка</label>
+          <button class="comparison-link" id="compare">Сравнить A / B / C</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="study-stage" id="stage"></main>
+
+    <footer class="study-footer">
+      <p id="variant-description"></p>
+      <p>Клик или <kbd>Tab</kbd> — другая панель · <kbd>j</kbd> / <kbd>k</kbd> — курсор · <kbd>Space</kbd> — отметка</p>
+      <span>13 px текст · 22 px строка · масштаб 100%</span>
+    </footer>
+    <p class="sr-only" id="announcement" role="status" aria-live="polite"></p>
+
+    <template id="window-template">
+      <section class="ferryx-window" aria-label="Ferryx: прототип выделения активной панели">
+        <div class="workspace"></div>
+        <footer class="key-hints">
+          <div class="hint-group">
+            <span class="hint"><kbd class="typed">gT</kbd> Previous Tab</span>
+            <span class="hint"><kbd class="typed">gt</kbd> Next Tab</span>
+            <span class="hint"><kbd>Tab</kbd> Change Panel</span>
+            <span class="hint"><kbd class="typed">i</kbd> Preview</span>
+          </div>
+          <span class="hint help-hint">Shortcuts <kbd>⌘/</kbd></span>
+        </footer>
+      </section>
+    </template>
+  </body>
+</html>

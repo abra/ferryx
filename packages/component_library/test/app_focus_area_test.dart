@@ -8,17 +8,23 @@ bool _active(WidgetTester tester, String label) => AppFocusArea.activeOf(
   tester.element(find.byKey(ValueKey('probe $label'))),
 );
 
-/// The bar across the top of the area around [label].
-Color _bar(WidgetTester tester, String label) {
+/// The foreground outline of the area around [label].
+Color _outline(WidgetTester tester, String label) {
   final area = find.ancestor(
     of: find.byKey(ValueKey('probe $label')),
     matching: find.byType(AppFocusArea),
   );
-  return tester
-      .widget<ColoredBox>(
-        find.descendant(of: area.first, matching: find.byType(ColoredBox)).last,
-      )
-      .color;
+  final decoration = tester.widget<DecoratedBox>(
+    find.descendant(of: area.first, matching: find.byType(DecoratedBox)).first,
+  );
+  final border = (decoration.decoration as BoxDecoration).border! as AppBorder;
+  expect(decoration.position, DecorationPosition.foreground);
+  for (final side in [border.top, border.right, border.bottom, border.left]) {
+    expect(side.width, 2);
+    expect(side.strokeAlign, BorderSide.strokeAlignInside);
+    expect(side.color, border.top.color);
+  }
+  return border.top.color;
 }
 
 Widget _field(String label, FocusNode node) => Builder(
@@ -30,7 +36,7 @@ Widget _field(String label, FocusNode node) => Builder(
 );
 
 void main() {
-  testWidgets('the area around the focus draws the bar and takes the '
+  testWidgets('the area around the focus draws the outline and takes the '
       'accent; the innermost wins, and a menu keeps the last one', (
     tester,
   ) async {
@@ -81,7 +87,13 @@ void main() {
         ),
       ),
     );
-    expect(_bar(tester, 'pages'), const Color(0x00000000));
+    final pagesField = find.descendant(
+      of: find.byKey(const ValueKey('probe pages')),
+      matching: find.byType(TextField),
+    );
+    final pagesState = tester.state(pagesField);
+    final pagesRect = tester.getRect(pagesField);
+    expect(_outline(tester, 'pages'), const Color(0x00000000));
     expect(_active(tester, 'outside'), isTrue, reason: 'outside every area');
 
     pages.requestFocus();
@@ -89,29 +101,32 @@ void main() {
     expect(_active(tester, 'pages'), isTrue);
     expect(_active(tester, 'notes'), isFalse);
     expect(_active(tester, 'pane'), isFalse, reason: 'the innermost wins');
-    expect(_bar(tester, 'pages'), accent);
-    expect(_bar(tester, 'notes'), const Color(0x00000000));
-    expect(_bar(tester, 'pane'), const Color(0x00000000));
+    expect(_outline(tester, 'pages'), accent);
+    expect(_outline(tester, 'notes'), const Color(0x00000000));
+    expect(_outline(tester, 'pane'), const Color(0x00000000));
 
     notes.requestFocus();
     await tester.pump();
     expect(_active(tester, 'pages'), isFalse);
     expect(_active(tester, 'notes'), isTrue);
-    expect(_bar(tester, 'notes'), accent);
-    expect(_bar(tester, 'pages'), const Color(0x00000000));
+    expect(_outline(tester, 'notes'), accent);
+    expect(_outline(tester, 'pages'), const Color(0x00000000));
 
     // A focus outside every area, as a menu's or a dialog's, leaves the
     // last area marked.
     menu.requestFocus();
     await tester.pump();
     expect(_active(tester, 'notes'), isTrue);
-    expect(_bar(tester, 'notes'), accent);
+    expect(_outline(tester, 'notes'), accent);
 
     outer.requestFocus();
     await tester.pump();
     expect(_active(tester, 'pane'), isTrue);
     expect(_active(tester, 'notes'), isFalse);
-    expect(_bar(tester, 'pane'), accent);
+    expect(_outline(tester, 'pane'), accent);
+    expect(tester.getRect(pagesField), pagesRect);
+    expect(tester.state(pagesField), same(pagesState));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('an area mounted around the focus is active at once', (

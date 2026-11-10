@@ -204,7 +204,7 @@ See `ARCHITECTURE.md`. The rules that matter most:
   from by typing (a palette, a jump) through `AppQuickPicker`.
 - Focus rings: draw them with `FocusRing`, which shows only after keyboard
   use (`FocusHighlightTracker`). Every part of the window the keys can be in
-  (each panel, the viewer) is an `AppFocusArea`, which bars the active one
+  (each panel, the viewer) is an `AppFocusArea`, which outlines the active one
   and lets a selection read `AppFocusArea.activeOf` to grey itself elsewhere.
 - Dialogs open through `showAppDialog` (the theme's barrier, no dismissal
   by a click beside); `AppDialog` owns Return/Esc/⌘. and the default

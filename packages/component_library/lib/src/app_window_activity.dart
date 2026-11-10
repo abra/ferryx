@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 /// Whether the app's window is the active one, the one the keys go to.
-/// macOS greys the emphasized selection and the focus bar of a window
+/// macOS greys the emphasized selection and clears the focus outline of a window
 /// that is not key; Flutter reports the app inactive once its window
 /// resigns that. One at the app's root; read through [of].
 class AppWindowActivity extends StatefulWidget {
