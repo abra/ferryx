@@ -405,13 +405,13 @@ class _Conditions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(l10n.dupesIn, style: context.text.labelMedium),
-        const SizedBox(height: AppSpacing.xs),
-        TextField(
-          controller: root,
-          style: context.mono,
-          onEditingComplete: () {},
-          onSubmitted: (_) => onSubmit(),
+        AppFormField(
+          label: l10n.dupesIn,
+          child: AppTextField(
+            controller: root,
+            monospace: true,
+            onSubmitted: (_) => onSubmit(),
+          ),
         ),
         if (other != null) ...[
           const SizedBox(height: AppSpacing.sm),
@@ -434,11 +434,10 @@ class _Conditions extends StatelessWidget {
                 Text(l10n.dupesNames, style: context.text.labelMedium),
                 SizedBox(
                   width: AppSizes.maskFieldWidth,
-                  child: TextField(
+                  child: AppTextField(
                     controller: mask,
-                    style: context.mono,
-                    decoration: InputDecoration(hintText: l10n.findNameHint),
-                    onEditingComplete: () {},
+                    monospace: true,
+                    hintText: l10n.findNameHint,
                     onSubmitted: (_) => onSubmit(),
                   ),
                 ),
@@ -451,12 +450,11 @@ class _Conditions extends StatelessWidget {
                 Text(l10n.dupesMinSize, style: context.text.labelMedium),
                 SizedBox(
                   width: AppSizes.settingsNumberFieldWidth,
-                  child: TextField(
+                  child: AppTextField(
                     controller: minSize,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     textAlign: TextAlign.end,
-                    onEditingComplete: () {},
                     onSubmitted: (_) => onSubmit(),
                   ),
                 ),

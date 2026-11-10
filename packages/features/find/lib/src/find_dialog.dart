@@ -411,13 +411,12 @@ class _Form extends StatelessWidget {
             ),
             SizedBox(
               width: AppSizes.settingsNumberFieldWidth,
-              child: TextField(
+              child: AppTextField(
                 controller: sizeValue,
                 enabled: sizeOp != null,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 textAlign: TextAlign.end,
-                onEditingComplete: () {},
                 onSubmitted: (_) => onSubmit(),
               ),
             ),
@@ -523,20 +522,15 @@ class _Field extends StatelessWidget {
   final bool monospace;
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(label, style: context.text.labelMedium),
-      const SizedBox(height: AppSpacing.xs),
-      TextField(
-        controller: controller,
-        focusNode: focusNode,
-        autofocus: autofocus,
-        style: monospace ? context.mono : null,
-        decoration: InputDecoration(hintText: hint),
-        onEditingComplete: () {},
-        onSubmitted: (_) => onSubmitted(),
-      ),
-    ],
+  Widget build(BuildContext context) => AppFormField(
+    label: label,
+    child: AppTextField(
+      controller: controller,
+      focusNode: focusNode,
+      autofocus: autofocus,
+      monospace: monospace,
+      hintText: hint,
+      onSubmitted: (_) => onSubmitted(),
+    ),
   );
 }

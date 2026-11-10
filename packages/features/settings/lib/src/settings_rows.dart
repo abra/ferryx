@@ -320,28 +320,17 @@ class LabeledField extends StatelessWidget {
   final ValueChanged<String>? onSubmitted;
 
   @override
-  Widget build(BuildContext context) {
-    final field = TextField(
+  Widget build(BuildContext context) => AppFormField(
+    label: label,
+    trailing: trailing,
+    child: AppTextField(
       controller: controller,
       autofocus: autofocus,
-      style: monospace ? context.mono : null,
-      decoration: InputDecoration(hintText: hint),
-      onEditingComplete: () {},
+      monospace: monospace,
+      hintText: hint,
       onSubmitted: onSubmitted,
-    );
-    return LabeledControl(
-      label: label,
-      child: trailing == null
-          ? field
-          : Row(
-              children: [
-                Expanded(child: field),
-                SizedBox(width: context.metrics.toolbarSpacing),
-                trailing!,
-              ],
-            ),
-    );
-  }
+    ),
+  );
 }
 
 /// A control of a dialog under its label, laid out as [LabeledField] is,
@@ -353,14 +342,8 @@ class LabeledControl extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(label, style: context.text.labelMedium),
-      const SizedBox(height: AppSpacing.xs),
-      child,
-    ],
-  );
+  Widget build(BuildContext context) =>
+      AppFormField(label: label, child: child);
 }
 
 /// A row of a list the settings keep (an editor, a tool, a layout) inside

@@ -190,14 +190,13 @@ class _ShellFieldState extends State<ShellField> {
   }
 
   @override
-  Widget build(BuildContext context) => TextField(
+  Widget build(BuildContext context) => AppTextField(
     controller: _controller,
     focusNode: _focus,
-    style: context.mono,
+    monospace: true,
     autocorrect: false,
     enableSuggestions: false,
-    decoration: InputDecoration(hintText: widget.hint),
-    onEditingComplete: () {},
+    hintText: widget.hint,
     onSubmitted: (_) => _commit(),
   );
 }

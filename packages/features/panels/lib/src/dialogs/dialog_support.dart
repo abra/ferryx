@@ -48,8 +48,10 @@ class DialogField extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
 
   @override
-  Widget build(BuildContext context) {
-    final field = TextField(
+  Widget build(BuildContext context) => AppFormField(
+    label: label,
+    trailing: trailing,
+    child: AppTextField(
       controller: controller,
       focusNode: focusNode,
       autofocus: autofocus,
@@ -58,34 +60,14 @@ class DialogField extends StatelessWidget {
       // The dialog sets the selection it wants (a name's stem, the caret
       // after `*.`); the desktop's select-all on focus would undo it.
       selectAllOnFocus: false,
-      // Return submits and the field keeps the keys: Flutter's default
-      // drops the focus, and a dialog that stays (a wrong password, a
-      // name taken) would leave the keys to the window behind it.
-      onEditingComplete: onSubmitted == null ? null : () {},
       obscureText: obscure,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
-      style: monospace ? context.mono : null,
-      decoration: InputDecoration(hintText: hint),
+      monospace: monospace,
+      hintText: hint,
       onSubmitted: onSubmitted,
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: context.text.labelMedium),
-        const SizedBox(height: AppSpacing.xs),
-        trailing == null
-            ? field
-            : Row(
-                children: [
-                  Expanded(child: field),
-                  SizedBox(width: context.metrics.toolbarSpacing),
-                  trailing!,
-                ],
-              ),
-      ],
-    );
-  }
+    ),
+  );
 }
 
 /// An option of a dialog: the platform's check box with its label, which

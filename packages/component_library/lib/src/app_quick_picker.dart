@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'app_text_field.dart';
 import 'app_divider.dart';
 import 'app_focus_area.dart';
 import 'app_icons.dart';
@@ -463,7 +464,7 @@ class _AppQuickPickerState<T> extends State<AppQuickPicker<T>> {
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
-                      child: TextField(
+                      child: AppTextField(
                         controller: _controller,
                         focusNode: _focus,
                         autofocus: true,
@@ -471,16 +472,8 @@ class _AppQuickPickerState<T> extends State<AppQuickPicker<T>> {
                         style: context.text.titleMedium!.weight(
                           FontWeight.w400,
                         ),
-                        decoration: InputDecoration(
-                          hintText: widget.hintText,
-                          // Borderless and unfilled: the panel is the field.
-                          filled: false,
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                          isDense: true,
-                        ),
+                        hintText: widget.hintText,
+                        appearance: AppTextFieldAppearance.embedded,
                         onChanged: widget.onQueryChanged,
                       ),
                     ),

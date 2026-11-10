@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// What macOS 15 draws, measured beside AppKit at one pixel per point:
 /// Finder's list, NSTextField, NSPopUpButton, NSMenu, NSAlert and a sheet.
-/// macOS 26 keeps its own look where it differs.
+/// Ferryx uses rounded text fields; macOS 26 keeps its own look where it differs.
 void main() {
   final sequoia = AppMetrics.of(AppPlatformStyle.macos);
   final tahoe = AppMetrics.of(
@@ -50,39 +50,55 @@ void main() {
     expect(windows.tableRowInset, windows.rowInset);
   });
 
-  testWidgets('a text field is square, its text 4 from the edge, its lower '
-      'edge shaded; a search field stays rounded', (tester) async {
-    await pump(
-      tester,
-      const SizedBox(
-        width: 300,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(),
-            AppSearchField(hintText: 'Search'),
-          ],
+  for (final brightness in Brightness.values) {
+    testWidgets('a text field matches the search field\'s rounding in every '
+        'state, its text 4 from the edge, its lower edge shaded '
+        '(${brightness.name})', (tester) async {
+      await pump(
+        tester,
+        brightness: brightness,
+        const SizedBox(
+          width: 300,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(),
+              AppSearchField(hintText: 'Search'),
+            ],
+          ),
         ),
-      ),
-    );
-    final theme = Theme.of(tester.element(find.byType(TextField).first));
-    final border =
-        theme.inputDecorationTheme.enabledBorder! as AppOutlineInputBorder;
-    expect(border.borderRadius, BorderRadius.zero);
-    expect(border.shade, isNotNull);
-    final field = tester.getRect(find.byType(TextField).first);
-    final text = tester.getRect(find.byType(EditableText).first);
-    expect(text.left - field.left, 4);
-    final search = tester.widget<TextField>(
-      find.descendant(
-        of: find.byType(AppSearchField),
-        matching: find.byType(TextField),
-      ),
-    );
-    final searchBorder =
-        search.decoration!.enabledBorder! as OutlineInputBorder;
-    expect(searchBorder.borderRadius, BorderRadius.circular(6));
-  });
+      );
+      final theme = Theme.of(tester.element(find.byType(TextField).first));
+      final border =
+          theme.inputDecorationTheme.enabledBorder! as AppOutlineInputBorder;
+      expect(border.borderRadius, BorderRadius.circular(6));
+      expect(border.shade, isNotNull);
+      for (final stateBorder in [
+        theme.inputDecorationTheme.disabledBorder,
+        theme.inputDecorationTheme.focusedBorder,
+        theme.inputDecorationTheme.errorBorder,
+        theme.inputDecorationTheme.focusedErrorBorder,
+      ]) {
+        expect(
+          (stateBorder! as OutlineInputBorder).borderRadius,
+          border.borderRadius,
+          reason: 'focus, validation and disabling must preserve the corners',
+        );
+      }
+      final field = tester.getRect(find.byType(TextField).first);
+      final text = tester.getRect(find.byType(EditableText).first);
+      expect(text.left - field.left, 4);
+      final search = tester.widget<TextField>(
+        find.descendant(
+          of: find.byType(AppSearchField),
+          matching: find.byType(TextField),
+        ),
+      );
+      final searchBorder =
+          search.decoration!.enabledBorder! as OutlineInputBorder;
+      expect(searchBorder.borderRadius, border.borderRadius);
+    });
+  }
 
   for (final brightness in Brightness.values) {
     testWidgets('a search field over a sidebar is a quiet fill with a fine '

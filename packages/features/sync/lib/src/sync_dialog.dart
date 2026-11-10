@@ -316,18 +316,13 @@ class _Field extends StatelessWidget {
   final VoidCallback onSubmit;
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(label, style: context.text.labelMedium),
-      const SizedBox(height: AppSpacing.xs),
-      TextField(
-        controller: controller,
-        style: context.mono,
-        onEditingComplete: () {},
-        onSubmitted: (_) => onSubmit(),
-      ),
-    ],
+  Widget build(BuildContext context) => AppFormField(
+    label: label,
+    child: AppTextField(
+      controller: controller,
+      monospace: true,
+      onSubmitted: (_) => onSubmit(),
+    ),
   );
 }
 
@@ -414,11 +409,10 @@ class _Options extends StatelessWidget {
                 Text(l10n.syncMask, style: context.text.labelMedium),
                 SizedBox(
                   width: AppSizes.maskFieldWidth,
-                  child: TextField(
+                  child: AppTextField(
                     controller: mask,
-                    style: context.mono,
-                    decoration: InputDecoration(hintText: l10n.syncMaskHint),
-                    onEditingComplete: () {},
+                    monospace: true,
+                    hintText: l10n.syncMaskHint,
                     onSubmitted: (_) => onSubmit(),
                   ),
                 ),

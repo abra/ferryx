@@ -127,6 +127,17 @@ The desktop details the library keeps for every screen:
   15, its icon 16 in — so the rounded selection never meets the window's
   edge; its search field is `AppSearchField(sidebar: true)`, which macOS
   draws as a quiet grey fill with a fine edge, not a white bezel.
+- Input: all forms use `AppTextField`, with `AppFormField` for labels,
+  optional trailing actions and help text. Ordinary and monospace inputs
+  share body size, line height, placeholder metrics and native control
+  geometry; `monospace` changes only the face. Enabled, disabled, read-only,
+  error and focus states come from shared theme roles. Literal input disables
+  smart quotes/dashes and autocorrection; Return keeps focus unless an owner
+  explicitly hands it on. Controllers, selection and completion stay with
+  the owning feature. `AppSearchField` composes the same input with native
+  search geometry and clearing; `inline` and `embedded` appearances fit
+  in-place rename, Vim and the names editor to their surrounding rows.
+  Dialog, network and settings field adapters delegate to these components.
 - Edges: a fill stops inside its edge (`insetFill`, `appEdgedBox`), as
   AppKit draws a bezel or a window: laid under a translucent edge it
   shows through the rounded corners' half-covered pixels and the edge
@@ -145,8 +156,9 @@ The desktop details the library keeps for every screen:
   odd); a surface placed by an `Align` takes a `PixelSnap` round it.
 - Bezels: on macOS 15 a push button, a pop-up and a text field end in a
   darker lower edge (`AppBezelBorder`, `AppOutlineInputBorder.shade`);
-  a text field is square (`radius.field`) with its text 4 from the edge,
-  a search field stays rounded; a pop-up's chevrons sit in the accent's
+  text fields use the control's rounding (`radius.field`, 6 pt on macOS 15),
+  matching search fields, with their text 4 from the edge; macOS 26 keeps
+  8 pt fields and capsule search fields. A pop-up's chevrons sit in the accent's
   cap (`metrics.popupCap`), grey in a background window. In the dark a
   button is a plate with no light rim and the default button the deeper
   selection blue.

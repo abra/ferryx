@@ -98,21 +98,11 @@ class _InlineRenameState extends State<InlineRename> {
       // outline's own inset.
       child: Transform.translate(
         offset: Offset(_outlineInset(context), 0),
-        child: TextField(
+        child: AppTextField(
           selectAllOnFocus: false,
           controller: _controller,
           focusNode: _focus,
-          style: context.text.bodyMedium,
-          // Opaque over the row, whatever fill the row had.
-          decoration: InputDecoration(
-            isDense: true,
-            filled: true,
-            fillColor: context.colors.surface,
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: AppSpacing.xxs,
-            ),
-          ),
-          onEditingComplete: () {},
+          appearance: AppTextFieldAppearance.inline,
           onSubmitted: (_) => _commit(),
         ),
       ),

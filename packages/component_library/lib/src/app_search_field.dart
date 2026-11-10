@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_icons.dart';
+import 'app_text_field.dart';
 import 'theme/app_platform_style.dart';
 import 'theme/extensions/build_context_ext.dart';
 import 'theme/hairlines.dart';
@@ -110,7 +111,7 @@ class _AppSearchFieldState extends State<AppSearchField> {
       canRequestFocus: false,
       child: ValueListenableBuilder<TextEditingValue>(
         valueListenable: _controller,
-        builder: (context, value, _) => TextField(
+        builder: (context, value, _) => AppTextField(
           controller: _controller,
           focusNode: widget.focusNode,
           autofocus: widget.autofocus,
@@ -133,7 +134,6 @@ class _AppSearchFieldState extends State<AppSearchField> {
             focusedErrorBorder: shaped(theme.focusedErrorBorder),
           ),
           onChanged: widget.onChanged,
-          onEditingComplete: () {},
           onSubmitted: widget.onSubmitted,
         ),
       ),

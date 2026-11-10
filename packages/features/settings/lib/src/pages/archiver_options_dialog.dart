@@ -168,16 +168,17 @@ class _OptionsDialogState extends State<_OptionsDialog> {
               Text(l10n.archiverSolidNote, style: context.text.bodySmall),
             ],
             if (engine != null) ...[
-              Text(l10n.archiverArgumentsLabel, style: context.text.bodySmall),
-              TextField(
-                controller: _arguments,
-                minLines: 3,
-                maxLines: 5,
-                style: context.mono,
-                readOnly: _saving,
-                onEditingComplete: () {},
+              AppFormField(
+                label: l10n.archiverArgumentsLabel,
+                helpText: l10n.archiverArgumentsHint,
+                child: AppTextField(
+                  controller: _arguments,
+                  minLines: 3,
+                  maxLines: 5,
+                  monospace: true,
+                  readOnly: _saving,
+                ),
               ),
-              Text(l10n.archiverArgumentsHint, style: context.text.bodySmall),
             ],
             if (_error case final error?)
               Text(

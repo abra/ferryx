@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
+import 'app_text_field.dart';
 import 'app_identity.dart';
 import 'focus_ring.dart';
 import 'pixel_snap.dart';
@@ -495,10 +496,9 @@ class _PromptDialogState extends State<_PromptDialog> {
   Widget build(BuildContext context) => AppDialog(
     title: widget.title,
     width: AppSizes.compactDialogWidth,
-    body: TextField(
+    body: AppTextField(
       controller: _controller,
       autofocus: true,
-      onEditingComplete: () {},
       onSubmitted: (_) => _submit(),
     ),
     actions: [

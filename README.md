@@ -380,6 +380,8 @@ Vim example: `:connect sftp://me@host/srv`.
 names in any UI language. **Shortcuts** (⌘/ / Ctrl+/) shows current bindings.
 **Settings → Hotkeys** assigns or replaces them. Click hints (⌘J / Ctrl+J)
 label controls; the footer suggests keys for the current area/selection.
+Form fields share text sizing, spacing and focus indicators, including
+monospace fields for paths and arguments. Enter keeps focus when a form stays open.
 
 <details>
 <summary>Everyday shortcuts</summary>

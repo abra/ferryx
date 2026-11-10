@@ -355,47 +355,41 @@ class _Expected extends StatelessWidget {
         : state.running
         ? null
         : l10n.checksumNoMatch;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(l10n.checksumExpected, style: context.text.labelMedium),
-        const SizedBox(height: AppSpacing.xs),
-        Row(
-          children: [
-            // Room for a SHA-256 in full; the verdict takes what is left.
-            Expanded(
-              flex: 3,
-              child: TextField(
-                controller: controller,
-                style: context.mono,
-                decoration: InputDecoration(
-                  hintText: l10n.checksumExpectedHint,
+    return AppFormField(
+      label: l10n.checksumExpected,
+      child: Row(
+        children: [
+          // Room for a SHA-256 in full; the verdict takes what is left.
+          Expanded(
+            flex: 3,
+            child: AppTextField(
+              controller: controller,
+              monospace: true,
+              hintText: l10n.checksumExpectedHint,
+            ),
+          ),
+          if (verdict != null) ...[
+            const SizedBox(width: AppSpacing.md),
+            Icon(
+              matches.isEmpty ? AppIcons.error : AppIcons.checkCircle,
+              size: AppIconSize.sm,
+              color: matches.isEmpty ? colors.danger : colors.accent,
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Flexible(
+              flex: 2,
+              child: Text(
+                verdict,
+                style: context.text.bodySmall?.copyWith(
+                  color: matches.isEmpty ? colors.danger : colors.textMuted,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (verdict != null) ...[
-              const SizedBox(width: AppSpacing.md),
-              Icon(
-                matches.isEmpty ? AppIcons.error : AppIcons.checkCircle,
-                size: AppIconSize.sm,
-                color: matches.isEmpty ? colors.danger : colors.accent,
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Flexible(
-                flex: 2,
-                child: Text(
-                  verdict,
-                  style: context.text.bodySmall?.copyWith(
-                    color: matches.isEmpty ? colors.danger : colors.textMuted,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
           ],
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

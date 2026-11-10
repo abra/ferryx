@@ -39,32 +39,22 @@ class NetworkField extends StatelessWidget {
   final TextInputType? keyboardType;
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text(label, style: context.text.labelMedium),
-      const SizedBox(height: AppSpacing.xs),
-      TextField(
-        controller: controller,
-        focusNode: focusNode,
-        autofocus: autofocus,
-        enabled: enabled,
-        readOnly: readOnly,
-        obscureText: obscure,
-        autocorrect: false,
-        enableSuggestions: !obscure,
-        keyboardType: keyboardType,
-        inputFormatters: inputFormatters,
-        style: monospace ? context.mono : null,
-        decoration: InputDecoration(hintText: hint),
-        onChanged: onChanged,
-        // Return submits and the field keeps the focus: Esc still reaches
-        // the dialog, and a second try needs no click.
-        onEditingComplete: () {},
-        onSubmitted: onSubmitted,
-      ),
-    ],
+  Widget build(BuildContext context) => AppFormField(
+    label: label,
+    child: AppTextField(
+      controller: controller,
+      focusNode: focusNode,
+      autofocus: autofocus,
+      enabled: enabled,
+      readOnly: readOnly,
+      obscureText: obscure,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      monospace: monospace,
+      hintText: hint,
+      onChanged: onChanged,
+      onSubmitted: onSubmitted,
+    ),
   );
 }
 

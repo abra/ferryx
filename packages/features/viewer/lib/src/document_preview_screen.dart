@@ -796,14 +796,11 @@ class _DocumentPageDialogState extends State<_DocumentPageDialog> {
     final valid = page != null && page >= 1 && page <= widget.count;
     return AppDialog(
       title: l10n.documentGoToPage,
-      body: TextField(
+      body: AppTextField(
         controller: _text,
         autofocus: true,
         keyboardType: TextInputType.number,
-        decoration: InputDecoration(
-          hintText: l10n.documentGoToPageHint(widget.count),
-        ),
-        onEditingComplete: () {},
+        hintText: l10n.documentGoToPageHint(widget.count),
         onSubmitted: (_) {
           if (valid) Navigator.of(context).pop(page - 1);
         },

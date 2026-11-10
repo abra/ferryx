@@ -157,21 +157,14 @@ class _VimCommandLineState extends State<VimCommandLine> {
           children: [
             Text(':', style: style.copyWith(color: colors.textMuted)),
             Expanded(
-              child: TextField(
-                selectAllOnFocus: false,
-                controller: _controller,
-                focusNode: _focus,
-                style: style,
-                decoration: InputDecoration(
-                  isDense: true,
-                  isCollapsed: true,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  filled: false,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xs,
-                  ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                child: AppTextField(
+                  selectAllOnFocus: false,
+                  controller: _controller,
+                  focusNode: _focus,
+                  style: style,
+                  appearance: AppTextFieldAppearance.embedded,
                   hintText: context.l10n.vimCommandHint,
                 ),
               ),

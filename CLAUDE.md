@@ -215,7 +215,8 @@ See `ARCHITECTURE.md`. The rules that matter most:
   the theme or a component-library widget. Menus go through `showAppMenu`,
   pop-up choices through `AppPopupButton`, dialogs through `AppDialog` with
   actions dismissive first (an `OutlinedButton`), notices through
-  `showAppNotice`, search fields through `AppSearchField`, a list picked
+  `showAppNotice`, input through `AppTextField`, labels and help through
+  `AppFormField`, search fields through `AppSearchField`, a list picked
   from by typing (a palette, a jump) through `AppQuickPicker`.
 - Focus rings: draw them with `FocusRing`, which shows only after keyboard
   use (`FocusHighlightTracker`). Every part of the window the keys can be in
@@ -243,9 +244,9 @@ See `ARCHITECTURE.md`. The rules that matter most:
   (ARCHITECTURE.md "Native look"). Strings are never built with
   `join('  ·  ')` or interpolation of separators: use an ARB template
   (`joinedDetails`) with placeholders.
-- A text field keeps the keys: one that submits on Return has an
-  `onEditingComplete` (`() {}` keeps the focus; Flutter's default drops it,
-  `test/app/text_field_focus_test.dart`), one waiting on what was typed is
+- A text field keeps the keys: `AppTextField` supplies `onEditingComplete`
+  by default (Flutter's native default drops focus on Return;
+  `test/app/text_field_focus_test.dart` guards the primitive), one waiting on what was typed is
   `readOnly`, never disabled, and one whose code sets its selection (a
   name's stem, a caret) turns `selectAllOnFocus` off — on the desktops it
   is on and replaces that selection. A test of such a field runs with
@@ -270,6 +271,12 @@ See `ARCHITECTURE.md`. The rules that matter most:
 - Font weights: the faces may be variable, so change a weight with
   `style.weight(FontWeight.w600)`, never with a bare `copyWith(fontWeight:)`.
   Monospace goes through `context.mono`.
+- Form inputs use `AppTextField(monospace: true)` for paths, masks, arguments
+  and hashes: it keeps body-sized text and the standard control height.
+  Do not build `TextField` or `InputDecoration` in features. Embedded editors
+  use the shared `embedded` appearance and their surrounding row's text style;
+  inline rename uses `inline`. `AppTextField` keeps focus on Return by default;
+  pass `onEditingComplete` only to explicitly hand focus elsewhere.
 - Key names never as literal glyphs: use `Chord.label` / `Chord.keyLabel`
   with `context.platform`, and placeholders in ARB strings.
 - English case: command labels (`cmd…`, menus) in Title Case ("New

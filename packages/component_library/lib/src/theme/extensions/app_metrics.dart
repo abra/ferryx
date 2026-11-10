@@ -67,8 +67,7 @@ class AppRadii {
   /// Native window corners, used when content extends into the title bar.
   final double window;
 
-  /// Text fields: a push button's unless the platform squares them (an
-  /// NSTextField up to macOS 15).
+  /// Text fields: a push button's unless the platform specifies otherwise.
   final double field;
 
   /// Search fields: a push button's unless the platform rounds them more
@@ -353,10 +352,10 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
       popover: 10,
       dialog: 12,
       window: 10,
-      // Finder's list view and an NSTextField, measured on macOS 15.
+      // Finder's list view, measured on macOS 15. Fields keep the control's
+      // rounding, matching search fields throughout Ferryx's forms.
       tableRow: 0,
       tableFrame: 0,
-      field: 0,
     ),
     topBarHeight: 52,
     navItemHeight: 28,

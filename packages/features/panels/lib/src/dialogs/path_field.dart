@@ -94,32 +94,16 @@ class _PathFieldState extends State<PathField> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final hint = widget.hint;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(widget.label, style: context.text.labelMedium),
-        const SizedBox(height: AppSpacing.xs),
-        TextField(
-          selectAllOnFocus: false,
-          controller: widget.controller,
-          focusNode: _focus,
-          autofocus: widget.autofocus,
-          style: context.mono,
-          onEditingComplete: () {},
-          onSubmitted: widget.onSubmitted,
-        ),
-        if (hint != null) ...[
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            hint,
-            style: context.text.bodySmall?.copyWith(
-              color: context.appColors.textMuted,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
+  Widget build(BuildContext context) => AppFormField(
+    label: widget.label,
+    helpText: widget.hint,
+    child: AppTextField(
+      selectAllOnFocus: false,
+      controller: widget.controller,
+      focusNode: _focus,
+      autofocus: widget.autofocus,
+      monospace: true,
+      onSubmitted: widget.onSubmitted,
+    ),
+  );
 }

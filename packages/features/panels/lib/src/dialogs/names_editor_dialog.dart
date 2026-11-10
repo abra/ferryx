@@ -723,7 +723,7 @@ class _Editor extends StatelessWidget {
               ),
               // As wide as its longest line: nothing wraps.
               child: IntrinsicWidth(
-                child: TextField(
+                child: AppTextField(
                   controller: controller,
                   focusNode: focusNode,
                   autofocus: true,
@@ -735,15 +735,7 @@ class _Editor extends StatelessWidget {
                     style,
                     forceStrutHeight: true,
                   ),
-                  // No bezel: the box around the columns is the field.
-                  decoration: const InputDecoration(
-                    isCollapsed: true,
-                    filled: false,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    contentPadding: EdgeInsets.zero,
-                  ),
+                  appearance: AppTextFieldAppearance.embedded,
                   autocorrect: false,
                   enableSuggestions: false,
                 ),
