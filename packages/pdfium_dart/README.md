@@ -2,6 +2,9 @@
 
 ## Ferryx local copy
 
+See the [Ferryx toolchain notes](../../CLAUDE.md#toolchain)
+for app-level setup; this section covers the local PDFium hook and cache.
+
 Based on the MIT-licensed [pdfium_dart 0.2.5](https://pub.dev/packages/pdfium_dart/versions/0.2.5)
 from [pdfrx](https://github.com/espresso3389/pdfrx/tree/master/packages/pdfium_dart).
 Runtime bindings, library loading and link-hook behavior are unchanged.

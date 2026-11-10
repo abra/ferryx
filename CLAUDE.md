@@ -2,6 +2,15 @@
 
 Guidance for Claude Code when working in this repository.
 
+## Documentation layout
+
+- Keep user-facing information in one `README.md`, with a table of contents
+  and collapsible details for longer references. Do not split it into
+  separate guides unless the user explicitly asks.
+- Keep setup, build and maintenance instructions here and internal design in
+  `ARCHITECTURE.md`. README is for application users, not development setup.
+- Update the relevant README section with behavior changes.
+
 ## Toolchain
 
 - Flutter is pinned in `.fvmrc`; always use `fvm flutter` / `fvm dart`
@@ -43,7 +52,7 @@ Guidance for Claude Code when working in this repository.
 | All tests | `make test` (`make test-rust`, `make test-dart`) |
 | Native AppKit window tests (macOS + Xcode) | `make test-macos` |
 | Host library for real-core tests | `make core` |
-| Regenerate bridge | `make codegen` (after editing `rust/crates/ferryx_api/src/api/`) |
+| Regenerate bridge | `fvm exec make codegen` (after editing `rust/crates/ferryx_api/src/api/`) |
 | Regenerate l10n | `make l10n` (after editing `packages/ferryx_localizations/lib/l10n/*.arb`) |
 | Rebuild app icons | `make icons` (after editing a master in `brand/`; needs `rsvg-convert`) |
 | Run | `make run` on macOS/Linux; `fvm flutter run -d windows` on Windows |
@@ -51,7 +60,7 @@ Guidance for Claude Code when working in this repository.
 | macOS disk image | `make dmg` (`build/Ferryx-<version>.dmg`); `make release` publishes it through `gh` |
 | Clean, list targets | `make clean`, `make help` |
 
-After `make codegen` or any Rust change, restart `flutter run` fully (`q`,
+After codegen or any Rust change, restart `flutter run` fully (`q`,
 then run again): a hot restart keeps the old Rust library in the process and
 flutter_rust_bridge refuses to initialise ("Content hash … different").
 
@@ -59,6 +68,57 @@ Single package: `cd packages/<pkg> && fvm flutter test` (features:
 `packages/features/<name>`). Single crate: `cd rust && cargo test -p ferryx_ops`.
 The bridge end to end: `cd rust && cargo test -p ferryx_api` (its tests
 take turns on the process-wide state through one mutex).
+
+## Build setup and packaging
+
+Install native desktop tools: Xcode and CocoaPods on macOS, Visual Studio's
+Desktop development with C++ on Windows, or Clang/CMake/Ninja/pkg-config,
+GTK 3 and C++ development libraries on Linux. CI also installs `liblzma-dev`.
+Windows Make targets need GNU Make and a Bash-compatible shell (CI uses Git Bash).
+
+First setup, from the repository root:
+
+```sh
+fvm install
+rustup update stable
+rustup override set stable
+rustup component add rustfmt clippy --toolchain stable
+fvm flutter doctor -v
+make get
+```
+
+Universal macOS builds need both Rust targets on the same toolchain:
+
+```sh
+rustup target add --toolchain stable aarch64-apple-darwin x86_64-apple-darwin
+```
+
+Pagecraft's pinned toolchain is independent. The first native build may
+download its toolchain/targets, Cargo dependencies and PDFium from GitHub.
+The verified PDFium cache survives `flutter clean`; see the local
+[hook/cache guide](packages/pdfium_dart/README.md). Keep the app, reader and
+viewer overrides together; they are not inherited between Dart packages.
+Real-core Dart tests need the host library built by `make core`.
+
+Release outputs are `build/macos/Build/Products/Release/Ferryx.app`,
+`build/windows/x64/runner/Release/` and `build/linux/x64/release/bundle/`
+(the latter paths are for x64). Build on the matching OS. Windows/Linux
+targets produce application directories, not installers; Linux desktop
+entry/icon installation is in [packaging notes](linux/packaging/README.md).
+
+`make dmg` creates `build/Ferryx-<version>.dmg` with an Applications link.
+The macOS app is signed ad hoc and is not notarized. `make release` runs
+the checks/build/publish steps in [release.sh](tools/macos/release.sh), using
+authenticated `gh`. The user commits/pushes first: publishing needs a clean
+tree and a commit already on the remote. The tag is `v<version>` from
+`pubspec.yaml` without its `+build` suffix. A tag at another commit needs a
+version bump; repeating the same commit's release replaces its DMG asset.
+The publishing script uploads macOS only.
+
+The [CI workflow](.github/workflows/ci.yml) checks, builds and smoke-launches
+Windows/Linux on pull requests, `ci/**` pushes and manual dispatch. There
+is no macOS CI job. A launch check does not validate document decoders;
+release validation must also open a document in the packaged app.
 
 ## Architecture (strict)
 

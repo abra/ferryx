@@ -7,6 +7,10 @@ reports positions, selections and taps back. The app embeds
 its views (`TextPagesView`, `TextScrollView`, `FixedPagesView`); `pagecraft`
 knows nothing about the app's domain models, repositories or blocs.
 
+This is the engine's API/implementation reference. For controls and the
+subset exposed by Ferryx, use [Preview in Ferryx](../../README.md#preview).
+For engine changes, start with the [maintainer reading path](#maintainer-reading-path).
+
 ## Source in Ferryx
 
 This directory is a source copy of `packages/pagecraft` from Readflex at

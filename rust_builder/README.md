@@ -19,7 +19,7 @@ Use rustup's current stable toolchain. After a Rust or bridge change, stop
 and restart the app completely; Flutter hot reload/restart does not replace
 the native library already loaded in the process.
 
-See the root [toolchain and commands](../README.md#toolchain),
+See the [toolchain and commands](../CLAUDE.md#toolchain),
 [bridge configuration](../flutter_rust_bridge.yaml) and
 [cargokit options](../cargokit_options.yaml). The plugin template also has
 Android/iOS scaffolding; Ferryx currently targets macOS, Windows and Linux.

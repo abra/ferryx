@@ -2,463 +2,419 @@
 
 # Ferryx
 
-A dual-pane file manager for the desktop, built for the keyboard: the
-orthodox two-panel workflow of the classic commanders with a compact blue
-interface and each desktop's conventions. The interface is Flutter; file
-listings, operations and the filesystem core are Rust.
+A desktop file manager built for the keyboard, with two panels and tabs.
+Browse local folders, archives and servers; preview documents; run file
+operations in the background; keep a terminal beside your files.
 
-![Ferryx on macOS in the Balanced light theme, with pocketbook and afrog/v1 directories, folder tabs and contextual keyboard hints](docs/screenshots/ferryx-macos.png)
+For **macOS, Windows and Linux**, with an **English or Russian** interface,
+light and dark themes, and platform-specific controls.
 
-## Features
+[Get started](#get-started) · [Panels](#panels-and-navigation) ·
+[Files](#file-operations) · [Archives](#archives) · [Preview](#preview) ·
+[Terminal](#terminal) · [Servers](#servers) ·
+[Keyboard and Vim](#keyboard-and-vim) · [Settings](#settings)
 
-Shortcuts below are the **macOS defaults**: ⌘ Command, ⌥ Option,
-⌃ Control, ⇧ Shift. Windows and Linux have their own defaults; see
-Settings → Hotkeys or the **Shortcuts** button for your current bindings.
-Vim mode is optional and off by default.
+![Ferryx on macOS in the Balanced light theme, with two file panels, tabs and contextual keyboard hints](docs/screenshots/ferryx-macos.png)
 
-- **Two panels** with tabs (⌘T), each with its own history (⌘[ / ⌘]),
-  sorting and view mode. Tab switches panels; ⌃Tab / ⌃⇧Tab switch to the
-  next / previous tab within a panel (also ⇧⌘] / ⇧⌘[; Vim `gt` / `gT`).
-  Swap (⌘U) or show the active folder in the other panel (⌥⌘U), or collapse
-  to one panel (⇧⌘P). By default the panels sit beside each other in a wide
-  window and stack in a tall one; ⌥⌘P changes the arrangement. The edge
-  between them moves by drag or by the keys (⌥⌘\). Hovering or dragging
-  shows both panels' percentages. Double-click the divider, use its Equal
-  panels button or View → Make Panels Equal to restore 50/50; in keyboard
-  resize mode, 0 restores equal panels, Return keeps the size and Esc
-  restores the previous split.
-- **Cursor and selection kept apart**, as orthodox managers have them:
-  the arrows move the cursor, ⇧ with them selects, Insert / ⌥Space toggles
-  a row, ⌘A / ⌥⌘A / ⌃⌘A select all, none, or invert, ⌘= selects by a mask
-  or a regular expression.
-- **Quick search**: type a few letters and the matching names are
-  underlined (fuzzy, anywhere, at the beginning or the end; optionally only
-  the matches show). Esc clears. With Vim mode enabled, `/` starts the search.
-- **View modes**: Brief (names in columns) and List (a table of columns);
-  five presets on ⌃1–⌃5, editable in Settings.
-- **Sorting** by name, extension, modified time, size, created time, added
-  time and accessed time (⌃⌘1–⌃⌘7, respectively), folders first or not,
-  natural, case-insensitive or case-sensitive comparison; the panel header
-  shows the sort field and direction, with a compact icon and full tooltip
-  in narrow panels.
-- **Operations in the background** with progress, speed and time left,
-  pause and stop, and questions on conflicts and errors with "apply to all":
-  copy (F5), copy as (⇧F5), move (F6), move or rename as (⇧F6), rename in
-  place (⌃F6), new folder (F7, nested paths too), move to Trash (⌘⌫),
-  delete dialog (F8, Trash selected by default), permanent-delete dialog
-  (⇧F8), duplicate (⌘D), compress to zip with an optional AES-256 password
-  (⌃⌘C / ⌃⇧⌘C on macOS, F9 / ⇧F9 elsewhere), symbolic and hard links.
-- **Batch rename** (⌃M) for local files, with Nimble Commander-style placeholders:
-  `[N]` `[E]` `[A]` `[P]` `[G]` with substrings (`[N2-4]`, `[N-5,3]`), dates
-  `[d] [Y] [M] [D] [t]…`, counters `[C5+5/2:3]`, case `[U] [L] [F] [n]`, then
-  a search and replace and a case change, with a live preview.
-- **File attributes** (⌃A) for local files: permissions and modified/accessed
-  times of one or several items, recursively if asked. Unix supports owner
-  and group changes; file flags are macOS-only, and Windows permissions
-  editing controls the read-only flag.
-- **Archives** open as read-only folders on Return: zip (jar, apk…), tar alone or
-  with gzip, bzip2, xz or zstd, 7z, rar, ISO images (Joliet and Rock Ridge
-  names), and one file compressed with gzip, bzip2, xz or zstd; ⌘↓ opens
-  any file whose first bytes say it is one. Encrypted zip, 7z and rar
-  archives remember their password for the current app session. Copy out
-  of them (F5), open members with their application, or Extract To
-  (⌃⌘E on macOS, ⌥F9 elsewhere; Vim `zx`, `:extract dir` / `:unpack dir`):
-  every archive selected into a folder you pick, each into a folder named
-  after it by default when it has multiple top-level items, with progress,
-  conflict questions and cancellation. Recent archive indexes are cached
-  while the files remain unchanged; the first read may require a full pass.
-  Editing an extracted copy does not update the archive. Multi-volume RAR
-  browsing lists only the first volume's members.
-  **System archivers** are detected automatically: 7-Zip (`7zz`, `7z`,
-  `7za`), tar/bsdtar, ZIP/UnZip, RAR/UnRAR, The Unarchiver (`unar`),
-  zstd, gzip/pigz, bzip2/pbzip2, xz and LZ4,
-  with common package-manager paths checked even after a GUI launch.
-  Settings → Archivers refreshes the list, enables/disables programs and
-  adds named executable paths with a matching command-line adapter.
-  Each program's settings button opens compression level, worker threads,
-  solid mode and additional arguments where supported. Built-in ZIP has
-  its own compression level. Defaults are saved per executable; Reset
-  restores the program's defaults. Additional arguments use one argument
-  per line, without shell quoting; the core accepts supported compression
-  and format switches while keeping operation, input/output and password
-  arguments under its control.
-  Compress offers only formats available from enabled programs: built-in
-  ZIP plus 7z, TAR variants and RAR where an appropriate writer exists.
-  Its format selector updates the name's extension. Automatic selection
-  uses built-in ZIP and the built-in reader for supported archives;
-  other formats select a suitable installed engine. You can override the
-  engine, and format/engine choices are remembered. Both dialogs link to
-  archiver settings. External programs run in the background, with activity
-  indication, cancellation and the usual conflict handling and Undo.
-  Member extraction and archive browsing still use the built-in engine.
-  A dedicated compressor can create a single-file `.gz`, `.bz2`, `.xz`,
-  `.zst` or `.lz4`; folders and multiple files use the corresponding TAR
-  container. Automatic creation prefers dedicated compressors over tar's
-  codec, including pigz/pbzip2 when available. TAR data streams through
-  the compressor without a full intermediate TAR file or archive-sized
-  memory buffer. Source files are preserved.
-  Vim `zc` / `zx` open compression/extraction; `:pack`, `:pack 7z`,
-  `:pack tar.gz`, `:compress` and `:zip` use the compression dialog;
-  `:archivers` opens its settings. Function-key aliases remain on macOS.
-- **Flat view** (⌥⌘B, Vim `zf`, `:flat`): every file under the folder in
-  one list, each with its folder beside its name, as Total Commander's
-  branch view; sort, select and quick search across the whole tree, with
-  rows streamed as they are found. Works in local folders and archives;
-  archive contents remain read-only.
-- **Finder tags** (macOS): coloured dots after the names, as Finder
-  shows them, and the names in their tip; ⌃⌘T (or `:tag red,work`,
-  `:tag -red`) tags the selection from a menu that checks what every item
-  has and dashes what some have, with new tags of any name and colour.
-- **Go anywhere**: the Go To pop-up (F1 / F2) with favorites, volumes, the
-  other panel's places and the history; quick lists for parents (⌘1),
-  history (⌘2), favorites (⌘3) and volumes (⌘4, with eject); Go to Folder
-  (⇧⌘G); Home, Desktop, Documents, Downloads, Applications and Utilities
-  on their chords; ⌘↑ up, ⌘↓ into (an archive with any extension), ⌘→ follows
-  a symlink.
-  The panel menu also offers Back, Forward and Go to Folder. Both favorites
-  menus include Manage Favorites, with visible Add and Remove buttons and a
-  row menu for renaming and reordering. ⌘B adds a folder; adding it again
-  keeps it in favorites. Remove from Favorites is a separate command.
-- **Built-in viewer**: Space outside Vim mode, `i` in Vim mode or ⇧⌘Y
-  opens preview in the neighboring pane, following the file cursor after
-  a short pause. The original pane is kept and restored when preview closes.
-  F3 opens the full-window viewer; an explicit button switches between
-  neighboring and full-window views without reopening the document.
-  Tab moves between the file list and preview (from full window it returns
-  to the list beside preview); Esc closes preview.
-  The viewer supports text, hex, images and document previews.
-  EPUB, FB2 (including `.fbz` and `.fb2.zip`), MOBI, AZW3/KF8, CBZ, PDF and
-  DjVu (`.djvu` / `.djv`) open directly in Preview, with page navigation and
-  contents where available; PDF, comics and DjVu also offer zoom and Go to
-  Page. Reflowable books have A− / A+ controls and a reset to 15, with sizes
-  from 10 to 32; the choice is saved separately from text/hex size and is
-  also available in Settings → Viewer. ⌘− / ⌘+ / ⌘0 change or reset book
-  type size, and zoom or fit fixed pages (Ctrl on Windows/Linux).
-  Files on disk are read in place; archive members and server files
-  use a temporary copy owned by the preview.
-  Text and hex keep windowed reads of large files, find (⌘F) and go to an
-  offset (⌘L). The actions menu keeps these controls available in narrow
-  windows. Image previews read the whole file and are limited to 64 MiB.
-  Document preview uses Pagecraft: reflowable books require horizontal
-  text; fixed-layout EPUB/KF8, vertical writing and CBR are unsupported.
-  Password-protected PDFs report that a password is required; this preview
-  does not yet provide password entry. DjVu must be self-contained; indirect
-  documents and JPEG-in-DjVu are unsupported. There is no OCR or document
-  text search in this preview; PDF/DjVu text selection and annotation tools
-  are not exposed.
-- **Find files** (⌘F): by mask or regular expression, by contents (phrase
-  or words, case, not containing), by size; results stream in; go to a
-  hit or view it. Searches local folders; on macOS it can use the Spotlight
-  index, checking each returned hit against the search criteria.
-- **Command palette** (⌘P): commands for the current panel, viewer or dialog,
-  found by a fuzzy search (English names work in any language), the ones
-  used lately first, with their keys; it runs as the key would.
-- **Jump to a frequent folder** (⌘G, Vim `gj` and `:z words`): the folders
-  you visit, ranked by how often and how recently you visit; type parts of a path,
-  open in the panel, a new tab (⌘↩) or the other panel (⌥↩).
-- **Shelf** (⌥⌘S to add, ⌃⌘S to show): gather files from local folders of
-  either panel, then copy or move them all into one with a button; Vim's
-  `yy` / `dd` / `p` work through it.
-- **Rename in an editor** (⌃⇧M): local file names in a built-in text dialog,
-  one per line, beside the names they replace, checked
-  as you type (empty, `/`, repeated, taken, a line too many or too few);
-  swaps work.
-- **The desktop's own services**: on macOS, Quick Look (⌘Y, as in Finder;
-  built-in neighboring preview uses ⇧⌘Y, Space outside Vim mode or `i`
-  in Vim mode) follows the cursor and
-  steps through a selection; Share (⇧⌘S, or Share… on a row) opens the
-  system's picker. Drag local files between the panels, onto a folder row,
-  or between Ferryx and other applications (macOS, Windows, Linux): a drop
-  on the same volume moves, another volume copies. The transfer runs as
-  any other operation. On macOS, ⌥ forces
-  copy and ⌘ forces move. Windows drag modifiers are not reported by the
-  drag-and-drop plugin, so the volume rule determines the operation.
-- **Integrated terminal**: your shell below the files in the active panel
-  (⌃\` shows it and gives it the keys, again for a taller one, ⌃⇧\`
-  hides it; Nimble Commander's ⌃⌥↑ and ⌃⌥↓ work too where no window
-  manager takes them; the edge between files and terminal drags or takes the
-  keys), the panels hidden over it (⌃⌥O) or the whole window (⌥⌘O). On macOS
-  and Linux, it follows its panel's local folder while waiting at its prompt,
-  and a `cd` typed in it
-  takes the panel along; programs (vim, top, ssh) are left alone. Windows
-  does not synchronize the shell and panel folders. A panel's menu also opens
-  the terminal. Its bar switches between the bottom area and a **Terminal** tab
-  with a terminal icon; the actions menu and tab context menu move it to the
-  left/right panel or across both panels. Moving it preserves the running shell,
-  output and scroll position. Terminal tabs reorder and cycle with file tabs
-  (`gt` / `gT` in Vim mode while the file list has focus). Closing the terminal
-  tab hides the session until it is opened again. A terminal attached to one
-  panel follows that panel's folder; across both panels it follows the active one.
-  Copy, paste and clear (⌘C, ⌘V, ⌘K) work as in Terminal.app;
-  shell control keys reach the shell,
-  while terminal controls and supported window shortcuts remain available.
-  The terminal bar's actions menu also exposes Copy, Paste, Select All and Clear.
-  There is one terminal session per window.
-  Settings → Terminal offers installed monospaced fonts, the bundled Geist
-  Mono and the system default, with a preview and a separate font size.
-  Font changes apply immediately without restarting the shell.
-  `:term make` runs a command there from Vim mode.
-- **Undo and redo** (⌘Z / ⇧⌘Z) for supported local changes: copies, moves,
-  the trash, renames (batch ones too), new folders and files, archive
-  creation/extraction and synchronizations:
-  what was made goes to the Trash, what moved moves back, what was trashed
-  comes back. A preflight check reports missing items, changed file metadata
-  and conflicting paths. The last 100 steps are kept in memory for this
-  session only; overwritten contents, permanent deletions and operations
-  involving servers cannot be undone.
-- **Compare folders** (⇧F2) compares the current listings, without descending
-  into subfolders, and selects what is missing or newer on the other side;
-  optional content comparison requires two local folders. **Synchronize
-  folders** (⌥⇧F2) compares two local trees recursively and makes them alike
-  both ways or one way, with a table of actions you can change row by row.
-- **Checksums** (⌃⌘H): SHA-256, SHA-1, MD5 or BLAKE3 of local files and folders,
-  a pasted hash looked up, a checksum file saved or checked.
-- **Find duplicates** (⇧⌘F): local files with the same contents, grouped by the
-  space they waste, marked by hand or by rule, moved to the Trash (and
-  back with ⌘Z).
-- **Servers** (⌘K, Connect to Server; `:connect sftp://me@host/srv`): SFTP,
-  FTP and FTPS, WebDAV over HTTP and HTTPS in the panels like any folder:
-  browse, view, copy and move both ways and between servers with progress
-  and cancel, rename, make folders, delete (for good: servers have no
-  trash), open a copy in an external application. Changes to that copy are
-  not uploaded automatically. Saved servers in the dialog and the Go To pop-up;
-  host keys checked against `~/.ssh/known_hosts` (a changed key is
-  refused, never waved through), the SSH agent and key files, passwords
-  in the system keychain only when you ask; plain FTP and HTTP say they
-  are not encrypted. Uses russh and rustls, without an OpenSSL dependency.
-  Server folders refresh on demand (⌘R), with no background change watching.
-- **Keyboard controls**: assign or rebind shortcuts in Settings → Hotkeys;
-  some commands have no default binding. Click hints (⌘J) label clickable controls,
-  the menu key (⌃↩, ⇧F10) opens what a right click opens, a cheat sheet
-  (⌘/) lists the current bindings by section with search. A quiet line under
-  the panels names the keys for what is under the cursor or selected (Tab for the
-  other panel, F5 to copy a selection…) until you hide it.
-  With multiple tabs in the active panel, it also shows how to switch them
-  (`gT` / `gt` in Vim mode), using your current key bindings.
-  Hints appear only when the whole entry fits; the **Shortcuts** button opens
-  the cheat sheet. **Commands** in a panel's top bar opens the command palette
-  for that panel (a search icon in a narrow panel). Sorting shows its field
-  and direction, with the full description on hover or keyboard focus.
-  On macOS, the menu bar groups file operations, navigation, view settings,
-  tabs, the terminal and help; its shortcuts follow your bindings.
-- **Vim mode** (Settings → Panels → Vim keys): `j k` move; `h l` go out and in
-  in a table and step a column in the names-in-columns modes, as in
-  vifm's ls-like view (`gl` and `-` go in and out in any mode), counts
-  (`5j`, `3G`, `2gt`), `gg` / `G`, `H M L`, `zz zt zb`, `f` / `F` / `;` /
-  `,` jump by a first letter, `v` Visual selection, `x` / Space toggle,
-  `yy` / `dd` / `p` copy or move between the panels through the shelf,
-  `/` searches with `n` / `N`, marks `m` / `'` kept across runs, `cw` /
-  `A` / `I` rename, `:` commands (`:cd ~/src`, `:mkdir`, `:sort size!`,
-  `:set hidden`, `:tabnew`, `:marks`, `:42`…) with history and Tab
-  completion; the footer names the mode and shows the keys that wait.
-- **Appearance**: Balanced light and dark themes with blue accents, soft
-  selection and monospace file metadata. Compact controls and system fonts
-  follow macOS HIG (including macOS 26's metrics), Windows 11 Fluent or
-  GNOME HIG. Interface in English and Russian. See the
-  [design prototypes](docs/prototypes/protocol-style/README.md).
-- **Platforms**: macOS, Windows and Linux desktops. Day-to-day builds and
-  runs are on macOS; CI is configured to run checks, release builds and
-  launch smoke checks on Windows and Linux. See [CI](#ci) below.
-- **UI:** Flutter. **Core:** Rust (listings with full metadata, folder
-  watching, operations with cancellation, archives, batch rename, find,
-  the terminal's pseudo-terminal, SFTP, FTP and WebDAV), connected
-  through `flutter_rust_bridge`.
+## Get started
 
-## Toolchain
+1. Open a folder in each panel. **Tab** switches between them.
+2. Mark files, then use **F5** to copy or **F6** to move them to the other panel.
+   With nothing marked, the operation uses the current file.
+3. Press **Space** to preview a file, or **i** in Vim mode.
+4. Use **Commands** in the panel header to find an action and **Shortcuts**
+   below the panels to see its keys.
 
-| Tool | Version | Notes |
-|------|---------|-------|
-| Flutter | 3.47.7, pinned in [`.fvmrc`](.fvmrc) | Use `fvm flutter` / `fvm dart`; the pinned Flutter includes Dart |
-| Rust | current stable via **rustup** | cargokit uses `rustup run stable`; keep it current with `rustup update stable` |
-| Pagecraft's Rust backend | **1.99.0** via rustup | Independently pinned by the dependency's `rust/rust-toolchain.toml`; native builds also need a C++17 compiler for DjVu |
-| `flutter_rust_bridge_codegen` | 2.13.0 | Only needed when regenerating bindings: `cargo install flutter_rust_bridge_codegen@2.13.0 --locked` |
+The cursor and marked selection are separate: arrows move the cursor without
+changing marks. **Insert** (or **Option+Space** on macOS) marks a file and
+moves down. In Vim mode, **Space marks files** instead of opening Preview.
 
-The workspace still declares `rust-version = "1.85"`, but the locked RAR
-dependencies require at least Rust **1.97.1**. Rust 1.85 is insufficient
-for the current lockfile; CI uses stable rather than testing that old minimum.
+Shortcuts below use macOS defaults unless a Windows/Linux alternative is
+shown. Your current bindings are always available in **Settings → Hotkeys**.
 
-Install FVM, rustup and the native tools for the desktop you build on:
+## Panels and navigation
 
-- **macOS:** Xcode with its command-line tools and licenses configured, plus
-  CocoaPods for this project's plugins. See [Flutter's macOS setup](https://docs.flutter.dev/platform-integration/macos/setup).
-- **Windows:** Visual Studio with **Desktop development with C++**, as in
-  [Flutter's Windows setup](https://docs.flutter.dev/platform-integration/windows/setup).
-  The Makefile also needs GNU Make and a Bash-compatible shell (CI uses Git Bash).
-- **Linux:** Clang, CMake, Ninja, pkg-config, GTK 3 and C++ development libraries;
-  CI also installs `liblzma-dev`. See [Flutter's Linux setup](https://docs.flutter.dev/platform-integration/linux/setup)
-  and the [Linux container dependencies](tools/linux/Dockerfile).
+Each panel keeps its own tabs, history, sorting and view mode. Panels sit
+beside each other in a wide window and stack in a tall one; **⌥⌘P** or
+Settings → Panels fixes the arrangement you prefer.
 
-First-time setup, from the repository root:
+Drag the divider to resize. Hovering or dragging shows both percentages.
+Double-click it, click **Equal panels**, or use **View → Make Panels Equal**
+to restore **50/50**. The split is remembered.
 
-```sh
-fvm install
-rustup update stable
-rustup override set stable
-rustup component add rustfmt clippy --toolchain stable
-fvm flutter doctor -v
-make get
-```
+<details>
+<summary>Tabs, places, favorites and views</summary>
 
-The Makefile calls `cargo` from PATH, while cargokit uses rustup's stable
-toolchain. Ensure they select the same Rust installation. Generated bridge
-bindings are checked in; normal builds do not require running codegen.
+| Task | macOS default |
+|---|---|
+| New tab | ⌘T |
+| Next / previous tab | ⌃Tab / ⌃⇧Tab; also ⇧⌘] / ⇧⌘[ |
+| Swap panels | ⌘U |
+| Show the current folder in the other panel | ⌥⌘U |
+| Show one panel | ⇧⌘P |
+| Resize with the keyboard | `⌥⌘\` |
+| Go To pop-up | F1 / F2 |
+| Parent folders / history / favorites / volumes | ⌘1 / ⌘2 / ⌘3 / ⌘4 |
+| Go to a typed path | ⇧⌘G |
+| Jump to a frequent folder | ⌘G |
 
-On macOS, the Podfile pins `RUSTC` to rustup's stable compiler for all
-Cargokit build phases, including third-party plugins. This avoids mixing
-rustup's Cargo and target libraries with a Homebrew `rustc`. Universal
-builds need both Rust targets; install them for the same toolchain:
+In keyboard-resize mode, arrows move the divider, Shift+arrows take larger
+steps, **0** restores equal panels, Return keeps the size and Esc restores
+the previous split. When stacked, the left panel is the upper one.
 
-```sh
-rustup target add --toolchain stable aarch64-apple-darwin x86_64-apple-darwin
-```
+Jump to Folder ranks visited places by frequency and recency. Type parts of
+a path, then open it in the active panel, a new tab (⌘Return) or the other
+panel (⌥Return).
 
-If a plugin's precompiled binary download fails, Cargokit builds it from
-source. An `E0463` error about missing `std` can mean that the compiler
-and installed targets belong to different Rust installations, even when
-`rustup target list --installed --toolchain stable` lists the target.
+**⌘B** adds a folder to favorites. Open **Manage Favorites**, select an entry
+and click **Remove** to remove it; its row menu also renames and reorders.
+Adding the same folder again keeps the existing entry.
 
-The reader engine lives in [packages/pagecraft](packages/pagecraft), with
-its local dependency [native_text_selection](packages/native_text_selection).
-Both packages were copied from Readflex and are part of this repository;
-the viewer uses a relative `path` dependency. Edit these sources here to
-change the engine used by Ferryx. Building does not require Readflex or a
-Git checkout in Pub's cache. The first native build may download Pagecraft's
-pinned Rust toolchain and target libraries,
-Cargo dependencies and PDFium binaries from GitHub. Keep these downloads
-available in CI and on a fresh build machine.
+Brief view shows names in columns; List shows a metadata table. Five view
+presets on ⌃1–⌃5 are editable in Settings. Sort by name, extension, size or
+file times, with folders-first and natural/case-sensitive ordering choices.
+The header shows the active field and direction.
 
-PDFium's build hook is maintained in [packages/pdfium_dart](packages/pdfium_dart),
-based on version 0.2.5 with the same Chromium 7811 binaries. It retries transient
-HTTP errors, falls back to the official GitHub release-asset API, and verifies
-archive size and SHA-256. Verified archives survive `flutter clean`: on macOS
-they live in `~/Library/Caches/pdfium_dart`; `PDFIUM_DART_CACHE` overrides the
-location. Universal macOS builds need both ARM64 and x64 archives. A populated
-cache avoids re-downloading PDFium; a fresh cache still needs GitHub access.
-The app, Pagecraft and viewer each select this local copy through a
-`dependency_overrides` entry, since Dart overrides are not inherited.
+Typing starts quick search in normal mode; Vim uses `/`. Search can be
+fuzzy, prefix-based or anywhere in the name, optionally hiding non-matches.
+**Find Files** (⌘F) searches local folders by mask, regular expression,
+contents and size. Results arrive progressively; macOS can use Spotlight.
 
-Pagecraft bundles PDFium, its Rust MOBI backend and DjVuLibre 3.5.30 even
-when only another format is imported. They ship with the application;
-users do not install a system DjVu decoder. The DjVu component is
-GPL-2.0-or-later, with its notices and license registered in Flutter's
-license bundle. See the local
-[Pagecraft notices](packages/pagecraft/LICENSE)
-and [DjVuLibre license](packages/pagecraft/native/djvu/upstream/COPYING)
-for the bundled components' terms.
+**Flat view** (⌥⌘B, Vim `zf` / `:flat`) lists files below a folder together
+with their relative paths. It works in local folders and read-only archives.
+Deep changes by other programs may require Refresh (⌘R).
 
-## Commands
+</details>
 
-| Task | Command |
-|------|---------|
-| Install deps for root + every package | `make get` |
-| Run on macOS / Linux | `make run` |
-| Run on Windows | `fvm flutter run -d windows` |
-| Full quality gate (format, analyze, tests) | `make verify` |
-| Rebuild the app icons from `brand/` | `make icons` |
-| Rust tests only | `make test-rust` |
-| Dart tests only | `make test-dart` |
-| Native AppKit window tests (macOS + Xcode, additional to `verify`) | `make test-macos` |
-| Build the Rust library used by integration tests | `make core` (also run by `make test-dart`) |
-| Regenerate bridge bindings after editing `rust/crates/ferryx_api/src/api` | `make codegen` |
-| Regenerate localizations after editing ARB files | `make l10n` |
-| Release builds (each on its own OS) | `make build-macos`, `make build-linux`, `make build-windows` |
-| macOS disk image (`build/Ferryx-<version>.dmg`) | `make dmg` |
-| Publish it as the GitHub release `v<version>` | `make release` |
-| Linux quality gate in Docker | `make linux` (or `make linux LINUX="test-dart build-linux"`) |
-| List all targets | `make help` |
+## File operations
 
-`make codegen` needs the pinned Flutter/Dart SDK on PATH because the
-generator invokes them directly; `fvm exec make codegen` supplies that
-environment. After changing Rust or regenerating the bridge, stop and
-restart `flutter run` completely: hot reload/restart keeps the old native
-library loaded.
+Copy and move jobs run in the background with progress, pause/stop controls
+and conflict questions. Their dialogs let you change the destination.
 
-See the [app icon guide](brand/README.md) for the SVG masters, palette,
-small-size variants and generated platform resources. `make icons` needs
-Python 3 and `rsvg-convert` (librsvg).
-See [Linux packaging](linux/packaging/README.md) for desktop-entry and icon
-installation; `make build-linux` produces an app bundle, not an installer.
+| Tool | Purpose |
+|---|---|
+| Copy As / Move As | Choose a destination and a new name |
+| New Folder | Create a folder, including a nested path |
+| Duplicate and links | Duplicate local files; create symbolic/hard links |
+| Batch Rename | Rename using patterns, dates, counters and search/replace, with a live preview |
+| Rename in Editor | Edit local names in a built-in multiline dialog |
+| File Attributes | Change permissions and modified/accessed times, optionally recursively |
+| Compare Folders | Compare current listings and mark missing/newer items |
+| Synchronize Folders | Review recursive one-way or two-way changes between local trees |
+| Checksums | Calculate, look up, save or verify SHA-256, SHA-1, MD5 and BLAKE3 |
+| Find Duplicates | Group identical local files and choose which copies to trash |
 
-## CI
+**Undo / Redo** (⌘Z / ⇧⌘Z) covers supported local changes for the current
+session. It cannot restore **overwritten contents**, **permanent deletion**
+or **server operations**.
 
-The [GitHub Actions workflow](.github/workflows/ci.yml) runs `make verify`,
-a release build and a short launch check on Linux and Windows, retaining
-screenshots as artifacts. It runs on pull requests, pushes to `ci/**`
-branches and manual dispatch; ordinary pushes to other branches do not
-trigger it. There is no macOS CI job.
+<details>
+<summary>Selection, renaming, the Shelf and Undo details</summary>
 
-Document smoke tests exercise the native engines with small generated
-fixtures. A successful launch check alone does not exercise those engines;
-release validation must also open a document in the packaged application.
+- Shift with movement selects a range. ⌘A marks all, ⌥⌘A clears marks and
+  ⌃⌘A inverts them. Select by Mask (⌘=) accepts masks or regular expressions.
+- Control+Space toggles a mark without moving. The parent row (`..`) is
+  never an operation target.
+- The delete dialog initially selects Trash; permanent deletion is a
+  separate choice.
+- The Shelf collects local files from several folders. Add with ⌥⌘S,
+  show with ⌃⌘S, then copy/move the collected items into one destination.
 
-## Releases
+Batch Rename patterns include name/path components (`[N]`, `[E]`, `[A]`,
+`[P]`, `[G]`), substrings (`[N2-4]`, `[N-5,3]`), dates (`[d]`, `[Y]`,
+`[M]`, `[D]`, `[t]`), counters (`[C5+5/2:3]`) and case conversion
+(`[U]`, `[L]`, `[F]`, `[n]`). Rename in Editor validates empty, invalid,
+duplicate or occupied names and supports name swaps.
 
-On macOS, `make dmg` builds the release app and packs it into
-`build/Ferryx-<version>.dmg` with a link to Applications. `make release`
-publishes that image through an authenticated `gh` as `v<version>` from
-`pubspec.yaml`, excluding the `+build` suffix.
+File Attributes supports owner/group changes on Unix, file flags on macOS
+and the read-only flag on Windows. macOS Finder tags appear beside file names;
+⌃⌘T edits common/mixed tags and can create new names and colors.
 
-Publishing requires a clean working tree and a commit already pushed to
-the remote. If that version's tag points to a different commit, the script
-requires a version bump. Repeating the release at the same commit replaces
-its DMG asset. Windows and Linux have build targets, but this publishing
-script packages and uploads only macOS.
+Configure an external editor in **Settings → Editors** before using F4.
+Editors/tools launch through desktop integration; the stored "in terminal"
+flag does not currently route them through Ferryx's terminal.
 
-The macOS app is signed ad hoc and is not notarized. For a downloaded build
-you trust, follow Apple's [Open Anyway instructions](https://support.apple.com/en-us/102445)
-in System Settings → Privacy & Security after attempting to open it.
+Drag local files between panels, onto folder rows or to/from other apps.
+Same-volume drops move; cross-volume drops copy. macOS Option forces copy
+and Command forces move. Windows modifiers are not reported by the drag
+plugin, so the volume rule applies. Archive members drag within Ferryx only.
 
-## Layout
+Undo retains the last **100 steps in memory**. Created items go to Trash,
+moved items move back and trashed items are restored. A preflight check
+reports missing items, metadata changes and conflicting paths. Items Ferryx
+trashes on macOS do not have Finder Put Back.
 
-```
-lib/app/                 composition root: bootstrap, dependencies, routing
-packages/                Dart packages (see ARCHITECTURE.md)
-packages/features/*      one package per screen or flow
-rust/crates/ferryx_core  sorting, natural collation, masks, quick search, batch rename
-rust/crates/ferryx_vfs   listings, metadata, watching, volumes, attributes, links, archives, servers
-rust/crates/ferryx_ops   copy, move, delete, trash, duplicate, compress, extract, sizes, find, transfers
-rust/crates/ferryx_term  the terminal's shell in a pseudo-terminal: batched output, its state
-rust/crates/ferryx_api   flutter_rust_bridge surface and the event stream
-rust/crates/ferryx_test_servers  in-process SFTP, FTP and WebDAV servers for the tests
-rust_builder/            cargokit FFI plugin that compiles the Rust crate
-brand/                   app icon masters, one per desktop (make icons)
-docs/screenshots/        UI images used in this README
-linux/packaging/         desktop entry and hicolor icons for Linux packages
-tools/                   Linux container and macOS packaging/release scripts
-```
+</details>
 
-## Settings and stored data
+## Archives
 
-Ferryx keeps its preferences in the platform's preference store (one JSON
-value under `ferryx.preferences`): theme and language, the panels' tabs
-and their places, view modes, favorites, editors, tools and shortcut
-overrides. Beside it, under keys of their own, it keeps the folders you
-visit with their frecency (`ferryx.folderFrecency`, for Jump to Folder)
-and the commands you ran from the palette (`ferryx.recentCommands`) and
-the server addresses you connected to (`ferryx.recentServers`, never with
-a password). Saved servers are in the preferences without passwords; a
-password or key passphrase goes to the system keychain only when you tick
-Remember.
+Open supported archives as **read-only folders**, or create/extract them
+with the built-in engine and installed programs.
 
-Accepted SSH host keys go to Ferryx's own `known_hosts`; the user's and
-system's OpenSSH files are read without being modified:
+**Compress:** ⌃⌘C on macOS, F9 on Windows/Linux, or Vim `zc`.
+**Extract To:** ⌃⌘E on macOS, Alt+F9 on Windows/Linux, or Vim `zx`.
+
+The dialogs offer format, name, engine and destination choices; the
+extension follows the format. Engine/format choices are remembered.
+**Settings → Archivers** detects programs, enables/disables them, adds
+manual executable profiles and configures each program.
+
+<details>
+<summary>Formats, program settings and passwords</summary>
+
+Built-in browsing covers ZIP-family archives, TAR with/without gzip, bzip2,
+xz or zstd, 7z, RAR, ISO (Joliet/Rock Ridge), and single-file gzip/bzip2/xz/zstd
+streams. Return opens a supported archive; ⌘↓ also checks file signatures.
+F5 extracts selected members. Opening a member externally uses a temporary
+copy; editing it does not update the archive. Multi-volume RAR browsing lists
+the first volume's members only.
+
+| Installed program | Creation in Ferryx |
+|---|---|
+| 7-Zip (`7zz`, `7z`, `7za`) | 7z, ZIP |
+| TAR (`tar`, `bsdtar`) | TAR, TAR.GZ, TAR.BZ2, TAR.XZ, TAR.ZST |
+| ZIP / UnZip | ZIP creation through `zip`; `unzip` extracts |
+| RAR / UnRAR | RAR creation through `rar`; `unrar` extracts |
+| The Unarchiver (`unar`) | Extraction only |
+| gzip / pigz | GZ, TAR.GZ |
+| bzip2 / pbzip2 | BZ2, TAR.BZ2 |
+| xz | XZ, TAR.XZ |
+| zstd | ZST, TAR.ZST |
+| LZ4 | LZ4, TAR.LZ4 |
+
+Formats depend on the installed program/version. Extra extractors do not
+automatically extend built-in archive browsing; use Extract To for them.
+
+Automatic selection uses built-in ZIP and the built-in reader where
+available. Compressed TAR creation prefers a dedicated compressor when found.
+One regular file can use a plain compression stream; folders, symlinks and
+multiple items use a container. Sources are kept.
+
+Each program's settings button offers supported compression levels, threads,
+solid mode and **one additional argument per line**, without shell quoting.
+Ferryx accepts supported compression/format arguments and supplies paths,
+passwords and operation switches itself. Reset selects program defaults;
+Save applies them. Settings are per executable and are not imported from
+Keka, WinRAR or other graphical applications. Solid mode applies to 7z/RAR;
+BSD tar's thread setting applies to TAR + zstd.
+
+Built-in ZIP supports an optional AES-256 password. External password entry
+is supported for 7-Zip. ZIP creation with 7-Zip and a non-ASCII password
+switches to built-in ZIP with an explanation. Opened ZIP/7z/RAR passwords
+are remembered for the session, not saved in program settings.
+
+Jobs support cancellation, conflict handling and Undo. External work can show
+an activity bar when its total is unknown. On Unix, pause suspends the worker;
+on Windows, the program may keep preparing output while publication waits.
+
+Vim examples: `:pack 7z`, `:pack tar.gz`, `:pack zst`,
+`:unpack ~/Downloads`, `:archivers`. `:compress` aliases `:pack`,
+`:zip` selects ZIP, and `:extract` aliases `:unpack`.
+
+</details>
+
+## Preview
+
+**Space** in normal mode, **i** in Vim mode or **⇧⌘Y** opens preview beside
+the file list. **F3** opens the full-window viewer. Use the placement button
+to switch without reopening the document; **Tab** moves between files and
+preview, and **Esc** closes it. The covered panel is restored on close.
+
+| Content | Supported formats |
+|---|---|
+| Text and hex | Windowed reads, Find and Go to Offset |
+| Images | Whole-file preview, limited to 64 MiB |
+| Reflowable books | EPUB, FB2 (also `.fbz` / `.fb2.zip`), MOBI 6, AZW3/KF8 |
+| Fixed pages | PDF, CBZ, self-contained DjVu (`.djvu` / `.djv`) |
+
+On macOS, **⌘Y opens system Quick Look**, separately from built-in Preview.
+
+<details>
+<summary>Reading controls and format limits</summary>
+
+Books have A− / A+ controls and a reset to 15, with sizes from 10 to 32.
+Book size is remembered separately from text/hex size and is available in
+Settings → Viewer. ⌘− / ⌘+ / ⌘0 changes/resets book type size or zooms/fits
+fixed pages; Windows/Linux use Ctrl instead of Command.
+
+Page navigation, contents where available, zoom and Go to Page support
+fixed-page reading. Text/hex use ⌘F for Find and ⌘L for Go to Offset;
+their actions menu keeps controls available in narrow windows.
+
+- EPUB/KF8 require horizontal reflowable text; fixed-layout books and vertical
+  writing are unsupported.
+- CBZ is supported; CBR is not.
+- Encrypted PDFs show a password-required message; password entry is not implemented.
+- DjVu must be self-contained; indirect documents and JPEG-in-DjVu are unsupported.
+- There is no OCR or book/PDF/DjVu text-search UI. PDF/DjVu selection and
+  annotation tools are not exposed.
+
+Native files are read in place. Server files/archive members use an owned
+temporary copy, released when preview closes or changes.
+
+</details>
+
+## Terminal
+
+Keep a terminal below a panel, in a **Terminal** tab or across the window.
+The terminal bar and its actions/tab menus move the same running session,
+preserving output and scroll position. Closing its tab hides the session.
+
+Choose an installed monospaced font, Geist Mono or the system default in
+**Settings → Terminal**. Font and size changes apply without restarting the shell.
+
+<details>
+<summary>Terminal keys, folder following and limits</summary>
+
+Here, backtick means the <kbd>&#96;</kbd> key.
+
+| Action | macOS | Windows/Linux |
+|---|---|---|
+| Show/focus; make a focused bottom terminal taller | Control + backtick | Ctrl+Shift+Up |
+| Hide | Control+Shift + backtick | Ctrl+Shift+Down |
+| Toggle full-window terminal | ⌥⌘O | Ctrl + backtick |
+| Toggle panels over terminal | ⌃⌥O | Ctrl+Shift + backtick |
+| Copy / Paste / Clear | ⌘C / ⌘V / ⌘K | Ctrl+Shift+C / Ctrl+Shift+V / Ctrl+Shift+K |
+
+macOS also has Control+Option+Up/Down show/hide aliases where the OS permits.
+The actions menu offers Copy, Paste, Select All and Clear. Shell control keys
+go to the shell; supported window commands remain available.
+
+On macOS/Linux, a panel-attached terminal follows its local folder while the
+shell waits at a prompt; a shell `cd` updates the panel. Across both panels
+it follows the active one. Running programs such as Vim, top or SSH are left
+alone. Windows does not synchronize shell/panel folders. Server locations
+do not become terminal working directories.
+
+There is **one session per window**, no scrollback search and no dedicated
+"paste the current file name into the terminal" command. Vim `:term make`
+runs a command when the shell is ready. `gt` / `gT` cycles terminal/folder
+tabs while the file list has Vim focus.
+
+</details>
+
+## Servers
+
+Connect with **⌘K** (Ctrl+K on Windows/Linux) to **SFTP, FTP/FTPS or WebDAV**
+over HTTP/HTTPS. Browse, preview and transfer files in either direction or
+between servers, rename, create folders and delete items. Transfers have
+progress and cancellation; saved servers appear in the connection dialog
+and Go To pop-up.
+
+**Server deletion is permanent and cannot be undone.** Externally opened
+files are local copies; saving them does not upload changes automatically.
+Refresh reads the folder again; there is no background server watcher.
+
+<details>
+<summary>Credentials and connection limits</summary>
+
+SSH host keys are checked against OpenSSH files and Ferryx's `known_hosts`;
+a changed key is refused. SFTP supports the SSH agent and key files.
+Passwords/passphrases go to the system keychain only when you choose
+**Remember**; saved server definitions contain no passwords. Plain FTP and
+HTTP are not encrypted.
+
+Flat view, Find Files, checksums and folder synchronization are local
+features. WebDAV uses Basic authentication. SSH jump hosts, `~/.ssh/config`
+aliases and client certificates for FTPS/HTTPS are unsupported.
+
+Vim example: `:connect sftp://me@host/srv`.
+
+</details>
+
+## Keyboard and Vim
+
+**Commands** (⌘P / Ctrl+P) finds actions with fuzzy search, including English
+names in any UI language. **Shortcuts** (⌘/ / Ctrl+/) shows current bindings.
+**Settings → Hotkeys** assigns or replaces them. Click hints (⌘J / Ctrl+J)
+label controls; the footer suggests keys for the current area/selection.
+
+<details>
+<summary>Everyday shortcuts</summary>
+
+| Action | macOS | Windows/Linux |
+|---|---|---|
+| Switch panels | Tab | Tab |
+| New tab | ⌘T | Ctrl+T |
+| Next / previous tab | ⌃Tab / ⌃⇧Tab | Ctrl+Tab / Ctrl+Shift+Tab |
+| Find files | ⌘F | Ctrl+F |
+| Full-window viewer / external editor | F3 / F4 | F3 / F4 |
+| Copy / Copy As | F5 / ⇧F5 | F5 / Shift+F5 |
+| Move / Move As | F6 / ⇧F6 | F6 / Shift+F6 |
+| Rename in place | ⌃F6 | Ctrl+F6 |
+| New folder | F7 | F7 |
+| Delete dialog | F8 | F8 |
+| Move to Trash | ⌘Backspace | Delete |
+| Compress / compress to the other panel | ⌃⌘C / ⌃⇧⌘C | F9 / Shift+F9 |
+| Extract To | ⌃⌘E | Alt+F9 |
+| Undo / Redo | ⌘Z / ⇧⌘Z | Ctrl+Z / Ctrl+Shift+Z |
+| Context menu | ⌃Return / Shift+F10 | Shift+F10 / Menu |
+
+macOS retains F9 / Shift+F9 / Option+F9 archive aliases; its primary archive
+keys do not require Fn. The macOS menu bar follows current bindings.
+
+</details>
+
+<details>
+<summary>Vim mode</summary>
+
+Enable **Settings → Panels → Vim keys**. These keys apply to file panels;
+text fields keep normal editing and terminal input goes to the shell.
+
+| Task | Keys |
+|---|---|
+| Move; use a count | `j` / `k`, e.g. `5j` |
+| Out / in | `h` / `l` in table mode; `-` / `gl` in any view |
+| Move between name columns | `h` / `l` |
+| First / last row | `gg` / `G`; counts such as `3G` |
+| Top / middle / bottom visible row | `H` / `M` / `L` |
+| Scroll the cursor into place | `zz` / `zt` / `zb` |
+| Jump by first letter; repeat | `f` / `F`, then `;` / `,` |
+| Visual selection / toggle marks | `v` / `x` or Space |
+| Shelf copy / move / paste | `yy` / `dd` / `p` |
+| Search; next / previous match | `/`, then `n` / `N` |
+| Next / previous tab | `gt` / `gT`, including counts such as `2gt` |
+| Neighboring preview | `i` |
+| Compress / extract | `zc` / `zx` |
+| Flat view / frequent folders | `zf` / `gj` |
+| Set / jump to a persistent mark | `m` / `'` |
+| Rename | `cw`, `A`, `I` |
+
+The `:` command line has history and Tab completion. Examples:
+`:cd ~/src`, `:mkdir notes`, `:sort size!`, `:set hidden`, `:tabnew`,
+`:marks`, `:42`, `:tag red,work`, `:tag -red`.
+
+`:sync` points the other panel at the current folder. Use `:synchronize`
+for recursive file synchronization.
+
+</details>
+
+## Settings
+
+Settings groups appearance/language, panel layouts/search/Vim keys,
+viewer sizes, terminal shell/fonts, hotkeys, external editors/tools and
+archiver profiles.
+
+<details>
+<summary>Saved data, host keys and temporary copies</summary>
+
+Preferences remember tabs/locations, modes, favorites, application profiles,
+shortcuts, terminal choices and archiver settings. Visited-folder rankings
+and recent commands/server addresses are stored separately. Recent/saved
+server addresses contain no passwords.
+
+Accepted SSH host keys are written to Ferryx's own file; the user's/system's
+OpenSSH files are read without being modified:
 
 | Platform | Ferryx host-key file |
-|----------|---------------------|
+|---|---|
 | macOS | `~/Library/Application Support/Ferryx/known_hosts` |
-| Windows | `%APPDATA%/Ferryx/known_hosts` (fallback: `~/AppData/Roaming/Ferryx/known_hosts`) |
-| Linux | `$XDG_CONFIG_HOME/ferryx/known_hosts` (fallback: `~/.config/ferryx/known_hosts`) |
+| Windows | `%APPDATA%/Ferryx/known_hosts`; fallback `~/AppData/Roaming/Ferryx/known_hosts` |
+| Linux | `$XDG_CONFIG_HOME/ferryx/known_hosts`; fallback `~/.config/ferryx/known_hosts` |
 
-Files opened externally from servers or archives are copied under `Ferryx/`
-in the system temporary directory. These copies do not synchronize changes
-back to their source. The built-in viewer caches large archive members in
-unnamed temporary files, removed when their last handle closes or the app
-exits. Document previews separately stage archive members and server files
-in private `ferryx-preview-*` temporary directories. Closing or replacing
-the preview cancels pending preparation, closes the decoder and removes
-its owned copy; native originals are never removed. Undo history and
-archive passwords stay in memory and are lost when
-the app exits.
+External server/archive copies live under `Ferryx/` in the system temporary
+directory and are not synchronized back. Preview-owned copies are released
+when the preview closes or changes; native originals are not removed.
+Archive passwords and Undo history stay in memory for the session only.
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the rules that keep the codebase
-navigable and [CLAUDE.md](CLAUDE.md) for the working conventions.
+</details>

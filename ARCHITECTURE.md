@@ -5,6 +5,26 @@ changing package boundaries, dependency flow, startup, routing or the
 bridge. The code remains the source of truth; if this document and the
 implementation diverge, fix both in the same change.
 
+For app usage, start with [README.md](README.md).
+Toolchains, builds, checks and releases are in the
+[working conventions](CLAUDE.md).
+
+## Reading map
+
+| Concern | Start here |
+|---|---|
+| Dependency boundaries and UI conventions | [Style](#style) |
+| Native filesystem and operations | [Rust workspace](#rust-workspace-rust) |
+| Archive readers and installed CLI programs | [Archives](#archives), [system archive engines](#system-archive-engines) |
+| Generated API and Dart mapping | [Bridge](#bridge-packagesferryx_backend), [Dart packages](#dart-packages) |
+| Screen composition and ownership | [Feature wiring](#feature-wiring) |
+| Viewer placement and reader integration | [Neighboring preview](#neighboring-preview), [document preview](#document-preview) |
+| File panels, input and commands | [Panels](#the-panels), [keyboard](#keyboard-model), [Vim](#vim-mode) |
+| PTY lifecycle and terminal placement | [Integrated terminal](#the-integrated-terminal) |
+| Undo, comparison, synchronization and file tools | [Operations stream](#operations-stream-undo-compare-and-sync-checksums-duplicates) |
+| Servers, credentials and transfers | [Network locations](#network-locations) |
+| Startup, verification and remaining work | [Start-up](#start-up), [tests](#tests), [known gaps](#known-gaps) |
+
 ## Style
 
 Ferryx follows the multi-package Flutter architecture of Mnema (feature
@@ -513,7 +533,7 @@ Alt-F9. Vim adds `zc` / `zx`, `:pack [format]`, `:compress`, `:zip`, `:unpack
 ## Bridge (`packages/ferryx_backend`)
 
 Generated code lives in `lib/src/rust/` and is regenerated with
-`make codegen` from `flutter_rust_bridge.yaml`. Repositories import the
+`fvm exec make codegen` from `flutter_rust_bridge.yaml`. Repositories import the
 package with a prefix (`as rust`) and translate through `mapping.dart`;
 feature packages never see generated types. `FerryxBackend.guard` turns
 Rust errors into `FerryxException` (typed `FerryxErrorKind`, the core's
