@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:component_library/component_library.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -594,16 +595,45 @@ void main() {
   });
 
   group('window tabs, as Finder\'s on macOS 15', () {
-    /// The bar above in its colour, the strip under it, at 1x; the grey of
-    /// each pixel by its position in the strip's box.
+    /// The grey of each pixel by its logical position in the strip's box.
+    Future<int Function(double x, double y)> stripPixels(
+      WidgetTester tester,
+    ) async {
+      final bar = tester.getRect(find.byType(AppTabStrip));
+      final ratio = tester.view.devicePixelRatio;
+      final boundary = tester.renderObject<RenderRepaintBoundary>(
+        find.byType(RepaintBoundary).first,
+      );
+      final data = await tester.runAsync(() async {
+        final image = await boundary.toImage(pixelRatio: ratio);
+        final bytes = (await image.toByteData(
+          format: ui.ImageByteFormat.rawRgba,
+        ))!;
+        final width = image.width;
+        image.dispose();
+        return (width, bytes);
+      });
+      final (width, bytes) = data!;
+      return (double x, double y) => bytes.getUint8(
+        (((bar.top + y) * ratio).round() * width + (x * ratio).round()) * 4 + 1,
+      );
+    }
+
+    /// The bar above in its colour, the strip under it.
     Future<(Rect, int Function(double x, double y))> pumpStrip(
       WidgetTester tester,
       Brightness brightness, {
       double stripWidth = 400,
       int active = 1,
+      double ratio = 1,
+      List<AppTab> tabs = const [
+        AppTab(id: 0, label: 'A', icon: AppIcons.folder),
+        AppTab(id: 1, label: 'B', icon: AppIcons.folder),
+        AppTab(id: 2, label: 'C', icon: AppIcons.folder),
+      ],
     }) async {
-      tester.view.physicalSize = Size(stripWidth, 120);
-      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = Size(stripWidth, 120) * ratio;
+      tester.view.devicePixelRatio = ratio;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
         MaterialApp(
@@ -618,11 +648,7 @@ void main() {
                   children: [
                     const SizedBox(height: 20),
                     AppTabStrip(
-                      tabs: const [
-                        AppTab(id: 0, label: 'A', icon: AppIcons.folder),
-                        AppTab(id: 1, label: 'B', icon: AppIcons.folder),
-                        AppTab(id: 2, label: 'C', icon: AppIcons.folder),
-                      ],
+                      tabs: tabs,
                       active: active,
                       onSelect: (_) {},
                       onClose: (_) {},
@@ -642,21 +668,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       final bar = tester.getRect(find.byType(AppTabStrip));
-      final data = await tester.runAsync(() async {
-        final image = await captureImage(
-          find.byType(RepaintBoundary).evaluate().first,
-        );
-        return (
-          image.width,
-          (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!,
-        );
-      });
-      final (width, bytes) = data!;
-      return (
-        bar,
-        (double x, double y) =>
-            bytes.getUint8(((bar.top + y).round() * width + x.round()) * 4 + 1),
-      );
+      return (bar, await stripPixels(tester));
     }
 
     double tabLeft(WidgetTester tester, String label) => tester
@@ -669,6 +681,71 @@ void main() {
         .left;
 
     for (final brightness in Brightness.values) {
+      for (final active in [0, 1]) {
+        for (final ratio in [1.0, 2.0]) {
+          testWidgets('${brightness.name}: an inactive tab keeps its top edge '
+              'on hover and exit ($active selected, ${ratio}x)', (
+            tester,
+          ) async {
+            final (_, before) = await pumpStrip(
+              tester,
+              brightness,
+              active: active,
+              ratio: ratio,
+              tabs: const [
+                AppTab(id: 0, label: 'A', icon: AppIcons.folder),
+                AppTab(id: 1, label: 'B', icon: AppIcons.folder),
+              ],
+            );
+            final inactiveLabel = active == 0 ? 'B' : 'A';
+            final activeLabel = active == 0 ? 'A' : 'B';
+            final x = tabLeft(tester, inactiveLabel) + 3;
+            final selectedX = tabLeft(tester, activeLabel) + 3;
+            final separatorX = tabLeft(tester, 'B');
+            final closeVisibility = find.descendant(
+              of: find.ancestor(
+                of: find.text(inactiveLabel),
+                matching: find.byType(HintTarget),
+              ),
+              matching: find.byType(Visibility),
+            );
+            expect(tester.widget<Visibility>(closeVisibility).visible, isFalse);
+            final mouse = await tester.createGesture(
+              kind: ui.PointerDeviceKind.mouse,
+            );
+            await mouse.addPointer(location: Offset.zero);
+            addTearDown(mouse.removePointer);
+            await mouse.moveTo(tester.getCenter(find.text(inactiveLabel)));
+            await tester.pump();
+
+            final hovered = await stripPixels(tester);
+            final colors = tester.element(find.byType(AppTabStrip)).appColors;
+            expect(hovered(x, 14), (colors.hoverFill.g * 255).round());
+            expect(tester.widget<Visibility>(closeVisibility).visible, isTrue);
+            expect(
+              hovered(x, 0),
+              before(x, 0),
+              reason: 'top edge stays visible',
+            );
+            if (brightness == Brightness.light) {
+              expect(
+                hovered(x, 1),
+                before(x, 1),
+                reason: 'shade under the edge',
+              );
+            }
+            expect(hovered(selectedX, 0), before(selectedX, 0));
+            expect(hovered(separatorX, 14), before(separatorX, 14));
+
+            await mouse.moveTo(Offset.zero);
+            await tester.pump();
+            final after = await stripPixels(tester);
+            expect(after(x, 0), before(x, 0));
+            expect(after(x, 14), before(x, 14));
+          });
+        }
+      }
+
       testWidgets('${brightness.name}: the active tab opens into the bar '
           'above in its colour; the others sit lower, under an edge, with a '
           'line between them', (tester) async {
@@ -701,7 +778,9 @@ void main() {
       });
 
       testWidgets('${brightness.name}: the last active tab meets the new-tab '
-          'cell without a step in its top edge or underline', (tester) async {
+          'cell in its normal colour without an accent underline', (
+        tester,
+      ) async {
         final (bar, grey) = await pumpStrip(
           tester,
           brightness,
@@ -720,13 +799,12 @@ void main() {
           reason: 'continuous open top edge',
         );
         expect(grey(lastTabPixel, 14), above, reason: 'no exposed strip pixel');
-        final underlineY = bar.height - 3;
-        final accent = grey(inActiveTab, underlineY);
-        expect(accent, isNot(above));
+        final bottomY = bar.height - 3;
+        expect(grey(inActiveTab, bottomY), above);
         expect(
-          grey(lastTabPixel, underlineY),
-          accent,
-          reason: 'the active underline reaches the new-tab cell',
+          grey(lastTabPixel, bottomY),
+          above,
+          reason: 'the normal tab surface reaches the new-tab cell',
         );
       });
     }

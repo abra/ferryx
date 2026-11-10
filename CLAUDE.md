@@ -40,6 +40,10 @@ Guidance for Claude Code when working in this repository.
 - `flutter_rust_bridge_codegen` 2.13.0 must match the `flutter_rust_bridge`
   version in `rust/Cargo.toml`, `pubspec.yaml` and
   `packages/ferryx_backend/pubspec.yaml`.
+- Text-document conversion lives in `ferryx_core::text_document`; changes to
+  its API require bridge codegen and `make core` before real-core Dart tests.
+  Keep native converter dependency notices in `packages/ferryx_backend/LICENSE`
+  so Flutter includes them in the application license bundle.
 
 ## Commands
 
@@ -63,6 +67,9 @@ Guidance for Claude Code when working in this repository.
 After codegen or any Rust change, restart `flutter run` fully (`q`,
 then run again): a hot restart keeps the old Rust library in the process and
 flutter_rust_bridge refuses to initialise ("Content hash … different").
+`make core` updates the host library for tests; `make dmg` updates Release.
+Neither updates an existing Debug process. Stop that session with `q` and
+use `make run` to rebuild Debug and start a new process with matching bindings.
 
 Single package: `cd packages/<pkg> && fvm flutter test` (features:
 `packages/features/<name>`). Single crate: `cd rust && cargo test -p ferryx_ops`.

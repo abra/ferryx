@@ -16,6 +16,7 @@ class AppRadii {
     required this.card,
     required this.popover,
     required this.dialog,
+    this.window = 0,
     double? tableRow,
     double? tableFrame,
     double? field,
@@ -62,6 +63,9 @@ class AppRadii {
 
   /// Alerts and dialogs.
   final double dialog;
+
+  /// Native window corners, used when content extends into the title bar.
+  final double window;
 
   /// Text fields: a push button's unless the platform squares them (an
   /// NSTextField up to macOS 15).
@@ -348,6 +352,7 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
       card: 8,
       popover: 10,
       dialog: 12,
+      window: 10,
       // Finder's list view and an NSTextField, measured on macOS 15.
       tableRow: 0,
       tableFrame: 0,
@@ -410,6 +415,7 @@ class AppMetrics extends ThemeExtension<AppMetrics> {
       card: 12,
       popover: 14,
       dialog: 16,
+      window: 16,
       search: AppRadius.full,
     ),
     topBarHeight: 52,

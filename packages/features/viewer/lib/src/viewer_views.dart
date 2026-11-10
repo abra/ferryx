@@ -8,15 +8,19 @@ import 'package:flutter/material.dart';
 import 'hex_format.dart';
 import 'line_layout.dart';
 import 'text_window.dart';
+import 'source_syntax.dart';
+import 'source_spans.dart';
 import 'viewer_source.dart';
 
-/// The monospace style of the content at the viewer's font size, with
-/// the type scale's code line (the editor's leading).
-TextStyle contentStyle(BuildContext context, double fontSize) =>
-    context.mono.copyWith(
-      fontSize: fontSize,
-      height: context.metrics.typeScale.editorCode.height,
-    );
+/// Monospace with compact leading; byte grids can supply their own height.
+TextStyle contentStyle(
+  BuildContext context,
+  double fontSize, {
+  double? height,
+}) => context.mono.copyWith(
+  fontSize: fontSize,
+  height: height ?? AppTypography.viewerLineHeightFactor,
+);
 
 /// The width of one character of [style]: the faces are monospace.
 double charWidthOf(BuildContext context, TextStyle style) {
@@ -46,8 +50,9 @@ ScrollBehavior _bareScrolling(BuildContext context) =>
 /// one at its bottom, whatever the content's width: the vertical list
 /// sits inside the horizontal scroll view, so its own bar would scroll
 /// away with the content. Neither scroll view draws a bar of its own.
-class _TwoWayScroll extends StatelessWidget {
-  const _TwoWayScroll({
+class ViewerScrollFrame extends StatelessWidget {
+  const ViewerScrollFrame({
+    super.key,
     required this.vertical,
     required this.horizontal,
     required this.contentWidth,
@@ -95,6 +100,7 @@ class TextView extends StatefulWidget {
     required this.controller,
     required this.onLayout,
     this.firstLine,
+    this.syntax = const [],
     super.key,
   });
 
@@ -108,6 +114,7 @@ class TextView extends StatefulWidget {
 
   /// The number of the window's first line, when known.
   final int? firstLine;
+  final List<List<SourceToken>> syntax;
 
   @override
   State<TextView> createState() => _TextViewState();
@@ -182,10 +189,13 @@ class _TextViewState extends State<TextView> {
             wrap: widget.wrap,
             number: firstLine == null ? null : firstLine + index,
             gutterWidth: gutter,
+            syntax: index < widget.syntax.length
+                ? widget.syntax[index]
+                : const [],
           ),
         );
         if (widget.wrap) return list;
-        return _TwoWayScroll(
+        return ViewerScrollFrame(
           vertical: widget.controller,
           horizontal: _horizontal,
           contentWidth: contentWidth,
@@ -207,6 +217,7 @@ class TextLine extends StatelessWidget {
     required this.wrap,
     this.number,
     this.gutterWidth = 0,
+    this.syntax = const [],
     super.key,
   });
 
@@ -219,11 +230,21 @@ class TextLine extends StatelessWidget {
 
   /// The number's column and the gap after it.
   final double gutterWidth;
+  final List<SourceToken> syntax;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final spans = matches == null || matches!.isEmpty
+    final spans = syntax.isNotEmpty
+        ? sourceSpans(
+            context,
+            text,
+            style,
+            syntax,
+            matches ?? const [],
+            current,
+          )
+        : matches == null || matches!.isEmpty
         ? TextSpan(text: text, style: style)
         : _lit(colors);
     final line = Text.rich(
@@ -320,7 +341,11 @@ class _HexViewState extends State<HexView> {
 
   @override
   Widget build(BuildContext context) {
-    final style = contentStyle(context, widget.fontSize);
+    final style = contentStyle(
+      context,
+      widget.fontSize,
+      height: context.metrics.typeScale.editorCode.height,
+    );
     final lineHeight = lineHeightOf(context, style);
     final rows = hexRowCount(widget.bytes.length);
     widget.onLayout(LineLayout.uniform(lineHeight: lineHeight, lines: rows));
@@ -328,7 +353,7 @@ class _HexViewState extends State<HexView> {
     // Offset, two groups, the text and the gaps between them.
     final width = charWidth * (8 + 2 + 23 + 2 + 23 + 2 + 18) + _inset * 2;
     return LayoutBuilder(
-      builder: (context, constraints) => _TwoWayScroll(
+      builder: (context, constraints) => ViewerScrollFrame(
         vertical: widget.controller,
         horizontal: _horizontal,
         contentWidth: width.clamp(constraints.maxWidth, double.infinity),

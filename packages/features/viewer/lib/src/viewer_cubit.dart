@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -7,6 +8,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'document_format.dart';
 import 'hex_format.dart';
+import 'text_preview_format.dart';
+import 'text_preview_data.dart';
+import 'source_syntax.dart';
 import 'text_window.dart';
 import 'viewer_source.dart';
 import 'viewer_state.dart';
@@ -19,6 +23,7 @@ class ViewerCubit extends Cubit<ViewerState> {
     required bool wrap,
     ViewerMode mode = ViewerMode.text,
     this.windowSize = defaultWindowSize,
+    this.highlighter = highlightSource,
   }) : super(ViewerState(mode: mode, wrap: wrap));
 
   /// How much of a file is read at once.
@@ -26,6 +31,7 @@ class ViewerCubit extends Cubit<ViewerState> {
 
   final ViewerSource source;
   final int windowSize;
+  final SourceHighlighter highlighter;
   int _reads = 0;
   bool _hasWindow = false;
 
@@ -52,9 +58,26 @@ class ViewerCubit extends Cubit<ViewerState> {
       final size = await source.size();
       if (read != _reads || isClosed) return;
       if (state.mode == ViewerMode.preview) {
+        var markdown = '';
+        TextPreviewData? preview;
+        final format = textPreviewFormatOf(source.displayName);
+        if (format != null && size > maxTextPreviewBytes) {
+          preview = const FailedTextPreview(TextPreviewFailure.limit);
+        } else if (format != null && size > 0) {
+          final bytes = await source.read(0, size);
+          if (read != _reads || isClosed) return;
+          if (format == TextPreviewFormat.markdown) {
+            markdown = utf8.decode(bytes, allowMalformed: true);
+          } else {
+            preview = await _preparePreview(bytes, format, read);
+            if (read != _reads || isClosed) return;
+          }
+        }
         emit(
           state.copyWith(
             size: size,
+            markdown: markdown,
+            textPreview: preview,
             generation: state.generation + 1,
             loading: false,
           ),
@@ -76,6 +99,7 @@ class ViewerCubit extends Cubit<ViewerState> {
             bytes: bytes,
             generation: state.generation + 1,
             window: window,
+            syntax: const [],
             loading: false,
             clearError: true,
             scroll: scroll,
@@ -84,9 +108,61 @@ class ViewerCubit extends Cubit<ViewerState> {
           keepCurrent: false,
         ),
       );
+      if (state.mode == ViewerMode.text) unawaited(_highlight(read));
     } on FerryxException catch (error) {
       if (read != _reads || isClosed) return;
       emit(state.copyWith(loading: false, error: error));
+    }
+  }
+
+  Future<TextPreviewData?> _preparePreview(
+    Uint8List bytes,
+    TextPreviewFormat format,
+    int read,
+  ) async {
+    try {
+      final converter = format.converter;
+      if (converter != null) {
+        final file = source;
+        if (file is! ConvertedDocumentSource) {
+          return const FailedTextPreview(TextPreviewFailure.malformed);
+        }
+        final html = await file.renderTextDocument(bytes, converter);
+        if (read != _reads || isClosed) return null;
+        return await prepareHtml(html);
+      }
+      final text = utf8.decode(bytes, allowMalformed: true);
+      return await (format == TextPreviewFormat.html
+          ? prepareHtml(text)
+          : prepareTable(text, tsv: format == TextPreviewFormat.tsv));
+    } on Object {
+      return const FailedTextPreview(TextPreviewFailure.malformed);
+    }
+  }
+
+  Future<void> _highlight(int read) async {
+    final language = syntaxLanguageOf(source.displayName);
+    if (language == null ||
+        state.bytes.isEmpty ||
+        state.offset != 0 ||
+        state.size > maxSyntaxBytes ||
+        state.window.binary) {
+      return;
+    }
+    try {
+      final syntax = await highlighter(
+        language,
+        state.window.lines.join('\n'),
+      );
+      if (read != _reads || isClosed || state.mode != ViewerMode.text) return;
+      emit(
+        state.copyWith(
+          syntax: syntax,
+          syntaxRevision: state.syntaxRevision + 1,
+        ),
+      );
+    } on Object {
+      // Highlighting must never prevent reading the original source.
     }
   }
 
@@ -138,7 +214,11 @@ class ViewerCubit extends Cubit<ViewerState> {
         keepCurrent: false,
       ),
     );
-    if (mode == ViewerMode.preview || !_hasWindow) unawaited(load());
+    if (mode == ViewerMode.preview || !_hasWindow) {
+      unawaited(load());
+    } else if (mode == ViewerMode.text && state.syntax.isEmpty) {
+      unawaited(_highlight(_reads));
+    }
   }
 
   void toggleWrap() => emit(state.copyWith(wrap: !state.wrap));

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Ferryx — вкладки без синей линии</title>
+    <link rel="icon" href="../../../brand/ferryx-symbolic.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../panel-focus/prototype.css">
+    <link rel="stylesheet" href="prototype.css">
+    <script src="study.js" defer></script>
+    <script src="../panel-focus/prototype.js" defer></script>
+  </head>
+  <body>
+    <header class="study-header">
+      <div class="study-title">
+        <span class="wordmark">FERRYX</span>
+        <h1>Вкладки без синей линии</h1>
+        <span class="study-note">Интерактивный прототип · демоданные</span>
+      </div>
+      <div class="study-controls">
+        <div class="segmented variants" role="group" aria-label="Оформление выбранной вкладки">
+          <button data-variant-choice="underline" aria-pressed="false">Было</button>
+          <button data-variant-choice="plain" aria-pressed="true"><b>A</b> Без линии</button>
+          <button data-variant-choice="fill" aria-pressed="false"><b>B</b> Заливка</button>
+          <button data-variant-choice="pill" aria-pressed="false"><b>C</b> Плашка</button>
+        </div>
+        <div class="control-options">
+          <label>Тема <select id="theme"><option value="light">Светлая</option><option value="dark">Тёмная</option></select></label>
+          <label>Панели <select id="layout"><option value="columns">Рядом</option><option value="rows">Одна над другой</option></select></label>
+          <label class="checkbox-label"><input id="empty-folder" type="checkbox"> Пустая папка</label>
+          <button class="comparison-link" id="compare">Сравнить A / B / C</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="study-stage" id="stage"></main>
+
+    <footer class="study-footer">
+      <p id="variant-description"></p>
+      <p><kbd>Tab</kbd> — другая панель · <kbd class="typed">gt</kbd> / <kbd class="typed">gT</kbd> — другая вкладка · вкладки также переключаются кликом</p>
+      <span>13 px текст · 22 px строка · масштаб 100%</span>
+    </footer>
+    <p class="sr-only" id="announcement" role="status" aria-live="polite"></p>
+
+    <template id="window-template">
+      <section class="ferryx-window" aria-label="Ferryx: выбранная вкладка и активная панель">
+        <div class="workspace"></div>
+        <footer class="key-hints">
+          <div class="hint-group">
+            <span class="hint"><kbd class="typed">gT</kbd> Previous Tab</span>
+            <span class="hint"><kbd class="typed">gt</kbd> Next Tab</span>
+            <span class="hint"><kbd>Tab</kbd> Change Panel</span>
+            <span class="hint"><kbd class="typed">i</kbd> Preview</span>
+          </div>
+          <span class="hint help-hint">Shortcuts <kbd>⌘/</kbd></span>
+        </footer>
+      </section>
+    </template>
+  </body>
+</html>

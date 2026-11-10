@@ -22,6 +22,7 @@ export 'src/panel_layout.dart';
 export 'src/rename.dart';
 export 'src/tags.dart';
 export 'src/terminal.dart';
+export 'src/text_document.dart';
 export 'src/tools.dart';
 export 'src/volumes.dart';
 // ─── Network ───

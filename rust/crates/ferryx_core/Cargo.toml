@@ -10,3 +10,7 @@ rust-version.workspace = true
 chrono.workspace = true
 regex.workspace = true
 serde.workspace = true
+asciidoc-html5 = "0.2.3"
+rst_parser = "0.4.2"
+rst_renderer = "0.4.2"
+rclip-rtf = { version = "0.1.0", features = ["alloc", "codepage"] }

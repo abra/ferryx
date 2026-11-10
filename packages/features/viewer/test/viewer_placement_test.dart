@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:component_library/component_library.dart';
@@ -7,11 +8,13 @@ import 'package:file_repository/file_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pagecraft/all_formats.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 import 'package:viewer_feature/src/document_preview_screen.dart';
+import 'package:viewer_feature/src/markdown_preview.dart';
 import 'package:viewer_feature/viewer_feature.dart';
 
 import 'support/document_fixtures.dart';
@@ -38,6 +41,111 @@ void main() {
     preferences = await PreferencesService.create(storage: storage);
   });
   tearDown(() => directory.delete(recursive: true));
+
+  testWidgets(
+    'Markdown keeps its read, scroll and focus when changing placement',
+    (tester) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      addTearDown(() async {
+        final closed = preferences.dispose();
+        await tester.pump();
+        await closed;
+      });
+      const location = Location.native('/tmp/README.md');
+      final bytes = Uint8List.fromList(
+        utf8.encode(List.generate(100, (i) => 'Paragraph $i.').join('\n\n')),
+      );
+      final files = _Files();
+      when(() => files.fileSize(location))
+          .thenAnswer((_) async => bytes.length);
+      when(() => files.readRange(location, 0, bytes.length))
+          .thenAnswer((_) async => bytes);
+      final fileFocus = FocusNode(debugLabel: 'files');
+      final viewerScope = FocusScopeNode(debugLabel: 'preview');
+      final fullWindow = ValueNotifier(false);
+      addTearDown(fileFocus.dispose);
+      addTearDown(viewerScope.dispose);
+      addTearDown(fullWindow.dispose);
+      final viewerKey = GlobalKey();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(AppPlatformStyle.macos),
+          localizationsDelegates: FerryxSupportedLocales.delegates,
+          supportedLocales: FerryxSupportedLocales.locales,
+          home: ValueListenableBuilder<bool>(
+            valueListenable: fullWindow,
+            builder: (context, full, _) {
+              final viewer = ViewerScreen(
+                key: viewerKey,
+                files: files,
+                preferences: preferences,
+                shortcutMap: ShortcutMap.defaults(TargetPlatform.macOS),
+                windowDecor: WindowDecor.none,
+                location: location,
+                autofocus: false,
+                focusScope: viewerScope,
+                fullWindow: full,
+                onToggleFullWindow: () => fullWindow.value = !full,
+                onFocusFiles: fileFocus.requestFocus,
+                onClose: fileFocus.requestFocus,
+              );
+              return full
+                  ? viewer
+                  : Row(
+                      children: [
+                        Expanded(
+                          child: Focus(
+                            focusNode: fileFocus,
+                            autofocus: true,
+                            child: const Text('Files'),
+                          ),
+                        ),
+                        Expanded(child: viewer),
+                      ],
+                    );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(fileFocus.hasPrimaryFocus, isTrue);
+      viewerScope.requestFocus();
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
+      await tester.pumpAndSettle();
+      final reader = tester.state(find.byType(MarkdownPreview));
+      final scroll = tester.widget<Markdown>(find.byType(Markdown)).controller!;
+      final position = scroll.offset;
+      expect(position, greaterThan(0));
+      for (final full in [true, false]) {
+        expect(
+          invokeCommand(
+            FocusManager.instance.primaryFocus!.context!,
+            AppCommand.viewerToggleFullWindow,
+          ),
+          isTrue,
+        );
+        await tester.pumpAndSettle();
+        expect(fullWindow.value, full);
+        expect(tester.state(find.byType(MarkdownPreview)), same(reader));
+        expect(
+          tester.widget<Markdown>(find.byType(Markdown)).controller,
+          same(scroll),
+        );
+        expect(scroll.offset, position);
+        viewerScope.requestFocus();
+        await tester.pumpAndSettle();
+      }
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+      expect(fileFocus.hasPrimaryFocus, isTrue);
+      verify(() => files.readRange(location, 0, bytes.length)).called(1);
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+  );
 
   testWidgets(
     'pane and full window share reader resources, position, size and focus',

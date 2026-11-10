@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 943221812;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -837224560;
 
 // Section: executor
 
@@ -2275,6 +2275,40 @@ fn wire__crate__api__files__rename_item_impl(
             move |context| {
                 transform_result_sse::<_, crate::api::types::FerryxError>((move || {
                     let output_ok = crate::api::files::rename_item(api_path, api_new_name)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__text_document__render_text_document_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "render_text_document",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_bytes = <Vec<u8>>::sse_decode(&mut deserializer);
+            let api_format =
+                <crate::api::text_document::TextDocumentFormatView>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::types::FerryxError>((move || {
+                    let output_ok = crate::api::text_document::render_text_document(api_bytes, api_format)?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -5775,6 +5809,19 @@ impl SseDecode for crate::api::terminal::TerminalStateView {
     }
 }
 
+impl SseDecode for crate::api::text_document::TextDocumentFormatView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::text_document::TextDocumentFormatView::AsciiDoc,
+            1 => crate::api::text_document::TextDocumentFormatView::ReStructuredText,
+            2 => crate::api::text_document::TextDocumentFormatView::Rtf,
+            _ => unreachable!("Invalid variant for TextDocumentFormatView: {}", inner),
+        };
+    }
+}
+
 impl SseDecode for u16 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -5937,35 +5984,36 @@ fn pde_ffi_dispatcher_primary_impl(
         67 => wire__crate__api__network__remote_stat_impl(port, ptr, rust_vec_len, data_len),
         68 => wire__crate__api__network__remote_temp_folder_impl(port, ptr, rust_vec_len, data_len),
         69 => wire__crate__api__files__rename_item_impl(port, ptr, rust_vec_len, data_len),
-        70 => wire__crate__api__files__resolve_path_impl(port, ptr, rust_vec_len, data_len),
-        71 => wire__crate__api__listing__resort_listing_impl(port, ptr, rust_vec_len, data_len),
-        72 => wire__crate__api__ops__resume_operation_impl(port, ptr, rust_vec_len, data_len),
-        73 => wire__crate__api__system__reveal_in_file_manager_impl(port, ptr, rust_vec_len, data_len),
-        74 => wire__crate__api__checksum__save_checksum_file_impl(port, ptr, rust_vec_len, data_len),
-        76 => wire__crate__api__archives__set_archive_password_impl(port, ptr, rust_vec_len, data_len),
-        77 => wire__crate__api__tags__set_tags_impl(port, ptr, rust_vec_len, data_len),
-        78 => wire__crate__api__flat__sort_flat_listing_impl(port, ptr, rust_vec_len, data_len),
-        80 => wire__crate__api__checksum__start_checksum_verify_impl(port, ptr, rust_vec_len, data_len),
-        81 => wire__crate__api__checksum__start_checksums_impl(port, ptr, rust_vec_len, data_len),
-        82 => wire__crate__api__archives__start_configured_zip_impl(port, ptr, rust_vec_len, data_len),
-        83 => wire__crate__api__sync__start_content_compare_impl(port, ptr, rust_vec_len, data_len),
-        84 => wire__crate__api__duplicates__start_duplicates_impl(port, ptr, rust_vec_len, data_len),
-        85 => wire__crate__api__archives__start_external_archive_impl(port, ptr, rust_vec_len, data_len),
-        86 => wire__crate__api__find__start_find_impl(port, ptr, rust_vec_len, data_len),
-        87 => wire__crate__api__sync__start_folder_compare_impl(port, ptr, rust_vec_len, data_len),
-        88 => wire__crate__api__network__start_network_operation_impl(port, ptr, rust_vec_len, data_len),
-        89 => wire__crate__api__ops__start_operation_impl(port, ptr, rust_vec_len, data_len),
-        90 => wire__crate__api__sync__start_synchronize_impl(port, ptr, rust_vec_len, data_len),
-        91 => wire__crate__api__files__stat_impl(port, ptr, rust_vec_len, data_len),
-        92 => wire__crate__api__flat__stream_flat_listing_impl(port, ptr, rust_vec_len, data_len),
-        93 => wire__crate__api__events__subscribe_events_impl(port, ptr, rust_vec_len, data_len),
-        94 => wire__crate__api__sync__take_content_differences_impl(port, ptr, rust_vec_len, data_len),
-        96 => wire__crate__api__terminal__terminal_change_directory_impl(port, ptr, rust_vec_len, data_len),
-        97 => wire__crate__api__terminal__terminal_close_impl(port, ptr, rust_vec_len, data_len),
-        99 => wire__crate__api__terminal__terminal_events_impl(port, ptr, rust_vec_len, data_len),
-        101 => wire__crate__api__terminal__terminal_start_impl(port, ptr, rust_vec_len, data_len),
-        104 => wire__crate__api__archives__validate_archiver_options_impl(port, ptr, rust_vec_len, data_len),
-        106 => wire__crate__api__journal__walk_journal_step_impl(port, ptr, rust_vec_len, data_len),
+        70 => wire__crate__api__text_document__render_text_document_impl(port, ptr, rust_vec_len, data_len),
+        71 => wire__crate__api__files__resolve_path_impl(port, ptr, rust_vec_len, data_len),
+        72 => wire__crate__api__listing__resort_listing_impl(port, ptr, rust_vec_len, data_len),
+        73 => wire__crate__api__ops__resume_operation_impl(port, ptr, rust_vec_len, data_len),
+        74 => wire__crate__api__system__reveal_in_file_manager_impl(port, ptr, rust_vec_len, data_len),
+        75 => wire__crate__api__checksum__save_checksum_file_impl(port, ptr, rust_vec_len, data_len),
+        77 => wire__crate__api__archives__set_archive_password_impl(port, ptr, rust_vec_len, data_len),
+        78 => wire__crate__api__tags__set_tags_impl(port, ptr, rust_vec_len, data_len),
+        79 => wire__crate__api__flat__sort_flat_listing_impl(port, ptr, rust_vec_len, data_len),
+        81 => wire__crate__api__checksum__start_checksum_verify_impl(port, ptr, rust_vec_len, data_len),
+        82 => wire__crate__api__checksum__start_checksums_impl(port, ptr, rust_vec_len, data_len),
+        83 => wire__crate__api__archives__start_configured_zip_impl(port, ptr, rust_vec_len, data_len),
+        84 => wire__crate__api__sync__start_content_compare_impl(port, ptr, rust_vec_len, data_len),
+        85 => wire__crate__api__duplicates__start_duplicates_impl(port, ptr, rust_vec_len, data_len),
+        86 => wire__crate__api__archives__start_external_archive_impl(port, ptr, rust_vec_len, data_len),
+        87 => wire__crate__api__find__start_find_impl(port, ptr, rust_vec_len, data_len),
+        88 => wire__crate__api__sync__start_folder_compare_impl(port, ptr, rust_vec_len, data_len),
+        89 => wire__crate__api__network__start_network_operation_impl(port, ptr, rust_vec_len, data_len),
+        90 => wire__crate__api__ops__start_operation_impl(port, ptr, rust_vec_len, data_len),
+        91 => wire__crate__api__sync__start_synchronize_impl(port, ptr, rust_vec_len, data_len),
+        92 => wire__crate__api__files__stat_impl(port, ptr, rust_vec_len, data_len),
+        93 => wire__crate__api__flat__stream_flat_listing_impl(port, ptr, rust_vec_len, data_len),
+        94 => wire__crate__api__events__subscribe_events_impl(port, ptr, rust_vec_len, data_len),
+        95 => wire__crate__api__sync__take_content_differences_impl(port, ptr, rust_vec_len, data_len),
+        97 => wire__crate__api__terminal__terminal_change_directory_impl(port, ptr, rust_vec_len, data_len),
+        98 => wire__crate__api__terminal__terminal_close_impl(port, ptr, rust_vec_len, data_len),
+        100 => wire__crate__api__terminal__terminal_events_impl(port, ptr, rust_vec_len, data_len),
+        102 => wire__crate__api__terminal__terminal_start_impl(port, ptr, rust_vec_len, data_len),
+        105 => wire__crate__api__archives__validate_archiver_options_impl(port, ptr, rust_vec_len, data_len),
+        107 => wire__crate__api__journal__walk_journal_step_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -5989,14 +6037,14 @@ fn pde_ffi_dispatcher_sync_impl(
         41 => wire__crate__api__listing__is_directory_impl(ptr, rust_vec_len, data_len),
         44 => wire__crate__api__network__list_servers_impl(ptr, rust_vec_len, data_len),
         54 => wire__crate__api__network__parse_server_address_impl(ptr, rust_vec_len, data_len),
-        75 => wire__crate__api__network__server_key_impl(ptr, rust_vec_len, data_len),
-        79 => wire__crate__api__system__standard_folders_impl(ptr, rust_vec_len, data_len),
-        95 => wire__crate__api__terminal__terminal_ack_impl(ptr, rust_vec_len, data_len),
-        98 => wire__crate__api__terminal__terminal_default_shell_impl(ptr, rust_vec_len, data_len),
-        100 => wire__crate__api__terminal__terminal_resize_impl(ptr, rust_vec_len, data_len),
-        102 => wire__crate__api__terminal__terminal_state_impl(ptr, rust_vec_len, data_len),
-        103 => wire__crate__api__terminal__terminal_write_impl(ptr, rust_vec_len, data_len),
-        105 => wire__crate__api__volume_id__volume_id_impl(ptr, rust_vec_len, data_len),
+        76 => wire__crate__api__network__server_key_impl(ptr, rust_vec_len, data_len),
+        80 => wire__crate__api__system__standard_folders_impl(ptr, rust_vec_len, data_len),
+        96 => wire__crate__api__terminal__terminal_ack_impl(ptr, rust_vec_len, data_len),
+        99 => wire__crate__api__terminal__terminal_default_shell_impl(ptr, rust_vec_len, data_len),
+        101 => wire__crate__api__terminal__terminal_resize_impl(ptr, rust_vec_len, data_len),
+        103 => wire__crate__api__terminal__terminal_state_impl(ptr, rust_vec_len, data_len),
+        104 => wire__crate__api__terminal__terminal_write_impl(ptr, rust_vec_len, data_len),
+        106 => wire__crate__api__volume_id__volume_id_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -7857,6 +7905,28 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::terminal::TerminalStateView>
     for crate::api::terminal::TerminalStateView
 {
     fn into_into_dart(self) -> crate::api::terminal::TerminalStateView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::text_document::TextDocumentFormatView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::AsciiDoc => 0.into_dart(),
+            Self::ReStructuredText => 1.into_dart(),
+            Self::Rtf => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::text_document::TextDocumentFormatView
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::text_document::TextDocumentFormatView>
+    for crate::api::text_document::TextDocumentFormatView
+{
+    fn into_into_dart(self) -> crate::api::text_document::TextDocumentFormatView {
         self
     }
 }
@@ -9808,6 +9878,23 @@ impl SseEncode for crate::api::terminal::TerminalStateView {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <Option<bool>>::sse_encode(self.idle, serializer);
         <Option<String>>::sse_encode(self.folder, serializer);
+    }
+}
+
+impl SseEncode for crate::api::text_document::TextDocumentFormatView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::text_document::TextDocumentFormatView::AsciiDoc => 0,
+                crate::api::text_document::TextDocumentFormatView::ReStructuredText => 1,
+                crate::api::text_document::TextDocumentFormatView::Rtf => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 

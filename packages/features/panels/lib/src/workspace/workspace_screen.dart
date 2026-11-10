@@ -34,6 +34,7 @@ import '../native/drop_plan.dart';
 import '../native/panel_drag_hooks.dart';
 import '../native/quick_look_pick.dart';
 import '../operations/operations_cards.dart';
+import '../operations/pending_deletion_card.dart';
 import '../panel/panel_cubit.dart';
 import '../panel/panel_side.dart';
 import '../panel/panel_state.dart';
@@ -50,6 +51,7 @@ import 'tag_menu.dart';
 import 'terminal_dock.dart';
 import 'workspace_cubit.dart';
 import 'workspace_operations_controller.dart';
+import 'pending_deletions_controller.dart';
 import 'workspace_preview.dart';
 import 'workspace_preview_cubit.dart';
 import 'workspace_state.dart';
@@ -277,6 +279,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   /// Asks the disk which shelf items are still there, once changes settle.
   Timer? _shelfCheck;
   late final WorkspaceOperationsController _operations;
+  late final PendingDeletionsController _deletions;
   Timer? _snapshotTimer;
   double _splitBeforeKeys = 0.5;
 
@@ -328,6 +331,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       ask: _ask,
       onFinished: _scheduleShelfCheck,
     );
+    _deletions = PendingDeletionsController(onExecute: _executeDeletion);
     _changes = widget.files.directoryChanges.listen(
       (_) => _scheduleShelfCheck(),
     );
@@ -367,6 +371,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   @override
   void dispose() {
+    _deletions.dispose();
     _operations.dispose();
     _changes?.cancel();
     _shelfCheck?.cancel();
@@ -634,6 +639,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                                   final secondPercent =
                                                       100 - firstPercent;
                                                   return _Panels(
+                                                    deletions: _deletions,
+                                                    operations: _operations,
+                                                    operationService:
+                                                        widget.operations,
+                                                    onCancelDeletion:
+                                                        _cancelDeletion,
                                                     workspace: workspace,
                                                     stacked: stacked,
                                                     prefs: prefs,
@@ -711,9 +722,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                                     listenable: _operations,
                                                     builder: (context, _) =>
                                                         OperationsCards(
-                                                          operations:
-                                                              _operations
-                                                                  .operations,
+                                                          operations: _operations
+                                                              .operationsFor(
+                                                                null,
+                                                              ),
                                                           titles: _operations
                                                               .titles,
                                                           onPause: (id) =>
@@ -839,6 +851,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                         !fullWindow &&
                                         !_previewFocus.hasFocus)
                                       _KeyHintsLine(
+                                        deletions: _deletions,
                                         terminalFocus: _terminalFocus,
                                         shelfFocus: _shelfFocus,
                                         terminalHints: terminalShown
@@ -907,6 +920,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     onVimComplete: _vimComplete,
     drag: _dragHooksFor(side),
     onEscape: _escapePreview,
+    onCancelPendingDeletion: () => _deletions.cancelFrom(side),
     onArchivePassword: (location) =>
         unawaited(_passwordForPanel(side, location)),
   );
@@ -974,6 +988,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 /// cursor or selection.
 class _KeyHintsLine extends StatelessWidget {
   const _KeyHintsLine({
+    required this.deletions,
     required this.terminalFocus,
     required this.shelfFocus,
     required this.terminalHints,
@@ -986,6 +1001,7 @@ class _KeyHintsLine extends StatelessWidget {
   });
 
   final FocusNode terminalFocus;
+  final PendingDeletionsController deletions;
   final FocusNode shelfFocus;
 
   /// The terminal's keys while it is shown; null without it.
@@ -1000,6 +1016,7 @@ class _KeyHintsLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: Listenable.merge([
+      deletions,
       terminalFocus,
       shelfFocus,
       FocusManager.instance,
@@ -1024,12 +1041,18 @@ class _KeyHintsLine extends StatelessWidget {
         builder: (context, state) => KeyHintStrip(
           hints: shelfFocus.hasFocus
               ? shelfHints
-              : hintsFor(
-                  tab: state.active,
-                  vim: vim,
-                  hasRegister: hasShelf,
-                  hasMultipleTabs: state.tabs.length > 1 && !typing,
-                ),
+              : [
+                  if (deletions.hasPending &&
+                      !typing &&
+                      state.active?.renaming == null)
+                    const KeyHint(LogicalKeyboardKey.escape, HintWord.cancel),
+                  ...hintsFor(
+                    tab: state.active,
+                    vim: vim,
+                    hasRegister: hasShelf,
+                    hasMultipleTabs: state.tabs.length > 1 && !typing,
+                  ),
+                ],
           shortcutMap: shortcutMap,
           vim: vim,
           onHide: onHide,
@@ -1044,6 +1067,10 @@ class _KeyHintsLine extends StatelessWidget {
 /// one alone.
 class _Panels extends StatelessWidget {
   const _Panels({
+    required this.deletions,
+    required this.operations,
+    required this.operationService,
+    required this.onCancelDeletion,
     required this.workspace,
     this.terminal,
     this.terminalSide = PanelSide.left,
@@ -1076,6 +1103,10 @@ class _Panels extends StatelessWidget {
   static const double splitterLineWidth = 1;
 
   final WorkspaceState workspace;
+  final PendingDeletionsController deletions;
+  final WorkspaceOperationsController operations;
+  final OperationsService operationService;
+  final ValueChanged<PanelSide> onCancelDeletion;
   final PanelTerminal? terminal;
   final PanelSide terminalSide;
 
@@ -1111,21 +1142,29 @@ class _Panels extends StatelessWidget {
     final colors = context.appColors;
     if (workspace.singlePane && previewSide == null) {
       final left = workspace.active == PanelSide.left;
-      return _SidePanel(
-        key: left ? leftPanel : rightPanel,
+      return _PanelOperationsHost(
         side: workspace.active,
-        terminal: terminalSide == workspace.active ? terminal : null,
-        leading: true,
-        trailing: true,
-        cubit: cubitOf(workspace.active),
-        focusNode: left ? leftFocus : rightFocus,
-        cursorKey: left ? leftCursor : rightCursor,
-        active: true,
-        prefs: prefs,
-        decor: decor,
-        shortcutMap: shortcutMap,
-        hooks: hooksFor(workspace.active),
-        registerNote: registerNote,
+        deletions: deletions,
+        operations: operations,
+        operationService: operationService,
+        showOperations: workspace.operationsShown,
+        onCancel: () => onCancelDeletion(workspace.active),
+        child: _SidePanel(
+          key: left ? leftPanel : rightPanel,
+          side: workspace.active,
+          terminal: terminalSide == workspace.active ? terminal : null,
+          leading: true,
+          trailing: true,
+          cubit: cubitOf(workspace.active),
+          focusNode: left ? leftFocus : rightFocus,
+          cursorKey: left ? leftCursor : rightCursor,
+          active: true,
+          prefs: prefs,
+          decor: decor,
+          shortcutMap: shortcutMap,
+          hooks: hooksFor(workspace.active),
+          registerNote: registerNote,
+        ),
       );
     }
     final first = ((extent - splitterLineWidth) * workspace.splitFraction)
@@ -1140,24 +1179,32 @@ class _Panels extends StatelessWidget {
             SizedBox(
               width: stacked ? null : first,
               height: stacked ? first : null,
-              child: _PreviewPanelSlot(
-                preview: previewSide == PanelSide.left ? preview : null,
-                child: _SidePanel(
-                  key: leftPanel,
-                  side: PanelSide.left,
-                  terminal: terminalSide == PanelSide.left ? terminal : null,
-                  // Above, it has the window's top row to itself.
-                  leading: true,
-                  trailing: stacked,
-                  cubit: cubitOf(PanelSide.left),
-                  focusNode: leftFocus,
-                  cursorKey: leftCursor,
-                  active: workspace.active == PanelSide.left,
-                  prefs: prefs,
-                  decor: decor,
-                  shortcutMap: shortcutMap,
-                  hooks: hooksFor(PanelSide.left),
-                  registerNote: registerNote,
+              child: _PanelOperationsHost(
+                side: PanelSide.left,
+                deletions: deletions,
+                operations: operations,
+                operationService: operationService,
+                showOperations: workspace.operationsShown,
+                onCancel: () => onCancelDeletion(PanelSide.left),
+                child: _PreviewPanelSlot(
+                  preview: previewSide == PanelSide.left ? preview : null,
+                  child: _SidePanel(
+                    key: leftPanel,
+                    side: PanelSide.left,
+                    terminal: terminalSide == PanelSide.left ? terminal : null,
+                    // Above, it has the window's top row to itself.
+                    leading: true,
+                    trailing: stacked,
+                    cubit: cubitOf(PanelSide.left),
+                    focusNode: leftFocus,
+                    cursorKey: leftCursor,
+                    active: workspace.active == PanelSide.left,
+                    prefs: prefs,
+                    decor: decor,
+                    shortcutMap: shortcutMap,
+                    hooks: hooksFor(PanelSide.left),
+                    registerNote: registerNote,
+                  ),
                 ),
               ),
             ),
@@ -1166,25 +1213,33 @@ class _Panels extends StatelessWidget {
               color: colors.line,
             ),
             Expanded(
-              child: _PreviewPanelSlot(
-                preview: previewSide == PanelSide.right ? preview : null,
-                child: _SidePanel(
-                  key: rightPanel,
-                  side: PanelSide.right,
-                  terminal: terminalSide == PanelSide.right ? terminal : null,
-                  // Below, its bar is not the window's: no buttons beside
-                  // it, and it does not move the window.
-                  leading: false,
-                  trailing: !stacked,
-                  cubit: cubitOf(PanelSide.right),
-                  focusNode: rightFocus,
-                  cursorKey: rightCursor,
-                  active: workspace.active == PanelSide.right,
-                  prefs: prefs,
-                  decor: stacked ? WindowDecor.none : decor,
-                  shortcutMap: shortcutMap,
-                  hooks: hooksFor(PanelSide.right),
-                  registerNote: registerNote,
+              child: _PanelOperationsHost(
+                side: PanelSide.right,
+                deletions: deletions,
+                operations: operations,
+                operationService: operationService,
+                showOperations: workspace.operationsShown,
+                onCancel: () => onCancelDeletion(PanelSide.right),
+                child: _PreviewPanelSlot(
+                  preview: previewSide == PanelSide.right ? preview : null,
+                  child: _SidePanel(
+                    key: rightPanel,
+                    side: PanelSide.right,
+                    terminal: terminalSide == PanelSide.right ? terminal : null,
+                    // Below, its bar is not the window's: no buttons beside
+                    // it, and it does not move the window.
+                    leading: false,
+                    trailing: !stacked,
+                    cubit: cubitOf(PanelSide.right),
+                    focusNode: rightFocus,
+                    cursorKey: rightCursor,
+                    active: workspace.active == PanelSide.right,
+                    prefs: prefs,
+                    decor: stacked ? WindowDecor.none : decor,
+                    shortcutMap: shortcutMap,
+                    hooks: hooksFor(PanelSide.right),
+                    registerNote: registerNote,
+                  ),
                 ),
               ),
             ),
@@ -1220,6 +1275,92 @@ class _Panels extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Composition for one side: updates cards without rebuilding its file/viewer
+/// subtree. Pending deletion is visible even when ordinary progress is hidden.
+class _PanelOperationsHost extends StatelessWidget {
+  const _PanelOperationsHost({
+    required this.side,
+    required this.deletions,
+    required this.operations,
+    required this.operationService,
+    required this.showOperations,
+    required this.onCancel,
+    required this.child,
+  });
+
+  final PanelSide side;
+  final PendingDeletionsController deletions;
+  final WorkspaceOperationsController operations;
+  final OperationsService operationService;
+  final bool showOperations;
+  final VoidCallback onCancel;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: Listenable.merge([deletions, operations]),
+    child: child,
+    builder: (context, child) {
+      final pending = deletions.pendingFor(side);
+      final running = showOperations
+          ? operations.operationsFor(side)
+          : const <OperationProgress>[];
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          child!,
+          if (pending != null || running.isNotEmpty)
+            Positioned.fill(
+              top: context.metrics.topBarHeight,
+              bottom: AppStatusBar.heightOf(context),
+              left: 0,
+              right: 0,
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: SizedBox(
+                  width: OperationsCards.cardWidth + AppSpacing.md * 2,
+                  child: SingleChildScrollView(
+                    reverse: true,
+                    // Keep the floating plate's shadow inside the viewport.
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: AppSpacing.sm,
+                      children: [
+                        if (running.isNotEmpty)
+                          OperationsCards(
+                            operations: running,
+                            titles: operations.titles,
+                            onPause: (id) =>
+                                unawaited(operationService.pause(id)),
+                            onResume: (id) =>
+                                unawaited(operationService.resume(id)),
+                            onCancel: (id) =>
+                                unawaited(operationService.cancel(id)),
+                            onDismiss: operations.dismiss,
+                            onAnswer: (progress) =>
+                                unawaited(operations.ask(progress.id)),
+                          ),
+                        if (pending != null)
+                          PendingDeletionCard(
+                            key: ValueKey(pending.id),
+                            deletion: pending,
+                            remaining: deletions.remaining(pending),
+                            onCancel: onCancel,
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      );
+    },
+  );
 }
 
 /// Whether the panels stand one above the other: as [prefs] has them, or,
@@ -1268,27 +1409,36 @@ class _SidePanel extends StatelessWidget {
   final String? registerNote;
 
   @override
-  Widget build(BuildContext context) => BlocProvider<PanelCubit>.value(
-    value: cubit,
-    child: PanelView(
-      key: ValueKey(side),
-      focusNode: focusNode,
-      active: active,
-      layouts: prefs.layouts,
-      showTabBarAlways: prefs.showTabBarAlways,
-      quickSearchModifier: prefs.quickSearchModifier,
-      vimMode: prefs.vimMode,
-      registerNote: registerNote,
-      // The window's buttons, then the bar's own margin at each edge.
-      leftInset: (leading ? decor.leadingInset : 0) + AppSpacing.md,
-      rightInset: (trailing ? decor.trailingInset : 0) + AppSpacing.sm,
-      shortcutMap: shortcutMap,
-      hooks: hooks,
-      windowDecor: decor,
-      cursorRowKey: cursorKey,
-      terminal: terminal,
-    ),
-  );
+  Widget build(BuildContext context) {
+    final radius = Radius.circular(
+      decor.integrated ? WindowDecor.of(context).cornerRadius : 0,
+    );
+    return BlocProvider<PanelCubit>.value(
+      value: cubit,
+      child: PanelView(
+        key: ValueKey(side),
+        focusNode: focusNode,
+        active: active,
+        layouts: prefs.layouts,
+        showTabBarAlways: prefs.showTabBarAlways,
+        quickSearchModifier: prefs.quickSearchModifier,
+        vimMode: prefs.vimMode,
+        registerNote: registerNote,
+        // The window's buttons, then the bar's own margin at each edge.
+        leftInset: (leading ? decor.leadingInset : 0) + AppSpacing.md,
+        rightInset: (trailing ? decor.trailingInset : 0) + AppSpacing.sm,
+        shortcutMap: shortcutMap,
+        hooks: hooks,
+        windowDecor: decor,
+        focusBorderRadius: BorderRadius.only(
+          topLeft: leading ? radius : Radius.zero,
+          topRight: trailing ? radius : Radius.zero,
+        ),
+        cursorRowKey: cursorKey,
+        terminal: terminal,
+      ),
+    );
+  }
 }
 
 /// Keep the covered panel mounted: its scroll, tabs and selection survive.

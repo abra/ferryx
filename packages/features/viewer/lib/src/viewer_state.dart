@@ -5,6 +5,8 @@ import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
 import 'text_window.dart';
+import 'text_preview_data.dart';
+import 'source_syntax.dart';
 
 enum ViewerMode { text, hex, preview }
 
@@ -22,6 +24,10 @@ class ViewerState extends Equatable {
     Uint8List? bytes,
     this.generation = 0,
     this.window = DecodedWindow.empty,
+    this.markdown = '',
+    this.textPreview,
+    this.syntax = const [],
+    this.syntaxRevision = 0,
     this.findShown = false,
     this.findQuery = '',
     this.matches = const [],
@@ -45,9 +51,15 @@ class ViewerState extends Equatable {
   /// The window read; not part of equality ([generation] stands for it).
   final Uint8List bytes;
 
-  /// Bumped on every read.
+  /// Bumped on every read; stands for the byte window and Markdown in equality.
   final int generation;
   final DecodedWindow window;
+
+  /// Bounded Markdown source for Preview, separate from the Text/Hex window.
+  final String markdown;
+  final TextPreviewData? textPreview;
+  final List<List<SourceToken>> syntax;
+  final int syntaxRevision;
   final bool findShown;
   final String findQuery;
   final List<ViewerMatch> matches;
@@ -83,6 +95,10 @@ class ViewerState extends Equatable {
     Uint8List? bytes,
     int? generation,
     DecodedWindow? window,
+    String? markdown,
+    TextPreviewData? textPreview,
+    List<List<SourceToken>>? syntax,
+    int? syntaxRevision,
     bool? findShown,
     String? findQuery,
     List<ViewerMatch>? matches,
@@ -101,6 +117,10 @@ class ViewerState extends Equatable {
     bytes: bytes ?? this.bytes,
     generation: generation ?? this.generation,
     window: window ?? this.window,
+    markdown: markdown ?? this.markdown,
+    textPreview: textPreview ?? this.textPreview,
+    syntax: syntax ?? this.syntax,
+    syntaxRevision: syntaxRevision ?? this.syntaxRevision,
     findShown: findShown ?? this.findShown,
     findQuery: findQuery ?? this.findQuery,
     matches: matches ?? this.matches,
@@ -119,6 +139,7 @@ class ViewerState extends Equatable {
     size,
     offset,
     generation,
+    syntaxRevision,
     window.lines.length,
     window.binary,
     findShown,

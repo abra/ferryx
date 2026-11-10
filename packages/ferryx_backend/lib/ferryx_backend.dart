@@ -26,6 +26,7 @@ export 'src/rust/api/sync.dart';
 export 'src/rust/api/system.dart';
 export 'src/rust/api/tags.dart';
 export 'src/rust/api/terminal.dart';
+export 'src/rust/api/text_document.dart';
 export 'src/rust/api/types.dart';
 export 'src/rust/api/volume_id.dart';
 export 'src/rust/frb_generated.dart' show FerryxRustLib;

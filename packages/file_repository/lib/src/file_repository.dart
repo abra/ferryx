@@ -184,6 +184,22 @@ class FileRepository {
     () => rust.fileSize(location: rust.locationToView(location)),
   );
 
+  /// Converts bounded document bytes on a native worker, without file access.
+  Future<String> renderTextDocument(
+    Uint8List bytes,
+    TextDocumentFormat format,
+  ) => rust.FerryxBackend.guard(
+    () => rust.renderTextDocument(
+      bytes: bytes,
+      format: switch (format) {
+        TextDocumentFormat.asciiDoc => rust.TextDocumentFormatView.asciiDoc,
+        TextDocumentFormat.reStructuredText =>
+          rust.TextDocumentFormatView.reStructuredText,
+        TextDocumentFormat.rtf => rust.TextDocumentFormatView.rtf,
+      },
+    ),
+  );
+
   /// Registers ownership immediately; [PreviewFileLease.path] lazily
   /// prepares a local copy when the location is remote or in an archive.
   PreviewFileLease preparePreview(Location location) {

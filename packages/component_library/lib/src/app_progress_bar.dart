@@ -42,7 +42,9 @@ class AppProgressBar extends StatelessWidget {
                   children: [
                     Container(color: colors.surfaceSunken),
                     AnimatedFractionallySizedBox(
-                      duration: context.motion(AppMotion.short),
+                      duration: animate
+                          ? context.motion(AppMotion.short)
+                          : Duration.zero,
                       widthFactor: value!.clamp(0, 1).toDouble(),
                       child: Container(color: colors.accent),
                     ),

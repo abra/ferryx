@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart' hide Answer;
 import 'package:operations_service/operations_service.dart';
 import 'package:panels_feature/src/workspace/workspace_operations_controller.dart';
+import 'package:panels_feature/panels_feature.dart' show PanelSide;
 
 class _Operations extends Mock implements OperationsService {}
 
@@ -127,6 +128,26 @@ void main() {
       expect(cards.titles, isEmpty);
       await tester.pump(const Duration(seconds: 10));
       expect(cards.operations.map((p) => p.id), [3, 4]);
+    },
+  );
+
+  testWidgets(
+    'routes panel operations through completion and cleans up ownership',
+    (
+      tester,
+    ) async {
+      final cards = start();
+      progress.add(_report(1, kind: OpKind.trash));
+      progress.add(_report(2));
+      cards.setPanel(1, PanelSide.left);
+      expect(cards.operationsFor(null).map((p) => p.id), [2]);
+      expect(cards.operationsFor(PanelSide.left).map((p) => p.id), [1]);
+      expect(cards.operationsFor(PanelSide.right), isEmpty);
+      progress.add(_report(1, kind: OpKind.trash, state: OpState.done));
+      expect(cards.operationsFor(PanelSide.left).single.state, OpState.done);
+      await tester.pump(const Duration(seconds: 3));
+      expect(cards.operationsFor(PanelSide.left), isEmpty);
+      expect(cards.operationsFor(null).map((p) => p.id), [2]);
     },
   );
 

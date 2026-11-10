@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_context_menu.dart';
-import 'app_focus_area.dart';
 import 'app_icon_button.dart';
 import 'app_icons.dart';
 import 'app_tooltip.dart';
@@ -18,7 +17,6 @@ import 'theme/app_typography.dart';
 import 'theme/extensions/build_context_ext.dart';
 import 'theme/tokens/app_icon_size.dart';
 import 'theme/tokens/app_motion.dart';
-import 'theme/tokens/app_sizes.dart';
 import 'theme/tokens/app_spacing.dart';
 import 'theme/hairlines.dart';
 import 'app_divider.dart';
@@ -655,7 +653,7 @@ class _TabState extends State<_Tab> {
           }
         : _hovered
         ? colors.hoverFill
-        : null;
+        : flat?.bar;
     final radius = metrics.radius.control;
     // TabView's selected tab: top corners of an overlay's radius.
     final shape = flat != null
@@ -695,18 +693,6 @@ class _TabState extends State<_Tab> {
     Widget body = Container(
       height: widget.height,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-      foregroundDecoration: active
-          ? BoxDecoration(
-              border: AppBorder(
-                bottom: BorderSide(
-                  color: AppFocusArea.activeOf(context)
-                      ? colors.accent
-                      : colors.controlBorder,
-                  width: AppSizes.focusBarHeight,
-                ),
-              ),
-            )
-          : null,
       decoration: BoxDecoration(
         color: fill,
         borderRadius: shape,
@@ -797,6 +783,10 @@ class _TabState extends State<_Tab> {
                           clipBehavior: Clip.none,
                           children: [
                             body,
+                            // Keep the inactive edge above the hover fill;
+                            // only the selected tab opens into the bar above.
+                            if (flat != null && !active)
+                              _FlatEdge(colors: flat),
                             if (separator)
                               Positioned(
                                 left: flat != null ? 0 : -1,

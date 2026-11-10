@@ -278,7 +278,10 @@ class WorkspaceHarness {
             ),
             child: CommandHandlers(
               handlers: commandHandlers,
-              child: RepaintBoundary(key: shotKey, child: child),
+              child: WindowDecorScope(
+                decor: decor,
+                child: RepaintBoundary(key: shotKey, child: child),
+              ),
             ),
           ),
         ),

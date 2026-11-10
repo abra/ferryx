@@ -22,6 +22,7 @@ import 'api/sync.dart';
 import 'api/system.dart';
 import 'api/tags.dart';
 import 'api/terminal.dart';
+import 'api/text_document.dart';
 import 'api/types.dart';
 import 'api/volume_id.dart';
 
@@ -646,6 +647,9 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   TerminalStateView dco_decode_terminal_state_view(dynamic raw);
+
+  @protected
+  TextDocumentFormatView dco_decode_text_document_format_view(dynamic raw);
 
   @protected
   int dco_decode_u_16(dynamic raw);
@@ -1451,6 +1455,11 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   TerminalStateView sse_decode_terminal_state_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  TextDocumentFormatView sse_decode_text_document_format_view(
     SseDeserializer deserializer,
   );
 
@@ -2485,6 +2494,12 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_terminal_state_view(
     TerminalStateView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_text_document_format_view(
+    TextDocumentFormatView self,
     SseSerializer serializer,
   );
 

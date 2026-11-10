@@ -4,6 +4,8 @@ import 'package:domain_models/domain_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:operations_service/operations_service.dart';
 
+import '../panel/panel_side.dart';
+
 /// The window's operation cards, questions and delayed dismissals.
 class WorkspaceOperationsController extends ChangeNotifier {
   WorkspaceOperationsController({
@@ -24,6 +26,7 @@ class WorkspaceOperationsController extends ChangeNotifier {
   final _shownOperations = <int, OperationProgress>{};
   final _dismissTimers = <int, Timer>{};
   final _operationTitles = <int, String>{};
+  final _panels = <int, PanelSide>{};
 
   // The core starts question numbers over for each operation.
   final _askedQuestions = <(int, int)>{};
@@ -34,6 +37,18 @@ class WorkspaceOperationsController extends ChangeNotifier {
       _shownOperations.values.toList()..sort((a, b) => a.id.compareTo(b.id));
 
   Map<int, String> get titles => Map.unmodifiable(_operationTitles);
+
+  List<OperationProgress> operationsFor(PanelSide? side) => [
+    for (final operation in operations)
+      if (_panels[operation.id] == side) operation,
+  ];
+
+  /// A panel-started deletion keeps its card there through completion.
+  void setPanel(int id, PanelSide side) {
+    if (_disposed || _panels[id] == side) return;
+    _panels[id] = side;
+    notifyListeners();
+  }
 
   void setTitle(int id, String title) {
     if (_disposed || _operationTitles[id] == title) return;
@@ -94,6 +109,7 @@ class WorkspaceOperationsController extends ChangeNotifier {
     if (_disposed) return;
     _dismissTimers.remove(id)?.cancel();
     _operationTitles.remove(id);
+    _panels.remove(id);
     _askedQuestions.removeWhere((asked) => asked.$1 == id);
     if (_shownOperations.remove(id) == null) return;
     notifyListeners();
@@ -110,6 +126,7 @@ class WorkspaceOperationsController extends ChangeNotifier {
     _dismissTimers.clear();
     _shownOperations.clear();
     _operationTitles.clear();
+    _panels.clear();
     _askedQuestions.clear();
     _openQuestions.clear();
     super.dispose();

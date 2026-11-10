@@ -67,9 +67,10 @@ The implementation uses the existing component architecture:
 - `AppMetrics` retains each platform's density and native window controls.
   `AppTypography` keeps system file names and monospace metadata, including
   accessibility text scaling and matching column measurements.
-- `AppTabStrip` marks the active tab with a fine bottom line. File cursors
-  have a leading accent; marked files retain their independent check marks.
-  Both become neutral in an inactive panel or window.
+- `AppTabStrip` uses normal platform colors for the selected tab, without
+  an accent underline; the active area has an `AppFocusArea` outline.
+  File cursors have a leading accent; marked files retain their independent
+  check marks. Both become neutral in an inactive panel or window.
 - Headers, hints, menus and dialogs share the same surface roles. Existing
   `ShortcutMap` bindings and command handlers provide the real behavior.
 - Contrast and component tests cover selection text, controls, native

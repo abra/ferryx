@@ -953,6 +953,45 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   }
 
   @override
+  String pendingTrashTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'В Корзину: $count объекта',
+      many: 'В Корзину: $count объектов',
+      few: 'В Корзину: $count объекта',
+      one: 'В Корзину: $count объект',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pendingDeleteTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Удалить навсегда: $count объекта',
+      many: 'Удалить навсегда: $count объектов',
+      few: 'Удалить навсегда: $count объекта',
+      one: 'Удалить навсегда: $count объект',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pendingDeleteRemaining(int seconds) {
+    return 'Начало через $seconds с';
+  }
+
+  @override
+  String get pendingDeleteNotStarted => 'Файлы пока не удалены';
+
+  @override
+  String pendingDeleteCancelHint(String key) {
+    return 'Отменить запланированное удаление ($key)';
+  }
+
+  @override
   String opCopyTitle(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1237,6 +1276,34 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get viewerNoPreview => 'Для этого типа файла нет превью';
+
+  @override
+  String markdownTooLarge(String limit) {
+    return 'Предпросмотр Markdown доступен для файлов до $limit. Чтобы прочитать этот файл, переключитесь в режим «Текст».';
+  }
+
+  @override
+  String get markdownImageUnavailable => 'Изображение недоступно';
+
+  @override
+  String get viewerLinkTitle => 'Ссылка';
+
+  @override
+  String textPreviewLimit(String limit) {
+    return 'Превышены ограничения размера или сложности предпросмотра. Откройте исходник в режиме «Текст» (предел для документа: $limit).';
+  }
+
+  @override
+  String get textPreviewFailed =>
+      'Не удалось отобразить оформление файла. Исходник доступен в режиме «Текст».';
+
+  @override
+  String get textPreviewSource => 'Открыть текст';
+
+  @override
+  String textPreviewTableSize(int rows, int columns) {
+    return '$rows строк × $columns столбцов';
+  }
 
   @override
   String get viewerFindHint => 'Найти в файле';

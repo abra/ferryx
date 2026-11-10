@@ -15,6 +15,7 @@ class WindowDecor {
     this.integrated = true,
     this.leadingInset = 0,
     this.trailingInset = 0,
+    this.cornerRadius = 0,
     this.dragArea = _same,
   });
 
@@ -35,6 +36,9 @@ class WindowDecor {
 
   /// Width kept free at the end of the top row for window buttons.
   final double trailingInset;
+
+  /// Native window corner radius; zero when full screen or system-decorated.
+  final double cornerRadius;
   final Widget Function(Widget child) dragArea;
 
   static Widget _same(Widget child) => child;
@@ -54,5 +58,6 @@ class WindowDecorScope extends InheritedWidget {
   bool updateShouldNotify(WindowDecorScope oldWidget) =>
       oldWidget.decor.integrated != decor.integrated ||
       oldWidget.decor.leadingInset != decor.leadingInset ||
-      oldWidget.decor.trailingInset != decor.trailingInset;
+      oldWidget.decor.trailingInset != decor.trailingInset ||
+      oldWidget.decor.cornerRadius != decor.cornerRadius;
 }

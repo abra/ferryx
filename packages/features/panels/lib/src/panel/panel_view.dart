@@ -42,6 +42,7 @@ class PanelHooks {
     required this.onVimComplete,
     this.drag,
     this.onEscape,
+    this.onCancelPendingDeletion,
     this.onArchivePassword,
   });
 
@@ -83,6 +84,10 @@ class PanelHooks {
   /// in the panel; answers whether it closed something.
   final bool Function()? onEscape;
 
+  /// A grace-period card takes Esc before browsing/selection, but never
+  /// before a text field, rename or command line finishes its own edit.
+  final bool Function()? onCancelPendingDeletion;
+
   /// An archive's folder asked for its password: the window asks the
   /// user and opens it again.
   final ValueChanged<Location>? onArchivePassword;
@@ -103,12 +108,14 @@ class PanelView extends StatefulWidget {
     required this.hooks,
     this.registerNote,
     this.windowDecor = WindowDecor.none,
+    this.focusBorderRadius = BorderRadius.zero,
     this.cursorRowKey,
     this.terminal,
     super.key,
   });
 
   final FocusNode focusNode;
+  final BorderRadius focusBorderRadius;
   final bool active;
   final List<PanelLayout> layouts;
   final bool showTabBarAlways;
@@ -208,6 +215,11 @@ class _PanelViewState extends State<PanelView> {
         !keyboard.isControlPressed &&
         !keyboard.isAltPressed;
     final character = event.character;
+    if (plain &&
+        event.logicalKey == LogicalKeyboardKey.escape &&
+        (widget.hooks.onCancelPendingDeletion?.call() ?? false)) {
+      return KeyEventResult.handled;
+    }
     if (widget.vimMode && !tab.searching) {
       if (!plain) return KeyEventResult.ignored;
       final outcome = _vim.feed(key: event.logicalKey, character: character);
@@ -812,6 +824,7 @@ class _PanelViewState extends State<PanelView> {
           }
         },
         child: AppFocusArea(
+          borderRadius: widget.focusBorderRadius,
           child: CommandHandlers(
             handlers: widget.terminal?.focusScope.hasFocus == true
                 ? {

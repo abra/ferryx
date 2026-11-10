@@ -15,9 +15,16 @@ import 'theme/tokens/app_sizes.dart';
 /// focus outside every area (a menu, a dialog, a bar between areas) keeps
 /// the last area active, so nothing flickers while a menu is open.
 class AppFocusArea extends StatefulWidget {
-  const AppFocusArea({required this.child, super.key});
+  const AppFocusArea({
+    required this.child,
+    this.borderRadius = BorderRadius.zero,
+    super.key,
+  });
 
   final Widget child;
+
+  /// Only corners meeting a rounded window edge need rounding.
+  final BorderRadiusGeometry borderRadius;
 
   /// Whether the area around [context] is the one the keys are in; true
   /// outside every area (a dialog's own content). False everywhere while
@@ -89,12 +96,16 @@ class _AppFocusAreaState extends State<AppFocusArea> {
         focusNode: _node,
         child: DecoratedBox(
           position: DecorationPosition.foreground,
-          decoration: BoxDecoration(
-            border: AppBorder.all(
-              color: active
-                  ? context.appColors.accent
-                  : const Color(0x00000000),
-              width: AppSizes.focusFrameWidth,
+          decoration: ShapeDecoration(
+            shape: AppRoundedRectangleBorder(
+              borderRadius: widget.borderRadius,
+              side: BorderSide(
+                color: active
+                    ? context.appColors.accent
+                    : const Color(0x00000000),
+                width: AppSizes.focusFrameWidth,
+                strokeAlign: BorderSide.strokeAlignInside,
+              ),
             ),
           ),
           child: widget.child,

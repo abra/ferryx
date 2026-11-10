@@ -95,11 +95,12 @@ class _WindowTitleIntegrationState extends State<WindowTitleIntegration> {
 }
 
 /// How the screens lay out the window's top row in [frame].
-WindowDecor windowDecor(WindowFrame frame) {
+WindowDecor windowDecor(WindowFrame frame, {double cornerRadius = 0}) {
   if (!frame.integrated) return WindowDecor.none;
   return WindowDecor(
     leadingInset: frame.leadingInset,
     trailingInset: frame.trailingInset,
+    cornerRadius: cornerRadius,
     dragArea: (child) => GestureDetector(
       onDoubleTap: toggleWindowZoom,
       behavior: HitTestBehavior.translucent,
@@ -139,14 +140,43 @@ class WindowChrome extends StatefulWidget {
   State<WindowChrome> createState() => _WindowChromeState();
 }
 
-class _WindowChromeState extends State<WindowChrome> {
+class _WindowChromeState extends State<WindowChrome> with WindowListener {
   String? _osTitle;
   Brightness? _brightness;
+  bool _fullScreen = false;
+  bool _fullScreenEvent = false;
 
   @override
   void initState() {
     super.initState();
     widget.title.addListener(_onTitleChanged);
+    windowManager.addListener(this);
+    unawaited(_readFullScreen());
+  }
+
+  Future<void> _readFullScreen() async {
+    try {
+      final value = await windowManager.isFullScreen();
+      if (mounted && !_fullScreenEvent) _setFullScreen(value);
+    } on MissingPluginException {
+      // No window plugin (tests).
+    }
+  }
+
+  void _setFullScreen(bool value) {
+    if (value != _fullScreen) setState(() => _fullScreen = value);
+  }
+
+  @override
+  void onWindowEnterFullScreen() {
+    _fullScreenEvent = true;
+    _setFullScreen(true);
+  }
+
+  @override
+  void onWindowLeaveFullScreen() {
+    _fullScreenEvent = true;
+    _setFullScreen(false);
   }
 
   @override
@@ -185,6 +215,7 @@ class _WindowChromeState extends State<WindowChrome> {
 
   @override
   void dispose() {
+    windowManager.removeListener(this);
     widget.title.removeListener(_onTitleChanged);
     super.dispose();
   }
@@ -196,7 +227,13 @@ class _WindowChromeState extends State<WindowChrome> {
     // The window buttons stay over every route, its dialogs too: a layer
     // over the whole window keeps its top row clear of them.
     return WindowDecorScope(
-      decor: windowDecor(frame),
+      decor: windowDecor(
+        frame,
+        cornerRadius:
+            !_fullScreen && frame.kind == WindowFrameKind.trafficLights
+            ? context.metrics.radius.window
+            : 0,
+      ),
       child: ListenableBuilder(
         listenable: widget.title,
         builder: (context, _) {

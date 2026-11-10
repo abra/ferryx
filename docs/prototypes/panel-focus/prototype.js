@@ -39,7 +39,9 @@ const entries = {
     file("afrog.pb.go", "126 KB", "Nov 1, 23:15", "code"),
   ],
 };
-const variants = {
+// Other visual studies reuse this fixture with their own presentation choices.
+const study = window.ferryxPrototypeStudy ?? {};
+const variants = study.variants ?? {
   current: { letter: "", name: "Сейчас", description: "Тонкая верхняя линия, подчёркивание вкладки и текущая строка." },
   header: { letter: "A", name: "Шапка", description: "Заливка строки пути и вкладок. Линия под всей шапкой." },
   frame: { letter: "B", name: "Контур", description: "Рамка 2 px вокруг всей активной панели." },
@@ -47,10 +49,10 @@ const variants = {
 };
 const query = new URLSearchParams(location.search);
 const state = {
-  variant: Object.hasOwn(variants, query.get("variant")) ? query.get("variant") : "combined",
+  variant: Object.hasOwn(variants, query.get("variant")) ? query.get("variant") : (study.defaultVariant ?? "combined"),
   theme: query.get("theme") === "dark" ? "dark" : "light",
   layout: query.get("layout") === "rows" ? "rows" : "columns",
-  active: query.get("active") === "left" ? "left" : "right",
+  active: (query.get("active") ?? study.activePane) === "left" ? "left" : "right",
   empty: query.get("empty") === "1",
   compare: query.has("compare"),
   panes: {
@@ -86,10 +88,15 @@ function paneMarkup(side, windowId) {
 
 function createWindow(variant, windowId) {
   const window = $("#window-template").content.firstElementChild.cloneNode(true);
-  window.dataset.variant = variant;
+  applyWindowVariant(window, variant);
   window.dataset.window = windowId;
   window.querySelector(".workspace").innerHTML = `${paneMarkup("left", windowId)}<div class="panel-divider" aria-hidden="true"></div>${paneMarkup("right", windowId)}`;
   return window;
+}
+
+function applyWindowVariant(window, name) {
+  window.dataset.variant = variants[name].focusVariant ?? name;
+  window.dataset.tabs = variants[name].tabStyle ?? "underline";
 }
 
 function renderStage() {
@@ -98,9 +105,9 @@ function renderStage() {
   if (state.compare) {
     const intro = document.createElement("p");
     intro.className = "comparison-intro";
-    intro.textContent = "Одинаковые файлы, шрифт и масштаб. Клик или Tab переключает активную панель одновременно во всех вариантах.";
+    intro.textContent = study.comparisonIntro ?? "Одинаковые файлы, шрифт и масштаб. Клик или Tab переключает активную панель одновременно во всех вариантах.";
     stage.append(intro);
-    for (const name of ["header", "frame", "combined"]) {
+    for (const name of (study.comparisonVariants ?? ["header", "frame", "combined"])) {
       const variant = variants[name];
       const card = document.createElement("section");
       card.className = "comparison-card";
@@ -187,7 +194,7 @@ document.addEventListener("click", (event) => {
   const choice = event.target.closest("[data-variant-choice]");
   if (choice) {
     state.variant = choice.dataset.variantChoice;
-    $(".ferryx-window").dataset.variant = state.variant;
+    applyWindowVariant($(".ferryx-window"), state.variant);
     applyControls();
     saveUrl();
     return;
@@ -221,6 +228,7 @@ document.addEventListener("focusin", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if (["Shift", "Control", "Alt", "Meta"].includes(event.key)) return;
   if (event.metaKey || event.ctrlKey || event.altKey) return;
   const list = event.target.closest(".file-list");
   if (!list) return;

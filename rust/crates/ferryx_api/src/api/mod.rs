@@ -18,6 +18,7 @@ pub mod sync;
 pub mod system;
 pub mod tags;
 pub mod terminal;
+pub mod text_document;
 pub mod types;
 pub mod volume_id;
 // ─── Network ───

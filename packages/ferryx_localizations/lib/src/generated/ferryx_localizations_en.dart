@@ -939,6 +939,41 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   }
 
   @override
+  String pendingTrashTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Move $count items to Trash',
+      one: 'Move 1 item to Trash',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pendingDeleteTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Delete $count items permanently',
+      one: 'Delete 1 item permanently',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pendingDeleteRemaining(int seconds) {
+    return 'Starts in ${seconds}s';
+  }
+
+  @override
+  String get pendingDeleteNotStarted => 'Nothing deleted yet';
+
+  @override
+  String pendingDeleteCancelHint(String key) {
+    return 'Cancel pending deletion ($key)';
+  }
+
+  @override
   String opCopyTitle(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1203,6 +1238,34 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get viewerNoPreview => 'No preview for this kind of file';
+
+  @override
+  String markdownTooLarge(String limit) {
+    return 'Markdown preview is limited to $limit. Switch to Text to read this file.';
+  }
+
+  @override
+  String get markdownImageUnavailable => 'Image unavailable';
+
+  @override
+  String get viewerLinkTitle => 'Link';
+
+  @override
+  String textPreviewLimit(String limit) {
+    return 'This preview exceeds its size or layout limits. Open Text to read the source (document limit: $limit).';
+  }
+
+  @override
+  String get textPreviewFailed =>
+      'Could not format this file. Open Text to read its source.';
+
+  @override
+  String get textPreviewSource => 'Open Text';
+
+  @override
+  String textPreviewTableSize(int rows, int columns) {
+    return '$rows rows × $columns columns';
+  }
 
   @override
   String get viewerFindHint => 'Find in file';

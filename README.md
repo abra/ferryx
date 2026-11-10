@@ -40,7 +40,9 @@ Settings → Panels fixes the arrangement you prefer.
 
 An accent outline identifies the area receiving keyboard input: a file
 panel, the terminal or preview. It follows focus after a click or Tab;
-opening a menu keeps the last area indicated.
+opening a menu keeps the last area indicated. At the top outer corners,
+the outline follows the window's curve; the junction between panels stays straight.
+Tabs show selection with their normal platform colors, without a blue underline.
 
 Drag the divider to resize. Hovering or dragging shows both percentages.
 Double-click it, click **Equal panels**, or use **View → Make Panels Equal**
@@ -94,6 +96,15 @@ Deep changes by other programs may require Refresh (⌘R).
 
 Copy and move jobs run in the background with progress, pause/stop controls
 and conflict questions. Their dialogs let you change the destination.
+
+Deleting from a file panel starts with a **5-second countdown** in that
+panel. Files stay in place until it ends. **Cancel**, or **Esc** while a
+file list has focus, cancels the whole pending batch. The card stays with
+its source panel when focus changes; changing tabs or marks does not
+change the captured targets. Closing the window cancels pending batches.
+Permanent/server deletion and the optional Trash confirmation still ask
+first; the countdown follows confirmation. Once work starts, **Stop**
+stops further processing; local Trash operations can be undone with ⌘Z.
 
 | Tool | Purpose |
 |---|---|
@@ -226,7 +237,11 @@ preview, and **Esc** closes it. The covered panel is restored on close.
 
 | Content | Supported formats |
 |---|---|
-| Text and hex | Windowed reads, Find and Go to Offset |
+| Text and hex | TXT, LOG and other UTF-8 text; windowed reads, Find and Go to Offset |
+| Code and configuration | Syntax coloring for JSON, YAML, TOML/INI, XML, Dart, Rust, JavaScript/TypeScript, Python, Shell, C/C++, Java, Kotlin, Go, Swift, SQL and more |
+| Tables | CSV (comma or semicolon) and TSV; quoted fields, row/column labels and selectable cells |
+| Markdown | `.md`, `.markdown`, `.mdown`, `.mkd`, `.mkdn`; headings, lists, tables, task lists and code |
+| Formatted text | HTML/HTM/XHTML, RTF, AsciiDoc (`.adoc`, `.asciidoc`) and reStructuredText (`.rst`, `.rest`) |
 | Images | Whole-file preview, limited to 64 MiB |
 | Reflowable books | EPUB, FB2 (also `.fbz` / `.fb2.zip`), MOBI 6, AZW3/KF8 |
 | Fixed pages | PDF, CBZ, self-contained DjVu (`.djvu` / `.djv`) |
@@ -235,6 +250,36 @@ On macOS, **⌘Y opens system Quick Look**, separately from built-in Preview.
 
 <details>
 <summary>Reading controls and format limits</summary>
+
+Code and configuration open in **Text**, with syntax coloring, Find,
+wrapping and Go to Offset. Coloring applies to files up to 256 KiB;
+larger files remain readable with windowed Text/Hex reads.
+
+Markdown, tables and formatted text open in **Preview**. Use **Text** or
+**Hex** to inspect the original file; Find and Go to Offset work on that
+source. Preview type size follows Settings → Viewer → Font size.
+Text mode uses compact line spacing (1.35 times the font size).
+CSV/TSV keep values as text, including leading zeros, and do not assume
+the first row is a header. Long cell contents are available on hover and
+keyboard focus.
+
+Formatted preview is limited to 512 KiB. Tables also have limits of 5,000
+rows, 64 columns, 50,000 cells and 16,384 characters per cell. A file that
+exceeds a limit offers **Open Text** instead of showing a partial table.
+
+HTML, AsciiDoc and reStructuredText show document content using the app's
+typography. Scripts, forms, embedded media and external resources are not
+loaded. AsciiDoc includes are disabled; Sphinx extensions are not supported.
+RTF shows text, paragraphs and basic emphasis; embedded pictures, objects
+and original page layout are not reproduced. Markdown supports GFM;
+inline HTML and MDX are not rendered.
+
+Markdown and HTML-based previews support selectable text and relative
+raster images from the same filesystem, archive or server. Each image is
+limited to 8 MiB encoded and 2048 pixels per side when decoded; external
+and absolute image references are not loaded. Links show a selectable,
+copyable target, as in book previews; HTML fragment links jump within
+the document.
 
 Books have A− / A+ controls and a reset to 15, with sizes from 10 to 32.
 Book size is remembered separately from text/hex size and is available in
@@ -253,8 +298,9 @@ their actions menu keeps controls available in narrow windows.
 - There is no OCR or book/PDF/DjVu text-search UI. PDF/DjVu selection and
   annotation tools are not exposed.
 
-Native files are read in place. Server files/archive members use an owned
-temporary copy, released when preview closes or changes.
+Books and fixed-page documents read native files in place. Their server
+files/archive members use an owned temporary copy, released when preview
+closes or changes.
 
 </details>
 
@@ -376,6 +422,7 @@ text fields keep normal editing and terminal input goes to the shell.
 | Jump by first letter; repeat | `f` / `F`, then `;` / `,` |
 | Visual selection / toggle marks | `v` / `x` or Space |
 | Shelf copy / move / paste | `yy` / `dd` / `p` |
+| Move to Trash / delete permanently | `D` / `dD`; Cancel / Esc during the countdown |
 | Search; next / previous match | `/`, then `n` / `N` |
 | Next / previous tab | `gt` / `gT`, including counts such as `2gt` |
 | Neighboring preview | `i` |

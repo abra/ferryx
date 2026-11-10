@@ -1,5 +1,5 @@
 name: viewer_feature
-description: "The built-in viewer: text, hex, images and Pagecraft document previews over local, archive and remote files."
+description: "The built-in viewer: text, hex, Markdown, images and Pagecraft document previews over local, archive and remote files."
 publish_to: none
 version: 0.1.0
 
@@ -12,6 +12,13 @@ dependencies:
   flutter_bloc: ^9.1.1
   equatable: ^2.0.8
   meta: ^1.16.0
+  flutter_markdown_plus: ^1.0.12
+  flutter_widget_from_html_core: ^0.17.4
+  html: ^0.15.6
+  re_highlight: ^0.0.3
+  csv: ^6.0.0
+  markdown: ^7.3.1
+  path: ^1.9.1
   domain_models:
     path: ../../domain_models
   component_library:

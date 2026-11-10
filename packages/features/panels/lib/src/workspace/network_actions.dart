@@ -213,6 +213,7 @@ extension _NetworkActions on _WorkspaceScreenState {
 
   /// F8 on a server: asked every time (it has no trash), deleted for good.
   Future<void> _deleteOnServer(
+    PanelSide side,
     PanelTabState tab,
     List<FileEntry> targets,
   ) async {
@@ -223,15 +224,13 @@ extension _NetworkActions on _WorkspaceScreenState {
       trashAvailable: false,
       note: _l10n.networkNoTrash,
     );
-    if (picked == null) return;
-    await widget.operations.start(
-      OperationRequest(
-        kind: OpKind.delete,
-        sources: [for (final t in targets) t.path],
-        sourceServer: tab.location.server,
-      ),
+    if (!mounted || picked == null) return;
+    _deletions.schedule(
+      side: side,
+      location: tab.location,
+      kind: OpKind.delete,
+      paths: [for (final t in targets) t.path],
     );
-    _active.clearSelection();
   }
 
   /// What Copy Path says of [entry] in the active tab: its path on disk,

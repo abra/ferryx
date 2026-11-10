@@ -82,6 +82,9 @@ abstract final class AppTypography {
   static const String bundledSans = 'Inter';
   static const String bundledMono = 'Geist Mono';
 
+  /// Compact leading for the viewer's monospace Text mode.
+  static const double viewerLineHeightFactor = 1.35;
+
   /// Shared by the terminal's cells and its font preview in Settings.
   static const double terminalLineHeightFactor = 1.2;
 

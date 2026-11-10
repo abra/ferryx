@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ferryx — карточка в исходной панели</title>
+    <link rel="stylesheet" href="../panel-focus/prototype.css">
+    <style>
+      main { max-width: 1336px; padding: 24px 28px; margin: auto; }
+      h1 { font-size: 18px; margin-bottom: 10px; }
+      p { margin: 0 0 22px; color: var(--muted); font-size: 12px; }
+      figure { margin: 0 0 22px; }
+      figcaption { display: flex; gap: 12px; align-items: baseline; margin-bottom: 9px; }
+      figcaption strong { font-size: 13px; }
+      figcaption span { margin-left: auto; font-size: 12px; color: var(--muted); }
+      img { width: 100%; height: auto; display: block; border-radius: 8px; box-shadow: 0 6px 24px #142b5012; }
+      a { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Вариант A — карточка внутри исходной панели</h1>
+      <p>До конца отсчёта файлы остаются на месте. Карточка сохраняет привязку к источнику при переключении фокуса.</p>
+      <figure>
+        <figcaption><strong>Удаление слева → карточка слева</strong><span>Папка Photo · осталось 3 с</span></figcaption>
+        <img src="source-left.png" width="1280" height="430" alt="Папка Photo выделена слева; карточка удаления с Cancel находится внутри левой панели">
+      </figure>
+      <figure>
+        <figcaption><strong>Удаление справа → карточка справа</strong><span>Три файла · осталось 3 с</span></figcaption>
+        <img src="source-right.png" width="1280" height="430" alt="Три файла выделены справа; карточка удаления с Cancel находится внутри правой панели">
+      </figure>
+      <p><a href="index.html">Открыть интерактивный прототип</a> · D запускает отсчёт · Cancel / Esc отменяет действие</p>
+    </main>
+  </body>
+</html>

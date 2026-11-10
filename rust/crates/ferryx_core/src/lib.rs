@@ -11,3 +11,4 @@ pub mod collation;
 pub mod entry;
 pub mod mask;
 pub mod sorting;
+pub mod text_document;

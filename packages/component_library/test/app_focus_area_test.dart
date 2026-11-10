@@ -1,5 +1,9 @@
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
 import 'package:component_library/component_library.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Whether the area holding [label]'s field is the active one, as what it
@@ -17,14 +21,13 @@ Color _outline(WidgetTester tester, String label) {
   final decoration = tester.widget<DecoratedBox>(
     find.descendant(of: area.first, matching: find.byType(DecoratedBox)).first,
   );
-  final border = (decoration.decoration as BoxDecoration).border! as AppBorder;
+  final shape =
+      (decoration.decoration as ShapeDecoration).shape
+          as AppRoundedRectangleBorder;
   expect(decoration.position, DecorationPosition.foreground);
-  for (final side in [border.top, border.right, border.bottom, border.left]) {
-    expect(side.width, 2);
-    expect(side.strokeAlign, BorderSide.strokeAlignInside);
-    expect(side.color, border.top.color);
-  }
-  return border.top.color;
+  expect(shape.side.width, 2);
+  expect(shape.side.strokeAlign, BorderSide.strokeAlignInside);
+  return shape.side.color;
 }
 
 Widget _field(String label, FocusNode node) => Builder(
@@ -36,6 +39,75 @@ Widget _field(String label, FocusNode node) => Builder(
 );
 
 void main() {
+  for (final brightness in Brightness.values) {
+    for (final ratio in [1.0, 2.0]) {
+      for (final left in [true, false]) {
+        testWidgets(
+          '${brightness.name} ${ratio}x: ${left ? 'left' : 'right'} window corner keeps the active outline after clipping',
+          (tester) async {
+            tester.view.devicePixelRatio = ratio;
+            addTearDown(tester.view.reset);
+            final node = FocusNode();
+            addTearDown(node.dispose);
+            final key = GlobalKey();
+            final theme = AppTheme.of(AppPlatformStyle.macos, brightness);
+            final accent = theme.extension<AppColorsExt>()!.accent.toARGB32();
+            final radius = BorderRadius.only(
+              topLeft: left ? const Radius.circular(16) : Radius.zero,
+              topRight: left ? Radius.zero : const Radius.circular(16),
+            );
+            await tester.pumpWidget(
+              MaterialApp(
+                theme: theme,
+                home: Center(
+                  child: RepaintBoundary(
+                    key: key,
+                    child: SizedBox(
+                      width: 120,
+                      height: 80,
+                      child: ClipRRect(
+                        borderRadius: radius,
+                        child: AppFocusArea(
+                          borderRadius: radius,
+                          child: Focus(
+                            focusNode: node,
+                            child: ColoredBox(color: theme.colorScheme.surface),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+            node.requestFocus();
+            await tester.pump();
+            final boundary =
+                key.currentContext!.findRenderObject()!
+                    as RenderRepaintBoundary;
+            final result = (await tester.runAsync(() async {
+              final image = await boundary.toImage(pixelRatio: ratio);
+              final data = await image.toByteData(
+                format: ui.ImageByteFormat.rawRgba,
+              );
+              final width = image.width;
+              image.dispose();
+              return (width, data!);
+            }))!;
+            // Halfway around the curve: a rectangular frame has no blue here.
+            final along = ((16 - 15 / math.sqrt2) * ratio).floor();
+            final x = left ? along : result.$1 - 1 - along;
+            final pixel = (along * result.$1 + x) * 4;
+            expect(result.$2.getUint8(pixel), (accent >> 16) & 255);
+            expect(result.$2.getUint8(pixel + 1), (accent >> 8) & 255);
+            expect(result.$2.getUint8(pixel + 2), accent & 255);
+            expect(tester.takeException(), isNull);
+          },
+        );
+      }
+    }
+  }
+
   testWidgets('the area around the focus draws the outline and takes the '
       'accent; the innermost wins, and a menu keeps the last one', (
     tester,

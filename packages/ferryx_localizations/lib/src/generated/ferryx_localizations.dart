@@ -1634,6 +1634,36 @@ abstract class FerryxLocalizations {
   /// **'Could not continue with “{name}”.'**
   String questionErrorMessage(String name);
 
+  /// No description provided for @pendingTrashTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Move 1 item to Trash} other{Move {count} items to Trash}}'**
+  String pendingTrashTitle(int count);
+
+  /// No description provided for @pendingDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Delete 1 item permanently} other{Delete {count} items permanently}}'**
+  String pendingDeleteTitle(int count);
+
+  /// No description provided for @pendingDeleteRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts in {seconds}s'**
+  String pendingDeleteRemaining(int seconds);
+
+  /// No description provided for @pendingDeleteNotStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing deleted yet'**
+  String get pendingDeleteNotStarted;
+
+  /// No description provided for @pendingDeleteCancelHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel pending deletion ({key})'**
+  String pendingDeleteCancelHint(String key);
+
   /// No description provided for @opCopyTitle.
   ///
   /// In en, this message translates to:
@@ -1963,6 +1993,48 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'No preview for this kind of file'**
   String get viewerNoPreview;
+
+  /// No description provided for @markdownTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown preview is limited to {limit}. Switch to Text to read this file.'**
+  String markdownTooLarge(String limit);
+
+  /// No description provided for @markdownImageUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Image unavailable'**
+  String get markdownImageUnavailable;
+
+  /// No description provided for @viewerLinkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get viewerLinkTitle;
+
+  /// No description provided for @textPreviewLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'This preview exceeds its size or layout limits. Open Text to read the source (document limit: {limit}).'**
+  String textPreviewLimit(String limit);
+
+  /// No description provided for @textPreviewFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not format this file. Open Text to read its source.'**
+  String get textPreviewFailed;
+
+  /// No description provided for @textPreviewSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Text'**
+  String get textPreviewSource;
+
+  /// No description provided for @textPreviewTableSize.
+  ///
+  /// In en, this message translates to:
+  /// **'{rows} rows × {columns} columns'**
+  String textPreviewTableSize(int rows, int columns);
 
   /// No description provided for @viewerFindHint.
   ///

@@ -92,9 +92,11 @@ The desktop details the library keeps for every screen:
   soft shade under it in light), the active one is the
   bar's own colour and opens into it, so the panel's header draws no
   line over the strip (`AppTabStrip.joinsBarAbove`). Its focus ring is
-  inside the tab. macOS 26 keeps rounded tabs on the bar. Both use the
-  shared surface roles; a bottom accent marks the active tab and becomes
-  neutral when its panel or window loses focus.
+  inside the tab. An inactive tab paints its top edge above its hover fill.
+  macOS 26 keeps rounded tabs on the bar. Both use the
+  shared surface roles and normal platform colours for selected tabs,
+  without an accent underline. The surrounding `AppFocusArea` outline
+  identifies the area receiving keys.
 - Bars at the bottom: the panel's footer stands as high as the hint line
   under it (27 and a line on macOS 15, as Finder's path and status bars):
   the item or the selection at the start, the count and the free space at
@@ -153,9 +155,14 @@ The desktop details the library keeps for every screen:
   switches draw `FocusRing` in keyboard mode only (a ⌘ or ⌃ chord does not
   switch that mode on).
   `AppFocusArea` marks the innermost area receiving keys with a 2 pt inset
-  accent outline, painted in the foreground through `AppBorder`. It adds
-  no padding or hit target and keeps its child mounted when focus moves.
+  accent outline, painted in the foreground through
+  `AppRoundedRectangleBorder`. It adds no padding or hit target and keeps
+  its child mounted when focus moves.
   Menus retain the last active area; an inactive window clears its outline.
+  A panel rounds only the top corners meeting the native window's corners;
+  panel junctions stay square. `WindowChrome` publishes the generation's
+  `radius.window` through `WindowDecorScope`, and resets it to zero in native
+  full screen. Changing the outline shape does not clip or reparent content.
 - Dialogs: `AppDialog` runs the default (last) action on Return whatever
   has the focus, keeps Return for a focused field's submit, leaves on Esc
   and ⌘., holds the focus itself when nothing asked for it, never makes a
@@ -621,7 +628,10 @@ drag takes focus away from files or the terminal.
 
 Space outside Vim mode, `i` in Vim mode and the global Preview command
 (⇧⌘Y on macOS) show preview in the opposite pane. F3 opens the full-window
-viewer. `WorkspacePreviewCubit` follows the originating panel's focused
+viewer. Ordinary files start in Text with its windowed reads and search;
+`startInPreview` selects Preview for recognized images. Markdown and reader
+documents select Preview by default in either placement.
+`WorkspacePreviewCubit` follows the originating panel's focused
 file, using its full `Location`; directories, `..` and empty listings have
 no preview file. Cursor changes are debounced for 150 ms, and changes to
 selection or other state at the same location do not reopen the file.
@@ -644,6 +654,58 @@ height grows with the text scale on both sides; narrow viewers keep exit
 hints before metadata instead of adding another row.
 
 ### Document preview
+
+`textPreviewFormatOf` recognizes Markdown, HTML, RTF, AsciiDoc,
+reStructuredText and CSV/TSV. These start in Preview. `ViewerCubit` reads
+at most 512 KiB, separately from its windowed Text/Hex state; an oversized
+file offers Text without reading the body. UTF-8 formats are decoded in
+Dart; RTF retains bytes for legacy codepage decoding. `ConvertedDocumentSource`
+is an optional source capability implemented by `FileRepositorySource`:
+the repository maps `TextDocumentFormat` to the generated bridge and invokes
+`ferryx_core::text_document` on a native worker. Rust converts AsciiDoc in
+Secure mode (no includes), reStructuredText and RTF to body HTML, with an
+8 MiB output limit. RTF preserves Unicode, codepages and basic inline styles.
+It does not reproduce embedded objects or page layout.
+
+`prepareHtml` and `prepareTable` run in worker isolates. HTML cleaning drops
+active content, remote styles, source typography and resource-loading
+attributes, limits the DOM to 20,000 elements and clamps table spans.
+`RichTextPreview` uses `flutter_widget_from_html_core` with a cached,
+controller-backed list renderer, shared typography and colors. Its factory
+disables all renderer-owned file/network/data/asset image providers.
+Fragment links scroll within the document. Other links use `ViewerLink`'s
+focusable target/copy dialog, shared with Markdown.
+
+CSV/TSV parsing retains strings and source rows, without assuming headers.
+CSV tests comma and semicolon candidates using quote-aware parsing. Tables
+are limited to 5,000 rows, 64 columns, 50,000 cells and 16,384 characters per
+cell; exceeding a limit offers Text, with no silent truncation. `DelimitedPreview`
+builds rows lazily with bounded column widths, two-axis scrolling and
+focusable tooltips for full cell contents.
+
+`MarkdownPreview` uses `flutter_markdown_plus` for GFM. Its stylesheet stays
+stable across unrelated updates. Monospace Text mode uses
+`AppTypography.viewerLineHeightFactor` (1.35); formatted previews retain the
+editor type scale's leading. All rendered previews keep their own scroll
+state across placement changes; Find and Go to Offset apply to source in
+Text/Hex. Generation checks discard obsolete reads, native conversion and
+syntax results after mode changes or disposal; a stale conversion does not
+start a sanitizer worker. Parse/limit failures are typed and localized.
+
+`source_syntax` selects a `re_highlight` grammar for recognized source/config
+files up to 256 KiB and tokenizes in an isolate. Windowed reading and exact
+source bytes remain unchanged for larger files. Token spans use line-relative
+UTF-16 offsets; `source_spans` merges syntax and Find ranges without altering
+the text, with search emphasis taking precedence. Theme/font/search changes
+reuse tokens. The highlighter is injectable for lifecycle and limit tests.
+
+`RelativeViewerSource` resolves Markdown/HTML images to repository-backed sources,
+preserving archive/server identity and rejecting absolute/external references
+and traversal above an archive root. There is no renderer-owned filesystem or
+HTTP access. Each raster image is limited to 8 MiB encoded and 2048 pixels per
+side on decode; providers are evicted on replacement/disposal. Refresh rereads
+both the document and referenced images. Image failures keep alt text available.
+Inline HTML inside Markdown and MDX are not rendered.
 
 `documentFormatOf` recognizes EPUB, FB2 (`.fb2`, `.fbz`, `.fb2.zip`), MOBI
 and AZW3/KF8, CBZ, PDF and DjVu (`.djvu`, `.djv`). `ViewerScreen` starts
@@ -732,6 +794,19 @@ its text stream, so document Preview does not inherit the text viewer's
 bounded byte-window behavior.
 
 ### The panels
+
+Panel deletion has a separate pre-execution stage:
+`PendingDeletionsController` captures immutable paths, location and side,
+then owns one five-second timer per panel. It calls the normal operation
+service only after the deadline. Cancel/disposal drops the timer without
+calling Rust. A duplicate request on the same panel neither replaces nor
+extends the batch. Confirmation dialogs still run before scheduling.
+The card animates its monotonic remaining time locally; no periodic timer
+rebuilds the file lists. `_PanelOperationsHost` keeps pending and subsequent
+progress cards in the source slot, outside the file/viewer subtree.
+`WorkspaceOperationsController` tracks operation origins and excludes them
+from the global cards. Esc cancellation is a panel mode: text fields retain
+their own Escape behavior. Waiting work is session-only and is not persisted.
 
 `PanelCubit` (one per side) keeps `PanelState`: the tabs, each a
 `PanelTabState` with its location, the listing the core holds for it, the

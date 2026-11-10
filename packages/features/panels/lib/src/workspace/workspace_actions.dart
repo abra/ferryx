@@ -1051,11 +1051,13 @@ extension _WorkspaceActions on _WorkspaceScreenState {
 
   Future<void> _delete({required bool trashDefault, required bool ask}) =>
       _guarded(() async {
+        final side = _workspace.state.active;
+        if (_deletions.pendingFor(side) != null) return;
         final tab = _tab;
         final targets = _targetsOrNotice();
         if (tab == null || targets.isEmpty) return;
         if (tab.location.isRemote) {
-          await _deleteOnServer(tab, targets);
+          await _deleteOnServer(side, tab, targets);
           return;
         }
         final paths = _nativePaths(targets);
@@ -1068,17 +1070,28 @@ extension _WorkspaceActions on _WorkspaceScreenState {
             trashDefault: trashDefault,
             trashAvailable: true,
           );
-          if (picked == null) return;
+          if (!mounted || picked == null) return;
           choice = picked;
         }
-        await widget.operations.start(
-          OperationRequest(
-            kind: choice == DeleteChoice.trash ? OpKind.trash : OpKind.delete,
-            sources: paths,
-          ),
+        _deletions.schedule(
+          side: side,
+          location: tab.location,
+          kind: choice == DeleteChoice.trash ? OpKind.trash : OpKind.delete,
+          paths: paths,
         );
-        _active.clearSelection();
       });
+
+  Future<void> _executeDeletion(PendingDeletion deletion) => _guarded(() async {
+    if (!mounted) return;
+    final id = await widget.operations.start(deletion.request);
+    if (mounted) _operations.setPanel(id, deletion.side);
+    // Listings reconcile their marks when the core reports changed folders.
+    // Never clear a selection that the user changed during the grace period.
+  });
+
+  void _cancelDeletion(PanelSide side) {
+    if (_deletions.cancel(side)) _focusPanel(side);
+  }
 
   Future<void> _compress({
     required bool toOpposite,

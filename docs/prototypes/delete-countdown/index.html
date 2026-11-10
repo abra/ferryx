@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Ferryx — отмена до удаления</title>
+    <link rel="icon" href="../../../brand/ferryx-symbolic.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../panel-focus/prototype.css">
+    <link rel="stylesheet" href="prototype.css">
+    <script src="prototype.js" defer></script>
+  </head>
+  <body>
+    <header class="study-header">
+      <div class="study-title">
+        <span class="wordmark">FERRYX</span>
+        <h1>Отмена до удаления</h1>
+        <span class="study-note">Интерактивный прототип · демоданные</span>
+      </div>
+      <p class="study-intro">Карточка A появляется в панели, из которой запущено удаление. Пока линия уменьшается, файлы остаются на месте. <strong>Cancel</strong> отменяет действие.</p>
+      <div class="study-controls">
+        <div class="segmented" role="group" aria-label="Вариант уведомления">
+          <button data-choice="card" aria-pressed="true"><b>A</b> Карточка</button>
+          <button data-choice="strip" aria-pressed="false"><b>B</b> Полоса</button>
+          <button data-choice="details" aria-pressed="false"><b>C</b> Список файлов</button>
+        </div>
+        <div class="control-options">
+          <label>Пример <select id="scenario"><option value="three">Три файла</option><option value="one">Один файл</option><option value="folder">Папка</option></select></label>
+          <label>Отсчёт <select id="delay"><option value="3">3 с</option><option value="5" selected>5 с</option><option value="8">8 с</option></select></label>
+          <label>Тема <select id="theme"><option value="light">Светлая</option><option value="dark">Тёмная</option></select></label>
+        </div>
+      </div>
+    </header>
+
+    <main class="study-stage" id="stage" aria-label="Прототип файлового менеджера"></main>
+
+    <footer class="delete-study-footer">
+      <div class="play-controls">
+        <button class="demo-play" id="play">Проиграть отсчёт · D</button>
+        <button class="demo-reset" id="reset">Вернуть стоп-кадр</button>
+        <button class="comparison-link" id="compare">Сравнить A / B / C</button>
+        <span id="demo-state">Стоп-кадр. Нажмите D или «Проиграть отсчёт».</span>
+      </div>
+      <p><kbd class="typed">D</kbd> — запланировать · <kbd>Esc</kbd> — Cancel · <kbd>Space</kbd> — отметить файл · <kbd>Tab</kbd> — другая панель</p>
+      <p class="study-explanation">«Три файла» — удаление справа, «Папка» — слева. Карточка A остаётся у исходной панели после Tab. Перемещение в демокорзину · 13 px текст · 22 px строка.</p>
+    </footer>
+    <p class="sr-only" id="announcement" role="status" aria-live="polite"></p>
+  </body>
+</html>

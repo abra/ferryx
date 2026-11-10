@@ -45,6 +45,9 @@ abstract final class AppSizes {
   /// Tallest an image shows inside a rem; the viewer has the whole image.
   static const double imageMaxHeight = 480;
   static const double documentWideMaxWidth = 900;
+  static const double previewTableMinColumnWidth = 120;
+  static const double previewTableMaxColumnWidth = 360;
+  static const double previewTableIndexWidth = 52;
   static const double dialogWidth = 560;
 
   /// A dialog holding one field or one key cap: a name prompt, a shortcut

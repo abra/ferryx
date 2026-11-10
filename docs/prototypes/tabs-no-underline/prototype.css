@@ -1,0 +1,52 @@
+:root {
+  --tab-inactive: #eef1f5;
+  --tab-selected-fill: #e7ebf0;
+  --tab-pill: #fff;
+  --tab-pill-border: #cbd3df;
+}
+
+:root[data-theme="dark"] {
+  --tab-inactive: #101b2d;
+  --tab-selected-fill: #263345;
+  --tab-pill: #243247;
+  --tab-pill-border: #43536c;
+}
+
+/* The row and separators retain their sizes. Only decoration changes. */
+.ferryx-window:is([data-tabs="plain"], [data-tabs="fill"], [data-tabs="pill"]) .pane .tab[aria-selected="true"] {
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.ferryx-window[data-tabs="plain"] .tab[aria-selected="false"] {
+  background: var(--tab-inactive);
+}
+
+.ferryx-window[data-tabs="fill"] .tab[aria-selected="true"] {
+  background: var(--tab-selected-fill);
+}
+
+.ferryx-window[data-tabs="pill"] .tab {
+  position: relative;
+  isolation: isolate;
+  border-right-color: transparent;
+}
+
+.ferryx-window[data-tabs="pill"] .tab[aria-selected="true"] {
+  background: transparent;
+}
+
+.ferryx-window[data-tabs="pill"] .tab[aria-selected="true"]::before {
+  content: "";
+  position: absolute;
+  inset: 2px 4px;
+  border: 1px solid var(--tab-pill-border);
+  border-radius: 5px;
+  background: var(--tab-pill);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.ferryx-window[data-tabs="pill"] .add-tab {
+  border-left: 1px solid var(--border);
+}

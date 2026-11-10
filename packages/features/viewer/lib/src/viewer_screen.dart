@@ -14,6 +14,12 @@ import 'document_format.dart';
 import 'document_preview_screen.dart';
 import 'hex_format.dart';
 import 'line_layout.dart';
+import 'markdown_format.dart';
+import 'markdown_preview.dart';
+import 'text_preview_format.dart';
+import 'text_preview_data.dart';
+import 'rich_text_preview.dart';
+import 'delimited_preview.dart';
 import 'text_window.dart';
 import 'viewer_cubit.dart';
 import 'viewer_footer.dart';
@@ -45,6 +51,8 @@ class ViewerScreen extends StatefulWidget {
   final ShortcutMap shortcutMap;
   final WindowDecor windowDecor;
   final Location location;
+
+  /// Prefer rendered content when supported; ordinary files open as text.
   final bool startInPreview;
   final bool autofocus;
   final FocusScopeNode? focusScope;
@@ -77,7 +85,10 @@ class _ViewerScreenState extends State<ViewerScreen> {
     _cubit = ViewerCubit(
       source: FileRepositorySource(widget.files, widget.location),
       wrap: widget.preferences.current.viewerWrap,
-      mode: widget.startInPreview || isDocumentName(widget.location.name)
+      mode:
+          isDocumentName(widget.location.name) ||
+              textPreviewFormatOf(widget.location.name) != null ||
+              widget.startInPreview && isImageName(widget.location.name)
           ? ViewerMode.preview
           : ViewerMode.text,
     );
@@ -119,6 +130,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
   // ─── Scrolling ───
 
   void _onScrolled() {
+    if (_cubit.state.mode == ViewerMode.preview) return;
     final layout = _layout;
     if (layout == null || !_scroll.hasClients) return;
     final line = layout.lineAtOffset(_scroll.offset);
@@ -485,10 +497,10 @@ class _Frame extends StatelessWidget {
             child: Listener(
               onPointerDown: (_) => onFocusContent(),
               child: AppFocusArea(
-                child: Focus(
-                  focusNode: contentFocus,
-                  onKeyEvent: onContentKey,
-                  child: AppScrollKeys(
+                child: AppScrollKeys(
+                  child: Focus(
+                    focusNode: contentFocus,
+                    onKeyEvent: onContentKey,
                     child: _Content(
                       state: state,
                       source: source,
@@ -502,6 +514,7 @@ class _Frame extends StatelessWidget {
                       onLayout: onLayout,
                       onLoadNext: onLoadNext,
                       onLoadPrevious: onLoadPrevious,
+                      onShowSource: () => onMode(ViewerMode.text),
                     ),
                   ),
                 ),
@@ -866,6 +879,7 @@ class _Content extends StatelessWidget {
     required this.onLayout,
     required this.onLoadNext,
     required this.onLoadPrevious,
+    required this.onShowSource,
   });
 
   final ViewerState state;
@@ -880,6 +894,7 @@ class _Content extends StatelessWidget {
   final ValueChanged<LineLayout> onLayout;
   final VoidCallback onLoadNext;
   final VoidCallback onLoadPrevious;
+  final VoidCallback onShowSource;
 
   @override
   Widget build(BuildContext context) {
@@ -894,6 +909,47 @@ class _Content extends StatelessWidget {
     switch (state.mode) {
       case ViewerMode.preview:
         final file = source;
+        if (isMarkdownName(file.displayName)) {
+          return MarkdownPreview(
+            source: file,
+            data: state.markdown,
+            size: state.size,
+            generation: state.generation,
+            fontSize: fontSize,
+          );
+        }
+        if (textPreviewFormatOf(file.displayName) != null) {
+          if (state.size == 0) {
+            return AppEmptyState(
+              title: l10n.viewerEmptyFile,
+              icon: AppIcons.file,
+            );
+          }
+          final preview = state.textPreview;
+          return switch (preview) {
+            HtmlPreviewData(:final html) => RichTextPreview(
+              html: html,
+              source: source,
+              generation: state.generation,
+              fontSize: fontSize,
+            ),
+            TablePreviewData() => DelimitedPreview(
+              data: preview,
+              fontSize: fontSize,
+            ),
+            FailedTextPreview(:final reason) => AppEmptyState(
+              title: reason == TextPreviewFailure.limit
+                  ? l10n.textPreviewLimit(l10n.fileSize(maxTextPreviewBytes))
+                  : l10n.textPreviewFailed,
+              icon: AppIcons.file,
+              action: OutlinedButton(
+                onPressed: onShowSource,
+                child: Text(l10n.textPreviewSource),
+              ),
+            ),
+            _ => const DelayedSpinner(),
+          };
+        }
         if (file is DocumentFileSource && isDocumentName(file.displayName)) {
           return DocumentPreviewScreen(
             source: file,
@@ -949,6 +1005,7 @@ class _Content extends StatelessWidget {
               Expanded(
                 child: TextView(
                   window: state.window,
+                  syntax: state.syntax,
                   matchesByLine: state.matchesByLine,
                   current: state.current,
                   wrap: state.wrap,
