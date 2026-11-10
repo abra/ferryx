@@ -107,6 +107,14 @@ The verified PDFium cache survives `flutter clean`; see the local
 viewer overrides together; they are not inherited between Dart packages.
 Real-core Dart tests need the host library built by `make core`.
 
+The macOS `ferryx_api` pod explicitly links the SDK's `bz2` library. ZIP 2's
+`bzip2-sys` may select an installed library through `pkg-config` instead of
+bundling its C sources. Cargo's `staticlib` does not pass that native linker
+requirement to Xcode; keep `s.libraries = 'bz2'` in the podspec. Validate
+macOS linking with both a discoverable `bzip2.pc` and the bundled fallback.
+After changing a local podspec, run `(cd macos && pod install)` explicitly:
+Flutter may reuse Pods when only a plugin's podspec changed.
+
 Release outputs are `build/macos/Build/Products/Release/Ferryx.app`,
 `build/windows/x64/runner/Release/` and `build/linux/x64/release/bundle/`
 (the latter paths are for x64). Build on the matching OS. Windows/Linux
