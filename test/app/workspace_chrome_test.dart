@@ -155,12 +155,31 @@ void main() {
           expect(tester.takeException(), isNull);
         }
 
+        Future<void> expectStableOnFocusChange(Finder viewer) async {
+          final strip = find.byType(KeyHintStrip);
+          final hintsRect = tester.getRect(strip);
+          final viewerRect = tester.getRect(viewer);
+          final state = tester.state(viewer);
+          await h.press(tester, LogicalKeyboardKey.tab);
+          expect(strip, findsOneWidget);
+          expectAligned(viewer);
+          expect(tester.getRect(strip), hintsRect);
+          expect(tester.getRect(viewer), viewerRect);
+          expect(tester.state(viewer), same(state));
+          await h.press(tester, LogicalKeyboardKey.tab);
+          expect(tester.getRect(strip), hintsRect);
+          expect(tester.getRect(viewer), viewerRect);
+          expect(tester.state(viewer), same(state));
+        }
+
         // A folder, text and a pending PDF must all reserve the same row.
         await h.press(tester, LogicalKeyboardKey.keyI, character: 'i');
         expectAligned(find.byType(ViewerPlaceholder));
+        await expectStableOnFocusChange(find.byType(ViewerPlaceholder));
         for (var row = 0; row < 4; row++) {
           await h.press(tester, LogicalKeyboardKey.arrowDown);
           expectAligned(find.byType(ViewerScreen));
+          await expectStableOnFocusChange(find.byType(ViewerScreen));
         }
         expect(
           tester.widget<ViewerScreen>(find.byType(ViewerScreen)).location.name,

@@ -844,14 +844,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                             ),
                                     ),
                                     // The keys for what is under the cursor or selected
-                                    // in the active panel, or the terminal's or the
+                                    // in the active panel, or the preview's, terminal's or
                                     // shelf's while they have the keys, until the user
                                     // hides the line.
-                                    if (prefs.showKeyHints &&
-                                        !fullWindow &&
-                                        !_previewFocus.hasFocus)
+                                    if (prefs.showKeyHints && !fullWindow)
                                       _KeyHintsLine(
                                         deletions: _deletions,
+                                        previewFocus: _previewFocus,
                                         terminalFocus: _terminalFocus,
                                         shelfFocus: _shelfFocus,
                                         terminalHints: terminalShown
@@ -984,11 +983,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 }
 
 /// The hint line under the panels: the terminal's keys while it has the
-/// keys, the shelf's while it has them, else those for the active panel's
+/// keys, the preview's or shelf's while they have them, else the active panel's
 /// cursor or selection.
 class _KeyHintsLine extends StatelessWidget {
   const _KeyHintsLine({
     required this.deletions,
+    required this.previewFocus,
     required this.terminalFocus,
     required this.shelfFocus,
     required this.terminalHints,
@@ -1001,6 +1001,7 @@ class _KeyHintsLine extends StatelessWidget {
   });
 
   final FocusNode terminalFocus;
+  final FocusNode previewFocus;
   final PendingDeletionsController deletions;
   final FocusNode shelfFocus;
 
@@ -1017,11 +1018,21 @@ class _KeyHintsLine extends StatelessWidget {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: Listenable.merge([
       deletions,
+      previewFocus,
       terminalFocus,
       shelfFocus,
       FocusManager.instance,
     ]),
     builder: (context, _) {
+      if (previewFocus.hasFocus) {
+        return KeyHintStrip(
+          hints: previewHints,
+          shortcutMap: shortcutMap,
+          vim: false,
+          onHide: onHide,
+          onHelp: onHelp,
+        );
+      }
       if (terminalHints case final hints? when terminalFocus.hasFocus) {
         return KeyHintStrip(
           hints: hints,

@@ -107,8 +107,21 @@ void main() {
     final right = panel(tester, PanelSide.right);
     focusFile(left, 'a.txt');
     await h.press(tester, LogicalKeyboardKey.space);
+    final strip = find.byType(KeyHintStrip);
+    final hintRect = tester.getRect(strip);
+    final previewRect = tester.getRect(find.byType(_PreviewBody));
     await h.press(tester, LogicalKeyboardKey.tab);
     expect(log.current!.contentFocus.hasPrimaryFocus, isTrue);
+    expect(strip, findsOneWidget);
+    expect(tester.getRect(strip), hintRect);
+    expect(tester.getRect(find.byType(_PreviewBody)), previewRect);
+    final hints = tester.widget<KeyHintStrip>(strip);
+    expect(hints.vim, isFalse);
+    expect(hints.hints.whereType<CommandHint>().map((h) => h.command), [
+      AppCommand.switchPanel,
+      AppCommand.dismiss,
+      AppCommand.internalViewer,
+    ]);
     final before = left.state;
     await h.press(tester, LogicalKeyboardKey.arrowDown);
     expect(log.current!.position, 1);
@@ -127,6 +140,7 @@ void main() {
     expect(h.started, isEmpty);
     await h.press(tester, LogicalKeyboardKey.tab);
     expect(FocusManager.instance.primaryFocus?.debugLabel, 'left panel');
+    expect(tester.getRect(strip), hintRect);
     expect(
       canInvokeCommand(
         FocusManager.instance.primaryFocus!.context!,
@@ -137,6 +151,9 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('preview content')));
     await tester.pumpAndSettle();
     expect(log.current!.contentFocus.hasPrimaryFocus, isTrue);
+    expect(strip, findsOneWidget);
+    expect(tester.getRect(strip), hintRect);
+    expect(tester.getRect(find.byType(_PreviewBody)), previewRect);
     await tester.tap(find.text('Close preview'));
     await tester.pumpAndSettle();
     expect(FocusManager.instance.primaryFocus?.debugLabel, 'left panel');

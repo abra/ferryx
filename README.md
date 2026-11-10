@@ -234,6 +234,8 @@ Vim examples: `:pack 7z`, `:pack tar.gz`, `:pack zst`,
 the file list. **F3** opens the full-window viewer. Use the placement button
 to switch without reopening the document; **Tab** moves between files and
 preview, and **Esc** closes it. The covered panel is restored on close.
+The bottom shortcut strip stays in place when focus moves between files
+and preview, showing the keys for the active area.
 
 | Content | Supported formats |
 |---|---|

@@ -1014,6 +1014,10 @@ elsewhere — features never ask the platform.
   browsing hints (`gT`/`gt` with Vim keys). Search, rename and selection keep
   their own hints; text fields, the terminal and the shelf take precedence.
   Closing back to one tab restores the ordinary browsing hints.
+  Neighboring preview focus keeps the same row mounted and switches to
+  `previewHints` (return to files, dismiss, toggle full-window placement),
+  without file-operation or Vim browsing hints. Moving focus with Tab or a
+  click does not change the panels' or preview's available height.
   The Return hint says Open for a file while keeping the Enter command's
   actual binding; folders keep the Enter label.
   `AppKeyHints(singleLine: true)` measures the actual caps and labels during

@@ -48,6 +48,16 @@ const shelfHints = [
   KeyHint(LogicalKeyboardKey.escape, HintWord.back),
 ];
 
+/// Shared navigation for every neighboring preview, including an empty one.
+const previewHints = [
+  CommandHint(AppCommand.switchPanel),
+  CommandHint(AppCommand.dismiss),
+  CommandHint(
+    AppCommand.internalViewer,
+    labelCommand: AppCommand.viewerToggleFullWindow,
+  ),
+];
+
 /// The keys worth knowing right now, for what is under the cursor or
 /// selected. Tab navigation leads ordinary browsing when available;
 /// editing, searching and selection keep their own hints.
