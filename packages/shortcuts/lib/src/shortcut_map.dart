@@ -281,6 +281,59 @@ class ShortcutMap {
     return null;
   }
 
+  /// Conflicts after resolving primary to the desktop's actual modifiers.
+  /// Inner viewer/terminal scopes intentionally shadow window commands.
+  static const _overlappingScopes = [
+    {CommandScope.global, CommandScope.panel},
+    {CommandScope.lists, CommandScope.dialogs},
+    {CommandScope.viewer, CommandScope.dialogs},
+    {CommandScope.terminal},
+  ];
+
+  Set<AppCommand> conflictsWith(
+    AppCommand command,
+    Chord chord,
+    TargetPlatform platform,
+  ) => {
+    for (final entry in _bindings.entries)
+      if (entry.key != command &&
+          _overlappingScopes.any(
+            (scopes) =>
+                scopes.contains(command.scope) &&
+                scopes.contains(entry.key.scope),
+          ))
+        if (entry.value.any((other) => other.sameKeysAs(chord, platform)))
+          entry.key,
+  };
+
+  Map<AppCommand, AppCommand> conflicts(TargetPlatform platform) {
+    final found = <AppCommand, AppCommand>{};
+    for (final scopes in _overlappingScopes) {
+      final seen = <Object, AppCommand>{};
+      for (final entry in _bindings.entries) {
+        if (!scopes.contains(entry.key.scope)) continue;
+        for (final chord in entry.value) {
+          final a = chord.toActivator(platform);
+          final key = (
+            chord.prefix,
+            chord.key,
+            a.control,
+            a.meta,
+            a.alt,
+            a.shift,
+          );
+          final other = seen[key];
+          if (other != null && other != entry.key) {
+            found.putIfAbsent(entry.key, () => other);
+            found.putIfAbsent(other, () => entry.key);
+          }
+          seen[key] = entry.key;
+        }
+      }
+    }
+    return Map.unmodifiable(found);
+  }
+
   /// A `Shortcuts`-compatible map for [platform], limited to [scopes] so
   /// single keys never fire while typing. A plain Enter or Space yields to
   /// a focused button or row ([CommandIntent.yieldsToControls]).
@@ -733,8 +786,8 @@ const _defaults = <AppCommand, List<Chord>>{
   // keyboards lack.
   AppCommand.toggleSelection: [Chord(LogicalKeyboardKey.space, control: true)],
   AppCommand.toggleSelectionMoveDown: [
-    Chord(LogicalKeyboardKey.insert),
     Chord(LogicalKeyboardKey.space, alt: true),
+    Chord(LogicalKeyboardKey.insert),
   ],
   AppCommand.enterItem: [Chord(LogicalKeyboardKey.enter)],
   AppCommand.goParent: [Chord(LogicalKeyboardKey.backspace)],
@@ -843,6 +896,57 @@ const _defaults = <AppCommand, List<Chord>>{
 
 /// Chords Windows and Linux desktops press with another key than a Mac.
 const _otherDesktops = <AppCommand, List<Chord>>{
+  // Command and Control are distinct only on macOS. Keep the effective
+  // shortcuts separate after primary becomes Control on these desktops.
+  AppCommand.reopenClosedTab: [
+    Chord(LogicalKeyboardKey.keyT, control: true, shift: true),
+  ],
+  AppCommand.revealInOppositePanel: [
+    Chord(LogicalKeyboardKey.enter, control: true),
+  ],
+  AppCommand.toggleTabBar: [],
+  AppCommand.manageFavorites: [
+    Chord(LogicalKeyboardKey.keyB, control: true, shift: true),
+  ],
+  AppCommand.invertSelection: [
+    Chord(LogicalKeyboardKey.keyI, control: true, shift: true),
+  ],
+  AppCommand.fileAttributes: [Chord(LogicalKeyboardKey.enter, alt: true)],
+  AppCommand.focusLeftPanel: [
+    Chord(LogicalKeyboardKey.keyL, control: true, shift: true),
+  ],
+  AppCommand.focusRightPanel: [
+    Chord(LogicalKeyboardKey.keyR, control: true, shift: true),
+  ],
+  AppCommand.sortByName: [
+    Chord(LogicalKeyboardKey.digit1, control: true, shift: true),
+  ],
+  AppCommand.sortByExtension: [
+    Chord(LogicalKeyboardKey.digit2, control: true, shift: true),
+  ],
+  AppCommand.sortByModified: [
+    Chord(LogicalKeyboardKey.digit3, control: true, shift: true),
+  ],
+  AppCommand.sortBySize: [
+    Chord(LogicalKeyboardKey.digit4, control: true, shift: true),
+  ],
+  AppCommand.sortByCreated: [
+    Chord(LogicalKeyboardKey.digit5, control: true, shift: true),
+  ],
+  AppCommand.sortByAdded: [
+    Chord(LogicalKeyboardKey.digit6, control: true, shift: true),
+  ],
+  AppCommand.sortByAccessed: [
+    Chord(LogicalKeyboardKey.digit7, control: true, shift: true),
+  ],
+  AppCommand.quickListParents: [Chord(LogicalKeyboardKey.digit1, alt: true)],
+  AppCommand.quickListHistory: [Chord(LogicalKeyboardKey.digit2, alt: true)],
+  AppCommand.quickListFavorites: [Chord(LogicalKeyboardKey.digit3, alt: true)],
+  AppCommand.quickListVolumes: [Chord(LogicalKeyboardKey.digit4, alt: true)],
+  AppCommand.toggleSelectionMoveDown: [
+    Chord(LogicalKeyboardKey.insert),
+    Chord(LogicalKeyboardKey.space, alt: true),
+  ],
   AppCommand.compress: [Chord(LogicalKeyboardKey.f9)],
   AppCommand.compressTo: [Chord(LogicalKeyboardKey.f9, shift: true)],
   AppCommand.extractTo: [Chord(LogicalKeyboardKey.f9, alt: true)],

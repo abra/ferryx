@@ -41,6 +41,16 @@ class Chord extends Equatable {
 
   bool get hasModifier => primary || shift || alt || control;
 
+  /// Primary resolves to Meta on macOS and Control elsewhere.
+  bool sameKeysAs(Chord other, TargetPlatform platform) {
+    if (key != other.key || prefix != other.prefix) return false;
+    final a = toActivator(platform), b = other.toActivator(platform);
+    return a.control == b.control &&
+        a.meta == b.meta &&
+        a.alt == b.alt &&
+        a.shift == b.shift;
+  }
+
   /// Activator for the `Shortcuts` map: a sequence when there is a prefix.
   /// With ⇧ on a key that ⇧ turns into another glyph, it answers the key
   /// under either name ([shiftedKeys]).

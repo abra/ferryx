@@ -35,16 +35,22 @@ class CommandHandlers extends StatelessWidget {
   const CommandHandlers({
     required this.handlers,
     required this.child,
+    this.onInvoked,
     super.key,
   });
 
   final Map<AppCommand, VoidCallback> handlers;
   final Widget child;
 
+  /// Completes transient input state after a command runs here or in a
+  /// parent scope. Scopes outside the handler's owner are not notified.
+  final ValueChanged<AppCommand>? onInvoked;
+
   @override
   Widget build(BuildContext context) => _CommandScope(
     handlers: handlers,
     parent: context.getInheritedWidgetOfExactType<_CommandScope>(),
+    onInvoked: onInvoked,
     child: child,
   );
 }
@@ -53,11 +59,13 @@ class _CommandScope extends InheritedWidget {
   const _CommandScope({
     required this.handlers,
     required this.parent,
+    required this.onInvoked,
     required super.child,
   });
 
   final Map<AppCommand, VoidCallback> handlers;
   final _CommandScope? parent;
+  final ValueChanged<AppCommand>? onInvoked;
 
   VoidCallback? _find(AppCommand command) {
     for (_CommandScope? scope = this; scope != null; scope = scope.parent) {
@@ -92,12 +100,21 @@ bool canInvokeCommand(BuildContext context, AppCommand command) =>
 ///
 /// Returns `true` when someone handled it; menus and the palette use this.
 bool invokeCommand(BuildContext context, AppCommand command) {
-  final handler = context.getInheritedWidgetOfExactType<_CommandScope>()?._find(
-    command,
-  );
-  if (handler == null) return false;
-  handler();
-  return true;
+  final start = context.getInheritedWidgetOfExactType<_CommandScope>();
+  for (var owner = start; owner != null; owner = owner.parent) {
+    final handler = owner.handlers[command];
+    if (handler == null) continue;
+    try {
+      handler();
+    } finally {
+      for (var scope = start; scope != null; scope = scope.parent) {
+        scope.onInvoked?.call(command);
+        if (identical(scope, owner)) break;
+      }
+    }
+    return true;
+  }
+  return false;
 }
 
 /// Root action that routes [CommandIntent]s raised by `Shortcuts` to the

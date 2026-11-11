@@ -128,9 +128,9 @@ extension _VimActions on _WorkspaceScreenState {
       case 'tabclose' || 'tabc' || 'q' || 'quit':
         await _active.closeTab();
       case 'tabnext' || 'tabn':
-        _active.nextTab();
+        _cyclePanelTab(_workspace.state.active, 1);
       case 'tabprevious' || 'tabprev' || 'tabp':
-        _active.previousTab();
+        _cyclePanelTab(_workspace.state.active, -1);
       case 'e' || 'edit' || 'view':
         if (arg.isEmpty) {
           await _view(preview: false);

@@ -187,6 +187,13 @@ class _PanelViewState extends State<PanelView> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.vimMode != widget.vimMode) {
       _vim.clear();
+      // Both panels observe the shared prefix. Notify after this rebuild so
+      // changing modes cannot mark the sibling dirty during its parent's build.
+      if (KeySequenceState.pending != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) KeySequenceState.clear();
+        });
+      }
       _commandLine = false;
       _cubit.endVisual();
     }
@@ -201,6 +208,30 @@ class _PanelViewState extends State<PanelView> {
   /// A prefix armed (`g`, `d`…) or let go shows in the footer.
   void _onSequence() {
     if (widget.vimMode && mounted) setState(() {});
+  }
+
+  void _cancelPendingKeys({bool clearSequence = true}) {
+    if (clearSequence) KeySequenceState.clear();
+    if (!mounted) {
+      _vim.clear();
+      return;
+    }
+    if (_vim.count != null || _vim.pending != null) {
+      setState(_vim.clear);
+    }
+  }
+
+  void _commandInvoked(AppCommand command) {
+    if (!mounted || !widget.vimMode) return;
+    // A find keeps its count for the following character; all other commands
+    // either consumed their count or finish it here (including window actions).
+    if (command == AppCommand.vimFindChar ||
+        command == AppCommand.vimFindCharBack ||
+        command == AppCommand.vimSetMark ||
+        command == AppCommand.vimGoMark) {
+      return;
+    }
+    if (_vim.count != null || _vim.pending != null) setState(_vim.clear);
   }
 
   // ─── Keys ───
@@ -246,11 +277,11 @@ class _PanelViewState extends State<PanelView> {
           );
           return KeyEventResult.handled;
         case VimSetMark(:final letter):
-          setState(() {});
+          setState(_vim.clear);
           widget.hooks.onVimSetMark(letter);
           return KeyEventResult.handled;
         case VimGoMark(:final letter):
-          setState(() {});
+          setState(_vim.clear);
           widget.hooks.onVimGoMark(letter);
           return KeyEventResult.handled;
       }
@@ -262,6 +293,7 @@ class _PanelViewState extends State<PanelView> {
       return KeyEventResult.handled;
     }
     if (widget.vimMode && tab.searching) {
+      if (!plain) return KeyEventResult.ignored;
       // The `/` prompt: Return keeps the matches, Esc clears them.
       if (event.logicalKey == LogicalKeyboardKey.enter ||
           event.logicalKey == LogicalKeyboardKey.numpadEnter) {
@@ -401,10 +433,13 @@ class _PanelViewState extends State<PanelView> {
     final tab = _cubit.state.active;
     if (!widget.vimMode || tab == null) {
       // A flat view goes back to its folder once no search is on.
-      if (tab != null && tab.quickSearch.isEmpty && tab.isFlat) {
-        unawaited(_cubit.leaveFlatView());
-      } else {
+      if (tab == null) return;
+      if (tab.quickSearch.isNotEmpty) {
         _cubit.clearQuickSearch();
+      } else if (tab.selected.isNotEmpty) {
+        _cubit.deselectAll();
+      } else if (tab.isFlat) {
+        unawaited(_cubit.leaveFlatView());
       }
       return;
     }
@@ -487,7 +522,7 @@ class _PanelViewState extends State<PanelView> {
     AppCommand.showPreview: widget.hooks.onShowPreview,
     AppCommand.clearQuickSearch: _escape,
     for (var i = 0; i < 10; i++)
-      AppCommand.values.byName('showTab${i + 1}'): () => _cubit.showTab(i),
+      AppCommand.values.byName('showTab${i + 1}'): () => _selectTab(i),
     // Vim
     AppCommand.vimVisual: _cubit.toggleVisual,
     AppCommand.vimSearch: _cubit.searchOpen,
@@ -549,10 +584,10 @@ class _PanelViewState extends State<PanelView> {
     setState(() => _commandLine = true);
   }
 
-  void _closeCommandLine() {
+  void _closeCommandLine({bool restoreFocus = true}) {
     if (!mounted) return;
     setState(() => _commandLine = false);
-    widget.focusNode.requestFocus();
+    if (restoreFocus) widget.focusNode.requestFocus();
   }
 
   void _runCommandLine(String line) {
@@ -584,11 +619,15 @@ class _PanelViewState extends State<PanelView> {
   }
 
   Future<void> _onRenameCommit(String name) async {
-    final error = await _cubit.commitRename(name);
+    // Return restores the rows immediately. A blur leaves focus where the
+    // user put it, and a slow rename never steals it back afterwards.
+    final restoreFocus = widget.focusNode.hasFocus;
+    final pending = _cubit.commitRename(name);
+    if (restoreFocus && mounted) widget.focusNode.requestFocus();
+    final error = await pending;
     if (error != null && mounted) {
       showAppNotice(context, context.l10n.errorMessage(error));
     }
-    widget.focusNode.requestFocus();
   }
 
   void _onRenameCancel() {
@@ -763,6 +802,7 @@ class _PanelViewState extends State<PanelView> {
               history: List.unmodifiable(_commandHistory),
               onRun: _runCommandLine,
               onCancel: _closeCommandLine,
+              onFocusLost: () => _closeCommandLine(restoreFocus: false),
               complete: widget.hooks.onVimComplete,
             )
           : null,
@@ -812,8 +852,12 @@ class _PanelViewState extends State<PanelView> {
 
   @override
   Widget build(BuildContext context) => BlocConsumer<PanelCubit, PanelState>(
-    listenWhen: _asksPassword,
+    listenWhen: (before, after) =>
+        _asksPassword(before, after) ||
+        before.active?.id != after.active?.id ||
+        before.active?.location != after.active?.location,
     listener: (context, state) {
+      _cancelPendingKeys(clearSequence: widget.focusNode.hasFocus);
       final location = state.active?.passwordLocation;
       if (location != null) widget.hooks.onArchivePassword?.call(location);
     },
@@ -840,6 +884,7 @@ class _PanelViewState extends State<PanelView> {
       return GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTapDown: (_) {
+          _cancelPendingKeys();
           widget.hooks.onActivate();
           if (!widget.focusNode.hasFocus &&
               !_commandLine &&
@@ -850,6 +895,7 @@ class _PanelViewState extends State<PanelView> {
         child: AppFocusArea(
           borderRadius: widget.focusBorderRadius,
           child: CommandHandlers(
+            onInvoked: _commandInvoked,
             handlers: widget.terminal?.focusScope.hasFocus == true
                 ? {
                     AppCommand.commandPalette: () =>
@@ -860,7 +906,11 @@ class _PanelViewState extends State<PanelView> {
               focusNode: widget.focusNode,
               onKeyEvent: _onKey,
               onFocusChange: (focused) {
-                if (focused) widget.hooks.onActivate();
+                if (focused) {
+                  widget.hooks.onActivate();
+                } else {
+                  _cancelPendingKeys();
+                }
               },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

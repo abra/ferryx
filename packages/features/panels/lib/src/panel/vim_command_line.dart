@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +17,7 @@ class VimCommandLine extends StatefulWidget {
     required this.onRun,
     required this.onCancel,
     required this.complete,
+    this.onFocusLost,
     super.key,
   });
 
@@ -24,6 +27,7 @@ class VimCommandLine extends StatefulWidget {
   final List<String> history;
   final ValueChanged<String> onRun;
   final VoidCallback onCancel;
+  final VoidCallback? onFocusLost;
 
   /// The completions of the line so far (whole lines), for Tab.
   final Future<List<String>> Function(String line) complete;
@@ -39,6 +43,9 @@ class _VimCommandLineState extends State<VimCommandLine> {
   List<String>? _completions;
   int _completionAt = -1;
   bool _done = false;
+  bool _loadingCompletions = false, _internalEdit = false;
+  int _completionRevision = 0, _completionSteps = 0;
+  String _lastText = '', _draft = '';
 
   @override
   void initState() {
@@ -51,18 +58,23 @@ class _VimCommandLineState extends State<VimCommandLine> {
   }
 
   void _onFocus() {
-    if (!_focus.hasFocus && !_done) _cancel();
+    if (!_focus.hasFocus && !_done) _cancel(focusLost: true);
   }
 
   void _onEdit() {
-    // Typing drops the completions; Tab builds them anew.
-    if (_completions != null && _completionAt >= 0) {
-      final current = _completions![_completionAt];
-      if (_controller.text != current) {
-        _completions = null;
-        _completionAt = -1;
-      }
-    }
+    final text = _controller.text;
+    if (_lastText == text) return;
+    _lastText = text;
+    if (_internalEdit) return;
+    _historyAt = null;
+    _invalidateCompletions();
+  }
+
+  void _invalidateCompletions() {
+    _completionRevision++;
+    _completionSteps = 0;
+    _completions = null;
+    _completionAt = -1;
   }
 
   void _run() {
@@ -72,41 +84,87 @@ class _VimCommandLineState extends State<VimCommandLine> {
     widget.onRun(line);
   }
 
-  void _cancel() {
+  void _cancel({bool focusLost = false}) {
     if (_done) return;
     _done = true;
-    widget.onCancel();
+    (focusLost ? widget.onFocusLost ?? widget.onCancel : widget.onCancel)();
   }
 
   void _history(int step) {
     final history = widget.history;
     if (history.isEmpty) return;
+    if (_historyAt == null) _draft = _controller.text;
     final at = ((_historyAt ?? history.length) + step).clamp(0, history.length);
-    _historyAt = at;
-    _set(at == history.length ? '' : history[at]);
+    _historyAt = at == history.length ? null : at;
+    _invalidateCompletions();
+    _set(at == history.length ? _draft : history[at]);
   }
 
-  Future<void> _complete() async {
-    var options = _completions;
-    if (options == null) {
-      options = await widget.complete(_controller.text);
-      if (!mounted || options.isEmpty) return;
-      _completions = options;
-      _completionAt = -1;
+  void _complete(int step) {
+    final options = _completions;
+    if (options != null && options.isNotEmpty) {
+      _completionAt = (_completionAt + step) % options.length;
+      _set(options[_completionAt]);
+      return;
     }
-    _completionAt = (_completionAt + 1) % options.length;
-    _set(options[_completionAt]);
+    _completionSteps += step;
+    if (!_loadingCompletions) unawaited(_loadCompletions());
+  }
+
+  Future<void> _loadCompletions() async {
+    final revision = _completionRevision;
+    final query = _controller.text;
+    _loadingCompletions = true;
+    try {
+      final options = await widget.complete(query);
+      if (!mounted ||
+          _done ||
+          revision != _completionRevision ||
+          options.isEmpty) {
+        return;
+      }
+      final steps = _completionSteps;
+      if (steps == 0) return;
+      _completions = List.unmodifiable(options);
+      _completionAt = (steps > 0 ? steps - 1 : steps) % options.length;
+      _set(options[_completionAt]);
+    } on Object {
+      if (mounted && !_done && revision == _completionRevision) {
+        showAppNotice(context, context.l10n.vimCompletionFailed);
+      }
+    } finally {
+      _loadingCompletions = false;
+      if (mounted &&
+          !_done &&
+          revision != _completionRevision &&
+          _completionSteps != 0) {
+        unawaited(_loadCompletions());
+      } else if (revision == _completionRevision) {
+        _completionSteps = 0;
+      }
+    }
   }
 
   void _set(String text) {
-    _controller.value = TextEditingValue(
-      text: text,
-      selection: TextSelection.collapsed(offset: text.length),
-    );
+    _internalEdit = true;
+    try {
+      _controller.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+    } finally {
+      _internalEdit = false;
+    }
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final keyboard = HardwareKeyboard.instance;
+    if (keyboard.isMetaPressed ||
+        keyboard.isControlPressed ||
+        keyboard.isAltPressed) {
       return KeyEventResult.ignored;
     }
     final key = event.logicalKey;
@@ -128,7 +186,7 @@ class _VimCommandLineState extends State<VimCommandLine> {
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.tab) {
-      _complete();
+      _complete(keyboard.isShiftPressed ? -1 : 1);
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;

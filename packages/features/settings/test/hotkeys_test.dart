@@ -119,6 +119,57 @@ void main() {
     expect(find.text(en.hotkeysUnbound), findsOneWidget);
   });
 
+  testWidgets(
+    'Windows reassignment removes an explicit-Control alias atomically',
+    (tester) async {
+      final service = await testPreferences();
+      await pumpScreen(
+        tester,
+        SettingsScreen(
+          preferencesService: service,
+          platform: TargetPlatform.windows,
+          version: '0.1.0',
+          initialSection: SettingsSection.hotkeys,
+          onClose: () {},
+        ),
+      );
+      await tester.enterText(find.byType(AppSearchField).last, 'copy to');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(en.cmdCopyTo));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyI);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(en.hotkeysConflict(en.cmdInvertSelection)),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(en.hotkeysReassign));
+      await tester.pumpAndSettle();
+      final map = ShortcutMap.forUser(
+        TargetPlatform.windows,
+        overrides: service.current.shortcutOverrides,
+      );
+      expect(map.chordsFor(AppCommand.invertSelection), isEmpty);
+      expect(
+        map
+            .chordsFor(AppCommand.copyTo)
+            .single
+            .sameKeysAs(
+              const Chord(LogicalKeyboardKey.keyI, control: true, shift: true),
+              TargetPlatform.windows,
+            ),
+        isTrue,
+      );
+      expect(map.conflicts(TargetPlatform.windows), isEmpty);
+    },
+  );
+
   testWidgets('a command this desktop cannot run is not listed', (
     tester,
   ) async {

@@ -125,10 +125,13 @@ List<PanelHint> _hintsFor({
       CommandHint(AppCommand.moveTo),
       CommandHint(AppCommand.moveToTrash),
       CommandHint(AppCommand.compress),
-      CommandHint(AppCommand.deselectAll),
+      CommandHint(
+        AppCommand.clearQuickSearch,
+        labelCommand: AppCommand.deselectAll,
+      ),
     ];
   }
-  final browsing = _browsingHints(tab, hasRegister: hasRegister);
+  final browsing = _browsingHints(tab, hasRegister: hasRegister, vim: vim);
   return hasMultipleTabs
       ? [
           const CommandHint(AppCommand.previousTab),
@@ -141,6 +144,7 @@ List<PanelHint> _hintsFor({
 List<PanelHint> _browsingHints(
   PanelTabState tab, {
   required bool hasRegister,
+  required bool vim,
 }) {
   final focused = tab.focused;
   if (focused == null) {
@@ -152,7 +156,7 @@ List<PanelHint> _browsingHints(
     ];
   }
   final paste = hasRegister
-      ? const [CommandHint(AppCommand.vimPaste)]
+      ? [CommandHint(vim ? AppCommand.vimPaste : AppCommand.toggleShelf)]
       : const <PanelHint>[];
   if (focused.isParent) {
     return [

@@ -1481,5 +1481,6 @@
         "type": "String"
       }
     }
-  }
+  },
+  "vimCompletionFailed": "Could not complete this command. Try again."
 }

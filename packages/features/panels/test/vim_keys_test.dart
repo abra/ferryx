@@ -72,4 +72,29 @@ void main() {
     }
     expect(keys.count, VimKeys.maxCount);
   });
+  test(
+    'find keeps modifiers, accepts uppercase, and releases navigation keys',
+    () {
+      final keys = VimKeys()
+        ..count = 2
+        ..pending = VimPending.findForward;
+      expect(keys.feed(key: LogicalKeyboardKey.shiftLeft), isA<VimIgnored>());
+      expect(keys.pending, VimPending.findForward);
+      expect(keys.count, 2);
+      expect(
+        (keys.feed(
+          key: LogicalKeyboardKey.keyA,
+          character: 'A',
+        ) as VimFindChar).char,
+        'A',
+      );
+      keys.pending = VimPending.findForward;
+      expect(
+        keys.feed(key: LogicalKeyboardKey.tab, character: '\t'),
+        isA<VimIgnored>(),
+      );
+      expect(keys.pending, isNull);
+      expect(keys.count, isNull);
+    },
+  );
 }

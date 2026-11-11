@@ -102,7 +102,9 @@ class _RecordChordDialogState extends State<_RecordChordDialog> {
     }
     final chord = chordOfEvent(event, widget.platform);
     if (chord == null) return KeyEventResult.ignored;
-    final other = widget.map.commandFor(chord);
+    final other = widget.map
+        .conflictsWith(widget.command, chord, widget.platform)
+        .firstOrNull;
     setState(() {
       _chord = chord;
       _conflict = other == null || other == widget.command ? null : other;

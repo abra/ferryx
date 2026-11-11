@@ -1917,3 +1917,22 @@ Pagecraft: two concurrent jobs, shared/refcounted requests, queued cancellation,
 Keys include location, size, modification time and target pixel width; negative
 results are cached too. Sources over 64 MiB and nonnative locations retain icons.
 No preview files are downloaded merely by browsing remote/archive directories.
+
+### Keyboard state boundaries
+
+PanelView retires counts, character waits and shared sequence prefixes when
+focus, active tab or folder changes. CommandHandlers.onInvoked observes handled
+commands from the focused scope through the handler's owner, so a window command
+also finishes local Vim input. Only character-taking commands keep their wait.
+Modifiers are not find targets; nontext navigation cancels the wait and continues
+to shortcuts. A modified key in `/` search continues to the window. Escape in
+ordinary browsing clears search, then selection, then leaves Flat view.
+
+Command-line completion serializes source requests, guards edits with revisions
+and coalesces repeated Tab/Shift+Tab steps. Late results cannot replace typed text;
+history keeps its unfinished draft. Blur does not request the old panel's focus;
+rename restores focus on submission before I/O, never after a slow write.
+
+ShortcutMap.conflicts compares effective desktop modifiers within overlapping
+scopes. Primary and Control must be resolved before checking Windows/Linux
+bindings; the settings warning and regression matrix use these semantics.

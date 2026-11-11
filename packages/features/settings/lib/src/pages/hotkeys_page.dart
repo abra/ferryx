@@ -54,14 +54,22 @@ class _HotkeysPageState extends State<HotkeysPage> {
     );
     if (recorded == null) return;
     final chord = recorded.chord;
-    final other = recorded.takenFrom;
-    if (other != null) {
-      await _override(other, [
-        for (final c in widget.shortcutMap.chordsFor(other))
-          if (c != chord) ChordCodec.encode(c),
-      ]);
-    }
-    await _override(command, [ChordCodec.encode(chord)]);
+    final conflicts = widget.shortcutMap.conflictsWith(
+      command,
+      chord,
+      widget.platform,
+    );
+    await widget.service.update((p) {
+      final overrides = {...p.shortcutOverrides};
+      for (final other in conflicts) {
+        overrides[other.name] = [
+          for (final c in widget.shortcutMap.chordsFor(other))
+            if (!c.sameKeysAs(chord, widget.platform)) ChordCodec.encode(c),
+        ];
+      }
+      overrides[command.name] = [ChordCodec.encode(chord)];
+      return p.copyWith(shortcutOverrides: Map.unmodifiable(overrides));
+    });
   }
 
   Future<void> _override(AppCommand command, List<String>? chords) =>
@@ -130,24 +138,8 @@ class _HotkeysPageState extends State<HotkeysPage> {
 
   /// The command each command shares a chord with inside its scope, if
   /// any: both would answer the key where it is pressed.
-  Map<AppCommand, AppCommand> _conflicts() {
-    final found = <AppCommand, AppCommand>{};
-    for (final scope in CommandScope.values) {
-      final byChord = <Chord, AppCommand>{};
-      for (final command in AppCommand.inScope(scope)) {
-        for (final chord in widget.shortcutMap.chordsFor(command)) {
-          final other = byChord[chord];
-          if (other == null) {
-            byChord[chord] = command;
-          } else {
-            found.putIfAbsent(command, () => other);
-            found.putIfAbsent(other, () => command);
-          }
-        }
-      }
-    }
-    return found;
-  }
+  Map<AppCommand, AppCommand> _conflicts() =>
+      widget.shortcutMap.conflicts(widget.platform);
 
   @override
   Widget build(BuildContext context) {
@@ -328,7 +320,8 @@ class _HotkeyRowState extends State<_HotkeyRow> {
       return KeyEventResult.handled;
     }
     final chord = chordOfEvent(event, widget.platform);
-    if (chord != null && widget.menuChords.contains(chord)) {
+    if (chord != null &&
+        widget.menuChords.any((c) => c.sameKeysAs(chord, widget.platform))) {
       widget.onMenu(keyboardMenuAnchor(context));
       return KeyEventResult.handled;
     }

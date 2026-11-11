@@ -157,33 +157,77 @@ void main() {
     );
   }
 
+  for (final vim in [false, true]) {
+    testWidgets(
+      'Vim=$vim: shell input stays out of file handlers and operations',
+      (tester) async {
+        await tester.runAsync(
+          () => h.preferences.update((p) => p.copyWith(vimMode: vim)),
+        );
+        await pump(tester);
+        await open(tester);
+        final before = cubit(tester, PanelSide.left).state.active!;
+        await command(tester, AppCommand.terminalAsTab);
+        for (final key in [
+          LogicalKeyboardKey.keyC,
+          LogicalKeyboardKey.keyD,
+          LogicalKeyboardKey.keyG,
+          LogicalKeyboardKey.keyJ,
+          LogicalKeyboardKey.space,
+        ]) {
+          await h.press(tester, key);
+          expect(KeySequenceState.pending, isNull);
+        }
+        await h.press(tester, LogicalKeyboardKey.keyC, control: true);
+        expect(sessions.single.text, contains('\x03'));
+        final after = cubit(tester, PanelSide.left).state.active!;
+        expect(after.cursor, before.cursor);
+        expect(after.quickSearch, isEmpty);
+        expect(after.selected, before.selected);
+        expect(
+          canInvokeCommand(tester.element(getPane()), AppCommand.deleteItems),
+          isFalse,
+        );
+      },
+    );
+  }
+
   testWidgets(
-    'shell input stays out of file Vim handlers and file operations',
+    'Vim tab commands and numbered selection include the visible terminal tab',
     (tester) async {
       await pump(tester);
       await open(tester);
-      final before = cubit(tester, PanelSide.left).state.active!;
       await command(tester, AppCommand.terminalAsTab);
-      for (final key in [
-        LogicalKeyboardKey.keyC,
-        LogicalKeyboardKey.keyD,
-        LogicalKeyboardKey.keyG,
-        LogicalKeyboardKey.keyJ,
-        LogicalKeyboardKey.space,
-      ]) {
-        await h.press(tester, key);
-        expect(KeySequenceState.pending, isNull);
+      tester.widget<AppTabStrip>(find.byType(AppTabStrip)).onReorder(1, 0);
+      await tester.pumpAndSettle();
+      await command(tester, AppCommand.nextTab);
+      Future<void> run(String line) async {
+        await h.press(
+          tester,
+          LogicalKeyboardKey.semicolon,
+          shift: true,
+          character: ':',
+        );
+        await tester.enterText(find.byType(AppTextField), line);
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
       }
-      await h.press(tester, LogicalKeyboardKey.keyC, control: true);
-      expect(sessions.single.text, contains('\x03'));
-      final after = cubit(tester, PanelSide.left).state.active!;
-      expect(after.cursor, before.cursor);
-      expect(after.quickSearch, isEmpty);
-      expect(after.selected, before.selected);
+
+      for (final line in ['tabnext', 'tabprevious']) {
+        await run(line);
+        expect(getPane(), findsOneWidget);
+        await command(tester, AppCommand.nextTab);
+        expect(getPane(), findsNothing);
+      }
+      final files = tester.widget<PanelView>(panel(PanelSide.left));
       expect(
-        canInvokeCommand(tester.element(getPane()), AppCommand.deleteItems),
-        isFalse,
+        invokeCommand(files.focusNode.context!, AppCommand.showTab1),
+        isTrue,
       );
+      await tester.pumpAndSettle();
+      expect(getPane(), findsOneWidget);
+      expect(sessions, hasLength(1));
+      expect(sessions.single.closed, isFalse);
     },
   );
 

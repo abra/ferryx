@@ -55,6 +55,18 @@ class VimKeys {
   /// Feeds a key pressed in Normal or Visual mode with no modifier but
   /// Shift, as [character] types it.
   VimKeyOutcome feed({required LogicalKeyboardKey key, String? character}) {
+    if (const [
+      LogicalKeyboardKey.shiftLeft,
+      LogicalKeyboardKey.shiftRight,
+      LogicalKeyboardKey.controlLeft,
+      LogicalKeyboardKey.controlRight,
+      LogicalKeyboardKey.altLeft,
+      LogicalKeyboardKey.altRight,
+      LogicalKeyboardKey.metaLeft,
+      LogicalKeyboardKey.metaRight,
+    ].contains(key)) {
+      return const VimIgnored();
+    }
     if (key == LogicalKeyboardKey.escape) {
       if (count == null && pending == null) return const VimIgnored();
       clear();
@@ -63,7 +75,13 @@ class VimKeys {
     final waiting = pending;
     if (waiting != null) {
       pending = null;
-      if (character == null || character.isEmpty) return const VimConsumed();
+      if (character == null ||
+          character.isEmpty ||
+          character.runes.first < 0x20 ||
+          character.runes.first == 0x7f) {
+        clear();
+        return const VimIgnored();
+      }
       switch (waiting) {
         case VimPending.findForward:
           lastFind = VimFindChar(character, forward: true);

@@ -131,7 +131,7 @@ void main() {
       AppCommand.moveTo,
       AppCommand.moveToTrash,
       AppCommand.compress,
-      AppCommand.deselectAll,
+      AppCommand.clearQuickSearch,
     ]);
     expect(
       commands(hintsFor(tab: tab(cursor: 2), vim: true, hasRegister: true))
@@ -139,6 +139,32 @@ void main() {
       AppCommand.vimPaste,
     );
   });
+
+  test(
+    'ordinary browsing offers the shelf instead of an unbound Vim paste',
+    () {
+      final hints = hintsFor(
+        tab: tab(cursor: 2),
+        vim: false,
+        hasRegister: true,
+      );
+      expect(commands(hints).first, AppCommand.toggleShelf);
+      final selected = hintsFor(
+        tab: tab(selected: {'a.txt'}),
+        vim: false,
+        hasRegister: false,
+      );
+      expect(
+        (selected.last as CommandHint).labelCommand,
+        AppCommand.deselectAll,
+      );
+      expect(
+        ShortcutMap.defaults(TargetPlatform.macOS)
+            .primaryChord(AppCommand.toggleSelectionMoveDown),
+        const Chord(LogicalKeyboardKey.space, alt: true),
+      );
+    },
+  );
 
   test('modes: renaming, the search prompt, matches, Visual', () {
     final renaming = hintsFor(

@@ -232,8 +232,11 @@ class WorkspaceHarness {
     await progress.close();
   }
 
-  ShortcutMap get shortcutMap =>
-      ShortcutMap.forUser(platform, vimMotions: preferences.current.vimMode);
+  ShortcutMap get shortcutMap => ShortcutMap.forUser(
+    platform,
+    vimMotions: preferences.current.vimMode,
+    overrides: preferences.current.shortcutOverrides,
+  );
 
   /// Pumps the window, the left panel in [left], the right in [right].
   Future<void> pump(

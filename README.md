@@ -447,6 +447,9 @@ monospace fields for paths and arguments. Enter keeps focus when a form stays op
 |---|---|---|
 | Switch panels | Tab | Tab |
 | New tab | ⌘T | Ctrl+T |
+| Reopen closed tab | ⇧⌘R | Ctrl+Shift+T |
+| Mark and move to the next file | ⌥Space | Insert / Alt+Space |
+| Clear search, then selection | Esc | Esc |
 | Next / previous tab | ⌃Tab / ⌃⇧Tab | Ctrl+Tab / Ctrl+Shift+Tab |
 | Find files | ⌘F | Ctrl+F |
 | Full-window viewer / external editor | F3 / F4 | F3 / F4 |
@@ -463,6 +466,12 @@ monospace fields for paths and arguments. Enter keeps focus when a form stays op
 
 macOS retains F9 / Shift+F9 / Option+F9 archive aliases; its primary archive
 keys do not require Fn. The macOS menu bar follows current bindings.
+On Windows/Linux, Ctrl+1–5 changes views, Ctrl+Shift+1–7 sorts, and Alt+1–4
+opens parents/history/favorites/volumes. Alt+Enter shows attributes;
+Ctrl+Enter reveals the file in the other panel. Ctrl+Shift+B manages
+favorites; Ctrl+Shift+I inverts the selection. Ctrl+Shift+L/R focuses the
+left/right panel; Tab remains the quick way to switch panels. Tab-bar
+visibility is available through View/Commands and can receive a custom key.
 
 </details>
 
@@ -496,7 +505,15 @@ text fields keep normal editing and terminal input goes to the shell.
 | Set / jump to a persistent mark | `m` / `'` |
 | Rename | `cw`, `A`, `I` |
 
-The `:` command line has history and Tab completion. Examples:
+Unfinished counts and key sequences end when you change focus, tabs or folders;
+`f` never traps Tab or the arrow keys. Shortcuts with modifiers remain available
+while the `/` search prompt is open. Esc clears search before clearing marked
+files; in Visual mode it ends Visual mode first. The bottom hints follow each step.
+
+The `:` command line has ↑/↓ history, preserves the draft you were typing,
+and cycles completions with Tab / Shift+Tab. Tab commands include a terminal
+shown as a panel tab. Leaving the command line or rename field keeps focus
+where you moved it. Examples:
 `:cd ~/src`, `:mkdir notes`, `:sort size!`, `:set hidden`, `:tabnew`,
 `:marks`, `:42`, `:tag red,work`, `:tag -red`.
 
