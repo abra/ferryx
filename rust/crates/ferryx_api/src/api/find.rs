@@ -96,3 +96,67 @@ pub fn cancel_find(id: i64) {
         cancel.store(true, Ordering::SeqCst);
     }
 }
+
+/// Sort a bounded search snapshot with the same rules as ordinary panels.
+/// Only indices cross back; no filesystem reads or listing handle is needed.
+pub fn sort_find_hits(
+    hits: Vec<FindHitView>,
+    options: crate::api::types::SortOptionsView,
+) -> Result<Vec<i32>, String> {
+    use ferryx_core::entry::{extension_of, Entry, EntryKind};
+    use std::path::PathBuf;
+    if hits.len() > 10_000 {
+        return Err("Search snapshot exceeds 10000 entries".into());
+    }
+    let entries: Vec<_> = hits
+        .iter()
+        .map(|hit| {
+            let path = PathBuf::from(&hit.path);
+            let name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
+            let mut entry = Entry::parent(path);
+            entry.is_parent = false;
+            entry.is_dir = hit.is_dir;
+            entry.kind = if hit.is_dir { EntryKind::Directory } else { EntryKind::File };
+            entry.extension = extension_of(&name).to_owned();
+            entry.name = name;
+            entry.size = (!hit.is_dir).then_some(hit.size.max(0) as u64);
+            entry.modified_ms = hit.modified_ms;
+            entry
+        })
+        .collect();
+    let options = options.to_core();
+    let mut order: Vec<_> = (0..entries.len()).collect();
+    order.sort_by(|&a, &b| {
+        ferryx_core::sorting::compare(&entries[a], &entries[b], &options)
+            .then_with(|| hits[a].path.cmp(&hits[b].path))
+    });
+    Ok(order.into_iter().map(|index| index as i32).collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::api::types::{CollationView, SortFieldView, SortOptionsView};
+
+    #[test]
+    fn search_sort_uses_panel_collation_and_metadata() {
+        let hits = vec![
+            FindHitView { path: "/root/file10.txt".into(), is_dir: false, size: 10, modified_ms: None },
+            FindHitView { path: "/root/file2.txt".into(), is_dir: false, size: 20, modified_ms: None },
+            FindHitView { path: "/root/dir".into(), is_dir: true, size: 0, modified_ms: None },
+        ];
+        let options = SortOptionsView {
+            field: SortFieldView::Name,
+            descending: false,
+            folders_first: true,
+            extensionless_folders: true,
+            collation: CollationView::Natural,
+        };
+        assert_eq!(sort_find_hits(hits.clone(), options).unwrap(), [2, 1, 0]);
+        assert_eq!(
+            sort_find_hits(hits, SortOptionsView { field: SortFieldView::Size, descending: true, ..options })
+                .unwrap(),
+            [2, 1, 0]
+        );
+    }
+}

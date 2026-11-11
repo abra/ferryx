@@ -18,6 +18,7 @@ PACKAGES = \
 	packages/operations_service \
 	packages/platform_services \
 	packages/terminal_service \
+	packages/thumbnail_service \
 	packages/native_text_selection \
 	packages/pagecraft \
 	packages/features/panels \

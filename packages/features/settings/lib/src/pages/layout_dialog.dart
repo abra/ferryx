@@ -103,6 +103,7 @@ class _LayoutDialogState extends State<_LayoutDialog> {
                 options: [
                   (ViewMode.brief, l10n.modeBrief),
                   (ViewMode.list, l10n.modeList),
+                  (ViewMode.thumbnails, l10n.cmdThumbnailsView),
                 ],
                 value: _mode,
                 onChanged: (m) => setState(() => _mode = m),

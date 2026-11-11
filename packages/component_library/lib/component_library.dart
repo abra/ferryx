@@ -8,6 +8,7 @@
 library;
 
 export 'src/app_dialog.dart';
+export 'src/app_named_items_dialog.dart';
 export 'src/app_divider.dart';
 export 'src/app_empty_state.dart';
 export 'src/app_fit_or_else.dart';

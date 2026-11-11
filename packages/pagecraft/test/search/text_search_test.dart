@@ -2,6 +2,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pagecraft/all_formats.dart';
 
 void main() {
+  test('optional match budget bounds result construction', () {
+    expect(searchText('aaaa', 'a', maxMatches: 2).length, 2);
+    expect(searchText('aaaa', 'a', maxMatches: 0), isEmpty);
+  });
+
   group('foldSearchText', () {
     test('lowercases and strips Latin and Cyrillic diacritics', () {
       expect(foldSearchText('Café NAÏVE Ångström').text, 'cafe naive angstrom');

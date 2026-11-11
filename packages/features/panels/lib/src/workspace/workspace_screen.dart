@@ -56,8 +56,10 @@ import 'workspace_preview.dart';
 import 'workspace_preview_cubit.dart';
 import 'workspace_state.dart';
 import 'workspace_terminal.dart';
+import 'saved_workspace.dart';
 
 part 'interface_actions.dart';
+part 'saved_workspace_actions.dart';
 part 'native_actions.dart';
 part 'operations_actions.dart';
 part 'terminal_actions.dart';
@@ -75,6 +77,8 @@ class WorkspaceNavigation {
     required this.openFind,
     required this.openSettings,
     this.openArchiverSettings,
+    this.openComparison,
+    this.openSavedSearches,
     required this.openCheatSheet,
     required this.openSync,
     required this.openChecksums,
@@ -95,10 +99,23 @@ class WorkspaceNavigation {
     BuildContext context,
     String root, {
     required Future<void> Function(Location location) view,
+    Future<void> Function(FindRequest request)? results,
+    FindRequest? initial,
   })
   openFind;
+  final Future<(String, FindRequest)?> Function(
+    BuildContext context,
+    FindRequest? current,
+  )?
+  openSavedSearches;
   final Future<void> Function(BuildContext context) openSettings;
   final Future<void> Function(BuildContext context)? openArchiverSettings;
+  final Future<void> Function(
+    BuildContext context,
+    Location left,
+    Location right,
+  )?
+  openComparison;
   final Future<void> Function(BuildContext context) openCheatSheet;
 
   // ─── Operations stream ───
@@ -206,6 +223,9 @@ class WorkspaceScreen extends StatefulWidget {
     required this.fallbackLocation,
     required this.onSnapshot,
     required this.frecency,
+    this.sideStorage,
+    this.find,
+    this.thumbnails,
     required this.platformServices,
     this.terminal,
     this.loadArchivers,
@@ -242,6 +262,9 @@ class WorkspaceScreen extends StatefulWidget {
   /// The folders the panels showed, counted as they show them, for Jump
   /// to Folder.
   final FolderFrecency frecency;
+  final SideStorage? sideStorage;
+  final FindService? find;
+  final ThumbnailProvider? thumbnails;
 
   /// The integrated terminal; none without it (the terminal's commands
   /// then do nothing).
@@ -263,6 +286,16 @@ class WorkspaceScreen extends StatefulWidget {
 }
 
 class _WorkspaceScreenState extends State<WorkspaceScreen> {
+  Future<SavedProfiles<SavedWorkspace>>? _savedWorkspaces;
+  bool _restoringWorkspace = false;
+  void _setRestoringWorkspace(bool restoring) {
+    if (mounted) {
+      setState(() => _restoringWorkspace = restoring);
+    } else {
+      _restoringWorkspace = restoring;
+    }
+  }
+
   late final WorkspaceCubit _workspace;
   late final PanelCubit _left;
   late final PanelCubit _right;
@@ -360,6 +393,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     readTags: widget.capabilities.finderTags,
     network: widget.network?.service,
     connectServer: widget.network == null ? null : _reconnectServer,
+    find: widget.find,
   );
 
   /// A panel's server connected to again, the window's dialogs asking.
@@ -371,6 +405,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   @override
   void dispose() {
+    unawaited(
+      _savedWorkspaces?.then(
+        (catalog) => catalog.dispose(),
+        // Loading already reports the error; disposal must consume it too.
+        onError: (Object _, StackTrace _) {},
+      ),
+    );
     _deletions.dispose();
     _operations.dispose();
     _changes?.cancel();
@@ -440,11 +481,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   // ─── Persistence ───
 
   void _scheduleSnapshot() {
+    if (_restoringWorkspace) return;
     _snapshotTimer?.cancel();
     _snapshotTimer = Timer(const Duration(milliseconds: 400), _snapshotNow);
   }
 
   void _snapshotNow() {
+    if (_restoringWorkspace) return;
     _snapshotTimer?.cancel();
     widget.onSnapshot(
       WorkspaceSnapshot(
@@ -582,299 +625,323 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       : null;
                   return Scaffold(
                     backgroundColor: context.appColors.window,
-                    body: CommandHandlers(
-                      handlers: _globalHandlers(context),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          ExcludeFocus(
-                            excluding: preview.fullWindow,
-                            child: ExcludeSemantics(
-                              excluding: preview.fullWindow,
-                              child: Offstage(
-                                offstage: preview.fullWindow,
-                                child: Column(
-                                  children: [
-                                    Expanded(
-                                      child: LayoutBuilder(
-                                        builder: (context, area) {
-                                          _terminalArea = area.maxHeight;
-                                          return _PanelsAndTerminal(
-                                            dock: dock,
-                                            terminalHeight: terminalShown
-                                                ? _terminalHeight(
-                                                    context,
-                                                    area.maxHeight,
-                                                  )
-                                                : 0,
-                                            panels: CommandShortcuts(
-                                              shortcuts: widget.shortcutMap
-                                                  .toShortcuts(
-                                                    Theme.of(context).platform,
-                                                    scopes: const {
-                                                      CommandScope.panel,
-                                                    },
-                                                    // The window's `gn`, `cd`, `gj` before
-                                                    // the panel's own `n`, `d`, `j`.
-                                                    sequencesOf: const {
-                                                      CommandScope.global,
-                                                    },
-                                                  ),
-                                              child: LayoutBuilder(
-                                                builder: (context, constraints) {
-                                                  final stacked =
-                                                      _panelsStacked(
-                                                        prefs,
-                                                        MediaQuery.sizeOf(
-                                                          context,
-                                                        ),
-                                                      );
-                                                  _panelsExtent = stacked
-                                                      ? constraints.maxHeight
-                                                      : constraints.maxWidth;
-                                                  final firstPercent =
-                                                      (workspace.splitFraction *
-                                                              100)
-                                                          .round();
-                                                  final secondPercent =
-                                                      100 - firstPercent;
-                                                  return _Panels(
-                                                    deletions: _deletions,
-                                                    operations: _operations,
-                                                    operationService:
-                                                        widget.operations,
-                                                    onCancelDeletion:
-                                                        _cancelDeletion,
-                                                    workspace: workspace,
-                                                    stacked: stacked,
-                                                    prefs: prefs,
-                                                    cubitOf: _cubitOf,
-                                                    decor: widget.windowDecor,
-                                                    shortcutMap:
-                                                        widget.shortcutMap,
-                                                    splitterFocus:
-                                                        _splitterFocus,
-                                                    leftFocus: _leftFocus,
-                                                    rightFocus: _rightFocus,
-                                                    leftPanel: _leftPanel,
-                                                    rightPanel: _rightPanel,
-                                                    previewSide: preview
-                                                        .source
-                                                        ?.opposite,
-                                                    preview: preview.fullWindow
-                                                        ? null
-                                                        : previewView,
-                                                    leftCursor: _leftCursor,
-                                                    rightCursor: _rightCursor,
-                                                    hooksFor: _hooksFor,
-                                                    terminal: panelTerminal,
-                                                    terminalSide: _terminalSide,
-                                                    registerNote: _shelfNote(
-                                                      l10n,
-                                                      workspace.shelf,
+                    body: AbsorbPointer(
+                      absorbing: _restoringWorkspace,
+                      child: CommandHandlers(
+                        handlers: _globalHandlers(context),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ExcludeFocus(
+                              excluding:
+                                  preview.fullWindow || _restoringWorkspace,
+                              child: ExcludeSemantics(
+                                excluding: preview.fullWindow,
+                                child: Offstage(
+                                  offstage: preview.fullWindow,
+                                  child: Column(
+                                    children: [
+                                      Expanded(
+                                        child: LayoutBuilder(
+                                          builder: (context, area) {
+                                            _terminalArea = area.maxHeight;
+                                            return _PanelsAndTerminal(
+                                              dock: dock,
+                                              terminalHeight: terminalShown
+                                                  ? _terminalHeight(
+                                                      context,
+                                                      area.maxHeight,
+                                                    )
+                                                  : 0,
+                                              panels: CommandShortcuts(
+                                                shortcuts: widget.shortcutMap
+                                                    .toShortcuts(
+                                                      Theme.of(context)
+                                                          .platform,
+                                                      scopes: const {
+                                                        CommandScope.panel,
+                                                      },
+                                                      // The window's `gn`, `cd`, `gj` before
+                                                      // the panel's own `n`, `d`, `j`.
+                                                      sequencesOf: const {
+                                                        CommandScope.global,
+                                                      },
                                                     ),
-                                                    splitterValue: stacked
-                                                        ? l10n.panelSplitStacked(
-                                                            firstPercent,
-                                                            secondPercent,
-                                                          )
-                                                        : l10n.panelSplitSideBySide(
-                                                            firstPercent,
-                                                            secondPercent,
+                                                child: LayoutBuilder(
+                                                  builder: (context, constraints) {
+                                                    final stacked =
+                                                        _panelsStacked(
+                                                          prefs,
+                                                          MediaQuery.sizeOf(
+                                                            context,
                                                           ),
-                                                    splitterHints:
-                                                        _splitterHints(
-                                                          context,
-                                                          stacked: stacked,
-                                                        ),
-                                                    onSplitterAction:
-                                                        _onSplitterAction,
-                                                    onSplitterDrag: (delta) {
-                                                      if (_panelsExtent >
-                                                          _Panels
-                                                              .splitterLineWidth) {
-                                                        _workspace.moveSplit(
-                                                          delta /
-                                                              (_panelsExtent -
-                                                                  _Panels
-                                                                      .splitterLineWidth),
                                                         );
-                                                      }
-                                                    },
-                                                    onSplitterDragEnd:
-                                                        _scheduleSnapshot,
-                                                    onSplitterReset:
-                                                        _equalizePanels,
-                                                    extent: _panelsExtent,
-                                                  );
-                                                },
+                                                    _panelsExtent = stacked
+                                                        ? constraints.maxHeight
+                                                        : constraints.maxWidth;
+                                                    final firstPercent =
+                                                        (workspace.splitFraction *
+                                                                100)
+                                                            .round();
+                                                    final secondPercent =
+                                                        100 - firstPercent;
+                                                    return _Panels(
+                                                      thumbnails:
+                                                          widget.thumbnails,
+                                                      deletions: _deletions,
+                                                      operations: _operations,
+                                                      operationService:
+                                                          widget.operations,
+                                                      onCancelDeletion:
+                                                          _cancelDeletion,
+                                                      workspace: workspace,
+                                                      stacked: stacked,
+                                                      prefs: prefs,
+                                                      cubitOf: _cubitOf,
+                                                      decor: widget.windowDecor,
+                                                      shortcutMap:
+                                                          widget.shortcutMap,
+                                                      splitterFocus:
+                                                          _splitterFocus,
+                                                      leftFocus: _leftFocus,
+                                                      rightFocus: _rightFocus,
+                                                      leftPanel: _leftPanel,
+                                                      rightPanel: _rightPanel,
+                                                      previewSide: preview
+                                                          .source
+                                                          ?.opposite,
+                                                      preview:
+                                                          preview.fullWindow
+                                                          ? null
+                                                          : previewView,
+                                                      leftCursor: _leftCursor,
+                                                      rightCursor: _rightCursor,
+                                                      hooksFor: _hooksFor,
+                                                      terminal: panelTerminal,
+                                                      terminalSide:
+                                                          _terminalSide,
+                                                      registerNote: _shelfNote(
+                                                        l10n,
+                                                        workspace.shelf,
+                                                      ),
+                                                      splitterValue: stacked
+                                                          ? l10n.panelSplitStacked(
+                                                              firstPercent,
+                                                              secondPercent,
+                                                            )
+                                                          : l10n.panelSplitSideBySide(
+                                                              firstPercent,
+                                                              secondPercent,
+                                                            ),
+                                                      splitterHints:
+                                                          _splitterHints(
+                                                            context,
+                                                            stacked: stacked,
+                                                          ),
+                                                      onSplitterAction:
+                                                          _onSplitterAction,
+                                                      onSplitterDrag: (delta) {
+                                                        if (_panelsExtent >
+                                                            _Panels
+                                                                .splitterLineWidth) {
+                                                          _workspace.moveSplit(
+                                                            delta /
+                                                                (_panelsExtent -
+                                                                    _Panels
+                                                                        .splitterLineWidth),
+                                                          );
+                                                        }
+                                                      },
+                                                      onSplitterDragEnd:
+                                                          _scheduleSnapshot,
+                                                      onSplitterReset:
+                                                          _equalizePanels,
+                                                      extent: _panelsExtent,
+                                                    );
+                                                  },
+                                                ),
                                               ),
-                                            ),
-                                            terminal:
-                                                terminalShown && !dock.inPanel
-                                                ? terminalView
-                                                : null,
-                                            edge: terminalShown && !dock.inPanel
-                                                ? terminalEdge
-                                                : null,
-                                            cards: workspace.operationsShown
-                                                ? ListenableBuilder(
-                                                    listenable: _operations,
-                                                    builder: (context, _) =>
-                                                        OperationsCards(
-                                                          operations: _operations
-                                                              .operationsFor(
-                                                                null,
-                                                              ),
-                                                          titles: _operations
-                                                              .titles,
-                                                          onPause: (id) =>
-                                                              unawaited(
-                                                                widget
-                                                                    .operations
-                                                                    .pause(id),
-                                                              ),
-                                                          onResume: (id) =>
-                                                              unawaited(
-                                                                widget
-                                                                    .operations
-                                                                    .resume(id),
-                                                              ),
-                                                          onCancel: (id) =>
-                                                              unawaited(
-                                                                widget
-                                                                    .operations
-                                                                    .cancel(id),
-                                                              ),
-                                                          onDismiss: _operations
-                                                              .dismiss,
-                                                          onAnswer:
-                                                              (
-                                                                progress,
-                                                              ) => unawaited(
-                                                                _operations.ask(
-                                                                  progress.id,
+                                              terminal:
+                                                  terminalShown && !dock.inPanel
+                                                  ? terminalView
+                                                  : null,
+                                              edge:
+                                                  terminalShown && !dock.inPanel
+                                                  ? terminalEdge
+                                                  : null,
+                                              cards: workspace.operationsShown
+                                                  ? ListenableBuilder(
+                                                      listenable: _operations,
+                                                      builder: (context, _) =>
+                                                          OperationsCards(
+                                                            operations: _operations
+                                                                .operationsFor(
+                                                                  null,
                                                                 ),
-                                                              ),
-                                                        ),
-                                                  )
-                                                : null,
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    // The shelf, between the panels (and the terminal
-                                    // under them) and the hints: the panels give it
-                                    // room smoothly, at once under reduced motion. A
-                                    // terminal over the whole window covers it.
-                                    AnimatedSize(
-                                      duration: context.motion(
-                                        AppMotion.medium,
-                                      ),
-                                      curve: Curves.easeOutCubic,
-                                      alignment: Alignment.topCenter,
-                                      child: workspace.shelfShown && !fullWindow
-                                          ? AppFocusArea(
-                                              child:
-                                                  BlocBuilder<
-                                                    PanelCubit,
-                                                    PanelState
-                                                  >(
-                                                    bloc: _cubitOf(
-                                                      workspace.active,
-                                                    ),
-                                                    builder: (context, panel) =>
-                                                        ShelfStrip(
-                                                          shelf:
-                                                              workspace.shelf,
-                                                          focusNode:
-                                                              _shelfFocus,
-                                                          destination:
-                                                              _shelfDestination(
-                                                                panel.active,
-                                                              ),
-                                                          home: widget.files
-                                                              .standardFolders()
-                                                              .home,
-                                                          addKey: widget
-                                                              .shortcutMap
-                                                              .labelOf(
-                                                                AppCommand
-                                                                    .addToShelf,
-                                                                Theme.of(
-                                                                  context,
-                                                                ).platform,
-                                                                vim: prefs
-                                                                    .vimMode,
-                                                              ),
-                                                          onReveal: (item) =>
-                                                              unawaited(
-                                                                _revealShelfItem(
-                                                                  item,
+                                                            titles: _operations
+                                                                .titles,
+                                                            onPause: (id) =>
+                                                                unawaited(
+                                                                  widget
+                                                                      .operations
+                                                                      .pause(
+                                                                        id,
+                                                                      ),
                                                                 ),
-                                                              ),
-                                                          onRemove: (item) =>
-                                                              _unshelve([
-                                                                item.path,
-                                                              ]),
-                                                          onClear: _clearShelf,
-                                                          onCopyHere: () =>
-                                                              unawaited(
-                                                                _putShelf(
-                                                                  move: false,
+                                                            onResume: (id) =>
+                                                                unawaited(
+                                                                  widget
+                                                                      .operations
+                                                                      .resume(
+                                                                        id,
+                                                                      ),
                                                                 ),
-                                                              ),
-                                                          onMoveHere: () =>
-                                                              unawaited(
-                                                                _putShelf(
-                                                                  move: true,
+                                                            onCancel: (id) =>
+                                                                unawaited(
+                                                                  widget
+                                                                      .operations
+                                                                      .cancel(
+                                                                        id,
+                                                                      ),
                                                                 ),
-                                                              ),
-                                                          onLeave: () =>
-                                                              _focusOf(
-                                                                _workspace
-                                                                    .state
-                                                                    .active,
-                                                              ).requestFocus(),
-                                                        ),
-                                                  ),
-                                            )
-                                          : const SizedBox(
-                                              width: double.infinity,
-                                            ),
-                                    ),
-                                    // The keys for what is under the cursor or selected
-                                    // in the active panel, or the preview's, terminal's or
-                                    // shelf's while they have the keys, until the user
-                                    // hides the line.
-                                    if (prefs.showKeyHints && !fullWindow)
-                                      _KeyHintsLine(
-                                        deletions: _deletions,
-                                        previewFocus: _previewFocus,
-                                        terminalFocus: _terminalFocus,
-                                        shelfFocus: _shelfFocus,
-                                        terminalHints: terminalShown
-                                            ? terminalHintsFor(dock.mode)
-                                            : null,
-                                        panel: _cubitOf(workspace.active),
-                                        vim: prefs.vimMode,
-                                        hasShelf: !workspace.shelf.isEmpty,
-                                        shortcutMap: widget.shortcutMap,
-                                        onHide: () => _hideKeyHints(context),
-                                        onHelp: () => unawaited(
-                                          widget.navigation.openCheatSheet(
-                                            context,
-                                          ),
+                                                            onDismiss:
+                                                                _operations
+                                                                    .dismiss,
+                                                            onAnswer:
+                                                                (
+                                                                  progress,
+                                                                ) => unawaited(
+                                                                  _operations
+                                                                      .ask(
+                                                                        progress
+                                                                            .id,
+                                                                      ),
+                                                                ),
+                                                          ),
+                                                    )
+                                                  : null,
+                                            );
+                                          },
                                         ),
                                       ),
-                                  ],
+                                      // The shelf, between the panels (and the terminal
+                                      // under them) and the hints: the panels give it
+                                      // room smoothly, at once under reduced motion. A
+                                      // terminal over the whole window covers it.
+                                      AnimatedSize(
+                                        duration: context.motion(
+                                          AppMotion.medium,
+                                        ),
+                                        curve: Curves.easeOutCubic,
+                                        alignment: Alignment.topCenter,
+                                        child:
+                                            workspace.shelfShown && !fullWindow
+                                            ? AppFocusArea(
+                                                child:
+                                                    BlocBuilder<
+                                                      PanelCubit,
+                                                      PanelState
+                                                    >(
+                                                      bloc: _cubitOf(
+                                                        workspace.active,
+                                                      ),
+                                                      builder:
+                                                          (
+                                                            context,
+                                                            panel,
+                                                          ) => ShelfStrip(
+                                                            shelf:
+                                                                workspace.shelf,
+                                                            focusNode:
+                                                                _shelfFocus,
+                                                            destination:
+                                                                _shelfDestination(
+                                                                  panel.active,
+                                                                ),
+                                                            home: widget.files
+                                                                .standardFolders()
+                                                                .home,
+                                                            addKey: widget
+                                                                .shortcutMap
+                                                                .labelOf(
+                                                                  AppCommand
+                                                                      .addToShelf,
+                                                                  Theme.of(
+                                                                    context,
+                                                                  ).platform,
+                                                                  vim: prefs
+                                                                      .vimMode,
+                                                                ),
+                                                            onReveal: (item) =>
+                                                                unawaited(
+                                                                  _revealShelfItem(
+                                                                    item,
+                                                                  ),
+                                                                ),
+                                                            onRemove: (item) =>
+                                                                _unshelve([
+                                                                  item.path,
+                                                                ]),
+                                                            onClear:
+                                                                _clearShelf,
+                                                            onCopyHere: () =>
+                                                                unawaited(
+                                                                  _putShelf(
+                                                                    move: false,
+                                                                  ),
+                                                                ),
+                                                            onMoveHere: () =>
+                                                                unawaited(
+                                                                  _putShelf(
+                                                                    move: true,
+                                                                  ),
+                                                                ),
+                                                            onLeave: () =>
+                                                                _focusOf(
+                                                                  _workspace
+                                                                      .state
+                                                                      .active,
+                                                                ).requestFocus(),
+                                                          ),
+                                                    ),
+                                              )
+                                            : const SizedBox(
+                                                width: double.infinity,
+                                              ),
+                                      ),
+                                      // The keys for what is under the cursor or selected
+                                      // in the active panel, or the preview's, terminal's or
+                                      // shelf's while they have the keys, until the user
+                                      // hides the line.
+                                      if (prefs.showKeyHints && !fullWindow)
+                                        _KeyHintsLine(
+                                          deletions: _deletions,
+                                          previewFocus: _previewFocus,
+                                          terminalFocus: _terminalFocus,
+                                          shelfFocus: _shelfFocus,
+                                          terminalHints: terminalShown
+                                              ? terminalHintsFor(dock.mode)
+                                              : null,
+                                          panel: _cubitOf(workspace.active),
+                                          vim: prefs.vimMode,
+                                          hasShelf: !workspace.shelf.isEmpty,
+                                          shortcutMap: widget.shortcutMap,
+                                          onHide: () => _hideKeyHints(context),
+                                          onHelp: () => unawaited(
+                                            widget.navigation.openCheatSheet(
+                                              context,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          if (preview.fullWindow && previewView != null)
-                            previewView,
-                        ],
+                            if (preview.fullWindow && previewView != null)
+                              previewView,
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -1084,6 +1151,7 @@ class _Panels extends StatelessWidget {
     required this.onCancelDeletion,
     required this.workspace,
     this.terminal,
+    this.thumbnails,
     this.terminalSide = PanelSide.left,
     required this.stacked,
     required this.prefs,
@@ -1119,6 +1187,7 @@ class _Panels extends StatelessWidget {
   final OperationsService operationService;
   final ValueChanged<PanelSide> onCancelDeletion;
   final PanelTerminal? terminal;
+  final ThumbnailProvider? thumbnails;
   final PanelSide terminalSide;
 
   /// The left panel above the right one, not beside it.
@@ -1161,6 +1230,7 @@ class _Panels extends StatelessWidget {
         showOperations: workspace.operationsShown,
         onCancel: () => onCancelDeletion(workspace.active),
         child: _SidePanel(
+          thumbnails: thumbnails,
           key: left ? leftPanel : rightPanel,
           side: workspace.active,
           terminal: terminalSide == workspace.active ? terminal : null,
@@ -1200,6 +1270,7 @@ class _Panels extends StatelessWidget {
                 child: _PreviewPanelSlot(
                   preview: previewSide == PanelSide.left ? preview : null,
                   child: _SidePanel(
+                    thumbnails: thumbnails,
                     key: leftPanel,
                     side: PanelSide.left,
                     terminal: terminalSide == PanelSide.left ? terminal : null,
@@ -1234,6 +1305,7 @@ class _Panels extends StatelessWidget {
                 child: _PreviewPanelSlot(
                   preview: previewSide == PanelSide.right ? preview : null,
                   child: _SidePanel(
+                    thumbnails: thumbnails,
                     key: rightPanel,
                     side: PanelSide.right,
                     terminal: terminalSide == PanelSide.right ? terminal : null,
@@ -1389,6 +1461,7 @@ class _SidePanel extends StatelessWidget {
   const _SidePanel({
     required this.side,
     this.terminal,
+    this.thumbnails,
     required this.leading,
     required this.trailing,
     required this.cubit,
@@ -1405,6 +1478,7 @@ class _SidePanel extends StatelessWidget {
 
   final PanelSide side;
   final PanelTerminal? terminal;
+  final ThumbnailProvider? thumbnails;
 
   /// The panel's bar meets the window's buttons at its start, at its end.
   final bool leading;
@@ -1427,6 +1501,7 @@ class _SidePanel extends StatelessWidget {
     return BlocProvider<PanelCubit>.value(
       value: cubit,
       child: PanelView(
+        thumbnails: thumbnails,
         key: ValueKey(side),
         focusNode: focusNode,
         active: active,

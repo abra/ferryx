@@ -323,6 +323,7 @@ fn find_streams_hits() {
         include_hidden: false,
         include_folders: true,
         use_spotlight: false,
+        modified_after_ms: None,
     });
     let mut hits = Vec::new();
     wait_for(|| {

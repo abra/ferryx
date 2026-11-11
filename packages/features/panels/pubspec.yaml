@@ -12,6 +12,7 @@ dependencies:
   flutter_bloc: ^9.1.1
   equatable: ^2.0.8
   meta: ^1.16.0
+  path: ^1.9.1
   domain_models:
     path: ../../domain_models
   component_library:

@@ -5,6 +5,8 @@
 
 import 'dart:ui' show Locale, PlatformDispatcher;
 
+import 'package:domain_models/domain_models.dart';
+
 import 'package:ferryx/app/dependency_container.dart';
 import 'package:ferryx/app/resource_disposer.dart';
 import 'package:ferryx/app/window_frame.dart';
@@ -20,6 +22,7 @@ import 'package:platform_services/platform_services.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 import 'package:terminal_service/terminal_service.dart';
+import 'package:thumbnail_service/thumbnail_service.dart';
 
 /// The app's strings where no widget tree is yet: the language chosen in
 /// the preferences, else the system's when the app speaks it, else English.
@@ -52,6 +55,13 @@ Future<DependenciesContainer> composeDependencies({
     resources.add('preferencesService.dispose', preferencesService.dispose);
     // High-churn values beside the preferences, under keys of their own.
     final sideStorage = SharedPreferencesSideStorage();
+    final savedSearches = await SavedProfiles.load<FindRequest>(
+      sideStorage,
+      key: 'ferryx.savedSearches',
+      encode: (request) => request.toJson(),
+      decode: FindRequest.fromJson,
+    );
+    resources.add('savedSearches.dispose', savedSearches.dispose);
     final frecency = await FolderFrecency.load(sideStorage);
     resources.add('frecency.dispose', frecency.dispose);
     final recentCommands = await RecentItems.load(
@@ -62,6 +72,8 @@ Future<DependenciesContainer> composeDependencies({
     // ─── Files and operations ───
     final files = FileRepository(backend: backend, logger: logger);
     resources.add('files.dispose', files.dispose);
+    final thumbnails = ThumbnailService(files: files);
+    resources.add('thumbnails.dispose', thumbnails.dispose);
     final operations = OperationsService(backend: backend, logger: logger);
     resources.add('operations.dispose', operations.dispose);
     final find = FindService(backend: backend);
@@ -114,6 +126,7 @@ Future<DependenciesContainer> composeDependencies({
       backend: backend,
       preferencesService: preferencesService,
       files: files,
+      thumbnails: thumbnails,
       operations: operations,
       find: find,
       rename: const RenameService(),
@@ -126,6 +139,8 @@ Future<DependenciesContainer> composeDependencies({
       duplicates: duplicates,
       network: network,
       recentServers: recentServers,
+      sideStorage: sideStorage,
+      savedSearches: savedSearches,
       resourceDisposer: resources,
       windowFrame: windowFrame,
     );

@@ -1272,6 +1272,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.18"
+  thumbnail_service:
+    dependency: "direct main"
+    description:
+      path: "packages/thumbnail_service"
+      relative: true
+    source: path
+    version: "0.1.0"
   toml:
     dependency: transitive
     description:

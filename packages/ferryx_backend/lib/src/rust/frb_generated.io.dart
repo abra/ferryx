@@ -204,6 +204,9 @@ abstract class FerryxRustLibApiImplPlatform
   SizeOpView dco_decode_box_autoadd_size_op_view(dynamic raw);
 
   @protected
+  SortOptionsView dco_decode_box_autoadd_sort_options_view(dynamic raw);
+
+  @protected
   StepSummaryView dco_decode_box_autoadd_step_summary_view(dynamic raw);
 
   @protected
@@ -882,6 +885,11 @@ abstract class FerryxRustLibApiImplPlatform
 
   @protected
   SizeOpView sse_decode_box_autoadd_size_op_view(SseDeserializer deserializer);
+
+  @protected
+  SortOptionsView sse_decode_box_autoadd_sort_options_view(
+    SseDeserializer deserializer,
+  );
 
   @protected
   StepSummaryView sse_decode_box_autoadd_step_summary_view(
@@ -1750,6 +1758,12 @@ abstract class FerryxRustLibApiImplPlatform
   @protected
   void sse_encode_box_autoadd_size_op_view(
     SizeOpView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_sort_options_view(
+    SortOptionsView self,
     SseSerializer serializer,
   );
 

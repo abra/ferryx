@@ -13,6 +13,7 @@ import 'package:shortcuts/shortcuts.dart';
 
 import 'document_cubit.dart';
 import 'document_session.dart';
+import 'preview_search.dart';
 import 'viewer_source.dart';
 
 /// Host for Pagecraft resources; views below only render state and callbacks.
@@ -373,19 +374,24 @@ class _DocumentPreviewScreenState extends State<DocumentPreviewScreen> {
               focusNode: _focus,
               autofocus: widget.autofocus,
               onKeyEvent: _onKey,
-              child: _DocumentView(
-                state: state,
-                onPrevious: () => unawaited(_cubit.previous()),
-                onNext: () => unawaited(_cubit.next()),
-                onContents: () => unawaited(_contents()),
-                onGoTo: () => unawaited(_goTo()),
-                onRetry: _open,
-                onZoom: _cubit.zoomTo,
-                onLink: (section, link) => unawaited(_link(section, link)),
-                onMenu: (anchor) => unawaited(_menu(anchor)),
-                chord: _chord,
-                fontSize: _fontSize,
-                onFontSizeChanged: _setFontSize,
+              child: PreviewSearchBinding(
+                target: state.session?.searchable == true
+                    ? state.session
+                    : null,
+                child: _DocumentView(
+                  state: state,
+                  onPrevious: () => unawaited(_cubit.previous()),
+                  onNext: () => unawaited(_cubit.next()),
+                  onContents: () => unawaited(_contents()),
+                  onGoTo: () => unawaited(_goTo()),
+                  onRetry: _open,
+                  onZoom: _cubit.zoomTo,
+                  onLink: (section, link) => unawaited(_link(section, link)),
+                  onMenu: (anchor) => unawaited(_menu(anchor)),
+                  chord: _chord,
+                  fontSize: _fontSize,
+                  onFontSizeChanged: _setFontSize,
+                ),
               ),
             ),
           );

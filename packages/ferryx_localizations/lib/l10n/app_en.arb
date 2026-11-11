@@ -1408,5 +1408,78 @@
   "panelSplitSideBySide": "Left {first}% · Right {second}%",
   "@panelSplitSideBySide": {"placeholders": {"first": {"type": "int"}, "second": {"type": "int"}}},
   "panelSplitStacked": "Top {first}% · Bottom {second}%",
-  "@panelSplitStacked": {"placeholders": {"first": {"type": "int"}, "second": {"type": "int"}}}
+  "@panelSplitStacked": {"placeholders": {"first": {"type": "int"}, "second": {"type": "int"}}},
+  "cmdManageWorkspaces": "Workspaces…",
+  "cmdManageSavedSearches": "Saved Searches…",
+  "cmdCompareFiles": "Compare Files…",
+  "diffTitle": "Compare files",
+  "diffNext": "Next change",
+  "diffPrevious": "Previous change",
+  "diffIdentical": "The files are identical",
+  "diffLineEndings": "The text matches; byte order marks or line endings differ",
+  "diffBinary": "Binary or non-UTF-8 files differ. Open them in Hex to inspect their contents.",
+  "diffLimit": "Text comparison supports up to {size} and {lines} lines per file, with lines up to 16,384 characters.",
+  "@diffLimit": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "lines": {
+        "type": "int"
+      }
+    }
+  },
+  "diffChangeCount": "Change {current} of {total}",
+  "@diffChangeCount": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "diffChooseFiles": "Mark two files in one panel, or place the cursor on one file in each panel.",
+  "cmdThumbnailsView": "Thumbnails View",
+  "workspacesTitle": "Workspaces",
+  "workspacesEmpty": "Save the current tabs and panel layout as a workspace.",
+  "workspaceSaveCurrent": "Save current as new",
+  "workspaceUpdateCurrent": "Replace with current",
+  "savedProfileName": "Name",
+  "savedProfileFailure": "Could not save or restore this item. Try again.",
+  "savedProfileInvalidName": "Enter a name of 1–80 characters without control characters.",
+  "savedProfileExists": "An item with this name already exists.",
+  "savedProfileLimit": "Remove an item before saving another (maximum 64).",
+  "savedProfileMissing": "No saved item with this name.",
+  "savedSearchesTitle": "Saved searches",
+  "savedSearchesEmpty": "Save a query from Find Files, or from an existing search tab.",
+  "searchSaveCurrent": "Save current query as new",
+  "searchUpdateCurrent": "Replace with current query",
+  "searchOpenTab": "Open results in tab",
+  "searchResultsTitle": "Search results",
+  "findModified": "Modified",
+  "findIncludeFolders": "Include folders",
+  "findModifiedDays": "{days, plural, =1{In the last 24 hours} other{In the last {days} days}}",
+  "@findModifiedDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "searchStop": "Stop search",
+  "searchEdit": "Edit search conditions",
+  "searchOpenRoot": "Open the search folder",
+  "searchLimit": "Showing the first 10,000 results. Narrow the search to see more.",
+  "previewSearching": "Searching…",
+  "previewSearchFailed": "Could not search this document.",
+  "previewSearchCapped": "{status} · First 1,000 matches",
+  "@previewSearchCapped": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  }
 }

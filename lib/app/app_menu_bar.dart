@@ -273,6 +273,7 @@ class _Menus {
           label: l10n.layoutMenuTitle,
           menus: [
             _group([
+              AppCommand.thumbnailsView,
               AppCommand.viewMode1,
               AppCommand.viewMode2,
               AppCommand.viewMode3,
@@ -334,6 +335,7 @@ class _Menus {
         AppCommand.goRoot,
       ],
       [AppCommand.jumpToFolder, AppCommand.goToFolder, AppCommand.findFiles],
+      [AppCommand.manageWorkspaces, AppCommand.manageSavedSearches],
       [
         AppCommand.quickListFavorites,
         AppCommand.addToFavorites,
@@ -345,6 +347,7 @@ class _Menus {
     _section(CommandSection.command, const [
       [
         AppCommand.compareFolders,
+        AppCommand.compareFiles,
         AppCommand.synchronizeFolders,
         AppCommand.findDuplicates,
       ],

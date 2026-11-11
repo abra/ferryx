@@ -7,6 +7,7 @@ import 'package:flutter/painting.dart';
 import 'package:pagecraft/all_formats.dart';
 
 import 'document_format.dart';
+import 'preview_search.dart';
 import 'document_page_image.dart';
 
 class DocumentAppearance {
@@ -33,7 +34,40 @@ class DocumentContentsEntry {
 
 /// An opened document and its rendering resources. The host closes this before
 /// releasing the local file lease, including when opening finished too late.
-abstract class DocumentSession extends ChangeNotifier {
+abstract class DocumentSession extends ChangeNotifier
+    implements PreviewSearchTarget {
+  bool get searchable => false;
+  bool _searchClosed = false;
+  final _searchReads = <Future<Object?>>{};
+  Future<T> readForSearch<T>(Future<T> Function() read) async {
+    if (_searchClosed) throw StateError('Document closed');
+    final future = read();
+    _searchReads.add(future);
+    try {
+      return await future;
+    } finally {
+      _searchReads.remove(future);
+    }
+  }
+
+  Future<void> closeSearch() async {
+    _searchClosed = true;
+    await Future.wait(
+      _searchReads.map((f) async {
+        try {
+          await f;
+        } on Object {
+          /* The search reports its own failure. */
+        }
+      }),
+    );
+  }
+
+  @override
+  Stream<List<PreviewSearchHit>> search(String query) => const Stream.empty();
+  @override
+  Future<void> reveal(PreviewSearchHit hit) async {}
+
   TextPagesController? get textController;
   FixedPageSource? get fixedPages;
   int get index;
@@ -72,6 +106,17 @@ Future<DocumentSession> openDocumentSession(
         PdfPages(book),
         book.close,
         _pdfContents(book.outline),
+        pageSearch: (page, query) async {
+          final layer = await PdfTextLayer.load(book, page);
+          return [
+            for (final match in searchText(
+              layer.text,
+              query,
+              maxMatches: PreviewSearchController.maxMatches + 1,
+            ))
+              PreviewSearchHit(page, '${match.pre}${match.match}${match.post}'),
+          ];
+        },
       );
     case DocumentFormat.djvu:
       final book = await DjvuBook.open(path);
@@ -79,6 +124,17 @@ Future<DocumentSession> openDocumentSession(
         DjvuPages(book),
         book.close,
         _contents(book.toc, fixed: true),
+        pageSearch: (page, query) async {
+          final layer = await book.pageText(page);
+          return [
+            for (final match in searchText(
+              layer.text,
+              query,
+              maxMatches: PreviewSearchController.maxMatches + 1,
+            ))
+              PreviewSearchHit(page, '${match.pre}${match.match}${match.post}'),
+          ];
+        },
       );
     case DocumentFormat.cbz:
       final book = await ComicBook.open(
@@ -173,6 +229,41 @@ class _TextSession extends DocumentSession {
   }
 
   @override
+  bool get searchable => true;
+  @override
+  Stream<List<PreviewSearchHit>> search(String query) async* {
+    if (query.isEmpty) return;
+    // One section at a time: closing waits for the one active source read.
+    for (
+      var section = 0;
+      section < source.sectionCount && !_searchClosed;
+      section++
+    ) {
+      final events = await readForSearch(
+        () => searchTextBook(
+          source,
+          query,
+          section: section,
+          parallel: 1,
+          maxMatches: PreviewSearchController.maxMatches + 1,
+        ).toList(),
+      );
+      if (_searchClosed) return;
+      for (final event in events.whereType<TextSearchResults>()) {
+        yield [
+          for (final hit in event.hits)
+            PreviewSearchHit(hit.cfi, '${hit.pre}${hit.match}${hit.post}'),
+        ];
+      }
+    }
+  }
+
+  @override
+  Future<void> reveal(PreviewSearchHit hit) async {
+    if (!_searchClosed) await _controller.goToCfi(hit.anchor as String);
+  }
+
+  @override
   TextPagesController get textController => _controller;
   @override
   FixedPageSource? get fixedPages => null;
@@ -227,6 +318,7 @@ class _TextSession extends DocumentSession {
   Future<void> close() => _closing ??= _close();
 
   Future<void> _close() async {
+    await closeSearch();
     try {
       _controller.removeListener(notifyListeners);
       _controller.dispose();
@@ -242,8 +334,30 @@ class _TextSession extends DocumentSession {
 }
 
 class _FixedSession extends DocumentSession {
-  _FixedSession(FixedPageSource pages, this._closeBook, this.contents)
-    : _pages = _TrackedPages(pages);
+  _FixedSession(
+    FixedPageSource pages,
+    this._closeBook,
+    this.contents, {
+    this.pageSearch,
+  }) : _pages = _TrackedPages(pages);
+
+  final Future<List<PreviewSearchHit>> Function(int page, String query)?
+  pageSearch;
+  @override
+  bool get searchable => pageSearch != null;
+  @override
+  Stream<List<PreviewSearchHit>> search(String query) async* {
+    final searchPage = pageSearch;
+    if (query.isEmpty || searchPage == null) return;
+    for (var page = 0; page < count && !_searchClosed; page++) {
+      final hits = await readForSearch(() => searchPage(page, query));
+      if (_searchClosed) return;
+      if (hits.isNotEmpty) yield hits;
+    }
+  }
+
+  @override
+  Future<void> reveal(PreviewSearchHit hit) => goTo(hit.anchor as int);
 
   final _TrackedPages _pages;
   final Future<void> Function() _closeBook;
@@ -297,6 +411,7 @@ class _FixedSession extends DocumentSession {
   Future<void> close() => _closing ??= _close();
 
   Future<void> _close() async {
+    await closeSearch();
     dispose();
     try {
       await _pages.clear();

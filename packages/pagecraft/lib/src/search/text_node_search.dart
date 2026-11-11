@@ -53,6 +53,7 @@ List<TextNodeMatch> searchTextNodes(
   List<String> strings,
   String query, {
   String locale = 'en',
+  int? maxMatches,
 }) {
   if (query.isEmpty || strings.isEmpty) return const [];
   final folder = SearchFolder(locale);
@@ -68,7 +69,7 @@ List<TextNodeMatch> searchTextNodes(
   var endSum = 0;
   for (
     var index = haystack.text.indexOf(needle);
-    index >= 0;
+    index >= 0 && (maxMatches == null || matches.length < maxMatches);
     index = haystack.text.indexOf(needle, index + 1)
   ) {
     final start = startOf(index);

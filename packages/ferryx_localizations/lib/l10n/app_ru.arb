@@ -1209,5 +1209,51 @@
   "splitterReset": "Поровну",
   "splitterResetHint": "Двойной щелчок по разделителю вернёт 50/50.",
   "panelSplitSideBySide": "Слева {first}% · Справа {second}%",
-  "panelSplitStacked": "Сверху {first}% · Снизу {second}%"
+  "panelSplitStacked": "Сверху {first}% · Снизу {second}%",
+  "cmdManageWorkspaces": "Рабочие наборы…",
+  "cmdManageSavedSearches": "Сохранённые поиски…",
+  "cmdCompareFiles": "Сравнить файлы…",
+  "diffTitle": "Сравнение файлов",
+  "diffNext": "Следующее изменение",
+  "diffPrevious": "Предыдущее изменение",
+  "diffIdentical": "Файлы одинаковы",
+  "diffLineEndings": "Текст совпадает; различаются метки порядка байтов или окончания строк",
+  "diffBinary": "Двоичные файлы или файлы не в UTF-8 различаются. Откройте их в Hex для просмотра содержимого.",
+  "diffLimit": "Сравнение текста поддерживает до {size} и {lines} строк в каждом файле; длина строки — до 16 384 символов.",
+  "diffChangeCount": "Изменение {current} из {total}",
+  "diffChooseFiles": "Отметьте два файла в одной панели или установите курсор на файл в каждой панели.",
+  "cmdThumbnailsView": "Миниатюры",
+  "workspacesTitle": "Рабочие наборы",
+  "workspacesEmpty": "Сохраните текущие вкладки и расположение панелей как рабочий набор.",
+  "workspaceSaveCurrent": "Сохранить текущий как новый",
+  "workspaceUpdateCurrent": "Заменить текущим",
+  "savedProfileName": "Название",
+  "savedProfileFailure": "Не удалось сохранить или восстановить запись. Попробуйте ещё раз.",
+  "savedProfileInvalidName": "Введите название от 1 до 80 символов без управляющих символов.",
+  "savedProfileExists": "Запись с таким названием уже существует.",
+  "savedProfileLimit": "Удалите запись перед добавлением новой (максимум 64).",
+  "savedProfileMissing": "Запись с таким названием не найдена.",
+  "savedSearchesTitle": "Сохранённые поиски",
+  "savedSearchesEmpty": "Сохраните запрос из окна поиска или из вкладки с результатами.",
+  "searchSaveCurrent": "Сохранить текущий запрос как новый",
+  "searchUpdateCurrent": "Заменить текущим запросом",
+  "searchOpenTab": "Открыть результаты во вкладке",
+  "searchResultsTitle": "Результаты поиска",
+  "findModified": "Изменены",
+  "findIncludeFolders": "Включая папки",
+  "findModifiedDays": "{days, plural, one{За последний день} few{За последние {days} дня} many{За последние {days} дней} other{За последние {days} дня}}",
+  "searchStop": "Остановить поиск",
+  "searchEdit": "Изменить условия поиска",
+  "searchOpenRoot": "Открыть папку поиска",
+  "searchLimit": "Показаны первые 10 000 результатов. Уточните условия поиска, чтобы увидеть остальные.",
+  "previewSearching": "Поиск…",
+  "previewSearchFailed": "Не удалось выполнить поиск в документе.",
+  "previewSearchCapped": "{status} · Первые 1 000 совпадений",
+  "@previewSearchCapped": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  }
 }

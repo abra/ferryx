@@ -462,6 +462,10 @@ const _defaults = <AppCommand, List<Chord>>{
   AppCommand.viewMode3: [Chord(LogicalKeyboardKey.digit3, control: true)],
   AppCommand.viewMode4: [Chord(LogicalKeyboardKey.digit4, control: true)],
   AppCommand.viewMode5: [Chord(LogicalKeyboardKey.digit5, control: true)],
+  AppCommand.thumbnailsView: [],
+  AppCommand.manageWorkspaces: [],
+  AppCommand.manageSavedSearches: [],
+  AppCommand.compareFiles: [],
   AppCommand.sortByName: [
     Chord(LogicalKeyboardKey.digit1, primary: true, control: true),
   ],

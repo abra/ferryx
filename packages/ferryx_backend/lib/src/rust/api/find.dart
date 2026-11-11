@@ -19,3 +19,13 @@ Future<PlatformInt64> startFind({required FindRequestView request}) =>
 
 Future<void> cancelFind({required PlatformInt64 id}) =>
     FerryxRustLib.instance.api.crateApiFindCancelFind(id: id);
+
+/// Sort a bounded search snapshot with the same rules as ordinary panels.
+/// Only indices cross back; no filesystem reads or listing handle is needed.
+Future<Int32List> sortFindHits({
+  required List<FindHitView> hits,
+  required SortOptionsView options,
+}) => FerryxRustLib.instance.api.crateApiFindSortFindHits(
+  hits: hits,
+  options: options,
+);

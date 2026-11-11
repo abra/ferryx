@@ -62,6 +62,7 @@ Stream<TextSearchEvent> searchTextBook(
   int? section,
   String locale = 'en',
   int parallel = 3,
+  int? maxMatches,
 }) async* {
   final trimmed = query.trim();
   if (trimmed.isEmpty) {
@@ -76,6 +77,7 @@ Stream<TextSearchEvent> searchTextBook(
       trimmed,
       source.sectionCfi(index),
       locale,
+      maxMatches,
     );
   }
 
@@ -124,6 +126,7 @@ Future<List<TextSearchHit>> _searchInIsolate(
   String query,
   String sectionCfi,
   String locale,
+  int? maxMatches,
 ) => Isolate.run(
   () => searchSectionText(
     text,
@@ -131,6 +134,7 @@ Future<List<TextSearchHit>> _searchInIsolate(
     sectionCfi: sectionCfi,
     mediaType: mediaType,
     locale: locale,
+    maxMatches: maxMatches,
   ),
 );
 
@@ -142,6 +146,7 @@ List<TextSearchHit> searchSectionText(
   required String sectionCfi,
   String? mediaType,
   String locale = 'en',
+  int? maxMatches,
 }) {
   final doc = parseSectionDocument(text, mediaType: mediaType);
   return searchSectionDocument(
@@ -149,6 +154,7 @@ List<TextSearchHit> searchSectionText(
     query: query,
     sectionCfi: sectionCfi,
     locale: locale,
+    maxMatches: maxMatches,
   );
 }
 
@@ -160,6 +166,7 @@ List<TextSearchHit> searchSectionDocument(
   required String query,
   required String sectionCfi,
   String locale = 'en',
+  int? maxMatches,
 }) {
   final root = _bodyOf(doc);
   final nodes = <int>[];
@@ -176,6 +183,7 @@ List<TextSearchHit> searchSectionDocument(
     [for (final node in nodes) doc.textOf(node)],
     query,
     locale: _languageOf(doc, root) ?? locale,
+    maxMatches: maxMatches,
   );
   return [
     for (final m in matches)

@@ -17,8 +17,10 @@ import 'panel_row.dart';
 import 'panel_state.dart';
 import 'panel_terminal.dart';
 import 'recent_entries.dart';
+import 'panel_search_bar.dart';
 import 'rows_brief.dart';
 import 'rows_list.dart';
+import 'rows_thumbnails.dart';
 import 'vim_command_line.dart';
 import 'vim_keys.dart';
 
@@ -112,6 +114,7 @@ class PanelView extends StatefulWidget {
     this.focusBorderRadius = BorderRadius.zero,
     this.cursorRowKey,
     this.terminal,
+    this.thumbnails,
     super.key,
   });
 
@@ -140,6 +143,7 @@ class PanelView extends StatefulWidget {
   /// a menu by it (the menu key, Open With).
   final GlobalKey? cursorRowKey;
   final PanelTerminal? terminal;
+  final ThumbnailProvider? thumbnails;
 
   @override
   State<PanelView> createState() => _PanelViewState();
@@ -156,6 +160,9 @@ class _PanelViewState extends State<PanelView> {
   PanelCubit get _cubit => context.read<PanelCubit>();
 
   PanelLayout _layoutOf(PanelTabState tab) {
+    if (tab.layoutIndex == PanelLayout.thumbnailIndex) {
+      return PanelLayout.thumbnailLayout;
+    }
     final layouts = widget.layouts.isEmpty
         ? PanelLayout.defaults
         : widget.layouts;
@@ -165,7 +172,7 @@ class _PanelViewState extends State<PanelView> {
   /// Whether the names stand in columns (brief mode), where `h` and `l`
   /// move by a column.
   bool get _inColumns => switch (_cubit.state.active) {
-    final tab? => _layoutOf(tab).mode == ViewMode.brief,
+    final tab? => _layoutOf(tab).mode != ViewMode.list,
     null => false,
   };
 
@@ -434,8 +441,10 @@ class _PanelViewState extends State<PanelView> {
   int get _halfPage => (_cubit.geometry.rowsPerPage ~/ 2).clamp(1, 1 << 20);
 
   Map<AppCommand, VoidCallback> _handlers() => {
-    AppCommand.moveUp: () => _cubit.moveCursor(-_count),
-    AppCommand.moveDown: () => _cubit.moveCursor(_count),
+    AppCommand.moveUp: () =>
+        _cubit.moveCursor(-_count * _cubit.geometry.columnsPerRow),
+    AppCommand.moveDown: () =>
+        _cubit.moveCursor(_count * _cubit.geometry.columnsPerRow),
     AppCommand.moveLeft: () => _cubit.moveColumn(-_count),
     AppCommand.moveRight: () => _cubit.moveColumn(_count),
     AppCommand.moveFirst: _moveFirst,
@@ -446,8 +455,14 @@ class _PanelViewState extends State<PanelView> {
     AppCommand.movePageDown: () => _cubit.movePage(_count),
     AppCommand.scrollPageUp: () => _cubit.movePage(-_count),
     AppCommand.scrollPageDown: () => _cubit.movePage(_count),
-    AppCommand.selectMoveUp: () => _cubit.moveCursor(-_count, selecting: true),
-    AppCommand.selectMoveDown: () => _cubit.moveCursor(_count, selecting: true),
+    AppCommand.selectMoveUp: () => _cubit.moveCursor(
+      -_count * _cubit.geometry.columnsPerRow,
+      selecting: true,
+    ),
+    AppCommand.selectMoveDown: () => _cubit.moveCursor(
+      _count * _cubit.geometry.columnsPerRow,
+      selecting: true,
+    ),
     AppCommand.selectMoveLeft: () =>
         _cubit.moveColumn(-_count, selecting: true),
     AppCommand.selectMoveRight: () =>
@@ -629,11 +644,19 @@ class _PanelViewState extends State<PanelView> {
       anchor: anchor,
       entries: [
         AppMenuSection(context.l10n.layoutMenuTitle),
+        AppMenuAction(
+          value: PanelLayout.thumbnailIndex,
+          label: context.l10n.cmdThumbnailsView,
+          icon: AppIcons.layoutThumbnails,
+          checked: tab.layoutIndex == PanelLayout.thumbnailIndex,
+        ),
         for (var i = 0; i < layouts.length; i++)
           AppMenuAction(
             value: i,
             label: context.l10n.viewModeName(layouts[i]),
-            icon: layouts[i].mode == ViewMode.list
+            icon: layouts[i].mode == ViewMode.thumbnails
+                ? AppIcons.layoutThumbnails
+                : layouts[i].mode == ViewMode.list
                 ? AppIcons.layoutList
                 : AppIcons.layoutBrief,
             shortcut: i < 5
@@ -875,9 +898,14 @@ class _PanelViewState extends State<PanelView> {
                           if (i < state.tabs.length)
                             AppTab(
                               id: state.tabs[i].id,
-                              label: state.tabs[i].location.name,
+                              label: state.tabs[i].search == null
+                                  ? state.tabs[i].location.name
+                                  : state.tabs[i].search!.label ??
+                                        l10n.searchResultsTitle,
                               tooltip: state.tabs[i].location.display,
-                              icon: _tabIcon(state.tabs[i].location),
+                              icon: state.tabs[i].search != null
+                                  ? AppIcons.search
+                                  : _tabIcon(state.tabs[i].location),
                             ),
                         ],
                       ],
@@ -927,6 +955,13 @@ class _PanelViewState extends State<PanelView> {
                       ),
                       onLeave: widget.focusNode.requestFocus,
                     ),
+                  if (tab.search case final search?)
+                    PanelSearchBar(
+                      search: search,
+                      onStop: () => unawaited(_cubit.stopSearch()),
+                      onRefresh: () => unawaited(_cubit.refresh()),
+                      onOpenRoot: () => unawaited(_cubit.open(tab.location)),
+                    ),
                   Expanded(
                     child: PanelTerminalBody(
                       terminal: widget.terminal,
@@ -951,7 +986,20 @@ class _PanelViewState extends State<PanelView> {
                                               widget.hooks.drag?.highlight ??
                                               _noDrop,
                                           builder: (context, spot, _) =>
-                                              layout.mode == ViewMode.list
+                                              layout.mode == ViewMode.thumbnails
+                                              ? RowsThumbnails(
+                                                  tab: tab,
+                                                  active: widget.active,
+                                                  callbacks: callbacks,
+                                                  rename: rename,
+                                                  provider: widget.thumbnails,
+                                                  cursorKey:
+                                                      widget.cursorRowKey,
+                                                  dropRow: spot?.row,
+                                                  onGeometry: (g) =>
+                                                      _cubit.geometry = g,
+                                                )
+                                              : layout.mode == ViewMode.list
                                               ? RowsList(
                                                   tab: tab,
                                                   layout: layout,

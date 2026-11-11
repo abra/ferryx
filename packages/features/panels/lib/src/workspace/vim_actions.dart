@@ -95,6 +95,10 @@ extension _VimActions on _WorkspaceScreenState {
       return;
     }
     switch (name) {
+      case 'workspace' || 'workspaces':
+        await _vimWorkspace(arg);
+      case 'worksave':
+        await _vimWorkspace(arg, save: true);
       case 'cd':
         await _vimCd(arg);
       case 'mkdir':
@@ -167,6 +171,14 @@ extension _VimActions on _WorkspaceScreenState {
       // `:sync` stays Sync Panels; the dialog is `:synchronize`.
       case 'compare':
         await _compareFolders(contents: arg == 'content' ? true : null);
+      case 'thumbs':
+      case 'thumbnails':
+        _active.setLayout(PanelLayout.thumbnailIndex);
+        break;
+      case 'diff':
+        await _compareFiles();
+      case 'searches':
+        await _manageSavedSearches();
       case 'compare!':
         await _compareFolders(contents: true);
       case 'synchronize' || 'syncdirs':
@@ -518,9 +530,16 @@ extension _VimActions on _WorkspaceScreenState {
     // ─── Operations ───
     'checksum',
     'compare',
+    'thumbs',
+    'thumbnails',
+    'diff',
+    'searches',
     'dupes',
     'redo',
     'synchronize',
+    'workspace',
+    'workspaces',
+    'worksave',
     'undo',
     // ─── Files core ───
     'extract',

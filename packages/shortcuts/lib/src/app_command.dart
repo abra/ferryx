@@ -43,6 +43,7 @@ enum AppCommand {
   removeFromFavorites(CommandScope.global),
   manageFavorites(CommandScope.global),
   findFiles(CommandScope.global),
+  manageSavedSearches(CommandScope.global),
 
   // ─── Edit ───
   copyPaths(CommandScope.global),
@@ -61,11 +62,13 @@ enum AppCommand {
   togglePanelsStacked(CommandScope.global),
   swapPanels(CommandScope.global),
   syncPanels(CommandScope.global),
+  manageWorkspaces(CommandScope.global),
   viewMode1(CommandScope.global),
   viewMode2(CommandScope.global),
   viewMode3(CommandScope.global),
   viewMode4(CommandScope.global),
   viewMode5(CommandScope.global),
+  thumbnailsView(CommandScope.global),
   sortByName(CommandScope.global),
   sortByExtension(CommandScope.global),
   sortByModified(CommandScope.global),
@@ -142,6 +145,7 @@ enum AppCommand {
 
   // ─── Operations ───
   compareFolders(CommandScope.global),
+  compareFiles(CommandScope.global),
   synchronizeFolders(CommandScope.global),
   undo(CommandScope.global),
   redo(CommandScope.global),

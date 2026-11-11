@@ -37,13 +37,13 @@ class TextSearchMatch {
 
 /// Every match of [query] in [text], in order. Matching ignores case and
 /// diacritics on both sides (see [foldSearchText]); offsets are in [text].
-List<TextSearchMatch> searchText(String text, String query) {
+List<TextSearchMatch> searchText(String text, String query, {int? maxMatches}) {
   final needle = foldSearchText(query).text;
   if (needle.isEmpty || text.isEmpty) return const [];
   final haystack = foldSearchText(text);
   final matches = <TextSearchMatch>[];
   var index = haystack.text.indexOf(needle);
-  while (index >= 0) {
+  while (index >= 0 && (maxMatches == null || matches.length < maxMatches)) {
     final start = haystack.originalStart(index);
     final end = haystack.originalEnd(index + needle.length);
     matches.add(

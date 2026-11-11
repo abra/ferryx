@@ -769,9 +769,18 @@ clamped to 10–32 with a default of 15, and exposed in Settings → Viewer.
 Changes update appearance and reflow the existing session without reopening
 its file. Primary − / + / 0 decrease, increase and reset book type size;
 the same commands zoom and fit fixed pages.
-The text/hex find controls do not search document contents. Fixed-page views
-render images; Pagecraft's PDF/DjVu text layers are not yet wired to selection
-or annotation controls.
+`PreviewSearchController` owns debouncing, cancellation, generations and a
+1,000-result cap independently from the text/hex byte search. Renderers bind
+`PreviewSearchTarget` through a local scope. HTML-based previews search sanitized
+visible text in a worker and add anchors/highlights across inline nodes;
+Markdown switches to that safe renderer on the first nonempty query and
+retains it after Find closes, so the found passage stays visible. Merely
+opening the search field keeps its ordinary renderer and scroll position. CSV/TSV retains its lazy table and
+navigates to matching cells. Document sessions search one page/section at a time;
+PDF/DjVu use Pagecraft text layers, reflowable books use CFIs. `closeSearch`
+retires new reads and drains outstanding source/native work before book close.
+Fixed-page search navigates by page with excerpts; selection, annotation and
+OCR are not exposed.
 
 `DocumentComicPageImage` limits encoded comic pages to 64 MiB and asks the
 decoder for an image of at most six million pixels and 8192 pixels on
@@ -1869,3 +1878,42 @@ survive a failed attempt; per-attempt listeners and services are disposed.
 - Compare Folders pairs names in Dart without Unicode normalization (a
   composed and a decomposed name differ there; Synchronize Folders folds
   them). Hard links are folded into one file by inode on Unix only.
+
+## Named workspaces, search tabs, comparison and thumbnails
+
+`SavedProfiles<T>` in preferences_service stores explicitly named, versioned
+collections under separate SideStorage keys. It validates bounds and duplicate
+names, serializes writes, and publishes only successful writes. The component
+library's `AppNamedItemsDialog` shares keyboard-accessible create, replace,
+rename, remove and open behavior. Workspaces capture SavedPanel states and
+layout/terminal placement, never processes or credentials. Restoration retires
+old listings/search tasks, blocks navigation during replacement and suppresses
+partial snapshots. The live terminal session and file operations stay independent.
+
+Saved searches hold `FindRequest`, including optional relative modification age.
+The operations service converts it to an absolute cutoff on each run. Rust
+applies the cutoff both to traversal and Spotlight candidates. Search result
+tabs own TaskSessions and generation/revision guards; FileEntry.folder carries
+the relative folder and locationOf resolves the actual path. Sorting reuses
+Rust's core comparator over supplied metadata, without filesystem restats.
+Queries are saved instead of stale result lists; reopening reruns them. The
+10,000-hit cap cancels native work and is visible in the toolbar. Explicit
+refresh and application file-operation completion rerun queries; no recursive
+watcher is installed for arbitrary roots.
+
+File comparison is routed by the composition root; panels pass only a pair of
+Locations. FileDiffCubit bounds repository reads before an isolate performs a
+line-token Myers diff with a deadline. Aligned lazy columns share vertical
+scrolling and keep horizontal scrolling independent. Byte equality is distinct
+from line-ending/BOM-normalized display equality. No comparison path writes files.
+
+`ViewMode.thumbnails` uses a lazy row-major grid and PanelGeometry.columnsPerRow
+for cursor navigation. It is a separate per-tab choice (layoutIndex -1), and can
+also be selected in editable presets. Panels depend only on ThumbnailProvider's
+domain lease interface; the composition root injects thumbnail_service. The
+service handles native image/PDF decoding through repository leases and
+Pagecraft: two concurrent jobs, shared/refcounted requests, queued cancellation,
+256 cached results and an 8 MiB encoded-byte LRU, cleared on memory pressure.
+Keys include location, size, modification time and target pixel width; negative
+results are cached too. Sources over 64 MiB and nonnative locations retain icons.
+No preview files are downloaded merely by browsing remote/archive directories.

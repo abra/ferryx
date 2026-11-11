@@ -71,6 +71,8 @@ pub struct FindRequest {
     pub max_depth: Option<usize>,
     /// Ask the Spotlight index first (macOS); see [`search`].
     pub use_spotlight: bool,
+    #[serde(default)]
+    pub modified_after_ms: Option<i64>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -139,11 +141,15 @@ pub fn run(
             if conditions.content.is_some() && (is_dir || !entry.file_type().is_file()) {
                 continue;
             }
+            let modified_ms = meta.modified().ok().and_then(ferryx_vfs::native::system_time_ms);
+            if !conditions.date_matches(modified_ms) {
+                continue;
+            }
             submit(FindHit {
                 path: entry.path().to_path_buf(),
                 is_dir,
                 size: if is_dir { 0 } else { meta.len() },
-                modified_ms: meta.modified().ok().and_then(ferryx_vfs::native::system_time_ms),
+                modified_ms,
             });
         }
         scanned
@@ -188,6 +194,7 @@ struct Conditions {
     filter: Option<NameFilter>,
     content: Option<ContentSearch>,
     size: Option<SizeCondition>,
+    modified_after_ms: Option<i64>,
     /// Folders are never hits.
     files_only: bool,
 }
@@ -210,6 +217,7 @@ impl Conditions {
             filter,
             content,
             size: request.size,
+            modified_after_ms: request.modified_after_ms,
         })
     }
 
@@ -219,6 +227,10 @@ impl Conditions {
 
     fn size_matches(&self, is_dir: bool, len: u64) -> bool {
         self.size.is_none_or(|size| !is_dir && size.holds(len))
+    }
+
+    fn date_matches(&self, modified_ms: Option<i64>) -> bool {
+        self.modified_after_ms.is_none_or(|after| modified_ms.is_some_and(|date| date >= after))
     }
 }
 
@@ -302,11 +314,15 @@ impl Matcher {
         if self.conditions.content.is_some() && (is_dir || !meta.is_file()) {
             return None;
         }
+        let modified_ms = meta.modified().ok().and_then(ferryx_vfs::native::system_time_ms);
+        if !self.conditions.date_matches(modified_ms) {
+            return None;
+        }
         Some(FindHit {
             path: path.to_path_buf(),
             is_dir,
             size: if is_dir { 0 } else { meta.len() },
-            modified_ms: meta.modified().ok().and_then(ferryx_vfs::native::system_time_ms),
+            modified_ms,
         })
     }
 
@@ -652,7 +668,33 @@ mod tests {
             include_folders: true,
             max_depth: None,
             use_spotlight: false,
+            modified_after_ms: None,
         }
+    }
+
+    #[test]
+    fn modified_range_filters_both_walk_and_index_candidates() {
+        let dir = tempfile::tempdir().unwrap();
+        for (name, seconds) in [("old.txt", 10), ("recent.txt", 100)] {
+            let path = dir.path().join(name);
+            fs::write(&path, "text").unwrap();
+            fs::OpenOptions::new()
+                .write(true)
+                .open(path)
+                .unwrap()
+                .set_modified(std::time::UNIX_EPOCH + std::time::Duration::from_secs(seconds))
+                .unwrap();
+        }
+        let mut request = base(dir.path());
+        request.modified_after_ms = Some(100_000);
+        let mut hits = Vec::new();
+        run(&request, &AtomicBool::new(false), &mut |hit| hits.push(hit), &mut |_, _| {}).unwrap();
+        assert_eq!(hits.len(), 1);
+        assert!(hits[0].path.ends_with("recent.txt"));
+        let matcher = Matcher::new(&request).unwrap();
+        assert!(matcher.check(&dir.path().join("old.txt")).is_none());
+        assert!(matcher.check(&dir.path().join("recent.txt")).is_some());
+        assert!(!matcher.conditions.date_matches(None));
     }
 
     #[test]

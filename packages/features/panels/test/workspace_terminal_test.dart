@@ -158,7 +158,7 @@ void main() {
             folderSync: _MockFolderSync(),
             navigation: WorkspaceNavigation(
               openViewer: (_, _, {preview = false}) async {},
-              openFind: (_, _, {required view}) async => null,
+              openFind: (_, _, {required view, results, initial}) async => null,
               openSettings: (_) async {},
               openCheatSheet: (_) async {},
               openSync: (_, {required left, required right}) async {},

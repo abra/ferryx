@@ -91,10 +91,30 @@ presets on ⌃1–⌃5 are editable in Settings. Sort by name, extension, size o
 file times, with folders-first and natural/case-sensitive ordering choices.
 The header shows the active field and direction.
 
+**Thumbnails** in the panel's view menu shows local PNG/JPEG/WebP/GIF/BMP
+images and the first page of PDF files. Other files retain their type icons.
+Only visible cards load previews; files over 64 MiB retain icons. This mode
+is remembered per tab and works with arrows, selection and Vim navigation.
+Use a normal view preset to return to a list.
+
+**Workspaces…** in the Commands palette saves named sets of both panels'
+tabs, sorting, view modes, active panel, split and terminal placement. Save,
+replace, rename and remove them in the same dialog. Restoring a workspace
+keeps running file operations and the current terminal session; it does not
+recreate shell processes or store credentials.
+
 Typing starts quick search in normal mode; Vim uses `/`. Search can be
 fuzzy, prefix-based or anywhere in the name, optionally hiding non-matches.
 **Find Files** (⌘F) searches local folders by mask, regular expression,
-contents and size. Results arrive progressively; macOS can use Spotlight.
+contents, size and modification age. Results arrive progressively; macOS
+can use Spotlight. **Saved searches…** stores the query and its options,
+including relative ages such as “last 7 days”, which are recalculated when run.
+**Open results in tab** creates a panel tab with paths relative to the search
+root. Open, preview and file operations work on those results. Its toolbar
+can stop, refresh, edit or save the query, or open the root folder. Results
+are capped at 10,000 with an explicit warning. Refresh reruns the query;
+changes made through Ferryx refresh an active search tab. Other programs'
+deep changes require Refresh.
 
 **Flat view** (⌥⌘B, Vim `zf` / `:flat`) lists files below a folder together
 with their relative paths. It works in local folders and read-only archives.
@@ -170,6 +190,14 @@ reports missing items, metadata changes and conflicting paths. Items Ferryx
 trashes on macOS do not have Finder Put Back.
 
 </details>
+
+**Compare Files** in the Commands palette or file context menu compares two
+marked files, or the focused file in each panel when nothing is marked. It
+shows aligned lines and highlights additions, removals and changes; arrows
+move between change groups. The comparison is read-only and accepts UTF-8
+text up to 4 MiB / 25,000 lines per file (16,384 characters per line).
+Line endings are normalized for display; byte differences are reported.
+Binary files and other encodings are rejected explicitly.
 
 ## Archives
 
@@ -277,8 +305,10 @@ Code and configuration open in **Text**, with syntax coloring, Find,
 wrapping and Go to Offset. Coloring applies to files up to 256 KiB;
 larger files remain readable with windowed Text/Hex reads.
 
-Markdown, tables and formatted text open in **Preview**. Use **Text** or
-**Hex** to inspect the original file; Find and Go to Offset work on that
+Markdown, tables and formatted text open in **Preview**. **⌘F** searches
+rendered Markdown, HTML, Office documents, other formatted text and CSV/TSV.
+Matches are highlighted and the arrows move between them. Use **Text** or
+**Hex** to inspect and search the original file; Go to Offset works on that
 source. Preview type size follows Settings → Viewer → Font size.
 Text mode uses compact line spacing (1.35 times the font size).
 CSV/TSV keep values as text, including leading zeros, and do not assume
@@ -314,14 +344,18 @@ fixed pages; Windows/Linux use Ctrl instead of Command.
 Page navigation, contents where available, zoom and Go to Page support
 fixed-page reading. Text/hex use ⌘F for Find and ⌘L for Go to Offset;
 their actions menu keeps controls available in narrow windows.
+**⌘F** also searches text in PDF/DjVu and EPUB/FB2/MOBI/KF8 books, with
+excerpts and navigation to the matching page or book passage. Enter/⌘G
+moves forward, ⇧⌘G back; Esc closes search before closing preview. Search
+ignores case and Latin/Cyrillic diacritics and shows the first 1,000 matches.
+Scans without a text layer and comic images are not searchable.
 
 - EPUB/KF8 require horizontal reflowable text; fixed-layout books and vertical
   writing are unsupported.
 - CBZ is supported; CBR is not.
 - Encrypted PDFs show a password-required message; password entry is not implemented.
 - DjVu must be self-contained; indirect documents and JPEG-in-DjVu are unsupported.
-- There is no OCR or book/PDF/DjVu text-search UI. PDF/DjVu selection and
-  annotation tools are not exposed.
+- There is no OCR. PDF/DjVu selection and annotation tools are not exposed.
 
 Books and fixed-page documents read native files in place. Their server
 files/archive members use an owned temporary copy, released when preview
@@ -453,6 +487,10 @@ text fields keep normal editing and terminal input goes to the shell.
 | Search; next / previous match | `/`, then `n` / `N` |
 | Next / previous tab | `gt` / `gT`, including counts such as `2gt` |
 | Neighboring preview | `i` |
+| Named workspaces | `:workspaces`, `:workspace name`, `:worksave name` |
+| Saved searches | `:searches` |
+| Compare two files | `:diff` |
+| Thumbnail view | `:thumbs` / `:thumbnails` |
 | Compress / extract | `zc` / `zx` |
 | Flat view / frequent folders | `zf` / `gj` |
 | Set / jump to a persistent mark | `m` / `'` |

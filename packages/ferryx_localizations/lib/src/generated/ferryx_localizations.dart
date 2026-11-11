@@ -188,6 +188,222 @@ abstract class FerryxLocalizations {
   /// **'Open'**
   String get actionOpen;
 
+  /// No description provided for @cmdManageWorkspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspaces…'**
+  String get cmdManageWorkspaces;
+
+  /// No description provided for @cmdManageSavedSearches.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved Searches…'**
+  String get cmdManageSavedSearches;
+
+  /// No description provided for @cmdCompareFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare Files…'**
+  String get cmdCompareFiles;
+
+  /// No description provided for @diffTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare files'**
+  String get diffTitle;
+
+  /// No description provided for @diffNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next change'**
+  String get diffNext;
+
+  /// No description provided for @diffPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous change'**
+  String get diffPrevious;
+
+  /// No description provided for @diffIdentical.
+  ///
+  /// In en, this message translates to:
+  /// **'The files are identical'**
+  String get diffIdentical;
+
+  /// No description provided for @diffLineEndings.
+  ///
+  /// In en, this message translates to:
+  /// **'The text matches; byte order marks or line endings differ'**
+  String get diffLineEndings;
+
+  /// No description provided for @diffBinary.
+  ///
+  /// In en, this message translates to:
+  /// **'Binary or non-UTF-8 files differ. Open them in Hex to inspect their contents.'**
+  String get diffBinary;
+
+  /// No description provided for @diffLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Text comparison supports up to {size} and {lines} lines per file, with lines up to 16,384 characters.'**
+  String diffLimit(String size, int lines);
+
+  /// No description provided for @diffChangeCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Change {current} of {total}'**
+  String diffChangeCount(int current, int total);
+
+  /// No description provided for @diffChooseFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark two files in one panel, or place the cursor on one file in each panel.'**
+  String get diffChooseFiles;
+
+  /// No description provided for @cmdThumbnailsView.
+  ///
+  /// In en, this message translates to:
+  /// **'Thumbnails View'**
+  String get cmdThumbnailsView;
+
+  /// No description provided for @workspacesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspaces'**
+  String get workspacesTitle;
+
+  /// No description provided for @workspacesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the current tabs and panel layout as a workspace.'**
+  String get workspacesEmpty;
+
+  /// No description provided for @workspaceSaveCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Save current as new'**
+  String get workspaceSaveCurrent;
+
+  /// No description provided for @workspaceUpdateCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace with current'**
+  String get workspaceUpdateCurrent;
+
+  /// No description provided for @savedProfileName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get savedProfileName;
+
+  /// No description provided for @savedProfileFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save or restore this item. Try again.'**
+  String get savedProfileFailure;
+
+  /// No description provided for @savedProfileInvalidName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name of 1–80 characters without control characters.'**
+  String get savedProfileInvalidName;
+
+  /// No description provided for @savedProfileExists.
+  ///
+  /// In en, this message translates to:
+  /// **'An item with this name already exists.'**
+  String get savedProfileExists;
+
+  /// No description provided for @savedProfileLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove an item before saving another (maximum 64).'**
+  String get savedProfileLimit;
+
+  /// No description provided for @savedProfileMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved item with this name.'**
+  String get savedProfileMissing;
+
+  /// No description provided for @savedSearchesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved searches'**
+  String get savedSearchesTitle;
+
+  /// No description provided for @savedSearchesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Save a query from Find Files, or from an existing search tab.'**
+  String get savedSearchesEmpty;
+
+  /// No description provided for @searchSaveCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Save current query as new'**
+  String get searchSaveCurrent;
+
+  /// No description provided for @searchUpdateCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace with current query'**
+  String get searchUpdateCurrent;
+
+  /// No description provided for @searchOpenTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Open results in tab'**
+  String get searchOpenTab;
+
+  /// No description provided for @searchResultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search results'**
+  String get searchResultsTitle;
+
+  /// No description provided for @findModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified'**
+  String get findModified;
+
+  /// No description provided for @findIncludeFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'Include folders'**
+  String get findIncludeFolders;
+
+  /// No description provided for @findModifiedDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{In the last 24 hours} other{In the last {days} days}}'**
+  String findModifiedDays(int days);
+
+  /// No description provided for @searchStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop search'**
+  String get searchStop;
+
+  /// No description provided for @searchEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit search conditions'**
+  String get searchEdit;
+
+  /// No description provided for @searchOpenRoot.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the search folder'**
+  String get searchOpenRoot;
+
+  /// No description provided for @searchLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the first 10,000 results. Narrow the search to see more.'**
+  String get searchLimit;
+
   /// No description provided for @actionRetry.
   ///
   /// In en, this message translates to:
@@ -7117,6 +7333,24 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Top {first}% · Bottom {second}%'**
   String panelSplitStacked(int first, int second);
+
+  /// No description provided for @previewSearching.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching…'**
+  String get previewSearching;
+
+  /// No description provided for @previewSearchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not search this document.'**
+  String get previewSearchFailed;
+
+  /// No description provided for @previewSearchCapped.
+  ///
+  /// In en, this message translates to:
+  /// **'{status} · First 1,000 matches'**
+  String previewSearchCapped(String status);
 }
 
 class _FerryxLocalizationsDelegate

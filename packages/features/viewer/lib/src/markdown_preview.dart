@@ -1,10 +1,16 @@
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:html/parser.dart' as html;
 
 import 'markdown_format.dart';
+import 'preview_search.dart';
+import 'rich_text_preview.dart';
+import 'text_preview_data.dart';
+
 import 'markdown_image.dart';
 import 'viewer_source.dart';
 import 'viewer_link.dart';
@@ -35,6 +41,9 @@ class _MarkdownPreviewState extends State<MarkdownPreview> {
   ThemeData? _theme;
   double? _fontSize;
   late MarkdownStyleSheet _style;
+  Future<TextPreviewData>? _searchHtml;
+  Object? _searchKey;
+  bool _usingSearchRenderer = false;
 
   @override
   void dispose() {
@@ -62,8 +71,92 @@ class _MarkdownPreviewState extends State<MarkdownPreview> {
       _fontSize = widget.fontSize;
       _style = _markdownStyle(context, widget.fontSize);
     }
+    final search = PreviewSearchScope.maybeOf(context);
+    if (search != null) {
+      return ListenableBuilder(
+        listenable: search,
+        child: _MarkdownBody(
+          scroll: _scroll,
+          source: widget.source,
+          generation: widget.generation,
+          data: widget.data,
+          style: _style,
+        ),
+        builder: (context, child) {
+          // Keep the found passage in place when Find closes. Opening the
+          // empty field alone does not replace the renderer or move the page.
+          _usingSearchRenderer =
+              _usingSearchRenderer || search.query.isNotEmpty;
+          if (!_usingSearchRenderer) return child!;
+          final key = (widget.source, widget.generation, widget.data);
+          if (_searchKey != key) {
+            _searchKey = key;
+            _searchHtml = _prepareSearchMarkdown(widget.data);
+          }
+          return FutureBuilder(
+            future: _searchHtml,
+            builder: (context, snapshot) {
+              final data = snapshot.data;
+              if (data is HtmlPreviewData) {
+                return RichTextPreview(
+                  html: data.html,
+                  source: widget.source,
+                  generation: widget.generation,
+                  fontSize: widget.fontSize,
+                );
+              }
+              return child!;
+            },
+          );
+        },
+      );
+    }
+    return _MarkdownBody(
+      scroll: _scroll,
+      source: widget.source,
+      generation: widget.generation,
+      data: widget.data,
+      style: _style,
+    );
+  }
+}
+
+Future<TextPreviewData> _prepareSearchMarkdown(String data) async =>
+    prepareHtml(await compute(_markdownHtml, data));
+
+String _markdownHtml(String data) {
+  final document = html.parseFragment(
+    md.markdownToHtml(data, extensionSet: md.ExtensionSet.gitHubFlavored),
+  );
+  for (final input in document.querySelectorAll('input[type=checkbox]')) {
+    final replacement = html
+        .parseFragment(
+          '<ferryx-checkbox checked="${input.attributes.containsKey('checked')}"></ferryx-checkbox>',
+        )
+        .nodes
+        .single;
+    input.replaceWith(replacement);
+  }
+  return document.outerHtml;
+}
+
+class _MarkdownBody extends StatelessWidget {
+  const _MarkdownBody({
+    required this.scroll,
+    required this.source,
+    required this.generation,
+    required this.data,
+    required this.style,
+  });
+  final ScrollController scroll;
+  final ViewerSource source;
+  final int generation;
+  final String data;
+  final MarkdownStyleSheet style;
+  @override
+  Widget build(BuildContext context) {
     return Scrollbar(
-      controller: _scroll,
+      controller: scroll,
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
         child: Align(
@@ -73,20 +166,20 @@ class _MarkdownPreviewState extends State<MarkdownPreview> {
               maxWidth: AppSizes.documentWideMaxWidth,
             ),
             child: Markdown(
-              key: ValueKey((widget.source, widget.generation)),
-              data: widget.data,
+              key: ValueKey((source, generation)),
+              data: data,
               selectable: true,
-              controller: _scroll,
+              controller: scroll,
               padding: const EdgeInsets.all(AppSpacing.lg),
-              styleSheet: _style,
-              builders: {'a': _LinkBuilder(widget.source, widget.generation)},
+              styleSheet: style,
+              builders: {'a': _LinkBuilder(source, generation)},
               checkboxBuilder: (value) =>
                   AppCheckbox(value: value, onChanged: null),
               imageBuilder: (uri, title, alt) => MarkdownImage(
-                source: widget.source,
+                source: source,
                 reference: uri,
                 alt: alt,
-                generation: widget.generation,
+                generation: generation,
               ),
             ),
           ),

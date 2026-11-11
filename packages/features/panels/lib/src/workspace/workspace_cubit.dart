@@ -29,6 +29,19 @@ class WorkspaceCubit extends Cubit<WorkspaceState> {
     if (state.active != side) emit(state.copyWith(active: side));
   }
 
+  void restoreLayout({
+    required PanelSide active,
+    required bool singlePane,
+    required double splitFraction,
+  }) => emit(
+    state.copyWith(
+      active: active,
+      singlePane: singlePane,
+      splitFraction: splitFraction.clamp(minFraction, maxFraction),
+      resizingPanels: false,
+    ),
+  );
+
   void switchPanel() => activate(state.active.opposite);
 
   void toggleSinglePane() =>

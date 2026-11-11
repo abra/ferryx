@@ -13,6 +13,7 @@ export 'src/preferences_service.dart';
 export 'src/preferences_storage.dart';
 export 'src/recent_items.dart';
 export 'src/side_storage.dart';
+export 'src/saved_profiles.dart';
 export 'src/terminal_preferences.dart';
 
 export 'src/archiver_preferences.dart';

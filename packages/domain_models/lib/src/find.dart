@@ -47,6 +47,7 @@ class FindRequest extends Equatable {
     this.includeHidden = false,
     this.includeFolders = true,
     this.useSpotlight = false,
+    this.modifiedWithinDays,
   });
 
   final String root;
@@ -64,6 +65,70 @@ class FindRequest extends Equatable {
   /// cannot answer.
   final bool useSpotlight;
 
+  /// A relative date range, evaluated again each time a saved search runs.
+  final int? modifiedWithinDays;
+
+  Map<String, Object?> toJson() => {
+    'root': root,
+    'name': name,
+    'nameIsRegex': nameIsRegex,
+    'includeHidden': includeHidden,
+    'includeFolders': includeFolders,
+    'useSpotlight': useSpotlight,
+    'modifiedWithinDays': modifiedWithinDays,
+    if (content case final query?)
+      'content': {
+        'text': query.text,
+        'caseSensitive': query.caseSensitive,
+        'wholePhrase': query.wholePhrase,
+        'notContaining': query.notContaining,
+      },
+    if (size case final condition?)
+      'size': {'op': condition.op.name, 'bytes': condition.bytes},
+  };
+
+  static FindRequest? fromJson(Map<String, Object?> json) {
+    final root = json['root'];
+    if (root is! String ||
+        root.trim().isEmpty ||
+        root.length > 32768 ||
+        root.contains('\u0000')) {
+      return null;
+    }
+    final name = json['name'];
+    final days = json['modifiedWithinDays'];
+    if (days != null && (days is! int || days < 1 || days > 36500)) return null;
+    ContentQuery? content;
+    if (json['content'] case final Map<String, Object?> value) {
+      final text = value['text'];
+      if (text is! String || text.length > 65536) return null;
+      content = ContentQuery(
+        text: text,
+        caseSensitive: value['caseSensitive'] == true,
+        wholePhrase: value['wholePhrase'] != false,
+        notContaining: value['notContaining'] == true,
+      );
+    }
+    SizeCondition? size;
+    if (json['size'] case final Map<String, Object?> value) {
+      final op = SizeOp.values.asNameMap()[value['op']];
+      final bytes = value['bytes'];
+      if (op == null || bytes is! int || bytes < 0) return null;
+      size = SizeCondition(op: op, bytes: bytes);
+    }
+    return FindRequest(
+      root: root,
+      name: name is String ? name : '',
+      nameIsRegex: json['nameIsRegex'] == true,
+      content: content,
+      size: size,
+      includeHidden: json['includeHidden'] == true,
+      includeFolders: json['includeFolders'] != false,
+      useSpotlight: json['useSpotlight'] == true,
+      modifiedWithinDays: days as int?,
+    );
+  }
+
   @override
   List<Object?> get props => [
     root,
@@ -74,6 +139,7 @@ class FindRequest extends Equatable {
     includeHidden,
     includeFolders,
     useSpotlight,
+    modifiedWithinDays,
   ];
 }
 

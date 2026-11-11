@@ -40,9 +40,12 @@ extension _WorkspaceActions on _WorkspaceScreenState {
   }
 
   Map<AppCommand, VoidCallback> _globalHandlers(BuildContext context) =>
-      _terminalScope.hasFocus
+      _restoringWorkspace
+      ? {for (final command in AppCommand.values) command: () {}}
+      : _terminalScope.hasFocus
       ? {
           ..._terminalHandlers(),
+          AppCommand.manageWorkspaces: () => unawaited(_manageWorkspaces()),
           AppCommand.newTab: () => unawaited(_newFileTab()),
           AppCommand.closeTab: () => unawaited(_closeCurrentTab()),
           AppCommand.nextTab: () => _cyclePanelTab(_workspace.state.active, 1),
@@ -57,6 +60,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         }
       : _previewFocus.hasFocus || _previewController.state.fullWindow
       ? {
+          AppCommand.manageWorkspaces: () => unawaited(_manageWorkspaces()),
           AppCommand.preview: _closePreview,
           AppCommand.internalViewer: _togglePreviewWindow,
           AppCommand.focusLeftPanel: () => _focusPanel(PanelSide.left),
@@ -102,6 +106,10 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     AppCommand.removeFromFavorites: () => unawaited(_removeFromFavorites()),
     AppCommand.manageFavorites: () => unawaited(_manageFavorites()),
     AppCommand.findFiles: () => unawaited(_findFiles()),
+    AppCommand.manageSavedSearches: () => unawaited(_manageSavedSearches()),
+    AppCommand.thumbnailsView: () =>
+        _active.setLayout(PanelLayout.thumbnailIndex),
+    AppCommand.manageWorkspaces: () => unawaited(_manageWorkspaces()),
     // Edit
     AppCommand.copyPaths: () => unawaited(_copyPaths()),
     AppCommand.pasteItems: () => unawaited(_pasteItems(move: false)),
@@ -1336,6 +1344,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
 
   Future<void> _findFiles() async {
     if (_onServer()) return;
+    final panel = _active;
     final tab = _tab;
     final root = tab?.location.isNative == true
         ? tab!.location.path
@@ -1344,6 +1353,8 @@ extension _WorkspaceActions on _WorkspaceScreenState {
       context,
       root,
       view: (location) => widget.navigation.openViewer(context, location),
+      initial: tab?.search?.request,
+      results: (request) => panel.newSearchTab(request),
     );
     if (path == null || !mounted) return;
     final slash = path.lastIndexOf('/');
@@ -1353,5 +1364,15 @@ extension _WorkspaceActions on _WorkspaceScreenState {
       focusName: path.substring(slash + 1),
     );
     if (mounted) _focusOf(_workspace.state.active).requestFocus();
+  }
+
+  Future<void> _manageSavedSearches() async {
+    final open = widget.navigation.openSavedSearches;
+    if (open == null || _onServer()) return;
+    final panel = _active;
+    final selected = await open(context, panel.state.active?.search?.request);
+    if (selected != null && mounted) {
+      await panel.newSearchTab(selected.$2, label: selected.$1);
+    }
   }
 }

@@ -8,6 +8,9 @@ enum ViewMode {
 
   /// One row per item with columns of attributes.
   list,
+
+  /// Image/PDF thumbnails in a lazy grid; other files retain their icons.
+  thumbnails,
 }
 
 /// A column of the list mode.
@@ -53,6 +56,13 @@ class PanelLayout extends Equatable {
   final BriefColumns briefColumns;
   final List<ListColumn> columns;
   final IconSize iconSize;
+
+  /// A separate view alongside the user's five configurable presets.
+  static const thumbnailIndex = -1;
+  static const thumbnailLayout = PanelLayout(
+    name: 'Thumbnails',
+    mode: ViewMode.thumbnails,
+  );
 
   /// The five presets the app starts with.
   static const List<PanelLayout> defaults = [

@@ -6,3 +6,4 @@ export 'src/viewer_screen.dart';
 export 'src/viewer_placeholder.dart';
 export 'src/viewer_source.dart';
 export 'src/viewer_state.dart';
+export 'src/file_diff_screen.dart';

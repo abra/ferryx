@@ -170,7 +170,9 @@ class PanelsPage extends StatelessWidget {
                 key: ValueKey('layout-$i'),
                 title: '${i + 1}. ${l10n.viewModeName(prefs.layouts[i])}',
                 subtitle: describeLayout(l10n, prefs.layouts[i]),
-                icon: prefs.layouts[i].mode == ViewMode.list
+                icon: prefs.layouts[i].mode == ViewMode.thumbnails
+                    ? AppIcons.layoutThumbnails
+                    : prefs.layouts[i].mode == ViewMode.list
                     ? AppIcons.layoutList
                     : AppIcons.layoutBrief,
                 editTooltip: l10n.hotkeysChange,
@@ -190,6 +192,7 @@ class PanelsPage extends StatelessWidget {
 /// `List · Name, Size, Modified` or `Brief · Three equal columns`.
 String describeLayout(FerryxLocalizations l10n, PanelLayout layout) =>
     switch (layout.mode) {
+      ViewMode.thumbnails => l10n.cmdThumbnailsView,
       ViewMode.list =>
         '${l10n.modeList} · ${layout.columns.map(l10n.columnLabel).join(', ')}',
       ViewMode.brief =>

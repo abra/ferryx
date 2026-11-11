@@ -7,9 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:operations_service/operations_service.dart';
+import 'package:preferences_service/preferences_service.dart';
 
 import 'find_cubit.dart';
 import 'find_results.dart';
+import 'saved_searches.dart';
 
 /// Find Files under [root]: a name mask, text the files hold, a size;
 /// the hits as they come. Answers the path of a hit to go to, or `null`.
@@ -22,13 +24,33 @@ Future<String?> showFindDialog(
   required FindService find,
   required Future<void> Function(Location location) onView,
   bool spotlight = false,
-}) => showAppDialog<String>(
-  context,
-  (context) => BlocProvider(
-    create: (_) => FindCubit(service: find),
-    child: _FindDialog(root: root, onView: onView, spotlight: spotlight),
-  ),
-);
+  FindRequest? initial,
+  SavedProfiles<FindRequest>? savedSearches,
+  Future<void> Function(FindRequest request)? onResults,
+}) async {
+  FindRequest? panelRequest;
+  final result = await showAppDialog<String>(
+    context,
+    (context) => BlocProvider(
+      create: (_) => FindCubit(service: find),
+      child: _FindDialog(
+        root: root,
+        onView: onView,
+        spotlight: spotlight,
+        initial: initial,
+        savedSearches: savedSearches,
+        onResults: onResults == null
+            ? null
+            : (request) {
+                panelRequest = request;
+                Navigator.of(context).pop();
+              },
+      ),
+    ),
+  );
+  if (panelRequest != null && onResults != null) await onResults(panelRequest!);
+  return result;
+}
 
 /// The size units the dialog offers, as multipliers of a byte.
 const _units = [1, 1024, 1024 * 1024, 1024 * 1024 * 1024];
@@ -38,11 +60,17 @@ class _FindDialog extends StatefulWidget {
     required this.root,
     required this.onView,
     required this.spotlight,
+    this.initial,
+    this.savedSearches,
+    this.onResults,
   });
 
   final String root;
   final Future<void> Function(Location location) onView;
   final bool spotlight;
+  final FindRequest? initial;
+  final SavedProfiles<FindRequest>? savedSearches;
+  final ValueChanged<FindRequest>? onResults;
 
   @override
   State<_FindDialog> createState() => _FindDialogState();
@@ -73,12 +101,50 @@ class _FindDialogState extends State<_FindDialog> {
   SizeOp? _sizeOp;
   int _unit = _units[1];
   bool _includeHidden = false;
+  bool _includeFolders = true;
   bool _useSpotlight = false;
+  int? _modifiedWithinDays;
 
   /// The hit the keys or the pointer rest on.
   int? _selected;
 
   FindCubit get _cubit => context.read<FindCubit>();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initial case final request?) _apply(request);
+  }
+
+  void _apply(FindRequest request) {
+    _root.text = request.root;
+    _name.text = request.name;
+    _content.text = request.content?.text ?? '';
+    _regex = request.nameIsRegex;
+    _caseSensitive = request.content?.caseSensitive ?? false;
+    _wholePhrase = request.content?.wholePhrase ?? true;
+    _notContaining = request.content?.notContaining ?? false;
+    _sizeOp = request.size?.op;
+    _unit = 1;
+    _sizeValue.text = request.size?.bytes.toString() ?? '';
+    _includeHidden = request.includeHidden;
+    _useSpotlight = request.useSpotlight;
+    _includeFolders = request.includeFolders;
+    _modifiedWithinDays = request.modifiedWithinDays;
+  }
+
+  Future<void> _saved() async {
+    final catalog = widget.savedSearches;
+    if (catalog == null) return;
+    final picked = await showSavedSearchesDialog(
+      context,
+      catalog: catalog,
+      current: _request(),
+    );
+    if (!mounted || picked == null) return;
+    setState(() => _apply(picked.value));
+    await _start();
+  }
 
   @override
   void dispose() {
@@ -125,8 +191,9 @@ class _FindDialogState extends State<_FindDialog> {
           ? null
           : SizeCondition(op: _sizeOp!, bytes: size * _unit),
       includeHidden: _includeHidden,
-      includeFolders: content.isEmpty && _sizeOp == null,
+      includeFolders: _includeFolders && content.isEmpty && _sizeOp == null,
       useSpotlight: widget.spotlight && _useSpotlight,
+      modifiedWithinDays: _modifiedWithinDays,
     );
   }
 
@@ -216,6 +283,9 @@ class _FindDialogState extends State<_FindDialog> {
                 sizeOp: _sizeOp,
                 unit: _unit,
                 includeHidden: _includeHidden,
+                includeFolders: _includeFolders,
+                onIncludeFolders: (value) =>
+                    setState(() => _includeFolders = value),
                 spotlight: widget.spotlight,
                 useSpotlight: _useSpotlight,
                 onUseSpotlight: (v) => setState(() => _useSpotlight = v),
@@ -227,6 +297,9 @@ class _FindDialogState extends State<_FindDialog> {
                 onUnit: (v) => setState(() => _unit = v),
                 onIncludeHidden: (v) => setState(() => _includeHidden = v),
                 onSubmit: () => unawaited(_start()),
+                modifiedWithinDays: _modifiedWithinDays,
+                onModifiedWithinDays: (days) =>
+                    setState(() => _modifiedWithinDays = days),
               ),
               const SizedBox(height: AppSpacing.md),
               Flexible(
@@ -244,6 +317,16 @@ class _FindDialogState extends State<_FindDialog> {
           // Find (or Stop) is the default; Return in a field starts the
           // search over, never stops it.
           actions: [
+            if (widget.savedSearches != null)
+              OutlinedButton(
+                onPressed: () => unawaited(_saved()),
+                child: Text(l10n.savedSearchesTitle),
+              ),
+            if (widget.onResults case final onResults?)
+              OutlinedButton(
+                onPressed: () => onResults(_request()),
+                child: Text(l10n.searchOpenTab),
+              ),
             OutlinedButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(l10n.actionClose),
@@ -289,6 +372,8 @@ class _Form extends StatelessWidget {
     required this.sizeOp,
     required this.unit,
     required this.includeHidden,
+    required this.includeFolders,
+    required this.onIncludeFolders,
     required this.spotlight,
     required this.useSpotlight,
     required this.onUseSpotlight,
@@ -300,6 +385,8 @@ class _Form extends StatelessWidget {
     required this.onUnit,
     required this.onIncludeHidden,
     required this.onSubmit,
+    required this.modifiedWithinDays,
+    required this.onModifiedWithinDays,
   });
 
   final TextEditingController root;
@@ -315,6 +402,8 @@ class _Form extends StatelessWidget {
   final SizeOp? sizeOp;
   final int unit;
   final bool includeHidden;
+  final bool includeFolders;
+  final ValueChanged<bool> onIncludeFolders;
 
   /// The desktop has the Spotlight index: the option shows.
   final bool spotlight;
@@ -328,6 +417,8 @@ class _Form extends StatelessWidget {
   final ValueChanged<int> onUnit;
   final ValueChanged<bool> onIncludeHidden;
   final VoidCallback onSubmit;
+  final int? modifiedWithinDays;
+  final ValueChanged<int?> onModifiedWithinDays;
 
   @override
   Widget build(BuildContext context) {
@@ -377,6 +468,11 @@ class _Form extends StatelessWidget {
           spacing: AppSpacing.lg,
           runSpacing: AppSpacing.sm,
           children: [
+            AppCheckbox(
+              label: l10n.findIncludeFolders,
+              value: includeFolders,
+              onChanged: onIncludeFolders,
+            ),
             AppCheckbox(
               label: l10n.findCaseSensitive,
               value: caseSensitive,
@@ -432,6 +528,19 @@ class _Form extends StatelessWidget {
               onChanged: onUnit,
             ),
           ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        AppControlRow(
+          label: l10n.findModified,
+          control: AppPopupButton<int?>(
+            value: modifiedWithinDays,
+            items: [
+              (null, l10n.findSizeAny),
+              for (final days in {1, 7, 30, 365, ?modifiedWithinDays})
+                (days, l10n.findModifiedDays(days)),
+            ],
+            onChanged: onModifiedWithinDays,
+          ),
         ),
         if (spotlight) ...[
           const SizedBox(height: AppSpacing.md),

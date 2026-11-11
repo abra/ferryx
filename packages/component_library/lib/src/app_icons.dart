@@ -175,6 +175,7 @@ abstract final class AppIcons {
   static const IconData star = LucideIcons.star;
   static const IconData clock = LucideIcons.clock;
   static const IconData sort = LucideIcons.arrowDownUp;
+  static const IconData layoutThumbnails = LucideIcons.layoutGrid;
   static const IconData layoutList = LucideIcons.list;
   static const IconData layoutBrief = LucideIcons.columns3;
   static const IconData terminal = LucideIcons.terminal;

@@ -4,6 +4,7 @@ import 'package:meta/meta.dart';
 
 import 'flat_view.dart';
 import 'panel_side.dart';
+import 'panel_search_state.dart';
 
 /// The rows own these sums: a selection remembered for `gv` must not keep
 /// an old listing alive. Both keys are weak; cursor moves reuse the sum.
@@ -43,6 +44,7 @@ class PanelTabState extends Equatable {
     this.renameCaret = RenameCaret.stem,
     this.passwordLocation,
     this.flat,
+    this.search,
   });
 
   /// The listing id in the core, unique across both panels.
@@ -118,6 +120,7 @@ class PanelTabState extends Equatable {
   /// The tab shows its folder's whole subtree as one list; `null` for the
   /// folder itself.
   final FlatView? flat;
+  final PanelSearchState? search;
 
   FileEntry? get focused =>
       cursor >= 0 && cursor < rows.length ? rows[cursor] : null;
@@ -160,10 +163,12 @@ class PanelTabState extends Equatable {
   int indexOfName(String key) => rows.indexWhere((r) => r.key == key);
 
   bool get isFlat => flat != null;
+  bool get isVirtual => flat != null || search != null;
 
   /// Where [entry] is: under the tab's folder, in its own folder of a
   /// flat view.
-  Location locationOf(FileEntry entry) => location.join(entry.key);
+  Location locationOf(FileEntry entry) =>
+      search != null ? Location.native(entry.path) : location.join(entry.key);
 
   PanelTabState copyWith({
     Location? location,
@@ -200,6 +205,8 @@ class PanelTabState extends Equatable {
     bool clearPasswordLocation = false,
     FlatView? flat,
     bool clearFlat = false,
+    PanelSearchState? search,
+    bool clearSearch = false,
   }) => PanelTabState(
     id: id,
     location: location ?? this.location,
@@ -232,6 +239,7 @@ class PanelTabState extends Equatable {
         ? null
         : (passwordLocation ?? this.passwordLocation),
     flat: clearFlat ? null : (flat ?? this.flat),
+    search: clearSearch ? null : (search ?? this.search),
   );
 
   @override
@@ -263,6 +271,7 @@ class PanelTabState extends Equatable {
     renameCaret,
     passwordLocation,
     flat,
+    search,
   ];
 }
 
@@ -352,6 +361,7 @@ class PanelGeometry extends Equatable {
     this.rowsPerPage = 20,
     this.rowsPerColumn = 1,
     this.firstVisibleRow = 0,
+    this.columnsPerRow = 1,
   });
 
   final int rowsPerPage;
@@ -359,12 +369,18 @@ class PanelGeometry extends Equatable {
   /// Rows in one column of brief mode; 1 in list mode, where ← and →
   /// have other meanings.
   final int rowsPerColumn;
+  final int columnsPerRow;
 
   /// The first row in view, for `H`, `M` and `L`.
   final int firstVisibleRow;
 
   @override
-  List<Object?> get props => [rowsPerPage, rowsPerColumn, firstVisibleRow];
+  List<Object?> get props => [
+    rowsPerPage,
+    rowsPerColumn,
+    firstVisibleRow,
+    columnsPerRow,
+  ];
 }
 
 /// How the view scrolls for the cursor.

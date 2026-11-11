@@ -26,6 +26,7 @@ import 'viewer_footer.dart';
 import 'viewer_source.dart';
 import 'viewer_state.dart';
 import 'viewer_views.dart';
+import 'preview_search.dart';
 
 /// One file in the workspace or a route. Keep its key stable when moving
 /// between placements so the reader, scroll position and decoder survive.
@@ -67,6 +68,7 @@ class ViewerScreen extends StatefulWidget {
 
 class _ViewerScreenState extends State<ViewerScreen> {
   late final ViewerCubit _cubit;
+  final _previewSearch = PreviewSearchController();
   final _contentFocus = FocusNode(debugLabel: 'viewer content');
   final _documentFocus = FocusNode(debugLabel: 'viewer document');
   FocusScopeNode? _ownedScope;
@@ -108,6 +110,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
     _contentFocus.dispose();
     _documentFocus.dispose();
     _ownedScope?.dispose();
+    _previewSearch.dispose();
     _cubit.close();
     super.dispose();
   }
@@ -225,6 +228,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
   };
 
   void _setMode(ViewerMode mode) {
+    _previewSearch.hide();
     _cubit.setMode(mode);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _focusContent();
@@ -241,7 +245,11 @@ class _ViewerScreenState extends State<ViewerScreen> {
   }
 
   void _showFind() {
-    if (_cubit.state.mode == ViewerMode.preview) return;
+    if (_cubit.state.mode == ViewerMode.preview) {
+      if (!_searchablePreview(widget.location.name)) return;
+      _previewSearch.show();
+      return;
+    }
     _cubit.showFind();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -259,6 +267,10 @@ class _ViewerScreenState extends State<ViewerScreen> {
   }
 
   void _find(int delta) {
+    if (_cubit.state.mode == ViewerMode.preview) {
+      _previewSearch.next(delta);
+      return;
+    }
     final state = _cubit.state;
     if (!state.findShown) {
       _showFind();
@@ -278,6 +290,11 @@ class _ViewerScreenState extends State<ViewerScreen> {
   }
 
   void _dismiss() {
+    if (_cubit.state.mode == ViewerMode.preview && _previewSearch.shown) {
+      _previewSearch.hide();
+      _focusContent();
+      return;
+    }
     if (_cubit.state.findShown) {
       _hideFind();
       return;
@@ -342,40 +359,43 @@ class _ViewerScreenState extends State<ViewerScreen> {
                   select: (p) => (p.viewerFontSize, p.documentFontSize),
                   builder: (context, sizes) =>
                       BlocBuilder<ViewerCubit, ViewerState>(
-                        builder: (context, state) => _Frame(
-                          state: state,
-                          source: _cubit.source,
-                          decor: widget.windowDecor,
-                          shortcutMap: widget.shortcutMap,
-                          fontSize: sizes.$1,
-                          documentFontSize: sizes.$2,
-                          onDocumentFontSizeChanged: _changeDocumentFontSize,
-                          documentFocus: _documentFocus,
-                          autofocus: widget.autofocus,
-                          fullWindow: widget.fullWindow,
-                          onToggleFullWindow: widget.onToggleFullWindow,
-                          onFocusFiles: widget.onFocusFiles,
-                          topLine: _topLine,
-                          contentFocus: _contentFocus,
-                          findFocus: _findFocus,
-                          findController: _findController,
-                          scroll: _scroll,
-                          onLayout: _onLayout,
-                          onContentKey: _onContentKey,
-                          onFocusContent: _focusContent,
-                          onMode: _setMode,
-                          onToggleWrap: _toggleWrap,
-                          onFind: _showFind,
-                          onFindChanged: _cubit.setFindQuery,
-                          onFindNext: () => _find(1),
-                          onFindPrevious: () => _find(-1),
-                          onFindClose: _hideFind,
-                          onGoTo: () => unawaited(_goTo()),
-                          onRefresh: () => unawaited(_cubit.refresh()),
-                          onLoadNext: () => unawaited(_cubit.loadNext()),
-                          onLoadPrevious: () =>
-                              unawaited(_cubit.loadPrevious()),
-                          onClose: widget.onClose,
+                        builder: (context, state) => PreviewSearchScope(
+                          controller: _previewSearch,
+                          child: _Frame(
+                            state: state,
+                            source: _cubit.source,
+                            decor: widget.windowDecor,
+                            shortcutMap: widget.shortcutMap,
+                            fontSize: sizes.$1,
+                            documentFontSize: sizes.$2,
+                            onDocumentFontSizeChanged: _changeDocumentFontSize,
+                            documentFocus: _documentFocus,
+                            autofocus: widget.autofocus,
+                            fullWindow: widget.fullWindow,
+                            onToggleFullWindow: widget.onToggleFullWindow,
+                            onFocusFiles: widget.onFocusFiles,
+                            topLine: _topLine,
+                            contentFocus: _contentFocus,
+                            findFocus: _findFocus,
+                            findController: _findController,
+                            scroll: _scroll,
+                            onLayout: _onLayout,
+                            onContentKey: _onContentKey,
+                            onFocusContent: _focusContent,
+                            onMode: _setMode,
+                            onToggleWrap: _toggleWrap,
+                            onFind: _showFind,
+                            onFindChanged: _cubit.setFindQuery,
+                            onFindNext: () => _find(1),
+                            onFindPrevious: () => _find(-1),
+                            onFindClose: _hideFind,
+                            onGoTo: () => unawaited(_goTo()),
+                            onRefresh: () => unawaited(_cubit.refresh()),
+                            onLoadNext: () => unawaited(_cubit.loadNext()),
+                            onLoadPrevious: () =>
+                                unawaited(_cubit.loadPrevious()),
+                            onClose: widget.onClose,
+                          ),
                         ),
                       ),
                 ),
@@ -480,7 +500,9 @@ class _Frame extends StatelessWidget {
           fullWindow: fullWindow,
           onToggleFullWindow: onToggleFullWindow,
         ),
-        if (state.findShown)
+        if (state.mode == ViewerMode.preview)
+          _PreviewFindSlot(onFocusContent: onFocusContent),
+        if (state.findShown && state.mode != ViewerMode.preview)
           _FindBar(
             state: state,
             controller: findController,
@@ -603,7 +625,9 @@ class _TopRow extends StatelessWidget {
           label: l10n.cmdViewerFind,
           icon: AppIcons.search,
           shortcut: chord(AppCommand.viewerFind),
-          enabled: state.mode != ViewerMode.preview,
+          enabled:
+              state.mode != ViewerMode.preview ||
+              _searchablePreview(source.displayName),
         ),
         AppMenuAction(
           value: AppCommand.viewerGoTo,
@@ -687,7 +711,11 @@ class _TopRow extends StatelessWidget {
               tooltip: l10n.cmdViewerFind,
               shortcut: chord(AppCommand.viewerFind),
               selected: state.findShown,
-              onPressed: state.mode == ViewerMode.preview ? null : onFind,
+              onPressed:
+                  state.mode == ViewerMode.preview &&
+                      !_searchablePreview(source.displayName)
+                  ? null
+                  : onFind,
             ),
             AppIconButton(
               icon: AppIcons.goTo,
@@ -1210,3 +1238,30 @@ class _StatusBar extends StatelessWidget {
     );
   }
 }
+
+class _PreviewFindSlot extends StatelessWidget {
+  const _PreviewFindSlot({required this.onFocusContent});
+  final VoidCallback onFocusContent;
+  @override
+  Widget build(BuildContext context) {
+    final search = PreviewSearchScope.maybeOf(context)!;
+    return ListenableBuilder(
+      listenable: search,
+      builder: (context, _) => search.shown
+          ? PreviewFindBar(
+              controller: search,
+              onClose: () {
+                search.hide();
+                onFocusContent();
+              },
+            )
+          : const SizedBox.shrink(),
+    );
+  }
+}
+
+bool _searchablePreview(String name) =>
+    isMarkdownName(name) ||
+    textPreviewFormatOf(name) != null ||
+    (documentFormatOf(name) != null &&
+        documentFormatOf(name) != DocumentFormat.cbz);

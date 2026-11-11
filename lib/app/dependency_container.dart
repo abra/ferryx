@@ -34,6 +34,9 @@ class DependenciesContainer {
     required this.duplicates,
     required this.network,
     required this.recentServers,
+    this.sideStorage,
+    this.savedSearches,
+    this.thumbnails,
     required this._resourceDisposer,
     TargetPlatform? platform,
     WindowFrame? windowFrame,
@@ -72,6 +75,9 @@ class DependenciesContainer {
 
   /// Addresses Connect to Server reached lately, never with a password.
   final RecentItems recentServers;
+  final SideStorage? sideStorage;
+  final SavedProfiles<FindRequest>? savedSearches;
+  final ThumbnailProvider? thumbnails;
 
   /// The desktop the app runs on; the default chords follow its
   /// conventions.

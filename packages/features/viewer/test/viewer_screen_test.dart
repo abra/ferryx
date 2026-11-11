@@ -14,6 +14,8 @@ import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 import 'package:viewer_feature/viewer_feature.dart';
 import 'package:viewer_feature/src/markdown_format.dart';
+import 'package:viewer_feature/src/preview_search.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 
 class _Files extends Mock implements FileRepository {}
 
@@ -166,6 +168,53 @@ void main() {
       verify(() => files.readRange(any(), 0, bytes.length)).called(1);
       expect(tester.takeException(), isNull);
     });
+  }
+
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      'rendered Markdown find highlights and navigates in a narrow ${brightness.name} pane',
+      (tester) async {
+        bytes = Uint8List.fromList(
+          utf8.encode('# Heading\n\nSome **needle** here.\n\nAnother needle.'),
+        );
+        await open(
+          tester,
+          width: 360,
+          brightness: brightness,
+          textScale: 1.5,
+          location: const Location.native('/tmp/find.md'),
+        );
+        await menu(tester);
+        await pick(tester, en.cmdViewerFind);
+        expect(find.byType(PreviewFindBar), findsOneWidget);
+        await tester.enterText(find.byType(AppSearchField), 'needle');
+        await tester.pump(const Duration(milliseconds: 220));
+        for (
+          var i = 0;
+          i < 100 && find.text(en.viewerMatches(1, 2)).evaluate().isEmpty;
+          i++
+        ) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 15)),
+          );
+          await tester.pump(const Duration(milliseconds: 20));
+        }
+        expect(find.text(en.viewerMatches(1, 2)), findsOneWidget);
+        expect(
+          tester.widget<HtmlWidget>(find.byType(HtmlWidget)).html,
+          contains('ferryx-find-0-start'),
+        );
+        await tester.tap(button(en.cmdViewerFindNext));
+        await tester.pumpAndSettle();
+        expect(find.text(en.viewerMatches(2, 2)), findsOneWidget);
+        await tester.tap(button(en.actionClose).last);
+        await tester.pumpAndSettle();
+        expect(find.byType(PreviewFindBar), findsNothing);
+        // Closing Find retains the renderer and the found passage.
+        expect(find.byType(HtmlWidget), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
 
   Future<void> settleImage(WidgetTester tester) async {

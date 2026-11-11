@@ -521,6 +521,7 @@ class FindRequestView {
   /// Ask the Spotlight index first (macOS); the folders are walked when
   /// it cannot answer.
   final bool useSpotlight;
+  final PlatformInt64? modifiedAfterMs;
 
   const FindRequestView({
     required this.root,
@@ -535,6 +536,7 @@ class FindRequestView {
     required this.includeHidden,
     required this.includeFolders,
     required this.useSpotlight,
+    this.modifiedAfterMs,
   });
 
   @override
@@ -550,7 +552,8 @@ class FindRequestView {
       sizeBytes.hashCode ^
       includeHidden.hashCode ^
       includeFolders.hashCode ^
-      useSpotlight.hashCode;
+      useSpotlight.hashCode ^
+      modifiedAfterMs.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -568,7 +571,8 @@ class FindRequestView {
           sizeBytes == other.sizeBytes &&
           includeHidden == other.includeHidden &&
           includeFolders == other.includeFolders &&
-          useSpotlight == other.useSpotlight;
+          useSpotlight == other.useSpotlight &&
+          modifiedAfterMs == other.modifiedAfterMs;
 }
 
 class FolderSizeView {

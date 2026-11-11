@@ -36,7 +36,7 @@ extension _TerminalActions on _WorkspaceScreenState {
       _workspace.stream.listen((_) => _followActiveFolder()),
       // A cd typed in the shell takes the active panel along.
       terminal.shellFolders.listen((folder) {
-        if (mounted) {
+        if (mounted && !_restoringWorkspace) {
           unawaited(_cubitOf(_terminalSide).open(Location.native(folder)));
         }
       }),
@@ -64,6 +64,7 @@ extension _TerminalActions on _WorkspaceScreenState {
   }
 
   void _followActiveFolder() {
+    if (_restoringWorkspace) return;
     final folder = _activeFolder();
     if (folder == _followed) return;
     _followed = folder;

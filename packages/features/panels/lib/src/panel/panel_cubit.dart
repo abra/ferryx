@@ -8,12 +8,16 @@ import 'package:monitoring/monitoring.dart';
 import 'package:network_service/network_service.dart';
 import 'package:operations_service/operations_service.dart';
 import 'package:preferences_service/preferences_service.dart';
+import 'package:path/path.dart' as path;
 
 import 'flat_view.dart';
 import 'panel_side.dart';
 import 'panel_state.dart';
 import 'quick_search.dart';
 import 'saved_panel.dart';
+import 'panel_search_state.dart';
+
+part 'panel_search.dart';
 
 /// Where Return leads when a row is not a folder: the workspace opens
 /// the file with the desktop, or runs it.
@@ -39,6 +43,7 @@ class PanelCubit extends Cubit<PanelState> {
     this.readTags = false,
     NetworkService? network,
     this.connectServer,
+    this._find,
   }) : _files = files,
        _operations = operations,
        _preferences = preferences,
@@ -51,6 +56,14 @@ class PanelCubit extends Cubit<PanelState> {
   }
 
   final PanelSide side;
+  final FindService? _find;
+  final _searchTasks = <String, TaskSession<FindUpdate>>{};
+  final _searchHits = <String, List<FindHit>>{};
+  final _searchSorts = <String, int>{};
+  int _searchGeneration = 0;
+  void _emitSearchState(PanelState next) {
+    if (!isClosed) emit(next);
+  }
 
   /// Finder tags are read for the rows once a listing shows (the core
   /// reports the capability; elsewhere there are none to read).
@@ -150,6 +163,10 @@ class PanelCubit extends Cubit<PanelState> {
       ),
     );
     for (var i = 0; i < states.length; i++) {
+      if (tabs[i].search case final query? when _find != null) {
+        await _openSearch(i, query, label: tabs[i].searchLabel);
+        continue;
+      }
       await _load(
         i,
         states[i].location,
@@ -169,11 +186,27 @@ class PanelCubit extends Cubit<PanelState> {
           location: tab.location,
           sort: tab.sort,
           layoutIndex: tab.layoutIndex,
+          search: tab.search?.request,
+          searchLabel: tab.search?.label,
         ),
     ],
     activeIndex: state.activeIndex,
     closedTabs: state.closedTabs.take(20).toList(),
   );
+
+  /// Replace navigation state while retiring every old listing first.
+  /// Existing file operations keep running independently of these tabs.
+  Future<void> restore(SavedPanel saved, Location fallback) async {
+    final old = state.tabs;
+    emit(state.copyWith(tabs: const [], activeIndex: 0));
+    for (final tab in old) {
+      await _stopSearch(tab.id);
+      await _stopFlat(tab.id);
+      _forget(tab.id);
+      if (tab.search == null) await _files.closeListing(tab.id);
+    }
+    if (!isClosed) await start(saved, fallback);
+  }
 
   String _newTabId() => '${side.name}-${_nextTabNumber++}';
 
@@ -194,6 +227,10 @@ class PanelCubit extends Cubit<PanelState> {
   }) async {
     final tab = state.tabs.elementAtOrNull(index);
     if (tab == null) return;
+    if (tab.search != null) {
+      await _stopSearch(tab.id);
+      if (isClosed || state.tabs.elementAtOrNull(index)?.id != tab.id) return;
+    }
     emit(
       state.withTab(
         index,
@@ -201,6 +238,7 @@ class PanelCubit extends Cubit<PanelState> {
           loading: true,
           clearError: true,
           pendingFocusName: focusName,
+          clearSearch: true,
         ),
       ),
     );
@@ -533,6 +571,10 @@ class PanelCubit extends Cubit<PanelState> {
   Future<void> _refreshTab(int index) {
     final id = state.tabs.elementAtOrNull(index)?.id;
     if (id == null) return Future.value();
+    if (state.tabs[index].search?.running ?? false) {
+      _stale.add(id);
+      return Future.value();
+    }
     _stale.remove(id);
     final running = _refreshing[id];
     if (running != null) {
@@ -560,6 +602,15 @@ class PanelCubit extends Cubit<PanelState> {
   Future<void> _refreshOnce(int index) async {
     final tab = state.tabs.elementAtOrNull(index);
     if (tab == null || tab.loading) return;
+    if (tab.search case final search?) {
+      await _openSearch(
+        index,
+        search.request,
+        label: search.label,
+        refreshing: true,
+      );
+      return;
+    }
     if (tab.isFlat) {
       await _walkFlatAgain(index);
       return;
@@ -645,6 +696,10 @@ class PanelCubit extends Cubit<PanelState> {
   Future<void> _resortTab(int index, SortOptions sort) async {
     final tab = state.tabs.elementAtOrNull(index);
     if (tab == null || tab.listing == null) return;
+    if (tab.search != null) {
+      await _sortSearch(tab.id, tab.search!.generation, sort);
+      return;
+    }
     if (tab.isFlat) {
       await _resortFlat(index, sort);
       return;
@@ -684,7 +739,11 @@ class PanelCubit extends Cubit<PanelState> {
       return null;
     }
     if (entry.isDir) {
-      await open(tab.locationOf(entry));
+      if (tab.search != null) {
+        await newTab(location: tab.locationOf(entry));
+      } else {
+        await open(tab.locationOf(entry));
+      }
       return null;
     }
     final location = tab.locationOf(entry);
@@ -857,6 +916,14 @@ class PanelCubit extends Cubit<PanelState> {
   /// ← and → in brief mode step by a column; in list mode they do
   /// nothing here (the view may bind them to other things).
   void moveColumn(int direction, {bool selecting = false}) {
+    if (geometry.columnsPerRow > 1) {
+      final tab = state.active;
+      if (tab == null || tab.cursor < 0) return;
+      final column = tab.cursor % geometry.columnsPerRow;
+      final target = (column + direction).clamp(0, geometry.columnsPerRow - 1);
+      moveCursor(target - column, selecting: selecting);
+      return;
+    }
     if (geometry.rowsPerColumn <= 1) return;
     moveCursor(direction * geometry.rowsPerColumn, selecting: selecting);
   }
@@ -1239,6 +1306,11 @@ class PanelCubit extends Cubit<PanelState> {
 
   void _onProgress(OperationProgress progress) {
     if (progress.state.isFinished && progress.kind != OpKind.calcSizes) {
+      for (var index = 0; index < state.tabs.length; index++) {
+        if (state.tabs[index].search == null) continue;
+        _stale.add(state.tabs[index].id);
+        if (index == state.activeIndex) unawaited(_refreshTab(index));
+      }
       _walkFlatViewsUnder(progress);
       _refreshServersTouched(progress);
     }
@@ -1307,9 +1379,10 @@ class PanelCubit extends Cubit<PanelState> {
       ),
     );
     _readIfStale();
+    await _stopSearch(tab.id);
     await _stopFlat(tab.id);
     _forget(tab.id);
-    await _files.closeListing(tab.id);
+    if (tab.search == null) await _files.closeListing(tab.id);
   }
 
   Future<void> closeOtherTabs() async {
@@ -1327,9 +1400,10 @@ class PanelCubit extends Cubit<PanelState> {
       ),
     );
     for (final tab in others) {
+      await _stopSearch(tab.id);
       await _stopFlat(tab.id);
       _forget(tab.id);
-      await _files.closeListing(tab.id);
+      if (tab.search == null) await _files.closeListing(tab.id);
     }
   }
 
@@ -1442,7 +1516,7 @@ class PanelCubit extends Cubit<PanelState> {
       if (at < 0) {
         // The tab closed meanwhile: the walk and its listing go too.
         await start.batches.listen(null).cancel();
-        await _files.closeListing(tab.id);
+        if (tab.search == null) await _files.closeListing(tab.id);
         return;
       }
       final current = state.tabs[at];
@@ -1815,6 +1889,12 @@ class PanelCubit extends Cubit<PanelState> {
 
   @override
   Future<void> close() async {
+    _searchSorts.clear();
+    for (final task in _searchTasks.values.toList()) {
+      await task.close();
+    }
+    _searchTasks.clear();
+    _searchHits.clear();
     await _serverChanges?.cancel();
     await _changes?.cancel();
     await _progress?.cancel();
@@ -1824,7 +1904,7 @@ class PanelCubit extends Cubit<PanelState> {
     }
     _flatWalks.clear();
     for (final tab in state.tabs) {
-      await _files.closeListing(tab.id);
+      if (tab.search == null) await _files.closeListing(tab.id);
     }
     return super.close();
   }

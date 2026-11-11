@@ -89,7 +89,7 @@ class PanelFooter extends StatelessWidget {
       left = _BrowsingStatus(
         focused: tab.focused,
         style: strong,
-        keepPath: tab.flat != null,
+        keepPath: tab.isVirtual,
       );
     }
     // `..` leads the rows when it is there.

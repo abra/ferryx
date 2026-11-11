@@ -76,6 +76,8 @@ class TerminalDock extends Equatable {
 class TerminalDockCubit extends Cubit<TerminalDock> {
   TerminalDockCubit([super.initialState = const TerminalDock()]);
 
+  void restore(TerminalDock dock) => emit(dock);
+
   void moveTo(TerminalHost host, {bool asTab = false}) => emit(
     state.copyWith(
       host: host,

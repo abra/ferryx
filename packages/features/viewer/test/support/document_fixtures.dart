@@ -140,15 +140,17 @@ Uint8List comicFixture() => buildComicArchive([
 ]);
 
 /// A PDF with two pages of original rectangle artwork and a real xref table.
-Uint8List pdfFixture() {
-  const stream = '0 0 0 rg 20 20 120 200 re f\n';
+Uint8List pdfFixture({bool searchable = false}) {
+  final stream =
+      '0 0 0 rg 20 20 120 200 re f\n${searchable ? 'BT /F1 12 Tf 20 220 Td (Ferryx searchable text) Tj ET\n' : ''}';
   final objects = [
     '<< /Type /Catalog /Pages 2 0 R >>',
     '<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>',
     for (var page = 0; page < 2; page++)
       '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 160 240] '
-          '/Resources << >> /Contents 5 0 R >>',
+          '/Resources << /Font << /F1 6 0 R >> >> /Contents 5 0 R >>',
     '<< /Length ${stream.length} >>\nstream\n${stream}endstream',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
   ];
   final out = StringBuffer('%PDF-1.4\n');
   final offsets = <int>[];

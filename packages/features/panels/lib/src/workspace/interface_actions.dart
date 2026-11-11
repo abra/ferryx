@@ -255,7 +255,7 @@ extension _InterfaceActions on _WorkspaceScreenState {
     }
     // Its checks are one folder's: a name taken there, the same new name
     // on two lines. A flat view's rows are in many.
-    if (tab.isFlat) {
+    if (tab.isVirtual) {
       showAppNotice(context, _l10n.noticeNotInFlat);
       return;
     }

@@ -92,7 +92,9 @@ class PanelHeader extends StatelessWidget {
         ],
         trailing: [
           _BarButton(
-            icon: layout.mode == ViewMode.list
+            icon: layout.mode == ViewMode.thumbnails
+                ? AppIcons.layoutThumbnails
+                : layout.mode == ViewMode.list
                 ? AppIcons.layoutList
                 : AppIcons.layoutBrief,
             tooltip: l10n.panelLayoutTooltip,

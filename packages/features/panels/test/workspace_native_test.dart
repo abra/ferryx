@@ -176,7 +176,13 @@ void main() {
             navigation: WorkspaceNavigation(
               openViewer: (context, location, {preview = false}) async =>
                   viewed.add(location),
-              openFind: (context, root, {required view}) async => null,
+              openFind: (
+                context,
+                root, {
+                required view,
+                results,
+                initial,
+              }) async => null,
               openSettings: (context) async {},
               openCheatSheet: (context) async {},
               openSync: (_, {required left, required right}) async {},

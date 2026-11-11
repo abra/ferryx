@@ -1,0 +1,26 @@
+name: thumbnail_service
+description: "Bounded, cancellable thumbnail decoding and shared memory cache."
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  domain_models:
+    path: ../domain_models
+  file_repository:
+    path: ../file_repository
+  pagecraft:
+    path: ../pagecraft
+
+dependency_overrides:
+  pdfium_dart:
+    path: ../pdfium_dart
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

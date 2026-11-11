@@ -9,6 +9,11 @@ import 'package:pagecraft/all_formats.dart';
 /// `tool/search_fold_table.mjs` folds every code point the way
 /// `normalizeSearchText` does.
 void main() {
+  test('optional match budget bounds node results', () {
+    expect(searchTextNodes(['aa', 'aa'], 'a', maxMatches: 2).length, 2);
+    expect(searchTextNodes(['aa'], 'a', maxMatches: 0), isEmpty);
+  });
+
   test('every code point folds as in the JS', () {
     final fixture =
         jsonDecode(File('test/fixtures/search_fold.json').readAsStringSync())

@@ -35,6 +35,8 @@ dependencies:
     path: packages/platform_services
   terminal_service:
     path: packages/terminal_service
+  thumbnail_service:
+    path: packages/thumbnail_service
 
   # Feature packages
   panels_feature:

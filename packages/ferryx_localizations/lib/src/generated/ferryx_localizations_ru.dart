@@ -58,6 +58,137 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String get actionOpen => 'Открыть';
 
   @override
+  String get cmdManageWorkspaces => 'Рабочие наборы…';
+
+  @override
+  String get cmdManageSavedSearches => 'Сохранённые поиски…';
+
+  @override
+  String get cmdCompareFiles => 'Сравнить файлы…';
+
+  @override
+  String get diffTitle => 'Сравнение файлов';
+
+  @override
+  String get diffNext => 'Следующее изменение';
+
+  @override
+  String get diffPrevious => 'Предыдущее изменение';
+
+  @override
+  String get diffIdentical => 'Файлы одинаковы';
+
+  @override
+  String get diffLineEndings =>
+      'Текст совпадает; различаются метки порядка байтов или окончания строк';
+
+  @override
+  String get diffBinary =>
+      'Двоичные файлы или файлы не в UTF-8 различаются. Откройте их в Hex для просмотра содержимого.';
+
+  @override
+  String diffLimit(String size, int lines) {
+    return 'Сравнение текста поддерживает до $size и $lines строк в каждом файле; длина строки — до 16 384 символов.';
+  }
+
+  @override
+  String diffChangeCount(int current, int total) {
+    return 'Изменение $current из $total';
+  }
+
+  @override
+  String get diffChooseFiles =>
+      'Отметьте два файла в одной панели или установите курсор на файл в каждой панели.';
+
+  @override
+  String get cmdThumbnailsView => 'Миниатюры';
+
+  @override
+  String get workspacesTitle => 'Рабочие наборы';
+
+  @override
+  String get workspacesEmpty =>
+      'Сохраните текущие вкладки и расположение панелей как рабочий набор.';
+
+  @override
+  String get workspaceSaveCurrent => 'Сохранить текущий как новый';
+
+  @override
+  String get workspaceUpdateCurrent => 'Заменить текущим';
+
+  @override
+  String get savedProfileName => 'Название';
+
+  @override
+  String get savedProfileFailure =>
+      'Не удалось сохранить или восстановить запись. Попробуйте ещё раз.';
+
+  @override
+  String get savedProfileInvalidName =>
+      'Введите название от 1 до 80 символов без управляющих символов.';
+
+  @override
+  String get savedProfileExists => 'Запись с таким названием уже существует.';
+
+  @override
+  String get savedProfileLimit =>
+      'Удалите запись перед добавлением новой (максимум 64).';
+
+  @override
+  String get savedProfileMissing => 'Запись с таким названием не найдена.';
+
+  @override
+  String get savedSearchesTitle => 'Сохранённые поиски';
+
+  @override
+  String get savedSearchesEmpty =>
+      'Сохраните запрос из окна поиска или из вкладки с результатами.';
+
+  @override
+  String get searchSaveCurrent => 'Сохранить текущий запрос как новый';
+
+  @override
+  String get searchUpdateCurrent => 'Заменить текущим запросом';
+
+  @override
+  String get searchOpenTab => 'Открыть результаты во вкладке';
+
+  @override
+  String get searchResultsTitle => 'Результаты поиска';
+
+  @override
+  String get findModified => 'Изменены';
+
+  @override
+  String get findIncludeFolders => 'Включая папки';
+
+  @override
+  String findModifiedDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'За последние $days дня',
+      many: 'За последние $days дней',
+      few: 'За последние $days дня',
+      one: 'За последний день',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get searchStop => 'Остановить поиск';
+
+  @override
+  String get searchEdit => 'Изменить условия поиска';
+
+  @override
+  String get searchOpenRoot => 'Открыть папку поиска';
+
+  @override
+  String get searchLimit =>
+      'Показаны первые 10 000 результатов. Уточните условия поиска, чтобы увидеть остальные.';
+
+  @override
   String get actionRetry => 'Повторить';
 
   @override
@@ -4430,5 +4561,16 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   @override
   String panelSplitStacked(int first, int second) {
     return 'Сверху $first% · Снизу $second%';
+  }
+
+  @override
+  String get previewSearching => 'Поиск…';
+
+  @override
+  String get previewSearchFailed => 'Не удалось выполнить поиск в документе.';
+
+  @override
+  String previewSearchCapped(String status) {
+    return '$status · Первые 1 000 совпадений';
   }
 }

@@ -392,6 +392,11 @@ rust.FindRequestView findRequestToView(d.FindRequest request) =>
       includeHidden: request.includeHidden,
       includeFolders: request.includeFolders,
       useSpotlight: request.useSpotlight,
+      modifiedAfterMs: request.modifiedWithinDays == null
+          ? null
+          : DateTime.now()
+                .subtract(Duration(days: request.modifiedWithinDays!))
+                .millisecondsSinceEpoch,
     );
 
 d.FindHit findHitFromView(rust.FindHitView view) => d.FindHit(

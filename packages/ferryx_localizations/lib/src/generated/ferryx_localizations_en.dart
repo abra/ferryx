@@ -58,6 +58,135 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get actionOpen => 'Open';
 
   @override
+  String get cmdManageWorkspaces => 'Workspaces…';
+
+  @override
+  String get cmdManageSavedSearches => 'Saved Searches…';
+
+  @override
+  String get cmdCompareFiles => 'Compare Files…';
+
+  @override
+  String get diffTitle => 'Compare files';
+
+  @override
+  String get diffNext => 'Next change';
+
+  @override
+  String get diffPrevious => 'Previous change';
+
+  @override
+  String get diffIdentical => 'The files are identical';
+
+  @override
+  String get diffLineEndings =>
+      'The text matches; byte order marks or line endings differ';
+
+  @override
+  String get diffBinary =>
+      'Binary or non-UTF-8 files differ. Open them in Hex to inspect their contents.';
+
+  @override
+  String diffLimit(String size, int lines) {
+    return 'Text comparison supports up to $size and $lines lines per file, with lines up to 16,384 characters.';
+  }
+
+  @override
+  String diffChangeCount(int current, int total) {
+    return 'Change $current of $total';
+  }
+
+  @override
+  String get diffChooseFiles =>
+      'Mark two files in one panel, or place the cursor on one file in each panel.';
+
+  @override
+  String get cmdThumbnailsView => 'Thumbnails View';
+
+  @override
+  String get workspacesTitle => 'Workspaces';
+
+  @override
+  String get workspacesEmpty =>
+      'Save the current tabs and panel layout as a workspace.';
+
+  @override
+  String get workspaceSaveCurrent => 'Save current as new';
+
+  @override
+  String get workspaceUpdateCurrent => 'Replace with current';
+
+  @override
+  String get savedProfileName => 'Name';
+
+  @override
+  String get savedProfileFailure =>
+      'Could not save or restore this item. Try again.';
+
+  @override
+  String get savedProfileInvalidName =>
+      'Enter a name of 1–80 characters without control characters.';
+
+  @override
+  String get savedProfileExists => 'An item with this name already exists.';
+
+  @override
+  String get savedProfileLimit =>
+      'Remove an item before saving another (maximum 64).';
+
+  @override
+  String get savedProfileMissing => 'No saved item with this name.';
+
+  @override
+  String get savedSearchesTitle => 'Saved searches';
+
+  @override
+  String get savedSearchesEmpty =>
+      'Save a query from Find Files, or from an existing search tab.';
+
+  @override
+  String get searchSaveCurrent => 'Save current query as new';
+
+  @override
+  String get searchUpdateCurrent => 'Replace with current query';
+
+  @override
+  String get searchOpenTab => 'Open results in tab';
+
+  @override
+  String get searchResultsTitle => 'Search results';
+
+  @override
+  String get findModified => 'Modified';
+
+  @override
+  String get findIncludeFolders => 'Include folders';
+
+  @override
+  String findModifiedDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'In the last $days days',
+      one: 'In the last 24 hours',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get searchStop => 'Stop search';
+
+  @override
+  String get searchEdit => 'Edit search conditions';
+
+  @override
+  String get searchOpenRoot => 'Open the search folder';
+
+  @override
+  String get searchLimit =>
+      'Showing the first 10,000 results. Narrow the search to see more.';
+
+  @override
   String get actionRetry => 'Retry';
 
   @override
@@ -4331,5 +4460,16 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   @override
   String panelSplitStacked(int first, int second) {
     return 'Top $first% · Bottom $second%';
+  }
+
+  @override
+  String get previewSearching => 'Searching…';
+
+  @override
+  String get previewSearchFailed => 'Could not search this document.';
+
+  @override
+  String previewSearchCapped(String status) {
+    return '$status · First 1,000 matches';
   }
 }

@@ -63,6 +63,7 @@ TextPreviewData _cleanHtml((String, bool) input) {
     'template',
   };
   const attributes = {
+    'checked',
     'href',
     'src',
     'alt',

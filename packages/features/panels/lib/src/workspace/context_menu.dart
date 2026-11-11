@@ -208,6 +208,11 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
       enabled: !remote,
     ),
     AppMenuAction(
+      value: AppCommand.compareFiles,
+      label: l10n.cmdCompareFiles,
+      shortcut: chord(AppCommand.compareFiles),
+    ),
+    AppMenuAction(
       value: AppCommand.synchronizeFolders,
       label: l10n.cmdSynchronizeFolders,
       icon: AppIcons.synchronize,
@@ -266,6 +271,11 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
       icon: AppIcons.hidden,
       shortcut: chord(AppCommand.toggleHiddenFiles),
       checked: showHidden,
+    ),
+    AppMenuAction(
+      value: AppCommand.manageWorkspaces,
+      label: l10n.cmdManageWorkspaces,
+      shortcut: chord(AppCommand.manageWorkspaces),
     ),
     AppMenuAction(
       value: AppCommand.refresh,

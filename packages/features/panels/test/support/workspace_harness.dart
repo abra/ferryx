@@ -250,6 +250,7 @@ class WorkspaceHarness {
     WorkspacePreview? preview,
     WorkspaceTerminal? terminal,
     ArchiverDiscovery? loadArchivers,
+    Future<void> Function(BuildContext, Location, Location)? onCompare,
     ValueChanged<WorkspaceSnapshot>? onSnapshot,
   }) async {
     tester.view.physicalSize = size;
@@ -299,8 +300,15 @@ class WorkspaceHarness {
           terminal: terminal,
           loadArchivers: loadArchivers,
           navigation: WorkspaceNavigation(
+            openComparison: onCompare,
             openViewer: (context, location, {preview = false}) async {},
-            openFind: (context, root, {required view}) async => null,
+            openFind: (
+              context,
+              root, {
+              required view,
+              results,
+              initial,
+            }) async => null,
             openSettings: (context) async {},
             openCheatSheet: (context) async {},
             openSync: (_, {required left, required right}) async {},
@@ -318,6 +326,7 @@ class WorkspaceHarness {
           fallbackLocation: const Location.native(home),
           onSnapshot: onSnapshot ?? (_) {},
           frecency: frecency,
+          sideStorage: sideStorage,
         ),
       ),
     );

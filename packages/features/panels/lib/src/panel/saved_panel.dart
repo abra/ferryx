@@ -62,16 +62,22 @@ class SavedTab {
     required this.location,
     this.sort = const SortOptions(),
     this.layoutIndex = 0,
+    this.search,
+    this.searchLabel,
   });
 
   final Location location;
   final SortOptions sort;
   final int layoutIndex;
+  final FindRequest? search;
+  final String? searchLabel;
 
   Map<String, Object?> toJson() => {
     'location': location.encode(),
     'sort': sort.toJson(),
     'layout': layoutIndex,
+    if (search != null) 'search': search!.toJson(),
+    if (searchLabel != null) 'searchLabel': searchLabel,
   };
 
   static SavedTab? fromJson(Map<String, Object?> json) {
@@ -86,6 +92,12 @@ class SavedTab {
           ? SortOptions.fromJson(json['sort']! as Map<String, Object?>)
           : const SortOptions(),
       layoutIndex: layout is int ? layout : 0,
+      search: json['search'] is Map<String, Object?>
+          ? FindRequest.fromJson(json['search']! as Map<String, Object?>)
+          : null,
+      searchLabel: json['searchLabel'] is String
+          ? json['searchLabel']! as String
+          : null,
     );
   }
 }

@@ -208,6 +208,7 @@ mod tests {
             include_folders: true,
             max_depth: None,
             use_spotlight: true,
+            modified_after_ms: None,
         }
     }
 

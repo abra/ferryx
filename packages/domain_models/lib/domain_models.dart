@@ -3,6 +3,8 @@
 /// Pure Dart: no Flutter, storage or bridge types leak through here.
 library;
 
+export 'src/thumbnail.dart';
+
 export 'src/archives.dart';
 export 'src/archivers.dart';
 export 'src/attributes.dart';

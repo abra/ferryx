@@ -658,6 +658,7 @@ pub struct FindRequestView {
     /// Ask the Spotlight index first (macOS); the folders are walked when
     /// it cannot answer.
     pub use_spotlight: bool,
+    pub modified_after_ms: Option<i64>,
 }
 
 impl FindRequestView {
@@ -687,6 +688,7 @@ impl FindRequestView {
             include_folders: self.include_folders,
             max_depth: None,
             use_spotlight: self.use_spotlight,
+            modified_after_ms: self.modified_after_ms,
         }
     }
 }

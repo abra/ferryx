@@ -59,6 +59,22 @@ class FindService {
   Future<void> cancel(int id) =>
       rust.FerryxBackend.guard(() => rust.cancelFind(id: id));
 
+  Future<List<int>> order(List<FindHit> hits, SortOptions options) =>
+      rust.FerryxBackend.guard(
+        () => rust.sortFindHits(
+          hits: [
+            for (final hit in hits)
+              rust.FindHitView(
+                path: hit.path,
+                isDir: hit.isDir,
+                size: hit.size,
+                modifiedMs: hit.modified?.millisecondsSinceEpoch,
+              ),
+          ],
+          options: rust.sortOptionsToView(options),
+        ),
+      );
+
   Future<void> dispose() async {
     await _subscription?.cancel();
     await _updates.close();

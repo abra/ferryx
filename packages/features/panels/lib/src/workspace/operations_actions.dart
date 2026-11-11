@@ -7,12 +7,40 @@ part of 'workspace_screen.dart';
 extension _OperationsActions on _WorkspaceScreenState {
   Map<AppCommand, VoidCallback> _operationsHandlers() => {
     AppCommand.compareFolders: () => unawaited(_compareFolders()),
+    AppCommand.compareFiles: () => unawaited(_compareFiles()),
     AppCommand.synchronizeFolders: () => unawaited(_synchronizeFolders()),
     AppCommand.undo: () => unawaited(_walkJournal(redo: false)),
     AppCommand.redo: () => unawaited(_walkJournal(redo: true)),
     AppCommand.checksums: () => unawaited(_checksums()),
     AppCommand.findDuplicates: () => unawaited(_findDuplicates()),
   };
+
+  Future<void> _compareFiles() async {
+    final tab = _tab;
+    final open = widget.navigation.openComparison;
+    if (tab == null || open == null) return;
+    final selected = tab.targets;
+    final other = _opposite.state.active;
+    final opposite = other?.focused;
+    final List<Location> locations;
+    if (tab.selected.length == 2 &&
+        selected.every((entry) => !entry.isDir && !entry.isParent)) {
+      locations = [for (final entry in selected) tab.locationOf(entry)];
+    } else if (tab.focused case final focused?
+        when tab.selected.isEmpty &&
+            (other?.selected.isEmpty ?? true) &&
+            !focused.isDir &&
+            !focused.isParent &&
+            opposite != null &&
+            !opposite.isDir &&
+            !opposite.isParent) {
+      locations = [tab.locationOf(focused), other!.locationOf(opposite)];
+    } else {
+      showAppNotice(context, _l10n.diffChooseFiles);
+      return;
+    }
+    await open(context, locations[0], locations[1]);
+  }
 
   // ─── Compare Folders ───
 
@@ -38,7 +66,7 @@ extension _OperationsActions on _WorkspaceScreenState {
       return;
     }
     // Names pair across two folders; a flat view's rows are in many.
-    if (leftTab.isFlat || rightTab.isFlat) {
+    if (leftTab.isVirtual || rightTab.isVirtual) {
       showAppNotice(context, _l10n.noticeNotInFlat);
       return;
     }

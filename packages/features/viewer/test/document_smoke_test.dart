@@ -57,6 +57,12 @@ void main() {
         expect(session.error, isNull);
         expect(session.ready, isTrue);
         expect(controller.spreadAt(0)!.pages, isNotEmpty);
+        final hits = (await session.search('document smoke').toList())
+            .expand((batch) => batch)
+            .toList();
+        expect(hits, isNotEmpty);
+        await session.reveal(hits.last);
+        expect(session.error, isNull);
         await session.last();
         expect(session.index, session.count - 1);
         await session.first();
@@ -66,6 +72,36 @@ void main() {
       }
     });
   }
+
+  test('PDF search reads text and navigates to the matching page', () async {
+    final session = await openDocumentSession(
+      await write('search.pdf', pdfFixture(searchable: true)),
+      DocumentFormat.pdf,
+      _appearance,
+    );
+    try {
+      final hits = (await session.search('SEARCHABLE').toList())
+          .expand((batch) => batch)
+          .toList();
+      expect(hits.length, 2);
+      expect(hits.first.excerpt, contains('searchable'));
+      await session.reveal(hits.last);
+      expect(session.index, 1);
+    } finally {
+      await session.close();
+    }
+  });
+  test('closing a document drains a pending native text read', () async {
+    final session = await openDocumentSession(
+      await write('closing.pdf', pdfFixture(searchable: true)),
+      DocumentFormat.pdf,
+      _appearance,
+    );
+    final searching = session.search('searchable').toList();
+    await Future<void>.delayed(Duration.zero);
+    await session.close();
+    await searching;
+  });
 
   test('EPUB navigation follows linear sections at both edges', () async {
     final session = await openDocumentSession(

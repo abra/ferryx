@@ -28,6 +28,7 @@ abstract final class AppRoutes {
   static const root = '/';
   static const workspace = '/workspace';
   static const viewer = '/viewer';
+  static const comparison = '/comparison';
   static const settings = '/settings';
 }
 
@@ -76,6 +77,21 @@ GoRouter buildRouter({
               windowDecor: windowDecor(deps.windowFrame),
               location: args.location,
               startInPreview: args.preview,
+              onClose: () => context.pop(),
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.comparison,
+        pageBuilder: (context, state) {
+          final (left, right) = state.extra! as (Location, Location);
+          return NoTransitionPage<void>(
+            key: state.pageKey,
+            child: FileDiffScreen(
+              left: FileRepositorySource(deps.files, left),
+              right: FileRepositorySource(deps.files, right),
+              shortcutMap: deps.shortcutMap,
               onClose: () => context.pop(),
             ),
           );
@@ -149,6 +165,9 @@ class _WorkspaceRoute extends StatelessWidget {
               : PanelSide.left,
           fallbackLocation: Location.native(home),
           frecency: deps.frecency,
+          sideStorage: deps.sideStorage,
+          find: deps.find,
+          thumbnails: deps.thumbnails,
           preview: WorkspacePreview(
             builder: (context, view) => switch (view.location) {
               final location? => ViewerScreen(
@@ -231,18 +250,36 @@ class _WorkspaceRoute extends StatelessWidget {
             );
           },
           navigation: WorkspaceNavigation(
+            openComparison: (context, left, right) => context.push<void>(
+              AppRoutes.comparison,
+              extra: (left, right),
+            ),
             openViewer: (context, location, {bool preview = false}) =>
                 context.push<void>(
                   AppRoutes.viewer,
                   extra: ViewerRouteArguments(location, preview: preview),
                 ),
-            openFind: (context, root, {required view}) => showFindDialog(
-              context,
-              root: root,
-              find: deps.find,
-              onView: view,
-              spotlight: deps.files.capabilities().spotlight,
-            ),
+            openSavedSearches: (context, current) async {
+              final catalog = deps.savedSearches;
+              if (catalog == null) return null;
+              final selected = await showSavedSearchesDialog(
+                context,
+                catalog: catalog,
+                current: current,
+              );
+              return selected == null ? null : (selected.name, selected.value);
+            },
+            openFind: (context, root, {required view, results, initial}) =>
+                showFindDialog(
+                  context,
+                  root: root,
+                  find: deps.find,
+                  onView: view,
+                  spotlight: deps.files.capabilities().spotlight,
+                  initial: initial,
+                  onResults: results,
+                  savedSearches: deps.savedSearches,
+                ),
             openArchiverSettings: (context) =>
                 openSettings(context, SettingsSection.archivers),
             openSettings: (context) => openSettings(context),
