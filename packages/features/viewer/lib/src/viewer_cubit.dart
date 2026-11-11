@@ -61,7 +61,7 @@ class ViewerCubit extends Cubit<ViewerState> {
         var markdown = '';
         TextPreviewData? preview;
         final format = textPreviewFormatOf(source.displayName);
-        if (format != null && size > maxTextPreviewBytes) {
+        if (format != null && size > format.maxInputBytes) {
           preview = const FailedTextPreview(TextPreviewFailure.limit);
         } else if (format != null && size > 0) {
           final bytes = await source.read(0, size);
@@ -129,7 +129,7 @@ class ViewerCubit extends Cubit<ViewerState> {
         }
         final html = await file.renderTextDocument(bytes, converter);
         if (read != _reads || isClosed) return null;
-        return await prepareHtml(html);
+        return await prepareHtml(html, embeddedImages: format.office);
       }
       final text = utf8.decode(bytes, allowMalformed: true);
       return await (format == TextPreviewFormat.html

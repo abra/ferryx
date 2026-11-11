@@ -1,9 +1,29 @@
 import Cocoa
 import XCTest
+import FlutterMacOS
+import irondash_engine_context
 @testable import Ferryx
 
 @MainActor
 class RunnerTests: XCTestCase {
+  func testUnknownEngineHandlesReturnNilInsteadOfDereferencingMissingContext() {
+    XCTAssertNil(IrondashEngineContextPlugin.getFlutterView(Int64.max))
+    XCTAssertNil(IrondashEngineContextPlugin.getTextureRegistry(Int64.max))
+    XCTAssertNil(IrondashEngineContextPlugin.getBinaryMessenger(Int64.max))
+  }
+
+  func testEngineHandleReplyWaitsForQueuedRegistration() {
+    let plugin = IrondashEngineContextPlugin()
+    let replied = expectation(description: "engine handle is published on the main queue")
+    var completed = false
+    plugin.handle(FlutterMethodCall(methodName: "getEngineHandle", arguments: nil), result: { _ in
+      completed = true
+      replied.fulfill()
+    })
+    XCTAssertFalse(completed)
+    wait(for: [replied], timeout: 2)
+  }
+
   func testMonospaceFontCatalogContainsFamiliesWithoutProportionalFaces() {
     let families = NativeServices.monospaceFontFamilies()
     XCTAssertTrue(families.contains("Menlo"))

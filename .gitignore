@@ -42,3 +42,5 @@ test/ui/snapshots/
 !generated_plugin_registrant.*
 !GeneratedPluginRegistrant.swift
 !generated_plugins.cmake
+# Small, self-contained office samples used by Rust and bridge tests.
+!/rust/crates/ferryx_core/tests/fixtures/office.zip

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
@@ -15,12 +16,16 @@ class MarkdownImage extends StatefulWidget {
     required this.reference,
     required this.alt,
     required this.generation,
+    this.embeddedBytes,
     super.key,
   });
   final ViewerSource source;
   final Uri reference;
   final String? alt;
   final int generation;
+
+  /// Bounded raster bytes extracted from an office document by the core.
+  final Uint8List? embeddedBytes;
   @override
   State<MarkdownImage> createState() => _MarkdownImageState();
 }
@@ -43,6 +48,7 @@ class _MarkdownImageState extends State<MarkdownImage> {
     super.didUpdateWidget(oldWidget);
     if (widget.source != oldWidget.source ||
         widget.reference != oldWidget.reference ||
+        widget.embeddedBytes != oldWidget.embeddedBytes ||
         widget.generation != oldWidget.generation) {
       _evict();
       _image = _load();
@@ -51,6 +57,17 @@ class _MarkdownImageState extends State<MarkdownImage> {
 
   Future<ImageProvider?> _load() async {
     final attempt = ++_attempt;
+    final embedded = widget.embeddedBytes;
+    if (embedded != null) {
+      if (embedded.isEmpty || embedded.length > _maxBytes) return null;
+      return _provider = ResizeImage(
+        MemoryImage(embedded),
+        width: _maxPixelsPerSide,
+        height: _maxPixelsPerSide,
+        policy: ResizeImagePolicy.fit,
+        allowUpscaling: false,
+      );
+    }
     final source = widget.source;
     if (source is! RelativeViewerSource) return null;
     final image = source.resolveRelative(widget.reference);

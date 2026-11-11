@@ -1,2 +1,12 @@
 /// Native, in-memory converters. HTML and Markdown need no conversion.
-enum TextDocumentFormat { asciiDoc, reStructuredText, rtf }
+enum TextDocumentFormat {
+  asciiDoc,
+  reStructuredText,
+  rtf,
+  docx,
+  xlsx,
+  pptx,
+  doc,
+  xls,
+  ppt,
+}

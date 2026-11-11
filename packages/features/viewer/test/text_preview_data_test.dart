@@ -1,9 +1,52 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:viewer_feature/src/source_syntax.dart';
 import 'package:viewer_feature/src/text_preview_data.dart';
 import 'package:viewer_feature/src/text_preview_format.dart';
 
 void main() {
+  test('Office images do not consume the cleaned markup budget', () async {
+    final encoded = base64Encode(Uint8List(6 * 1024 * 1024));
+    final source =
+        '<h1>Presentation</h1><img src="data:image/png;base64,$encoded">';
+    final office =
+        await prepareHtml(source, embeddedImages: true) as HtmlPreviewData;
+    expect(office.html, contains('<h1>Presentation</h1>'));
+    expect(office.html, contains('ferryx-embedded:0'));
+    expect(office.images.values.single.length, 6 * 1024 * 1024);
+    expect(
+      (await prepareHtml(source) as FailedTextPreview).reason,
+      TextPreviewFailure.limit,
+    );
+
+    final markup = await prepareHtml(
+      'a' * (8 * 1024 * 1024 + 1),
+      embeddedImages: true,
+    );
+    expect((markup as FailedTextPreview).reason, TextPreviewFailure.limit);
+  });
+  test(
+    'office images are extracted only for native office conversion',
+    () async {
+      const source =
+          '<p>Document</p><img src="data:image/png;base64,AQID" alt="Image">'
+          '<img src="https://example.com/external.png">'
+          '<img src="file:///private/secret.png">'
+          '<img src="../unrelated.png">';
+      final office =
+          await prepareHtml(source, embeddedImages: true) as HtmlPreviewData;
+      expect(office.images.values.single, [1, 2, 3]);
+      expect(office.html, contains('ferryx-embedded:0'));
+      expect(office.html, isNot(contains('https://example.com')));
+      expect(office.html, isNot(contains('file:///')));
+      expect(office.html, isNot(contains('../unrelated')));
+      final ordinary = await prepareHtml(source) as HtmlPreviewData;
+      expect(ordinary.images, isEmpty);
+    },
+  );
+
   test('recognizes document formats without misclassifying source files', () {
     for (final name in [
       'a.HTML',
@@ -16,6 +59,15 @@ void main() {
       'a.rest',
       'a.csv',
       'a.TSV',
+      'a.docx',
+      'a.xlsx',
+      'a.pptx',
+      'a.doc',
+      'a.xls',
+      'a.ppt',
+      'a.DOCM',
+      'a.XLSM',
+      'a.PPSX',
     ]) {
       expect(textPreviewFormatOf(name), isNotNull, reason: name);
     }

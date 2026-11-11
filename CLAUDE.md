@@ -32,6 +32,10 @@ Guidance for Claude Code when working in this repository.
   pins its toolchain in `packages/pagecraft/rust/rust-toolchain.toml`;
   the Makefile and native build hook select that compiler explicitly.
   Keep its Dart and Cargo lockfiles; edit the local sources, not Pub's cache.
+- `packages/irondash_engine_context` is a local copy of 0.5.5. Its macOS
+  patch defers publishing an engine handle until queued view registration
+  finishes and returns nil for stale handles. Keep the root path override;
+  otherwise startup can crash in drag/drop before the window appears.
 - `packages/pdfium_dart` is a local MIT-licensed copy of 0.2.5. Its build
   hook pins PDFium Chromium 7811 archives and SHA-256 digests, retries downloads
   and uses the official GitHub asset API as fallback. Keep the path overrides
@@ -44,6 +48,10 @@ Guidance for Claude Code when working in this repository.
   its API require bridge codegen and `make core` before real-core Dart tests.
   Keep native converter dependency notices in `packages/ferryx_backend/LICENSE`
   so Flutter includes them in the application license bundle.
+  Office preview uses pinned `office_oxide` 0.1.16 in that same pipeline,
+  over bounded bytes; keep it read-only and do not introduce external office
+  applications. Rust fixtures in `ferryx_core/tests/fixtures/office.zip`
+  cover DOCX/XLSX/PPTX, DOC/XLS/PPT, embedded images and hidden text.
 
 ## Commands
 

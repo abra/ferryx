@@ -5817,6 +5817,12 @@ impl SseDecode for crate::api::text_document::TextDocumentFormatView {
             0 => crate::api::text_document::TextDocumentFormatView::AsciiDoc,
             1 => crate::api::text_document::TextDocumentFormatView::ReStructuredText,
             2 => crate::api::text_document::TextDocumentFormatView::Rtf,
+            3 => crate::api::text_document::TextDocumentFormatView::Docx,
+            4 => crate::api::text_document::TextDocumentFormatView::Xlsx,
+            5 => crate::api::text_document::TextDocumentFormatView::Pptx,
+            6 => crate::api::text_document::TextDocumentFormatView::Doc,
+            7 => crate::api::text_document::TextDocumentFormatView::Xls,
+            8 => crate::api::text_document::TextDocumentFormatView::Ppt,
             _ => unreachable!("Invalid variant for TextDocumentFormatView: {}", inner),
         };
     }
@@ -7915,6 +7921,12 @@ impl flutter_rust_bridge::IntoDart for crate::api::text_document::TextDocumentFo
             Self::AsciiDoc => 0.into_dart(),
             Self::ReStructuredText => 1.into_dart(),
             Self::Rtf => 2.into_dart(),
+            Self::Docx => 3.into_dart(),
+            Self::Xlsx => 4.into_dart(),
+            Self::Pptx => 5.into_dart(),
+            Self::Doc => 6.into_dart(),
+            Self::Xls => 7.into_dart(),
+            Self::Ppt => 8.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -9889,6 +9901,12 @@ impl SseEncode for crate::api::text_document::TextDocumentFormatView {
                 crate::api::text_document::TextDocumentFormatView::AsciiDoc => 0,
                 crate::api::text_document::TextDocumentFormatView::ReStructuredText => 1,
                 crate::api::text_document::TextDocumentFormatView::Rtf => 2,
+                crate::api::text_document::TextDocumentFormatView::Docx => 3,
+                crate::api::text_document::TextDocumentFormatView::Xlsx => 4,
+                crate::api::text_document::TextDocumentFormatView::Pptx => 5,
+                crate::api::text_document::TextDocumentFormatView::Doc => 6,
+                crate::api::text_document::TextDocumentFormatView::Xls => 7,
+                crate::api::text_document::TextDocumentFormatView::Ppt => 8,
                 _ => {
                     unimplemented!("");
                 }

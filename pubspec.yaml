@@ -73,6 +73,9 @@ dependencies:
   window_manager: ^0.5.0
 
 dependency_overrides:
+  # macOS engine-context registration must finish before drag/drop uses its handle.
+  irondash_engine_context:
+    path: packages/irondash_engine_context
   # Local 0.2.5 build-hook fix; keep the reader's PDFium ABI unchanged.
   pdfium_dart:
     path: packages/pdfium_dart

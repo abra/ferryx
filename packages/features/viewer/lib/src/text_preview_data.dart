@@ -10,8 +10,9 @@ sealed class TextPreviewData {
 }
 
 class HtmlPreviewData extends TextPreviewData {
-  const HtmlPreviewData(this.html);
+  const HtmlPreviewData(this.html, {this.images = const {}});
   final String html;
+  final Map<String, Uint8List> images;
 }
 
 class TablePreviewData extends TextPreviewData {
@@ -27,11 +28,17 @@ class FailedTextPreview extends TextPreviewData {
 
 /// Parsing stays outside the UI isolate. Renderer-owned resource loading is
 /// removed here; images are supplied by the repository-backed widget.
-Future<TextPreviewData> prepareHtml(String source) =>
-    compute(_cleanHtml, source);
+Future<TextPreviewData> prepareHtml(
+  String source, {
+  bool embeddedImages = false,
+}) => compute(_cleanHtml, (source, embeddedImages));
 
-TextPreviewData _cleanHtml(String source) {
-  if (source.length > 8 * 1024 * 1024) {
+TextPreviewData _cleanHtml((String, bool) input) {
+  final (source, embeddedImages) = input;
+  // Native Office conversion includes base64 images. They are removed from
+  // the markup and decoded into the separate image map before rendering.
+  final maxSourceLength = (embeddedImages ? 32 : 8) * 1024 * 1024;
+  if (source.length > maxSourceLength) {
     return const FailedTextPreview(TextPreviewFailure.limit);
   }
   final document = html.parse(source);
@@ -73,6 +80,7 @@ TextPreviewData _cleanHtml(String source) {
   if (nodes.length > 20000) {
     return const FailedTextPreview(TextPreviewFailure.limit);
   }
+  final images = <String, Uint8List>{};
   for (final element in nodes) {
     if (excluded.contains(element.localName)) {
       element.remove();
@@ -80,6 +88,30 @@ TextPreviewData _cleanHtml(String source) {
     }
     final style = element.attributes['style'];
     element.attributes.removeWhere((key, _) => !attributes.contains(key));
+    if (embeddedImages && element.localName == 'img') {
+      final reference = element.attributes.remove('src') ?? '';
+      try {
+        final data = Uri.parse(reference).data;
+        if (data != null &&
+            data.isBase64 &&
+            const {
+              'image/png',
+              'image/jpeg',
+              'image/gif',
+              'image/webp',
+              'image/bmp',
+            }.contains(data.mimeType)) {
+          final bytes = data.contentAsBytes();
+          if (bytes.isNotEmpty && bytes.length <= 8 * 1024 * 1024) {
+            final id = 'ferryx-embedded:${images.length}';
+            images[id] = bytes;
+            element.attributes['src'] = id;
+          }
+        }
+      } on FormatException {
+        // A broken/unsupported picture keeps its alt text without loading a URL.
+      }
+    }
     if (style != null) {
       final safe = style
           .split(';')
@@ -126,7 +158,14 @@ TextPreviewData _cleanHtml(String source) {
       }
     }
   }
-  return HtmlPreviewData(document.body?.innerHtml ?? '');
+  final cleaned = document.body?.innerHtml ?? '';
+  if (cleaned.length > 8 * 1024 * 1024) {
+    return const FailedTextPreview(TextPreviewFailure.limit);
+  }
+  return HtmlPreviewData(
+    cleaned,
+    images: Map.unmodifiable(images),
+  );
 }
 
 Future<TextPreviewData> prepareTable(String source, {required bool tsv}) =>

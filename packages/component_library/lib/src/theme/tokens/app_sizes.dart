@@ -48,6 +48,9 @@ abstract final class AppSizes {
   static const double previewTableMinColumnWidth = 120;
   static const double previewTableMaxColumnWidth = 360;
   static const double previewTableIndexWidth = 52;
+
+  /// Formatted documents need room for full words and multi-line headings.
+  static const double documentTableCellWidth = 180;
   static const double dialogWidth = 560;
 
   /// A dialog holding one field or one key cap: a name prompt, a shortcut

@@ -927,8 +927,9 @@ class _Content extends StatelessWidget {
           }
           final preview = state.textPreview;
           return switch (preview) {
-            HtmlPreviewData(:final html) => RichTextPreview(
+            HtmlPreviewData(:final html, :final images) => RichTextPreview(
               html: html,
+              images: images,
               source: source,
               generation: state.generation,
               fontSize: fontSize,
@@ -939,7 +940,11 @@ class _Content extends StatelessWidget {
             ),
             FailedTextPreview(:final reason) => AppEmptyState(
               title: reason == TextPreviewFailure.limit
-                  ? l10n.textPreviewLimit(l10n.fileSize(maxTextPreviewBytes))
+                  ? l10n.textPreviewLimit(
+                      l10n.fileSize(
+                        textPreviewFormatOf(file.displayName)!.maxInputBytes,
+                      ),
+                    )
                   : l10n.textPreviewFailed,
               icon: AppIcons.file,
               action: OutlinedButton(

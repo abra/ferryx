@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:viewer_feature/viewer_feature.dart';
 import 'package:viewer_feature/src/markdown_format.dart';
 import 'package:viewer_feature/src/text_preview_data.dart';
+import 'package:viewer_feature/src/text_preview_format.dart';
 import 'package:viewer_feature/src/source_syntax.dart';
 
 /// A file held in memory.
@@ -62,6 +63,12 @@ class DeferredSource extends FakeSource {
   }
 }
 
+class OversizedOfficeSource extends FakeSource {
+  OversizedOfficeSource() : super(Uint8List(0), name: 'large.docx');
+  @override
+  Future<int> size() async => maxOfficePreviewBytes + 1;
+}
+
 Uint8List text(String s) => Uint8List.fromList(utf8.encode(s));
 
 class ConvertedSource extends FakeSource implements ConvertedDocumentSource {
@@ -80,6 +87,24 @@ class ConvertedSource extends FakeSource implements ConvertedDocumentSource {
 
 void main() {
   group('ViewerCubit', () {
+    test(
+      'oversized office sources are rejected before reading or conversion',
+      () async {
+        final source = OversizedOfficeSource();
+        final cubit = ViewerCubit(
+          source: source,
+          wrap: true,
+          mode: ViewerMode.preview,
+        );
+        await cubit.load();
+        expect(source.reads, 0);
+        expect(
+          (cubit.state.textPreview! as FailedTextPreview).reason,
+          TextPreviewFailure.limit,
+        );
+        await cubit.close();
+      },
+    );
     test('late conversion cannot replace Hex or start HTML preparation after closing', () async {
       for (final close in [false, true]) {
         final source = ConvertedSource(text(r'{\rtf1 body}'));

@@ -196,6 +196,12 @@ class FileRepository {
         TextDocumentFormat.reStructuredText =>
           rust.TextDocumentFormatView.reStructuredText,
         TextDocumentFormat.rtf => rust.TextDocumentFormatView.rtf,
+        TextDocumentFormat.docx => rust.TextDocumentFormatView.docx,
+        TextDocumentFormat.xlsx => rust.TextDocumentFormatView.xlsx,
+        TextDocumentFormat.pptx => rust.TextDocumentFormatView.pptx,
+        TextDocumentFormat.doc => rust.TextDocumentFormatView.doc,
+        TextDocumentFormat.xls => rust.TextDocumentFormatView.xls,
+        TextDocumentFormat.ppt => rust.TextDocumentFormatView.ppt,
       },
     ),
   );

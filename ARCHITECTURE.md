@@ -679,12 +679,41 @@ Secure mode (no includes), reStructuredText and RTF to body HTML, with an
 8 MiB output limit. RTF preserves Unicode, codepages and basic inline styles.
 It does not reproduce embedded objects or page layout.
 
+Office preview uses the same worker conversion boundary with `office_oxide`
+0.1.16: DOCX/XLSX/PPTX and legacy DOC/XLS/PPT become body HTML in Rust,
+without external programs or file access by the converter. The repository maps
+typed formats; the viewer recognizes their supported template/macro variants.
+It reads at most 32 MiB, limits package expansion to 128 MiB, individual parts
+to 32 MiB, conversion memory to 64 MiB and HTML including base64 images to 32 MiB.
+After extracting image bytes, cleaned markup is limited to 8 MiB. Per-document
+options exclude hidden/deleted text and reject incomplete input; they never mutate
+process-wide parser settings. Native workers parse the files, Dart isolates
+sanitize the result, and stale results are discarded on replacement/disposal.
+The existing DOM limit (20,000 elements), viewer sizing, keyboard handling
+and pane/full-window placement apply. This is a read-only content preview,
+not an Office pagination or presentation-layout engine. XLSB, OpenDocument
+and password-protected Office documents are not claimed as supported.
+
+Only office conversion may extract embedded raster data URIs. Sanitization
+replaces them with opaque local IDs and a bounded byte map; office image URLs
+are removed. `RichTextPreview` passes the bytes to `MarkdownImage`'s existing
+bounded decode/cache lifecycle (8 MiB encoded, 2048 pixels per side), never to
+renderer-owned resource loaders. Ordinary HTML continues to reject data URIs.
+
 `prepareHtml` and `prepareTable` run in worker isolates. HTML cleaning drops
 active content, remote styles, source typography and resource-loading
 attributes, limits the DOM to 20,000 elements and clamps table spans.
 `RichTextPreview` uses `flutter_widget_from_html_core` with a cached,
 controller-backed list renderer, shared typography and colors. Its factory
 disables all renderer-owned file/network/data/asset image providers.
+HTML tables share theme-colored cell borders and padding. A factory build op
+wraps each table in a controller-backed horizontal scroll view before layout,
+giving the renderer loose horizontal constraints. Cells have a shared preferred
+width scaled with the preview font and accessibility text scale. The renderer
+calculates its grid from those cell widths, preserving merged and nested tables
+without duplicating its layout algorithm. Tables no longer receive a narrow
+viewport sizing hint, so wide sheets can scroll. Table colors and scale
+invalidate the HTML cache on theme/font changes.
 Fragment links scroll within the document. Other links use `ViewerLink`'s
 focusable target/copy dialog, shared with Markdown.
 

@@ -30,6 +30,31 @@ void main() {
   tearDownAll(() async {
     if (skip == null) await files.dispose();
   });
+  final fixture = File(
+    '../../rust/crates/ferryx_core/tests/fixtures/office.zip',
+  ).absolute;
+  for (final (extension, format, expected) in [
+    ('docx', TextDocumentFormat.docx, 'Ferryx office preview'),
+    ('doc', TextDocumentFormat.doc, 'Ferryx office preview'),
+    ('xlsx', TextDocumentFormat.xlsx, 'Second worksheet'),
+    ('xls', TextDocumentFormat.xls, 'Second worksheet'),
+    ('pptx', TextDocumentFormat.pptx, 'Second slide'),
+    ('ppt', TextDocumentFormat.ppt, 'Second slide'),
+  ]) {
+    test(
+      '$extension converts through the bridge directly from an archive',
+      () async {
+        final bytes = await files.readRange(
+          Location.inArchive(archive: fixture.path, path: 'fixture.$extension'),
+          0,
+          1024 * 1024,
+        );
+        final html = await files.renderTextDocument(bytes, format);
+        expect(html, contains(expected));
+      },
+      skip: skip,
+    );
+  }
   for (final (format, text, expected) in [
     (
       TextDocumentFormat.rtf,

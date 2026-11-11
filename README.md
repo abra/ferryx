@@ -244,11 +244,21 @@ and preview, showing the keys for the active area.
 | Tables | CSV (comma or semicolon) and TSV; quoted fields, row/column labels and selectable cells |
 | Markdown | `.md`, `.markdown`, `.mdown`, `.mkd`, `.mkdn`; headings, lists, tables, task lists and code |
 | Formatted text | HTML/HTM/XHTML, RTF, AsciiDoc (`.adoc`, `.asciidoc`) and reStructuredText (`.rst`, `.rest`) |
+| Office documents | DOCX, XLSX, PPTX and legacy DOC, XLS, PPT; supported template and macro-enabled variants |
 | Images | Whole-file preview, limited to 64 MiB |
 | Reflowable books | EPUB, FB2 (also `.fbz` / `.fb2.zip`), MOBI 6, AZW3/KF8 |
 | Fixed pages | PDF, CBZ, self-contained DjVu (`.djvu` / `.djv`) |
 
 On macOS, **⌘Y opens system Quick Look**, separately from built-in Preview.
+
+Office files open directly in built-in Preview, including in the neighboring
+pane. No office application needs to be installed. Preview shows document text,
+tables, worksheet sections, slide content and supported embedded raster images;
+it is read-only and does not reproduce every aspect of the original page or
+slide layout. Tables have visible cell borders and padding. Wide tables scroll
+horizontally instead of squeezing every column into the pane; column widths
+also follow the preview font size. Password-protected Office files and
+XLSB/OpenDocument formats are not supported by this preview.
 
 <details>
 <summary>Reading controls and format limits</summary>
@@ -265,8 +275,11 @@ CSV/TSV keep values as text, including leading zeros, and do not assume
 the first row is a header. Long cell contents are available on hover and
 keyboard focus.
 
-Formatted preview is limited to 512 KiB. Tables also have limits of 5,000
-rows, 64 columns, 50,000 cells and 16,384 characters per cell. A file that
+Formatted preview is limited to 512 KiB; Office source files to 32 MiB.
+Office parsing also bounds decompressed data and memory. Converted Office
+content may use up to 32 MiB including embedded images, with 20,000 elements
+for rendering. Tables also have limits of 5,000 rows, 64 columns, 50,000 cells
+and 16,384 characters per cell. A file that
 exceeds a limit offers **Open Text** instead of showing a partial table.
 
 HTML, AsciiDoc and reStructuredText show document content using the app's

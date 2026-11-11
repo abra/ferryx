@@ -154,6 +154,12 @@ void main() {
       ('doc.rtf', TextDocumentFormat.rtf),
       ('doc.adoc', TextDocumentFormat.asciiDoc),
       ('doc.rst', TextDocumentFormat.reStructuredText),
+      ('doc.docx', TextDocumentFormat.docx),
+      ('doc.xlsx', TextDocumentFormat.xlsx),
+      ('doc.pptx', TextDocumentFormat.pptx),
+      ('doc.doc', TextDocumentFormat.doc),
+      ('doc.xls', TextDocumentFormat.xls),
+      ('doc.ppt', TextDocumentFormat.ppt),
     ]) {
       testWidgets(
         '${brightness.name}: $name uses its native converter and renders formatted text',

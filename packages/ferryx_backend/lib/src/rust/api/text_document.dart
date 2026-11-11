@@ -21,4 +21,10 @@ enum TextDocumentFormatView {
   asciiDoc,
   reStructuredText,
   rtf,
+  docx,
+  xlsx,
+  pptx,
+  doc,
+  xls,
+  ppt,
 }
