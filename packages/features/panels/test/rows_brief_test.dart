@@ -11,6 +11,7 @@ import 'package:monitoring/monitoring.dart';
 import 'package:operations_service/operations_service.dart';
 import 'package:panels_feature/panels_feature.dart';
 import 'package:panels_feature/src/panel/rows_brief.dart';
+import 'package:panels_feature/src/panel/panel_row.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 
@@ -174,7 +175,18 @@ void main() {
       expect(RowsBrief.debugColumnsBuilt - built, lessThan(20));
       expect(clock.elapsed, lessThan(const Duration(seconds: 10)));
       expect(cubit.state.active!.cursor, 19999);
-      expect(find.text('file ${'x' * (19999 % 17)} 19999.txt'), findsOneWidget);
+      // A long name may be ellipsized. Check the actual file row and its
+      // position, rather than assuming the whole label fits in a column.
+      final last = find.byWidgetPredicate(
+        (w) =>
+            w is RowName &&
+            w.entry.name == 'file ${'x' * (19999 % 17)} 19999.txt',
+      );
+      expect(last, findsOneWidget);
+      expect(
+        tester.getRect(find.byType(RowsBrief)).contains(tester.getCenter(last)),
+        isTrue,
+      );
     });
   });
 }

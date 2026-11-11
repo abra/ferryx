@@ -453,35 +453,48 @@ class _PanelsAndTerminal extends StatelessWidget {
     final full = terminal != null && !dock.panelsShown;
     final under = terminal != null && !full ? terminalHeight : 0.0;
     return Stack(
+      fit: StackFit.expand,
       children: [
-        if (!full)
-          Positioned(
-            key: const ValueKey('panels'),
-            left: 0,
-            top: 0,
-            right: 0,
-            bottom: under,
-            child: panels,
-          ),
-        if (terminal != null)
-          Positioned(
-            key: const ValueKey('terminal'),
-            left: 0,
-            right: 0,
-            bottom: 0,
-            top: full ? 0 : null,
-            height: full ? null : terminalHeight,
-            child: terminal,
-          ),
-        if (terminal != null && !full && edge != null)
-          Positioned(
-            key: const ValueKey('terminal edge'),
-            left: 0,
-            right: 0,
-            bottom: terminalHeight - AppSizes.resizeHandleWidth / 2,
-            height: AppSizes.resizeHandleWidth,
-            child: edge!,
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: ExcludeFocus(
+                excluding: full,
+                child: Offstage(offstage: full, child: panels),
+              ),
+            ),
+            AppPresence(
+              resize: true,
+              retainOnExit: !dock.shown,
+              animateInitially: true,
+              child: terminal != null && !full
+                  ? SizedBox(
+                      height: terminalHeight,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Positioned.fill(child: terminal),
+                          if (edge != null)
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              top: 0,
+                              height: AppSizes.resizeHandleWidth,
+                              child: edge!,
+                            ),
+                        ],
+                      ),
+                    )
+                  : null,
+            ),
+          ],
+        ),
+        AppPresence(
+          retainOnExit: !dock.shown,
+          animateInitially: true,
+          child: full ? terminal : null,
+        ),
         if (!full && cards != null)
           Positioned(
             key: const ValueKey('operations'),

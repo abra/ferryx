@@ -61,6 +61,29 @@ fn s(path: &std::path::Path) -> String {
 }
 
 #[test]
+fn failed_navigation_preserves_the_open_listing_and_reports_the_os_error_kind() {
+    let _guard = serial();
+    reset_for_tests();
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join("document.txt");
+    fs::write(&file, b"data").unwrap();
+    let original =
+        listing::open_listing("errors".into(), LocationView::native(dir.path()), options()).unwrap();
+    for (target, kind) in
+        [(dir.path().join("missing"), FerryxErrorKind::NotFound), (file, FerryxErrorKind::NotADirectory)]
+    {
+        let error =
+            listing::open_listing("errors".into(), LocationView::native(&target), options()).unwrap_err();
+        assert_eq!(error.kind, kind);
+        assert_eq!(error.path.as_deref(), target.to_str());
+        let current = listing::listing_rows("errors".into()).unwrap();
+        assert_eq!(current.location, original.location);
+        assert_eq!(names(&current), names(&original));
+    }
+    listing::close_listing("errors".into());
+}
+
+#[test]
 fn listings_sort_resort_and_follow_changes() {
     let _guard = serial();
     reset_for_tests();

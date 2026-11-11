@@ -102,6 +102,15 @@ List<PanelHint> _hintsFor({
       KeyHint(LogicalKeyboardKey.escape, HintWord.back),
     ];
   }
+  if (tab.error != null) {
+    return const [
+      CommandHint(
+        AppCommand.clearQuickSearch,
+        labelCommand: AppCommand.dismiss,
+      ),
+      CommandHint(AppCommand.commandPalette),
+    ];
+  }
   if (tab.quickSearch.isNotEmpty) {
     return [
       if (vim && tab.matches.isNotEmpty) ...const [

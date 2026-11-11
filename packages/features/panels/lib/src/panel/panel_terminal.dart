@@ -37,11 +37,13 @@ class PanelTerminalBody extends StatelessWidget {
   const PanelTerminalBody({
     required this.files,
     required this.terminal,
+    this.retainOnExit = true,
     super.key,
   });
 
   final Widget files;
   final PanelTerminal? terminal;
+  final bool retainOnExit;
 
   @override
   Widget build(BuildContext context) {
@@ -53,45 +55,53 @@ class PanelTerminalBody extends StatelessWidget {
         final height = terminal == null || tab
             ? 0.0
             : terminal.heightOf(context, size.maxHeight);
-        return Stack(
-          fit: StackFit.expand,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Positioned.fill(
-              bottom: height,
-              child: ExcludeFocus(
-                excluding: terminalSelected,
-                child: ExcludeSemantics(
-                  excluding: terminalSelected,
-                  child: Offstage(offstage: terminalSelected, child: files),
-                ),
-              ),
-            ),
-            if (terminal != null)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                top: tab ? 0 : null,
-                height: tab ? null : height,
-                child: ExcludeFocus(
-                  excluding: tab && !terminal.selected,
-                  child: ExcludeSemantics(
-                    excluding: tab && !terminal.selected,
-                    child: Offstage(
-                      offstage: tab && !terminal.selected,
-                      child: terminal.child,
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ExcludeFocus(
+                    excluding: terminalSelected,
+                    child: ExcludeSemantics(
+                      excluding: terminalSelected,
+                      child: Offstage(offstage: terminalSelected, child: files),
                     ),
                   ),
-                ),
+                  AppPresence(
+                    visible: terminalSelected,
+                    maintainState: true,
+                    retainOnExit: retainOnExit,
+                    animateInitially: true,
+                    child: tab ? terminal!.child : null,
+                  ),
+                ],
               ),
-            if (terminal != null && !tab)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: height - AppSizes.resizeHandleWidth / 2,
-                height: AppSizes.resizeHandleWidth,
-                child: terminal.edge,
-              ),
+            ),
+            AppPresence(
+              resize: true,
+              retainOnExit: retainOnExit,
+              animateInitially: true,
+              child: terminal != null && !tab
+                  ? SizedBox(
+                      height: height,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Positioned.fill(child: terminal.child),
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            top: 0,
+                            height: AppSizes.resizeHandleWidth,
+                            child: terminal.edge,
+                          ),
+                        ],
+                      ),
+                    )
+                  : null,
+            ),
           ],
         );
       },

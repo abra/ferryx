@@ -403,17 +403,24 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String get panelRecentHour => '<1 ч';
 
   @override
+  String get panelRecentThreeHours => '<3 ч';
+
+  @override
   String get panelRecentAdded => 'Добавлены:';
 
   @override
-  String get panelRecentDay => '1–24 ч';
+  String get panelRecentDay => '3–24 ч';
 
   @override
   String get panelRecentHourHelp => 'Добавлены в эту папку менее часа назад';
 
   @override
+  String get panelRecentThreeHoursHelp =>
+      'Добавлены в эту папку от 1 до 3 часов назад';
+
+  @override
   String get panelRecentDayHelp =>
-      'Добавлены в эту папку от 1 до 24 часов назад';
+      'Добавлены в эту папку от 3 до 24 часов назад';
 
   @override
   String get tabNew => 'Новая вкладка';

@@ -55,6 +55,7 @@ class RowLook {
     if (selected) return active ? colors.accentSoft : colors.selectionMuted;
     return switch (recentAge) {
       RecentEntryAge.hour => colors.recentHour,
+      RecentEntryAge.threeHours => colors.recentThreeHours,
       RecentEntryAge.day => colors.recentDay,
       null => null,
     };
@@ -348,6 +349,10 @@ String rowSemanticsLabel(BuildContext context, FileEntry entry) {
   final age = recentEntryAge(entry, RecentEntriesClock.nowOf(context));
   return switch (age) {
     RecentEntryAge.hour => l10n.joinedDetails(label, l10n.panelRecentHourHelp),
+    RecentEntryAge.threeHours => l10n.joinedDetails(
+      label,
+      l10n.panelRecentThreeHoursHelp,
+    ),
     RecentEntryAge.day => l10n.joinedDetails(label, l10n.panelRecentDayHelp),
     null => label,
   };

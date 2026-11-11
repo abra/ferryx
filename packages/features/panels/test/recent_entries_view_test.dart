@@ -29,6 +29,13 @@ void main() {
         modified: DateTime(2000),
       ),
       FileEntry(
+        name: 'recent.txt',
+        path: '/home/docs/recent.txt',
+        kind: EntryKind.file,
+        isDir: false,
+        added: now.subtract(const Duration(hours: 2)),
+      ),
+      FileEntry(
         name: 'Today',
         path: '/home/docs/Today',
         kind: EntryKind.directory,
@@ -61,6 +68,8 @@ void main() {
       void expectDates() {
         expect(look('new.txt').recentAge, RecentEntryAge.hour);
         expect(look('new.txt').background(colors), colors.recentHour);
+        expect(look('recent.txt').recentAge, RecentEntryAge.threeHours);
+        expect(look('recent.txt').background(colors), colors.recentThreeHours);
         expect(look('Today').recentAge, RecentEntryAge.day);
         expect(look('Today').background(colors), colors.recentDay);
         expect(look('old.txt').recentAge, isNull);
@@ -120,6 +129,15 @@ void main() {
         expect(find.byType(RecentEntriesLegend), findsNWidgets(2));
         for (var index = 0; index < 2; index++) {
           final legend = find.byType(RecentEntriesLegend).at(index);
+          for (final label
+              in locale == 'en'
+                  ? ['<1h', '<3h', '3–24h']
+                  : ['<1 ч', '<3 ч', '3–24 ч']) {
+            expect(
+              find.descendant(of: legend, matching: find.text(label)),
+              findsOneWidget,
+            );
+          }
           final rect = tester.getRect(legend);
           final footer = tester.getRect(
             find.ancestor(

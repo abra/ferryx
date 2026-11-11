@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'theme/extensions/build_context_ext.dart';
+import 'theme/tokens/app_motion.dart';
+
 /// A short notice at the bottom of the window (an import done, a move with
 /// its undo key, an error), in the platform's toast plate; a new one takes
 /// the place of the one showing. Two lines at most.
@@ -18,6 +21,10 @@ void showAppNotice(
         clipBehavior: Clip.none,
         duration: duration,
         content: Text(message, maxLines: 2, overflow: TextOverflow.ellipsis),
+      ),
+      snackBarAnimationStyle: AnimationStyle(
+        duration: context.motion(AppMotion.short),
+        reverseDuration: context.motion(AppMotion.quick),
       ),
     );
 }

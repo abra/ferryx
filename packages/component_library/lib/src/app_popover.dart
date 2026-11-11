@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'popup_focus.dart';
+import 'app_transitions.dart';
 import 'theme/extensions/build_context_ext.dart';
 import 'theme/tokens/app_motion.dart';
 import 'theme/tokens/app_spacing.dart';
@@ -48,6 +49,9 @@ class _PopoverRoute<T> extends PopupRoute<T> {
   Duration get transitionDuration => duration;
 
   @override
+  Duration get reverseTransitionDuration => duration;
+
+  @override
   Widget buildPage(
     BuildContext context,
     Animation<double> animation,
@@ -63,7 +67,7 @@ class _PopoverRoute<T> extends PopupRoute<T> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) => FadeTransition(opacity: animation, child: child);
+  ) => AppSurfaceTransition(animation: animation, slide: false, child: child);
 }
 
 class _PopoverLayout extends SingleChildLayoutDelegate {

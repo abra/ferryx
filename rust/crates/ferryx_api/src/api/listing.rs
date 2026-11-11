@@ -408,12 +408,8 @@ fn superseded() -> FerryxError {
 fn read(location: &Location, options: &ListingOptionsView, stop: &AtomicBool) -> ApiResult<Vec<Entry>> {
     match location {
         Location::Native(path) => {
-            if !native::is_dir(path) {
-                return Err(FerryxError::new(
-                    FerryxErrorKind::NotADirectory,
-                    format!("{} is not a folder", path.display()),
-                ));
-            }
+            // Let the directory read preserve NotFound, NotADirectory and
+            // PermissionDenied instead of collapsing them into a boolean.
             Ok(native::list_dir_until(
                 path,
                 &ListOptions { show_hidden: options.show_hidden, show_parent: options.show_parent },

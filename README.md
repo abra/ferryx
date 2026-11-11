@@ -38,16 +38,25 @@ Each panel keeps its own tabs, history, sorting and view mode. Panels sit
 beside each other in a wide window and stack in a tall one; **⌥⌘P** or
 Settings → Panels fixes the arrangement you prefer.
 
+If a folder cannot be opened, the current files and marks stay in place.
+**Retry** tries the requested folder again; **Esc** or the message's close
+button dismisses the error without clearing marks.
+
 An accent outline identifies the area receiving keyboard input: a file
 panel, the terminal or preview. It follows focus after a click or Tab;
 opening a menu keeps the last area indicated. At the top outer corners,
 the outline follows the window's curve; the junction between panels stays straight.
 Tabs show selection with their normal platform colors, without a blue underline.
 
-Recently added files and folders have a soft mint background: stronger for
-**less than 1 hour**, paler for **1–24 hours**, then the usual background.
-The panel footer explains both shades; selection totals, search and Vim's
-command line take its place while in use. Current-file details remain beside
+Panels and auxiliary bars open and close smoothly; dialogs, menus and the
+command palette use short fades. Transitions follow the system's **Reduce
+Motion** setting. Keyboard commands and file navigation respond immediately.
+
+Recently added files and folders have a soft **mint background for less than
+1 hour**, **lavender for 1–3 hours**, **amber for 3–24 hours**, then the usual
+background. The footer legend shows **<1h**, **<3h** and **3–24h**;
+selection totals, search and Vim's command line take its place while in use.
+Current-file details remain beside
 the legend when there is room; a narrow Flat view prioritizes the relative
 path. Cursor and selection colors take priority. This uses the **date added
 to the folder** supplied by macOS;

@@ -884,8 +884,10 @@ match ranges, the sort options and the layout index. Rules:
   active panel (so cursor and selection read apart, as orthodox managers
   need) and grey too where the focus is not (`RowLook`, through
   `AppFocusArea.activeOf`).
-- Unmarked rows in List and Brief use two mint fills for `FileEntry.added`:
-  under one hour, then under 24 hours. `RowLook` keeps cursor, selection
+- Unmarked rows in List and Brief use distinct fills for `FileEntry.added`:
+  mint under one hour, lavender from one to three, amber from three to 24.
+  The legend reads `<1h`, `<3h`, `3–24h`; the exclusive upper bounds also
+  schedule clock updates. `RowLook` keeps cursor, selection
   and drop-target fills ahead of recency. Missing/future dates and `..`
   stay untinted; modified/created times are not fallbacks. The core already
   supplies macOS's date added to the item's containing folder, with no
@@ -1936,3 +1938,42 @@ rename restores focus on submission before I/O, never after a slow write.
 ShortcutMap.conflicts compares effective desktop modifiers within overlapping
 scopes. Primary and Control must be resolved before checking Windows/Linux
 bindings; the settings warning and regression matrix use these semantics.
+
+### Interface motion
+
+Shared motion lives in component_library: AppMotion.short (160 ms),
+AppMotion.quick (100 ms exits), easeOutCubic and a 6 px settling distance for
+floating dialogs/pickers. AppDialogRoute is used by showAppDialog and DialogPage;
+AppPage fades full-window viewer/comparison routes without moving window chrome.
+Menus/popovers fade at their anchors. All durations resolve through context.motion
+and transitions also observe runtime changes to MediaQuery.disableAnimations.
+
+AppPresence fades optional surfaces and can reveal their extent. Outgoing
+content loses pointer input, focus and semantics immediately, then unmounts after
+the exit; maintained hidden content has its tickers muted. It never uses two
+copies of a live view. Terminal and preview hosts retain closing content only
+when hidden: a move to another host releases the old GlobalKey in the same frame.
+The terminal session, viewer and file-list state therefore survive reparenting.
+Search/error/tab/hint bars, the shelf and operation overlays share this primitive.
+Bottom-anchored cards reveal upward so their bounds stay inside their source pane.
+
+AppSplitView keeps both file panes mounted and animates only a change between
+one/two panes. Divider dragging and window resizing remain immediate. Closing
+panes retain a readable layout extent behind a clip, preventing narrow-layout
+overflow during the animation. List rows, cursor moves and progress events do
+not start surface transitions. Widget tests exercise intermediate frames,
+reversal, focus exclusion, reduced motion and live-view moves between hosts.
+
+### Failed navigation
+
+Native listing reads preserve the OS error kind and path: existence and access
+checks must not collapse into `is_dir == false`. PanelCubit keeps the current
+listing, cursor, marks, query and history position until a replacement read
+succeeds. Search tasks are retired only on success. Per-tab request tokens and
+tab-id lookup discard superseded navigation/refresh results after moves or closes.
+`failedLocation` belongs to the current error; Retry opens that target, while
+Esc/the close button clears the message and returns focus to the file rows.
+
+Expected path/access errors are informational log records without a stack.
+Unexpected read failures keep the original error/stack in diagnostics, clear the
+loading state and expose a typed I/O error with the target path in the view.

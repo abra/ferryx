@@ -74,6 +74,41 @@ void main() {
     await Future<void>.delayed(Duration.zero);
   }
 
+  test(
+    'a failed folder navigation keeps search results and the live task',
+    () async {
+      await panel.newSearchTab(request, label: 'Notes');
+      updates.add(
+        FindUpdate(
+          findId: 1,
+          hits: [FindHit(path: '/root/one.txt', isDir: false, size: 1)],
+        ),
+      );
+      await settle();
+      final before = panel.state.active!;
+      const target = Location.native('/root/missing');
+      when(() => files.openListing(any(), target, any())).thenThrow(
+        const FerryxException(FerryxErrorKind.notFound, '/root/missing'),
+      );
+      await panel.open(target);
+      expect(panel.state.active!.search, before.search);
+      expect(panel.state.active!.rows, before.rows);
+      expect(panel.state.active!.failedLocation, target);
+      verifyNever(() => find.cancel(1));
+      updates.add(
+        FindUpdate(
+          findId: 1,
+          hits: [FindHit(path: '/root/two.txt', isDir: false, size: 1)],
+        ),
+      );
+      await settle();
+      expect(
+        panel.state.active!.rows.map((row) => row.name),
+        containsAll(['one.txt', 'two.txt']),
+      );
+    },
+  );
+
   FindHit hit(String path) => FindHit(path: path, isDir: false, size: 12);
 
   test('results keep distinct relative paths, reject paths outside the root '

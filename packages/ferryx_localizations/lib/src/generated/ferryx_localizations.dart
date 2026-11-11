@@ -728,6 +728,12 @@ abstract class FerryxLocalizations {
   /// **'<1h'**
   String get panelRecentHour;
 
+  /// No description provided for @panelRecentThreeHours.
+  ///
+  /// In en, this message translates to:
+  /// **'<3h'**
+  String get panelRecentThreeHours;
+
   /// No description provided for @panelRecentAdded.
   ///
   /// In en, this message translates to:
@@ -737,7 +743,7 @@ abstract class FerryxLocalizations {
   /// No description provided for @panelRecentDay.
   ///
   /// In en, this message translates to:
-  /// **'1–24h'**
+  /// **'3–24h'**
   String get panelRecentDay;
 
   /// No description provided for @panelRecentHourHelp.
@@ -746,10 +752,16 @@ abstract class FerryxLocalizations {
   /// **'Added to this folder less than an hour ago'**
   String get panelRecentHourHelp;
 
+  /// No description provided for @panelRecentThreeHoursHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to this folder between 1 and 3 hours ago'**
+  String get panelRecentThreeHoursHelp;
+
   /// No description provided for @panelRecentDayHelp.
   ///
   /// In en, this message translates to:
-  /// **'Added to this folder between 1 and 24 hours ago'**
+  /// **'Added to this folder between 3 and 24 hours ago'**
   String get panelRecentDayHelp;
 
   /// No description provided for @tabNew.

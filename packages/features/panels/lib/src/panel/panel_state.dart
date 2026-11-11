@@ -23,6 +23,7 @@ class PanelTabState extends Equatable {
     this.listing,
     this.loading = false,
     this.error,
+    this.failedLocation,
     this.rows = const [],
     this.cursor = -1,
     this.selected = const {},
@@ -54,8 +55,11 @@ class PanelTabState extends Equatable {
   final Listing? listing;
   final bool loading;
 
-  /// The last failure to read [location]; the previous listing stays.
+  /// The last read failure; the previous listing stays.
   final FerryxException? error;
+
+  /// The requested location that failed, which Retry must open again.
+  final Location? failedLocation;
 
   /// The rows shown: the listing's entries, less the ones a quick search
   /// hides, with the calculated folder sizes merged in.
@@ -177,6 +181,7 @@ class PanelTabState extends Equatable {
     bool clearListing = false,
     bool? loading,
     FerryxException? error,
+    Location? failedLocation,
     bool clearError = false,
     List<FileEntry>? rows,
     int? cursor,
@@ -214,6 +219,9 @@ class PanelTabState extends Equatable {
     listing: clearListing ? null : (listing ?? this.listing),
     loading: loading ?? this.loading,
     error: clearError ? null : (error ?? this.error),
+    failedLocation: clearError
+        ? null
+        : failedLocation ?? (error == null ? this.failedLocation : null),
     rows: rows ?? this.rows,
     cursor: cursor ?? this.cursor,
     selected: selected ?? this.selected,
@@ -250,6 +258,7 @@ class PanelTabState extends Equatable {
     listing,
     loading,
     error,
+    failedLocation,
     rows,
     cursor,
     _Hashed(selected),

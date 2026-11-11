@@ -114,6 +114,7 @@ class PanelView extends StatefulWidget {
     this.focusBorderRadius = BorderRadius.zero,
     this.cursorRowKey,
     this.terminal,
+    this.retainTerminalOnExit = true,
     this.thumbnails,
     super.key,
   });
@@ -143,6 +144,7 @@ class PanelView extends StatefulWidget {
   /// a menu by it (the menu key, Open With).
   final GlobalKey? cursorRowKey;
   final PanelTerminal? terminal;
+  final bool retainTerminalOnExit;
   final ThumbnailProvider? thumbnails;
 
   @override
@@ -431,6 +433,10 @@ class _PanelViewState extends State<PanelView> {
   void _escape() {
     if (widget.hooks.onEscape?.call() ?? false) return;
     final tab = _cubit.state.active;
+    if (tab?.error != null) {
+      _dismissError();
+      return;
+    }
     if (!widget.vimMode || tab == null) {
       // A flat view goes back to its folder once no search is on.
       if (tab == null) return;
@@ -828,7 +834,15 @@ class _PanelViewState extends State<PanelView> {
       return () => widget.hooks.onArchivePassword?.call(location);
     }
     if (_reconnects(tab)) return () => unawaited(_cubit.reconnect());
-    return () => unawaited(_cubit.refresh());
+    return () {
+      widget.focusNode.requestFocus();
+      unawaited(_cubit.retryFailedRead());
+    };
+  }
+
+  void _dismissError() {
+    _cubit.dismissError();
+    widget.focusNode.requestFocus();
   }
 
   static bool _reconnects(PanelTabState tab) =>
@@ -934,86 +948,98 @@ class _PanelViewState extends State<PanelView> {
                     decor: widget.windowDecor,
                     edge: !showTabs || !AppTabStrip.joinsBarAbove(context),
                   ),
-                  if (showTabs)
-                    AppTabStrip(
-                      tabs: [
-                        for (var i = 0; i <= state.tabs.length; i++) ...[
-                          if (terminalTab && i == _terminalIndex(state))
-                            AppTab(
-                              id: 'terminal',
-                              label: l10n.terminalTitle,
-                              icon: AppIcons.terminal,
-                              tooltip: l10n.terminalTitle,
+                  AppPresence(
+                    resize: true,
+                    child: showTabs
+                        ? AppTabStrip(
+                            tabs: [
+                              for (var i = 0; i <= state.tabs.length; i++) ...[
+                                if (terminalTab && i == _terminalIndex(state))
+                                  AppTab(
+                                    id: 'terminal',
+                                    label: l10n.terminalTitle,
+                                    icon: AppIcons.terminal,
+                                    tooltip: l10n.terminalTitle,
+                                  ),
+                                if (i < state.tabs.length)
+                                  AppTab(
+                                    id: state.tabs[i].id,
+                                    label: state.tabs[i].search == null
+                                        ? state.tabs[i].location.name
+                                        : state.tabs[i].search!.label ??
+                                              l10n.searchResultsTitle,
+                                    tooltip: state.tabs[i].location.display,
+                                    icon: state.tabs[i].search != null
+                                        ? AppIcons.search
+                                        : _tabIcon(state.tabs[i].location),
+                                  ),
+                              ],
+                            ],
+                            active: terminalTab && widget.terminal!.selected
+                                ? _terminalIndex(state)
+                                : state.activeIndex +
+                                      (terminalTab &&
+                                              state.activeIndex >=
+                                                  _terminalIndex(state)
+                                          ? 1
+                                          : 0),
+                            onSelect: _selectTab,
+                            onClose: (index) => _closeTab(index, state),
+                            onReorder: (from, to) => _moveTab(from, to, state),
+                            onMenu: (index, anchor) =>
+                                _tabMenu(index, anchor, state),
+                            onNewTab: () {
+                              if (terminalTab) {
+                                widget.terminal!.onSelectTab(
+                                  state.activeIndex +
+                                      (state.activeIndex >=
+                                              _terminalIndex(state)
+                                          ? 1
+                                          : 0),
+                                );
+                              }
+                              unawaited(_cubit.newTab());
+                            },
+                            closeTooltip: l10n.tabClose,
+                            newTabTooltip: l10n.tabNew,
+                            listTooltip: l10n.tabList,
+                            newTabShortcut: widget.shortcutMap.labelOf(
+                              AppCommand.newTab,
+                              Theme.of(context).platform,
                             ),
-                          if (i < state.tabs.length)
-                            AppTab(
-                              id: state.tabs[i].id,
-                              label: state.tabs[i].search == null
-                                  ? state.tabs[i].location.name
-                                  : state.tabs[i].search!.label ??
-                                        l10n.searchResultsTitle,
-                              tooltip: state.tabs[i].location.display,
-                              icon: state.tabs[i].search != null
-                                  ? AppIcons.search
-                                  : _tabIcon(state.tabs[i].location),
+                            // The menu key on a focused tab opens its menu by
+                            // the tab; Esc puts the keys back on the rows.
+                            wrapTab: (index, item) => Builder(
+                              builder: (context) => CommandHandlers(
+                                handlers: {
+                                  AppCommand.contextMenu: () => _tabMenu(
+                                    index,
+                                    keyboardMenuAnchor(context),
+                                    state,
+                                  ),
+                                },
+                                child: item,
+                              ),
                             ),
-                        ],
-                      ],
-                      active: terminalTab && widget.terminal!.selected
-                          ? _terminalIndex(state)
-                          : state.activeIndex +
-                                (terminalTab &&
-                                        state.activeIndex >=
-                                            _terminalIndex(state)
-                                    ? 1
-                                    : 0),
-                      onSelect: _selectTab,
-                      onClose: (index) => _closeTab(index, state),
-                      onReorder: (from, to) => _moveTab(from, to, state),
-                      onMenu: (index, anchor) => _tabMenu(index, anchor, state),
-                      onNewTab: () {
-                        if (terminalTab) {
-                          widget.terminal!.onSelectTab(
-                            state.activeIndex +
-                                (state.activeIndex >= _terminalIndex(state)
-                                    ? 1
-                                    : 0),
-                          );
-                        }
-                        unawaited(_cubit.newTab());
-                      },
-                      closeTooltip: l10n.tabClose,
-                      newTabTooltip: l10n.tabNew,
-                      listTooltip: l10n.tabList,
-                      newTabShortcut: widget.shortcutMap.labelOf(
-                        AppCommand.newTab,
-                        Theme.of(context).platform,
+                            onLeave: widget.focusNode.requestFocus,
+                          )
+                        : null,
+                  ),
+                  AppPresence(
+                    resize: true,
+                    child: switch (tab.search) {
+                      final search? => PanelSearchBar(
+                        search: search,
+                        onStop: () => unawaited(_cubit.stopSearch()),
+                        onRefresh: () => unawaited(_cubit.refresh()),
+                        onOpenRoot: () => unawaited(_cubit.open(tab.location)),
                       ),
-                      // The menu key on a focused tab opens its menu by
-                      // the tab; Esc puts the keys back on the rows.
-                      wrapTab: (index, item) => Builder(
-                        builder: (context) => CommandHandlers(
-                          handlers: {
-                            AppCommand.contextMenu: () => _tabMenu(
-                              index,
-                              keyboardMenuAnchor(context),
-                              state,
-                            ),
-                          },
-                          child: item,
-                        ),
-                      ),
-                      onLeave: widget.focusNode.requestFocus,
-                    ),
-                  if (tab.search case final search?)
-                    PanelSearchBar(
-                      search: search,
-                      onStop: () => unawaited(_cubit.stopSearch()),
-                      onRefresh: () => unawaited(_cubit.refresh()),
-                      onOpenRoot: () => unawaited(_cubit.open(tab.location)),
-                    ),
+                      null => null,
+                    },
+                  ),
                   Expanded(
                     child: PanelTerminalBody(
+                      retainOnExit: widget.retainTerminalOnExit,
                       terminal: widget.terminal,
                       files: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1096,11 +1122,17 @@ class _PanelViewState extends State<PanelView> {
                               ),
                             ),
                           ),
-                          if (tab.error case final error?)
-                            _ErrorArea(
-                              text: errorStripOf(l10n, tab, error),
-                              onRetry: _retryOf(tab),
-                            ),
+                          AppPresence(
+                            resize: true,
+                            child: switch (tab.error) {
+                              final error? => _ErrorArea(
+                                text: errorStripOf(l10n, tab, error),
+                                onRetry: _retryOf(tab),
+                                onDismiss: _dismissError,
+                              ),
+                              null => null,
+                            },
+                          ),
                           PanelFooter(
                             tab: tab,
                             active: widget.active,
@@ -1172,10 +1204,15 @@ typedef ErrorStripText = ({
 /// a strip under the rows that stay, with a button (the keys reach it; ⌘J
 /// labels it).
 class _ErrorArea extends StatelessWidget {
-  const _ErrorArea({required this.text, required this.onRetry});
+  const _ErrorArea({
+    required this.text,
+    required this.onRetry,
+    required this.onDismiss,
+  });
 
   final ErrorStripText text;
   final VoidCallback onRetry;
+  final VoidCallback onDismiss;
 
   @override
   Widget build(BuildContext context) {
@@ -1221,6 +1258,12 @@ class _ErrorArea extends StatelessWidget {
               onPressed: onRetry,
               child: Text(text.action),
             ),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          AppIconButton(
+            icon: AppIcons.close,
+            tooltip: context.l10n.actionClose,
+            onPressed: onDismiss,
           ),
         ],
       ),

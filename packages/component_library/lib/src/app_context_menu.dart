@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'app_menu.dart';
 import 'popup_focus.dart';
+import 'app_transitions.dart';
 import 'window_decor.dart';
 import 'theme/app_platform_style.dart';
 import 'theme/extensions/build_context_ext.dart';
@@ -164,9 +165,8 @@ class _MenuRoute<T> extends PopupRoute<T> {
   @override
   Duration get transitionDuration => duration;
 
-  // Native menus vanish the moment a choice is made.
   @override
-  Duration get reverseTransitionDuration => Duration.zero;
+  Duration get reverseTransitionDuration => duration;
 
   @override
   Widget buildPage(
@@ -193,7 +193,7 @@ class _MenuRoute<T> extends PopupRoute<T> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) => FadeTransition(opacity: animation, child: child);
+  ) => AppSurfaceTransition(animation: animation, slide: false, child: child);
 }
 
 /// Puts the menu at the anchor's bottom-left: under a box with a small

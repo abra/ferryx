@@ -10,6 +10,7 @@ import 'app_identity.dart';
 import 'focus_ring.dart';
 import 'pixel_snap.dart';
 import 'popup_focus.dart';
+import 'app_transitions.dart';
 
 import 'theme/app_button_styles.dart';
 import 'theme/app_platform_style.dart';
@@ -435,11 +436,10 @@ Future<T?> showAppDialog<T>(
   bool dismissible = false,
 }) => pushReturningFocus(
   context,
-  DialogRoute<T>(
+  AppDialogRoute<T>(
     context: context,
     builder: builder,
     barrierDismissible: dismissible,
-    barrierColor: DialogTheme.of(context).barrierColor,
   ),
 );
 
@@ -452,7 +452,9 @@ Future<T?> _showReturningSelection<T>(
 ) async {
   final opener = FocusManager.instance.primaryFocus;
   final value = fieldValueOf(opener);
-  final result = await showDialog<T>(context: context, builder: builder);
+  final result = await Navigator.of(context, rootNavigator: true).push<T>(
+    AppDialogRoute<T>(context: context, builder: builder),
+  );
   if (opener != null &&
       opener.context?.mounted == true &&
       opener.canRequestFocus) {

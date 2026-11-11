@@ -208,6 +208,7 @@ void main() {
         expect(h.started, isEmpty);
         await tester.tap(find.widgetWithText(OutlinedButton, 'Cancel'));
         await tester.pump(const Duration(seconds: 10));
+        await tester.pumpAndSettle();
         expect(find.byType(PendingDeletionCard), findsNothing);
         expect(h.started, isEmpty);
         expect(panel.state.active!.selected, {'alpha.txt'});

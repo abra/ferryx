@@ -12,6 +12,7 @@ import 'app_menu.dart';
 import 'app_label_and_detail.dart';
 import 'pixel_snap.dart';
 import 'popup_focus.dart';
+import 'app_transitions.dart';
 import 'theme/extensions/build_context_ext.dart';
 import 'theme/app_typography.dart';
 import 'theme/tokens/app_icon_size.dart';
@@ -96,7 +97,8 @@ Future<R?> showAppQuickPicker<R>(
   _QuickPickerRoute<R>(
     builder: builder,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-    duration: context.motion(AppMotion.quick),
+    duration: context.motion(AppMotion.short),
+    reverseDuration: context.motion(AppMotion.quick),
   ),
 );
 
@@ -105,6 +107,7 @@ class _QuickPickerRoute<R> extends PopupRoute<R> {
     required this.builder,
     required this.barrierLabel,
     required this.duration,
+    required this.reverseDuration,
   });
 
   final WidgetBuilder builder;
@@ -112,6 +115,7 @@ class _QuickPickerRoute<R> extends PopupRoute<R> {
   @override
   final String barrierLabel;
   final Duration duration;
+  final Duration reverseDuration;
 
   @override
   Color? get barrierColor => null;
@@ -121,6 +125,9 @@ class _QuickPickerRoute<R> extends PopupRoute<R> {
 
   @override
   Duration get transitionDuration => duration;
+
+  @override
+  Duration get reverseTransitionDuration => reverseDuration;
 
   @override
   Widget buildPage(
@@ -150,7 +157,7 @@ class _QuickPickerRoute<R> extends PopupRoute<R> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
-  ) => FadeTransition(opacity: animation, child: child);
+  ) => AppSurfaceTransition(animation: animation, child: child);
 }
 
 /// A search field over a list to pick from, as a command palette or a

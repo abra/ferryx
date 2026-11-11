@@ -92,6 +92,17 @@ void main() {
         await h.press(tester, LogicalKeyboardKey.keyJ, character: 'j');
         expect(panel.state.active!.cursor, before.cursor);
         expect(panel.state.active!.selected, before.selected);
+        final viewerState = tester.state(find.byType(ViewerScreen));
+        for (var i = 0; i < 4; i++) {
+          tester
+              .widget<ViewerScreen>(find.byType(ViewerScreen))
+              .onToggleFullWindow!();
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 20));
+          expect(tester.state(find.byType(ViewerScreen)), same(viewerState));
+          expect(tester.takeException(), isNull);
+        }
+        await tester.pumpAndSettle();
         await h.press(tester, LogicalKeyboardKey.tab);
         expect(panelWidget.focusNode.hasFocus, isTrue);
         await h.press(tester, LogicalKeyboardKey.escape);

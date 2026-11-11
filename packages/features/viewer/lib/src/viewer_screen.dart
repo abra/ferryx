@@ -502,17 +502,21 @@ class _Frame extends StatelessWidget {
         ),
         if (state.mode == ViewerMode.preview)
           _PreviewFindSlot(onFocusContent: onFocusContent),
-        if (state.findShown && state.mode != ViewerMode.preview)
-          _FindBar(
-            state: state,
-            controller: findController,
-            focusNode: findFocus,
-            chord: chord,
-            onChanged: onFindChanged,
-            onNext: onFindNext,
-            onPrevious: onFindPrevious,
-            onClose: onFindClose,
-          ),
+        AppPresence(
+          resize: true,
+          child: state.findShown && state.mode != ViewerMode.preview
+              ? _FindBar(
+                  state: state,
+                  controller: findController,
+                  focusNode: findFocus,
+                  chord: chord,
+                  onChanged: onFindChanged,
+                  onNext: onFindNext,
+                  onPrevious: onFindPrevious,
+                  onClose: onFindClose,
+                )
+              : null,
+        ),
         Expanded(
           child: ColoredBox(
             color: context.colors.surface,
@@ -1247,15 +1251,18 @@ class _PreviewFindSlot extends StatelessWidget {
     final search = PreviewSearchScope.maybeOf(context)!;
     return ListenableBuilder(
       listenable: search,
-      builder: (context, _) => search.shown
-          ? PreviewFindBar(
-              controller: search,
-              onClose: () {
-                search.hide();
-                onFocusContent();
-              },
-            )
-          : const SizedBox.shrink(),
+      builder: (context, _) => AppPresence(
+        resize: true,
+        child: search.shown
+            ? PreviewFindBar(
+                controller: search,
+                onClose: () {
+                  search.hide();
+                  onFocusContent();
+                },
+              )
+            : null,
+      ),
     );
   }
 }

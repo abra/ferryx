@@ -109,6 +109,14 @@ class PanelCubit extends Cubit<PanelState> {
   final _refreshing = <String, Future<void>>{};
   final _again = <String>{};
 
+  /// A failed or completed read may arrive after a newer navigation request.
+  final _loads = <String, Object>{};
+
+  int _loadIndex(String id, Object request) =>
+      isClosed || !identical(_loads[id], request)
+      ? -1
+      : state.tabs.indexWhere((tab) => tab.id == id);
+
   /// The last quick search a tab ran, by tab id: a query typed on extends
   /// it, and then only its matches can match ([narrowsAsTyped]).
   final _searched =
@@ -224,13 +232,12 @@ class PanelCubit extends Cubit<PanelState> {
     Location? fallback,
     bool visit = true,
     bool connect = true,
+    int? targetHistoryIndex,
   }) async {
     final tab = state.tabs.elementAtOrNull(index);
-    if (tab == null) return;
-    if (tab.search != null) {
-      await _stopSearch(tab.id);
-      if (isClosed || state.tabs.elementAtOrNull(index)?.id != tab.id) return;
-    }
+    if (tab == null || isClosed) return;
+    final request = Object();
+    _loads[tab.id] = request;
     emit(
       state.withTab(
         index,
@@ -238,7 +245,7 @@ class PanelCubit extends Cubit<PanelState> {
           loading: true,
           clearError: true,
           pendingFocusName: focusName,
-          clearSearch: true,
+          clearPendingFocus: focusName == null,
         ),
       ),
     );
@@ -248,16 +255,23 @@ class PanelCubit extends Cubit<PanelState> {
         location,
         _options(tab.sort),
       );
+      index = _loadIndex(tab.id, request);
+      if (index < 0) return;
+      // Retire the old view only once the new folder has actually opened.
+      await _stopSearch(tab.id);
+      index = _loadIndex(tab.id, request);
+      if (index < 0) return;
       await _stopFlat(tab.id);
-      final current = state.tabs.elementAtOrNull(index);
-      if (current == null || current.id != tab.id) return;
+      index = _loadIndex(tab.id, request);
+      if (index < 0) return;
+      final current = state.tabs[index];
       if (visit &&
           location.isNative &&
           (current.listing == null || current.location != location)) {
         onFolderShown?.call(location.path);
       }
       var history = current.history;
-      var historyIndex = current.historyIndex;
+      var historyIndex = targetHistoryIndex ?? current.historyIndex;
       if (pushHistory) {
         history = [...history.take(historyIndex + 1), location];
         historyIndex = history.length - 1;
@@ -283,6 +297,7 @@ class PanelCubit extends Cubit<PanelState> {
               searching: false,
               clearPasswordLocation: true,
               clearFlat: true,
+              clearSearch: true,
             ),
             focusName: focusName ?? current.pendingFocusName,
             // Another folder: the old cursor's name and place mean nothing
@@ -293,16 +308,34 @@ class PanelCubit extends Cubit<PanelState> {
       );
       unawaited(_loadTags(tab.id));
     } on FerryxException catch (error, stackTrace) {
-      // A later read of the tab took this one's place.
-      if (error.kind == FerryxErrorKind.cancelled) return;
+      index = _loadIndex(tab.id, request);
+      if (index < 0) return;
+      if (error.kind == FerryxErrorKind.cancelled) {
+        emit(
+          state.withTab(
+            index,
+            state.tabs[index].copyWith(
+              loading: false,
+              clearPendingFocus: true,
+            ),
+          ),
+        );
+        return;
+      }
       final server = location.server;
       final connector = connectServer;
       if (server != null &&
           connect &&
           connector != null &&
           error.kind == FerryxErrorKind.notConnected) {
-        final open = await connector(server);
-        final at = state.tabs.indexWhere((t) => t.id == tab.id);
+        final bool open;
+        try {
+          open = await connector(server);
+        } on Object catch (error, stackTrace) {
+          _recoverReadFailure(tab.id, request, location, error, stackTrace);
+          return;
+        }
+        final at = _loadIndex(tab.id, request);
         if (at < 0) return;
         if (open) {
           await _load(
@@ -313,6 +346,7 @@ class PanelCubit extends Cubit<PanelState> {
             fallback: fallback,
             visit: visit,
             connect: false,
+            targetHistoryIndex: targetHistoryIndex,
           );
           return;
         }
@@ -328,11 +362,7 @@ class PanelCubit extends Cubit<PanelState> {
         );
         return;
       }
-      logger.warn(
-        'cannot open ${location.display}',
-        error: error,
-        stackTrace: stackTrace,
-      );
+      _logReadFailure(location, error, stackTrace);
       final current = state.tabs.elementAtOrNull(index);
       if (current == null || current.id != tab.id) return;
       if (current.listing == null &&
@@ -388,11 +418,67 @@ class PanelCubit extends Cubit<PanelState> {
           current.copyWith(
             loading: false,
             error: error,
+            failedLocation: location,
             clearPendingFocus: true,
           ),
         ),
       );
+    } on Object catch (error, stackTrace) {
+      _recoverReadFailure(tab.id, request, location, error, stackTrace);
     }
+  }
+
+  void _logReadFailure(Location location, Object error, StackTrace stackTrace) {
+    if (error is! FerryxException) {
+      logger.error(
+        'cannot open ${location.display}',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return;
+    }
+    final expected = switch (error.kind) {
+      FerryxErrorKind.notFound ||
+      FerryxErrorKind.notADirectory ||
+      FerryxErrorKind.permissionDenied ||
+      FerryxErrorKind.invalidName => true,
+      _ => false,
+    };
+    final log = expected ? logger.info : logger.warn;
+    log(
+      'cannot open ${location.display}',
+      error: error,
+      stackTrace: expected ? null : stackTrace,
+    );
+  }
+
+  void _recoverReadFailure(
+    String id,
+    Object request,
+    Location location,
+    Object error,
+    StackTrace stackTrace,
+  ) {
+    final index = _loadIndex(id, request);
+    if (index < 0) return;
+    final cancelled =
+        error is FerryxException && error.kind == FerryxErrorKind.cancelled;
+    if (!cancelled) _logReadFailure(location, error, stackTrace);
+    final failure = error is FerryxException
+        ? error
+        : FerryxException(FerryxErrorKind.io, location.display);
+    emit(
+      state.withTab(
+        index,
+        state.tabs[index].copyWith(
+          loading: false,
+          error: cancelled ? null : failure,
+          failedLocation: cancelled ? null : location,
+          clearError: cancelled,
+          clearPendingFocus: true,
+        ),
+      ),
+    );
   }
 
   /// A tab with nothing read yet, left at [location] on a server it could
@@ -615,10 +701,13 @@ class PanelCubit extends Cubit<PanelState> {
       await _walkFlatAgain(index);
       return;
     }
+    final request = _loads[tab.id];
+    if (request == null) return;
     try {
       final listing = await _files.refreshListing(tab.id);
-      final current = state.tabs.elementAtOrNull(index);
-      if (current == null || current.id != tab.id) return;
+      index = _loadIndex(tab.id, request);
+      if (index < 0) return;
+      final current = state.tabs[index];
       emit(
         state.withTab(
           index,
@@ -634,6 +723,8 @@ class PanelCubit extends Cubit<PanelState> {
       );
       unawaited(_loadTags(tab.id));
     } on FerryxException catch (error) {
+      index = _loadIndex(tab.id, request);
+      if (index < 0) return;
       // A read of the tab's own took this one's place.
       if (error.kind == FerryxErrorKind.cancelled) return;
       final gone =
@@ -649,6 +740,8 @@ class PanelCubit extends Cubit<PanelState> {
       if (current != null && current.id == tab.id) {
         emit(state.withTab(index, current.copyWith(error: error)));
       }
+    } on Object catch (error, stackTrace) {
+      _recoverReadFailure(tab.id, request, tab.location, error, stackTrace);
     }
   }
 
@@ -728,6 +821,25 @@ class PanelCubit extends Cubit<PanelState> {
     focusName: focusName,
   );
 
+  Future<void> retryFailedRead() async {
+    final target = state.active?.failedLocation;
+    if (target == null) {
+      await refresh();
+    } else {
+      await open(target);
+    }
+  }
+
+  void dismissError() {
+    final tab = state.active;
+    if (tab?.error == null) return;
+    emit(
+      state.withActive(
+        tab!.copyWith(clearError: true, clearPasswordLocation: true),
+      ),
+    );
+  }
+
   /// Return on the cursor: into a folder or an archive, up on `..`;
   /// answers the file to open otherwise.
   Future<OpenFileRequest?> enter() async {
@@ -788,8 +900,12 @@ class PanelCubit extends Cubit<PanelState> {
     if (tab == null) return;
     final target = tab.historyIndex + step;
     if (target < 0 || target >= tab.history.length) return;
-    emit(state.withActive(tab.copyWith(historyIndex: target)));
-    await _load(index, tab.history[target], pushHistory: false);
+    await _load(
+      index,
+      tab.history[target],
+      pushHistory: false,
+      targetHistoryIndex: target,
+    );
   }
 
   /// Follows the focused symlink to where it points.
@@ -1409,6 +1525,7 @@ class PanelCubit extends Cubit<PanelState> {
 
   /// What the cubit kept of a tab closed.
   void _forget(String id) {
+    _loads.remove(id);
     _searched.remove(id);
     _stale.remove(id);
     _again.remove(id);
@@ -1889,6 +2006,7 @@ class PanelCubit extends Cubit<PanelState> {
 
   @override
   Future<void> close() async {
+    _loads.clear();
     _searchSorts.clear();
     for (final task in _searchTasks.values.toList()) {
       await task.close();

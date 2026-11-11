@@ -32,23 +32,31 @@ void main() {
     created: created,
   );
 
-  test('date added ranges have exact hour and day boundaries', () {
-    for (final folder in [false, true]) {
-      RecentEntryAge? age(Duration elapsed) => recentEntryAge(
-        entry(age: elapsed, folder: folder),
-        start,
-      );
-      expect(age(Duration.zero), RecentEntryAge.hour);
-      expect(
-        age(const Duration(minutes: 59, seconds: 59)),
-        RecentEntryAge.hour,
-      );
-      expect(age(const Duration(hours: 1)), RecentEntryAge.day);
-      expect(age(const Duration(hours: 23, minutes: 59)), RecentEntryAge.day);
-      expect(age(const Duration(days: 1)), isNull);
-      expect(age(const Duration(days: 100)), isNull);
-    }
-  });
+  test(
+    'date added ranges have exact one-hour, three-hour and day boundaries',
+    () {
+      for (final folder in [false, true]) {
+        RecentEntryAge? age(Duration elapsed) => recentEntryAge(
+          entry(age: elapsed, folder: folder),
+          start,
+        );
+        expect(age(Duration.zero), RecentEntryAge.hour);
+        expect(
+          age(const Duration(minutes: 59, seconds: 59)),
+          RecentEntryAge.hour,
+        );
+        expect(age(const Duration(hours: 1)), RecentEntryAge.threeHours);
+        expect(
+          age(const Duration(hours: 2, minutes: 59, seconds: 59)),
+          RecentEntryAge.threeHours,
+        );
+        expect(age(const Duration(hours: 3)), RecentEntryAge.day);
+        expect(age(const Duration(hours: 23, minutes: 59)), RecentEntryAge.day);
+        expect(age(const Duration(days: 1)), isNull);
+        expect(age(const Duration(days: 100)), isNull);
+      }
+    },
+  );
 
   test('missing, future and parent dates never highlight; modification and '
       'creation are not substitutes for the date added', () {
@@ -96,9 +104,12 @@ void main() {
     expect(shown, RecentEntryAge.hour);
     now = now.add(const Duration(minutes: 1));
     await tester.pump(const Duration(minutes: 1));
+    expect(shown, RecentEntryAge.threeHours);
+    now = now.add(const Duration(hours: 2));
+    await tester.pump(const Duration(hours: 2));
     expect(shown, RecentEntryAge.day);
-    now = now.add(const Duration(hours: 23));
-    await tester.pump(const Duration(hours: 23));
+    now = now.add(const Duration(hours: 21));
+    await tester.pump(const Duration(hours: 21));
     expect(shown, isNull);
     final expiredBuilds = builds;
     now = now.add(const Duration(days: 3));
@@ -162,7 +173,7 @@ void main() {
     expect(shown, RecentEntryAge.hour, reason: 'no timer while hidden');
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
-    expect(shown, RecentEntryAge.day);
+    expect(shown, RecentEntryAge.threeHours);
     await tester.pumpWidget(const SizedBox());
     now = now.add(const Duration(days: 1));
     await tester.pump(const Duration(days: 1));
@@ -230,9 +241,12 @@ void main() {
       final measured = RowsBrief.debugMeasures;
       now = now.add(const Duration(minutes: 1));
       await tester.pump(const Duration(minutes: 1));
+      expect(look().background(colors), colors.recentThreeHours);
+      now = now.add(const Duration(hours: 2));
+      await tester.pump(const Duration(hours: 2));
       expect(look().background(colors), colors.recentDay);
-      now = now.add(const Duration(hours: 23));
-      await tester.pump(const Duration(hours: 23));
+      now = now.add(const Duration(hours: 21));
+      await tester.pump(const Duration(hours: 21));
       expect(look().background(colors), isNull);
       expect(RowsBrief.debugMeasures, measured);
       expect(tester.takeException(), isNull);

@@ -7,6 +7,7 @@
 import 'dart:async';
 
 import 'package:domain_models/domain_models.dart';
+import 'package:component_library/component_library.dart';
 import 'package:ferryx/app/dependency_container.dart';
 import 'package:ferryx/app/dialog_page.dart';
 import 'package:ferryx/app/terminal_link.dart';
@@ -64,11 +65,11 @@ GoRouter buildRouter({
       ),
       GoRoute(
         path: AppRoutes.viewer,
-        // The viewer takes the whole window over the panels, at once and
-        // with no scrim; Esc closes it and the keys go back to the panel.
+        // The viewer fades over the panels without a scrim; Esc closes it
+        // and the keys go back to the panel.
         pageBuilder: (context, state) {
           final args = state.extra! as ViewerRouteArguments;
-          return NoTransitionPage<void>(
+          return AppPage<void>(
             key: state.pageKey,
             child: ViewerScreen(
               files: deps.files,
@@ -86,7 +87,7 @@ GoRouter buildRouter({
         path: AppRoutes.comparison,
         pageBuilder: (context, state) {
           final (left, right) = state.extra! as (Location, Location);
-          return NoTransitionPage<void>(
+          return AppPage<void>(
             key: state.pageKey,
             child: FileDiffScreen(
               left: FileRepositorySource(deps.files, left),

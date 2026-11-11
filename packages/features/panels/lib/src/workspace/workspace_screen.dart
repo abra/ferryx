@@ -582,7 +582,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       ? AppSplitter(
                           focusNode: _terminalEdgeFocus,
                           axis: Axis.vertical,
-                          line: AppSplitterLine.center,
+                          line: AppSplitterLine.start,
                           title: l10n.terminalHeightTitle,
                           value: l10n.terminalLineCount(
                             dock.lines,
@@ -686,6 +686,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                                     final secondPercent =
                                                         100 - firstPercent;
                                                     return _Panels(
+                                                      retainPreviewOnExit:
+                                                          !preview.shown,
+                                                      retainTerminalOnExit:
+                                                          !dock.shown,
                                                       thumbnails:
                                                           widget.thumbnails,
                                                       deletions: _deletions,
@@ -756,7 +760,6 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                                           _scheduleSnapshot,
                                                       onSplitterReset:
                                                           _equalizePanels,
-                                                      extent: _panelsExtent,
                                                     );
                                                   },
                                                 ),
@@ -828,12 +831,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                       // under them) and the hints: the panels give it
                                       // room smoothly, at once under reduced motion. A
                                       // terminal over the whole window covers it.
-                                      AnimatedSize(
-                                        duration: context.motion(
-                                          AppMotion.medium,
-                                        ),
-                                        curve: Curves.easeOutCubic,
-                                        alignment: Alignment.topCenter,
+                                      AppPresence(
+                                        resize: true,
                                         child:
                                             workspace.shelfShown && !fullWindow
                                             ? AppFocusArea(
@@ -905,41 +904,53 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                                           ),
                                                     ),
                                               )
-                                            : const SizedBox(
-                                                width: double.infinity,
-                                              ),
+                                            : null,
                                       ),
                                       // The keys for what is under the cursor or selected
                                       // in the active panel, or the preview's, terminal's or
                                       // shelf's while they have the keys, until the user
                                       // hides the line.
-                                      if (prefs.showKeyHints && !fullWindow)
-                                        _KeyHintsLine(
-                                          deletions: _deletions,
-                                          previewFocus: _previewFocus,
-                                          terminalFocus: _terminalFocus,
-                                          shelfFocus: _shelfFocus,
-                                          terminalHints: terminalShown
-                                              ? terminalHintsFor(dock.mode)
-                                              : null,
-                                          panel: _cubitOf(workspace.active),
-                                          vim: prefs.vimMode,
-                                          hasShelf: !workspace.shelf.isEmpty,
-                                          shortcutMap: widget.shortcutMap,
-                                          onHide: () => _hideKeyHints(context),
-                                          onHelp: () => unawaited(
-                                            widget.navigation.openCheatSheet(
-                                              context,
-                                            ),
-                                          ),
-                                        ),
+                                      AppPresence(
+                                        resize: true,
+                                        child: prefs.showKeyHints && !fullWindow
+                                            ? _KeyHintsLine(
+                                                deletions: _deletions,
+                                                previewFocus: _previewFocus,
+                                                terminalFocus: _terminalFocus,
+                                                shelfFocus: _shelfFocus,
+                                                terminalHints: terminalShown
+                                                    ? terminalHintsFor(
+                                                        dock.mode,
+                                                      )
+                                                    : null,
+                                                panel: _cubitOf(
+                                                  workspace.active,
+                                                ),
+                                                vim: prefs.vimMode,
+                                                hasShelf:
+                                                    !workspace.shelf.isEmpty,
+                                                shortcutMap: widget.shortcutMap,
+                                                onHide: () =>
+                                                    _hideKeyHints(context),
+                                                onHelp: () => unawaited(
+                                                  widget.navigation
+                                                      .openCheatSheet(
+                                                        context,
+                                                      ),
+                                                ),
+                                              )
+                                            : null,
+                                      ),
                                     ],
                                   ),
                                 ),
                               ),
                             ),
-                            if (preview.fullWindow && previewView != null)
-                              previewView,
+                            AppPresence(
+                              retainOnExit: !preview.shown,
+                              animateInitially: true,
+                              child: preview.fullWindow ? previewView : null,
+                            ),
                           ],
                         ),
                       ),
@@ -1145,6 +1156,8 @@ class _KeyHintsLine extends StatelessWidget {
 /// one alone.
 class _Panels extends StatelessWidget {
   const _Panels({
+    required this.retainPreviewOnExit,
+    required this.retainTerminalOnExit,
     required this.deletions,
     required this.operations,
     required this.operationService,
@@ -1175,12 +1188,13 @@ class _Panels extends StatelessWidget {
     required this.onSplitterDrag,
     required this.onSplitterDragEnd,
     required this.onSplitterReset,
-    required this.extent,
   });
 
   /// The line the splitter draws down the middle of its handle.
   static const double splitterLineWidth = 1;
 
+  final bool retainPreviewOnExit;
+  final bool retainTerminalOnExit;
   final WorkspaceState workspace;
   final PendingDeletionsController deletions;
   final WorkspaceOperationsController operations;
@@ -1214,148 +1228,92 @@ class _Panels extends StatelessWidget {
   final VoidCallback onSplitterDragEnd;
   final VoidCallback onSplitterReset;
 
-  /// The room along the line between the panels.
-  final double extent;
-
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
-    if (workspace.singlePane && previewSide == null) {
-      final left = workspace.active == PanelSide.left;
-      return _PanelOperationsHost(
-        side: workspace.active,
+    final single = workspace.singlePane && previewSide == null;
+    final singleLeft = single && workspace.active == PanelSide.left;
+    final singleRight = single && workspace.active == PanelSide.right;
+    return AppSplitView(
+      axis: stacked ? Axis.vertical : Axis.horizontal,
+      fraction: workspace.splitFraction,
+      expandedPane: single
+          ? (singleLeft ? AppSplitPane.first : AppSplitPane.second)
+          : null,
+      first: _PanelOperationsHost(
+        side: PanelSide.left,
         deletions: deletions,
         operations: operations,
         operationService: operationService,
         showOperations: workspace.operationsShown,
-        onCancel: () => onCancelDeletion(workspace.active),
-        child: _SidePanel(
-          thumbnails: thumbnails,
-          key: left ? leftPanel : rightPanel,
-          side: workspace.active,
-          terminal: terminalSide == workspace.active ? terminal : null,
-          leading: true,
-          trailing: true,
-          cubit: cubitOf(workspace.active),
-          focusNode: left ? leftFocus : rightFocus,
-          cursorKey: left ? leftCursor : rightCursor,
-          active: true,
-          prefs: prefs,
-          decor: decor,
-          shortcutMap: shortcutMap,
-          hooks: hooksFor(workspace.active),
-          registerNote: registerNote,
-        ),
-      );
-    }
-    final first = ((extent - splitterLineWidth) * workspace.splitFraction)
-        .roundToDouble();
-    // One Flex either way, so the panels keep their state as it turns.
-    return Stack(
-      children: [
-        Flex(
-          direction: stacked ? Axis.vertical : Axis.horizontal,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              width: stacked ? null : first,
-              height: stacked ? first : null,
-              child: _PanelOperationsHost(
-                side: PanelSide.left,
-                deletions: deletions,
-                operations: operations,
-                operationService: operationService,
-                showOperations: workspace.operationsShown,
-                onCancel: () => onCancelDeletion(PanelSide.left),
-                child: _PreviewPanelSlot(
-                  preview: previewSide == PanelSide.left ? preview : null,
-                  child: _SidePanel(
-                    thumbnails: thumbnails,
-                    key: leftPanel,
-                    side: PanelSide.left,
-                    terminal: terminalSide == PanelSide.left ? terminal : null,
-                    // Above, it has the window's top row to itself.
-                    leading: true,
-                    trailing: stacked,
-                    cubit: cubitOf(PanelSide.left),
-                    focusNode: leftFocus,
-                    cursorKey: leftCursor,
-                    active: workspace.active == PanelSide.left,
-                    prefs: prefs,
-                    decor: decor,
-                    shortcutMap: shortcutMap,
-                    hooks: hooksFor(PanelSide.left),
-                    registerNote: registerNote,
-                  ),
-                ),
-              ),
-            ),
-            AppRule(
-              axis: stacked ? Axis.horizontal : Axis.vertical,
-              color: colors.line,
-            ),
-            Expanded(
-              child: _PanelOperationsHost(
-                side: PanelSide.right,
-                deletions: deletions,
-                operations: operations,
-                operationService: operationService,
-                showOperations: workspace.operationsShown,
-                onCancel: () => onCancelDeletion(PanelSide.right),
-                child: _PreviewPanelSlot(
-                  preview: previewSide == PanelSide.right ? preview : null,
-                  child: _SidePanel(
-                    thumbnails: thumbnails,
-                    key: rightPanel,
-                    side: PanelSide.right,
-                    terminal: terminalSide == PanelSide.right ? terminal : null,
-                    // Below, its bar is not the window's: no buttons beside
-                    // it, and it does not move the window.
-                    leading: false,
-                    trailing: !stacked,
-                    cubit: cubitOf(PanelSide.right),
-                    focusNode: rightFocus,
-                    cursorKey: rightCursor,
-                    active: workspace.active == PanelSide.right,
-                    prefs: prefs,
-                    decor: stacked ? WindowDecor.none : decor,
-                    shortcutMap: shortcutMap,
-                    hooks: hooksFor(PanelSide.right),
-                    registerNote: registerNote,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        Positioned(
-          left: stacked ? 0 : first - AppSizes.resizeHandleWidth / 2,
-          top: stacked ? first - AppSizes.resizeHandleWidth / 2 : 0,
-          right: stacked ? 0 : null,
-          bottom: stacked ? null : 0,
-          width: stacked
-              ? null
-              : AppSizes.resizeHandleWidth + splitterLineWidth,
-          height: stacked
-              ? AppSizes.resizeHandleWidth + splitterLineWidth
-              : null,
-          child: AppSplitter(
-            focusNode: splitterFocus,
-            axis: stacked ? Axis.vertical : Axis.horizontal,
-            title: context.l10n.splitterTitle,
-            value: splitterValue,
-            hints: splitterHints,
-            onAction: onSplitterAction,
-            onDragStart: () {},
-            onDragUpdate: onSplitterDrag,
-            onDragEnd: onSplitterDragEnd,
-            onReset: onSplitterReset,
-            resetLabel: context.l10n.splitterReset,
-            resetHint: context.l10n.splitterResetHint,
-            line: AppSplitterLine.center,
+        onCancel: () => onCancelDeletion(PanelSide.left),
+        child: _PreviewPanelSlot(
+          retainOnExit: retainPreviewOnExit,
+          preview: previewSide == PanelSide.left ? preview : null,
+          child: _SidePanel(
+            retainTerminalOnExit: retainTerminalOnExit,
+            thumbnails: thumbnails,
+            key: leftPanel,
+            side: PanelSide.left,
+            terminal: terminalSide == PanelSide.left ? terminal : null,
+            leading: true,
+            trailing: stacked || singleLeft,
+            cubit: cubitOf(PanelSide.left),
+            focusNode: leftFocus,
+            cursorKey: leftCursor,
+            active: workspace.active == PanelSide.left,
+            prefs: prefs,
+            decor: decor,
+            shortcutMap: shortcutMap,
+            hooks: hooksFor(PanelSide.left),
+            registerNote: registerNote,
           ),
         ),
-      ],
+      ),
+      second: _PanelOperationsHost(
+        side: PanelSide.right,
+        deletions: deletions,
+        operations: operations,
+        operationService: operationService,
+        showOperations: workspace.operationsShown,
+        onCancel: () => onCancelDeletion(PanelSide.right),
+        child: _PreviewPanelSlot(
+          retainOnExit: retainPreviewOnExit,
+          preview: previewSide == PanelSide.right ? preview : null,
+          child: _SidePanel(
+            retainTerminalOnExit: retainTerminalOnExit,
+            thumbnails: thumbnails,
+            key: rightPanel,
+            side: PanelSide.right,
+            terminal: terminalSide == PanelSide.right ? terminal : null,
+            leading: singleRight,
+            trailing: !stacked || singleRight,
+            cubit: cubitOf(PanelSide.right),
+            focusNode: rightFocus,
+            cursorKey: rightCursor,
+            active: workspace.active == PanelSide.right,
+            prefs: prefs,
+            decor: stacked && !singleRight ? WindowDecor.none : decor,
+            shortcutMap: shortcutMap,
+            hooks: hooksFor(PanelSide.right),
+            registerNote: registerNote,
+          ),
+        ),
+      ),
+      handle: AppSplitter(
+        focusNode: splitterFocus,
+        axis: stacked ? Axis.vertical : Axis.horizontal,
+        title: context.l10n.splitterTitle,
+        value: splitterValue,
+        hints: splitterHints,
+        onAction: onSplitterAction,
+        onDragStart: () {},
+        onDragUpdate: onSplitterDrag,
+        onDragEnd: onSplitterDragEnd,
+        onReset: onSplitterReset,
+        resetLabel: context.l10n.splitterReset,
+        resetHint: context.l10n.splitterResetHint,
+        line: AppSplitterLine.center,
+      ),
     );
   }
 }
@@ -1394,52 +1352,58 @@ class _PanelOperationsHost extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           child!,
-          if (pending != null || running.isNotEmpty)
-            Positioned.fill(
-              top: context.metrics.topBarHeight,
-              bottom: AppStatusBar.heightOf(context),
-              left: 0,
-              right: 0,
-              child: Align(
+          Positioned.fill(
+            top: context.metrics.topBarHeight,
+            bottom: AppStatusBar.heightOf(context),
+            left: 0,
+            right: 0,
+            child: Align(
+              alignment: Alignment.bottomRight,
+              child: AppPresence(
+                resize: true,
                 alignment: Alignment.bottomRight,
-                child: SizedBox(
-                  width: OperationsCards.cardWidth + AppSpacing.md * 2,
-                  child: SingleChildScrollView(
-                    reverse: true,
-                    // Keep the floating plate's shadow inside the viewport.
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: AppSpacing.sm,
-                      children: [
-                        if (running.isNotEmpty)
-                          OperationsCards(
-                            operations: running,
-                            titles: operations.titles,
-                            onPause: (id) =>
-                                unawaited(operationService.pause(id)),
-                            onResume: (id) =>
-                                unawaited(operationService.resume(id)),
-                            onCancel: (id) =>
-                                unawaited(operationService.cancel(id)),
-                            onDismiss: operations.dismiss,
-                            onAnswer: (progress) =>
-                                unawaited(operations.ask(progress.id)),
+                animateInitially: true,
+                child: pending != null || running.isNotEmpty
+                    ? SizedBox(
+                        width: OperationsCards.cardWidth + AppSpacing.md * 2,
+                        child: SingleChildScrollView(
+                          reverse: true,
+                          // Keep the floating plate's shadow inside the viewport.
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            spacing: AppSpacing.sm,
+                            children: [
+                              if (running.isNotEmpty)
+                                OperationsCards(
+                                  operations: running,
+                                  titles: operations.titles,
+                                  onPause: (id) =>
+                                      unawaited(operationService.pause(id)),
+                                  onResume: (id) =>
+                                      unawaited(operationService.resume(id)),
+                                  onCancel: (id) =>
+                                      unawaited(operationService.cancel(id)),
+                                  onDismiss: operations.dismiss,
+                                  onAnswer: (progress) =>
+                                      unawaited(operations.ask(progress.id)),
+                                ),
+                              if (pending != null)
+                                PendingDeletionCard(
+                                  key: ValueKey(pending.id),
+                                  deletion: pending,
+                                  remaining: deletions.remaining(pending),
+                                  onCancel: onCancel,
+                                ),
+                            ],
                           ),
-                        if (pending != null)
-                          PendingDeletionCard(
-                            key: ValueKey(pending.id),
-                            deletion: pending,
-                            remaining: deletions.remaining(pending),
-                            onCancel: onCancel,
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
+                        ),
+                      )
+                    : null,
               ),
             ),
+          ),
         ],
       );
     },
@@ -1460,6 +1424,7 @@ bool _panelsStacked(Preferences prefs, Size window) =>
 class _SidePanel extends StatelessWidget {
   const _SidePanel({
     required this.side,
+    required this.retainTerminalOnExit,
     this.terminal,
     this.thumbnails,
     required this.leading,
@@ -1477,6 +1442,7 @@ class _SidePanel extends StatelessWidget {
   });
 
   final PanelSide side;
+  final bool retainTerminalOnExit;
   final PanelTerminal? terminal;
   final ThumbnailProvider? thumbnails;
 
@@ -1522,6 +1488,7 @@ class _SidePanel extends StatelessWidget {
         ),
         cursorRowKey: cursorKey,
         terminal: terminal,
+        retainTerminalOnExit: retainTerminalOnExit,
       ),
     );
   }
@@ -1529,10 +1496,15 @@ class _SidePanel extends StatelessWidget {
 
 /// Keep the covered panel mounted: its scroll, tabs and selection survive.
 class _PreviewPanelSlot extends StatelessWidget {
-  const _PreviewPanelSlot({required this.child, required this.preview});
+  const _PreviewPanelSlot({
+    required this.child,
+    required this.preview,
+    required this.retainOnExit,
+  });
 
   final Widget child;
   final Widget? preview;
+  final bool retainOnExit;
 
   @override
   Widget build(BuildContext context) => Stack(
@@ -1545,7 +1517,11 @@ class _PreviewPanelSlot extends StatelessWidget {
           child: Offstage(offstage: preview != null, child: child),
         ),
       ),
-      ?preview,
+      AppPresence(
+        retainOnExit: retainOnExit,
+        animateInitially: true,
+        child: preview,
+      ),
     ],
   );
 }

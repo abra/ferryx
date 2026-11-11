@@ -4,16 +4,26 @@ import 'package:domain_models/domain_models.dart';
 import 'package:flutter/widgets.dart';
 
 /// Presentation ranges for the filesystem's date added to this folder.
-enum RecentEntryAge { hour, day }
+enum RecentEntryAge {
+  hour(Duration(hours: 1)),
+  threeHours(Duration(hours: 3)),
+  day(Duration(days: 1));
+
+  const RecentEntryAge(this.upperBound);
+
+  /// Exclusive upper age, shared by classification and clock scheduling.
+  final Duration upperBound;
+}
 
 RecentEntryAge? recentEntryAge(FileEntry entry, DateTime now) {
   final added = entry.added;
   if (entry.isParent || added == null) return null;
   final age = now.difference(added);
-  if (age.isNegative || age >= const Duration(days: 1)) return null;
-  return age < const Duration(hours: 1)
-      ? RecentEntryAge.hour
-      : RecentEntryAge.day;
+  if (age.isNegative) return null;
+  for (final range in RecentEntryAge.values) {
+    if (age < range.upperBound) return range;
+  }
+  return null;
 }
 
 /// One clock for the visible rows. Entry timestamps are inspected only when
@@ -76,14 +86,14 @@ class _RecentEntriesClockState extends State<RecentEntriesClock>
     if (_suspended) return;
     DateTime? next;
     _dates.removeWhere(
-      (date) => _now.difference(date) >= const Duration(days: 1),
+      (date) => _now.difference(date) >= RecentEntryAge.day.upperBound,
     );
     for (final added in _dates) {
-      final deadline = added.add(
-        _now.difference(added) < const Duration(hours: 1)
-            ? const Duration(hours: 1)
-            : const Duration(days: 1),
+      final elapsed = _now.difference(added);
+      final range = RecentEntryAge.values.firstWhere(
+        (range) => elapsed < range.upperBound,
       );
+      final deadline = added.add(range.upperBound);
       if (next == null || deadline.isBefore(next)) next = deadline;
     }
     if (next == null) return;

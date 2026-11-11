@@ -257,6 +257,46 @@ void main() {
   );
 
   testWidgets(
+    'rapid docking and hide/show during transitions keep one live terminal',
+    (tester) async {
+      await pump(tester);
+      await open(tester);
+      final state = tester.state(getPane());
+      for (final action in [
+        AppCommand.terminalAsTab,
+        AppCommand.terminalInRightPanel,
+        AppCommand.terminalBelowFiles,
+        AppCommand.terminalAcrossPanels,
+        AppCommand.toggleTerminal,
+      ]) {
+        expect(
+          invokeCommand(
+            tester.element(find.byType(TerminalPane, skipOffstage: false)),
+            action,
+          ),
+          isTrue,
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 20));
+        expect(tester.takeException(), isNull);
+        expect(tester.state(getPane()), same(state));
+      }
+      invokeCommand(tester.element(getPane()), AppCommand.hideTerminal);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 20));
+      final files = tester.widget<PanelView>(panel(PanelSide.right));
+      expect(
+        invokeCommand(files.focusNode.context!, AppCommand.showTerminal),
+        isTrue,
+      );
+      await tester.pumpAndSettle();
+      expect(getPane(), findsOneWidget);
+      expect(sessions, hasLength(1));
+      expect(sessions.single.closed, isFalse);
+    },
+  );
+
+  testWidgets(
     'restores a terminal tab in the right panel and saves docking changes',
     (tester) async {
       unawaited(

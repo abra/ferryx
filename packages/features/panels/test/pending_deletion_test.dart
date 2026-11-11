@@ -73,6 +73,7 @@ void main() {
     expect(h.started, isEmpty);
     await tester.tap(find.widgetWithText(OutlinedButton, en.actionCancel));
     await tester.pump(const Duration(seconds: 10));
+    await tester.pumpAndSettle();
     expect(find.byType(PendingDeletionCard), findsNothing);
     expect(h.started, isEmpty);
     expect(left.state.active!.selected, {'a.txt', 'b.txt'});
@@ -157,6 +158,7 @@ void main() {
       await tester.pump();
       expectInside(tester, visibleCards(), PanelSide.left);
       await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
       expect(visibleCards(), findsNothing);
     },
   );
@@ -240,6 +242,7 @@ void main() {
         );
       }
       await press(tester, LogicalKeyboardKey.escape);
+      await tester.pump(AppMotion.quick);
       expect(find.byType(PendingDeletionCard), findsOneWidget);
       await tester.pump(const Duration(seconds: 5));
       expect(h.started.single.sources, ['/home/docs/a.txt']);
@@ -315,6 +318,7 @@ void main() {
       await press(tester, LogicalKeyboardKey.escape);
       expect(find.byType(PendingDeletionCard), findsOneWidget);
       await press(tester, LogicalKeyboardKey.escape);
+      await tester.pump(AppMotion.quick);
       expect(find.byType(PendingDeletionCard), findsNothing);
       expect(h.started, isEmpty);
     },
@@ -337,6 +341,7 @@ void main() {
       verifyNever(() => h.operations.start(any()));
       await tester.pump(const Duration(seconds: 5));
       verify(() => h.operations.start(any())).called(1);
+      await tester.pumpAndSettle();
       expect(find.byType(PendingDeletionCard), findsNothing);
       expect(find.byType(SnackBar), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -360,6 +365,7 @@ void main() {
           );
           select(panel(tester, PanelSide.left), {'a.txt', 'b.txt', 'c.md'});
           await trash(tester);
+          await tester.pump(AppMotion.short);
           expectInside(
             tester,
             find.byType(PendingDeletionCard),

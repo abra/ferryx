@@ -136,10 +136,16 @@ void main() {
           ),
         ),
       );
+      expect(
+        {colors.recentHour, colors.recentThreeHours, colors.recentDay},
+        hasLength(3),
+      );
       for (final age in RecentEntryAge.values) {
-        final fill = age == RecentEntryAge.hour
-            ? colors.recentHour
-            : colors.recentDay;
+        final fill = switch (age) {
+          RecentEntryAge.hour => colors.recentHour,
+          RecentEntryAge.threeHours => colors.recentThreeHours,
+          RecentEntryAge.day => colors.recentDay,
+        };
         for (final active in [false, true]) {
           expect(look(active: active, recentAge: age).background(colors), fill);
           expect(

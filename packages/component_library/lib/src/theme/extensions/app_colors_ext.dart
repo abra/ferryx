@@ -32,6 +32,7 @@ class AppColorsExt extends ThemeExtension<AppColorsExt> {
     required this.onCursor,
     required this.onCursorMuted,
     required this.recentHour,
+    required this.recentThreeHours,
     required this.recentDay,
     required this.recentBorder,
     required this.link,
@@ -134,11 +135,12 @@ class AppColorsExt extends ThemeExtension<AppColorsExt> {
   /// File metadata on [cursorFill].
   final Color onCursorMuted;
 
-  /// File rows added within the last hour and between one and 24 hours ago.
+  /// Mint below one hour, lavender from one to three, amber from three to 24.
   final Color recentHour;
+  final Color recentThreeHours;
   final Color recentDay;
 
-  /// The age legend's swatches, distinct even against pale window chrome.
+  /// A neutral outline for both age swatches against the window chrome.
   final Color recentBorder;
 
   /// Links and references in text: the accent darkened enough to read.
@@ -263,6 +265,7 @@ class AppColorsExt extends ThemeExtension<AppColorsExt> {
       onCursor: mix(onCursor, other.onCursor),
       onCursorMuted: mix(onCursorMuted, other.onCursorMuted),
       recentHour: mix(recentHour, other.recentHour),
+      recentThreeHours: mix(recentThreeHours, other.recentThreeHours),
       recentDay: mix(recentDay, other.recentDay),
       recentBorder: mix(recentBorder, other.recentBorder),
       link: mix(link, other.link),
