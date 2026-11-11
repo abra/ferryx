@@ -875,6 +875,20 @@ match ranges, the sort options and the layout index. Rules:
   active panel (so cursor and selection read apart, as orthodox managers
   need) and grey too where the focus is not (`RowLook`, through
   `AppFocusArea.activeOf`).
+- Unmarked rows in List and Brief use two mint fills for `FileEntry.added`:
+  under one hour, then under 24 hours. `RowLook` keeps cursor, selection
+  and drop-target fills ahead of recency. Missing/future dates and `..`
+  stay untinted; modified/created times are not fallbacks. The core already
+  supplies macOS's date added to the item's containing folder, with no
+  additional filesystem calls. `RecentEntriesClock` scans dates when the
+  visible tab's rows change, schedules the next age boundary (batched to
+  minute precision), and notifies visible rows through an inherited clock.
+  No directory refresh or per-row timer is involved; Brief's width cache
+  stays independent of the clock. Hidden windows suspend the timer and
+  resuming recomputes it. The existing footer shows the legend unless a
+  selection, search or Vim command needs that space. Focused-item details
+  share the row when they fit; a narrow Flat view keeps the relative path
+  ahead of the legend so equal file names remain unambiguous.
 - Quick search: letters typed in the panel (unless a modifier is required
   by the preferences) filter or underline; the cursor goes to the first
   match; Backspace takes a letter back while a search is on, Esc clears.

@@ -10,6 +10,7 @@ import 'package:shortcuts/shortcuts.dart';
 import 'inline_rename.dart';
 import 'panel_row.dart';
 import 'panel_state.dart';
+import 'recent_entries.dart';
 import 'rows_header.dart';
 import 'rows_list.dart';
 
@@ -348,7 +349,13 @@ class _BriefColumn extends StatelessWidget {
               key: ValueKey(tab.rows[i].key),
               index: i,
               entry: tab.rows[i],
-              look: rowLookOf(tab, i, active: active, dropRow: dropRow),
+              look: rowLookOf(
+                tab,
+                i,
+                active: active,
+                dropRow: dropRow,
+                now: RecentEntriesClock.nowOf(context),
+              ),
               location: tab.location,
               renaming: tab.renaming == i,
               rename: rename,

@@ -1,0 +1,109 @@
+:root {
+  --fresh: #e4f3ec;
+  --today: #f2f8f5;
+  --fresh-hover: #daeee3;
+  --today-hover: #e6f2ec;
+  --fresh-mark: #388363;
+  --today-mark: #759e8a;
+  --legend-edge: #9dbdab;
+}
+
+:root[data-theme="dark"] {
+  --fresh: #183a33;
+  --today: #142b29;
+  --fresh-hover: #20483d;
+  --today-hover: #1b3831;
+  --fresh-mark: #82c6a7;
+  --today-mark: #83a99a;
+  --legend-edge: #467c65;
+}
+
+.ferryx-window[data-age-style="duo"] {
+  --today: #f1eef8;
+  --today-hover: #e9e3f4;
+  --today-mark: #8b79ac;
+  --today-edge: #c3b7d9;
+}
+
+:root[data-theme="dark"] .ferryx-window[data-age-style="duo"] {
+  --today: #29243d;
+  --today-hover: #352e4a;
+  --today-mark: #b6a2d2;
+  --today-edge: #6e5a91;
+}
+
+.file-row[data-age="fresh"] { background: var(--fresh); }
+.file-row[data-age="today"] { background: var(--today); }
+.file-row[data-age="fresh"]:hover { background: var(--fresh-hover); }
+.file-row[data-age="today"]:hover { background: var(--today-hover); }
+.file-row.marked, .file-row.cursor { background: var(--inactive); }
+.pane.active .file-row.marked { background: var(--marked); }
+.pane.active .file-row.cursor { background: var(--cursor); }
+.file-row.cursor .file-name { font-weight: 600; }
+.file-name .entry-name { overflow: hidden; text-overflow: ellipsis; }
+.file-row.parent .file-name > svg { color: var(--muted); }
+
+.age-marker { display: none; flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%; }
+[data-age-style="marker"] [data-age="fresh"] .age-marker {
+  display: block;
+  background: var(--fresh-mark);
+}
+[data-age-style="marker"] [data-age="today"] .age-marker {
+  display: block;
+  border: 1.5px solid var(--today-mark);
+}
+[data-age-style="marker"] .file-row.cursor .age-marker,
+[data-age-style="marker"] .file-row.marked .age-marker {
+  box-shadow: 0 0 0 2px var(--paper);
+}
+
+.pane-status { gap: 12px; }
+.age-legend { display: flex; align-items: center; flex: 0 0 auto; gap: 12px; }
+.legend-label { color: var(--faint); }
+.legend-item { display: inline-flex; align-items: center; gap: 5px; cursor: help; }
+.age-swatch { display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; border-radius: 3px; border: 1px solid var(--legend-edge); background: var(--fresh); }
+.age-swatch.today { background: var(--today); border-color: var(--today-edge, var(--legend-edge)); }
+[data-age-style="marker"] .age-swatch::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--fresh-mark); }
+[data-age-style="marker"] .age-swatch.today::after { background: none; border: 1px solid var(--today-mark); }
+.status-count { font-family: var(--sans); }
+.demo-add { padding: 5px 9px; border: 1px solid var(--border); background: var(--paper); }
+.demo-add:hover { background: var(--hover); }
+.comparison-caption { align-items: baseline; }
+.comparison-caption p { max-width: 61%; text-align: right; }
+.comparison-intro { max-width: 900px; }
+.comparison-card .ferryx-window { height: 428px; }
+.study-stage { min-height: 520px; }
+
+/* Close comparison at the same 13 px UI scale as the full two-pane examples. */
+.detail .study-stage { max-width: 704px; padding: 16px; }
+.detail .study-header { display: none; }
+.detail .workspace { grid-template-columns: minmax(0, 1fr); }
+.detail .panel-divider, .detail [data-pane="right"] { display: none; }
+.detail .comparison-caption { flex-wrap: wrap; gap: 8px; }
+.detail .comparison-caption p { margin: 0; flex-basis: 100%; max-width: none; text-align: left; }
+.detail .comparison-card .ferryx-window { height: 428px; }
+
+@media (max-width: 1250px) {
+  .toolbar-actions .command-button span { display: none; }
+  .permissions { display: none; }
+  .column-head, .file-row { grid-template-columns: minmax(90px, 1fr) 64px 126px; }
+  .status-count .free-space { display: none; }
+}
+
+@media (max-width: 1000px) {
+  .legend-label { display: none; }
+  .pane-status { gap: 7px; }
+  .age-legend { gap: 7px; }
+  .status-count { font-size: 10px; }
+}
+
+@media (max-width: 760px) {
+  .traffic-lights { display: none; }
+  .mode-badge { display: none; }
+  .pane-status { padding: 0 7px; }
+  .age-legend { font-size: 10px; }
+  .age-swatch { width: 11px; height: 11px; }
+  .comparison-caption { flex-wrap: wrap; gap: 8px; }
+  .comparison-caption p { max-width: 100%; text-align: left; margin: 0; flex: 1 0 85%; }
+  .study-stage { min-height: 500px; }
+}

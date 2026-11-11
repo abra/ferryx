@@ -109,6 +109,11 @@
   "panelsVimMode": "Клавиши Vim",
   "panelsVimModeHint": "h j k l, счётчики, / для поиска, v для выделения, yy dd p, метки и командная строка :; см. шпаргалку",
   "panelHiddenShown": "Скрытые объекты показаны",
+  "panelRecentHour": "<1 ч",
+  "panelRecentAdded": "Добавлены:",
+  "panelRecentDay": "1–24 ч",
+  "panelRecentHourHelp": "Добавлены в эту папку менее часа назад",
+  "panelRecentDayHelp": "Добавлены в эту папку от 1 до 24 часов назад",
 
   "tabNew": "Новая вкладка",
   "tabClose": "Закрыть вкладку",

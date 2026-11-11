@@ -5,7 +5,9 @@ import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/material.dart';
 
+import 'panel_row.dart';
 import 'panel_state.dart';
+import 'recent_entries_legend.dart';
 
 /// What Vim mode shows in the footer: the mode's name, the keys that
 /// wait, or the command line in place of the rest.
@@ -23,9 +25,9 @@ class VimLine {
 
 enum VimMode { normal, visual, search, command }
 
-/// Under the rows: the focused item with its size and date, or the
-/// selection's count and size; what the shelf holds, the number of items
-/// and the free space. With Vim keys on, the mode leads the line.
+/// Under the rows: the age legend, or the selection's count and size;
+/// what the shelf holds, the number of items and the free space.
+/// Search and Vim's command line take priority over the legend.
 class PanelFooter extends StatelessWidget {
   const PanelFooter({
     required this.tab,
@@ -67,7 +69,6 @@ class PanelFooter extends StatelessWidget {
       fontFeatures: const [FontFeature.tabularFigures()],
     );
     final mono = context.mono.copyWith(fontSize: strong.fontSize);
-    final focused = tab.focused;
     final vim = this.vim;
     final Widget left;
     if (vim?.commandLine != null) {
@@ -84,29 +85,12 @@ class PanelFooter extends StatelessWidget {
         ),
         strong,
       );
-    } else if (focused != null && !focused.isParent) {
-      final size = focused.size;
-      final modified = focused.modified;
-      final details = size != null && modified != null
-          ? l10n.joinedDetails(l10n.fileSize(size), l10n.dateTime(modified))
-          : size != null
-          ? l10n.fileSize(size)
-          : modified != null
-          ? l10n.dateTime(modified)
-          : null;
-      left = Row(
-        children: [
-          // A flat view's row says its folder too.
-          Flexible(child: AppMiddleEllipsis(focused.key, style: strong)),
-          if (details != null) ...[
-            const SizedBox(width: AppSpacing.md),
-            // Cut too when the footer is narrow (a server's capsule, Vim's).
-            Flexible(child: _Line(details, strong)),
-          ],
-        ],
-      );
     } else {
-      left = const SizedBox.shrink();
+      left = _BrowsingStatus(
+        focused: tab.focused,
+        style: strong,
+        keepPath: tab.flat != null,
+      );
     }
     // `..` leads the rows when it is there.
     final rows = tab.rows;
@@ -153,7 +137,7 @@ class PanelFooter extends StatelessWidget {
             const SizedBox(width: AppSpacing.md),
           ],
           // The count and the free space keep to the end, up to half the
-          // line; the focused item's name gives way first.
+          // line; the legend or contextual text gives way first.
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) => Row(
@@ -178,6 +162,78 @@ class PanelFooter extends StatelessWidget {
   ServerKey? get _server {
     final key = tab.location.server;
     return key == null ? null : ServerKey.parse(key);
+  }
+}
+
+/// Keep the focused item's details alongside the legend when both fit.
+/// In a narrow flat view, the full relative path disambiguates equal names.
+class _BrowsingStatus extends StatelessWidget {
+  const _BrowsingStatus({
+    required this.focused,
+    required this.style,
+    required this.keepPath,
+  });
+
+  final FileEntry? focused;
+  final TextStyle style;
+  final bool keepPath;
+
+  @override
+  Widget build(BuildContext context) {
+    final entry = focused;
+    if (entry == null || entry.isParent) return const RecentEntriesLegend();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final legendWidth = RecentEntriesLegend.widthOf(context);
+        final nameWidth = MediaQuery.textScalerOf(context).scale(
+          ColumnWidths.nameMin,
+        );
+        if (constraints.maxWidth < legendWidth + AppSpacing.md + nameWidth) {
+          return keepPath
+              ? _FocusedDetails(entry: entry, style: style)
+              : const RecentEntriesLegend();
+        }
+        return Row(
+          children: [
+            SizedBox(width: legendWidth, child: const RecentEntriesLegend()),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: _FocusedDetails(entry: entry, style: style),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _FocusedDetails extends StatelessWidget {
+  const _FocusedDetails({required this.entry, required this.style});
+
+  final FileEntry entry;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final size = entry.size;
+    final modified = entry.modified;
+    final details = size != null && modified != null
+        ? l10n.joinedDetails(l10n.fileSize(size), l10n.dateTime(modified))
+        : size != null
+        ? l10n.fileSize(size)
+        : modified != null
+        ? l10n.dateTime(modified)
+        : null;
+    return Row(
+      children: [
+        Flexible(child: AppMiddleEllipsis(entry.key, style: style)),
+        if (details != null) ...[
+          const SizedBox(width: AppSpacing.md),
+          Flexible(child: _Line(details, style)),
+        ],
+      ],
+    );
   }
 }
 

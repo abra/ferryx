@@ -16,6 +16,7 @@ import 'panel_header.dart';
 import 'panel_row.dart';
 import 'panel_state.dart';
 import 'panel_terminal.dart';
+import 'recent_entries.dart';
 import 'rows_brief.dart';
 import 'rows_list.dart';
 import 'vim_command_line.dart';
@@ -940,43 +941,52 @@ class _PanelViewState extends State<PanelView> {
                               child: Stack(
                                 children: [
                                   Positioned.fill(
-                                    child: PanelDropZone(
-                                      hooks: widget.hooks.drag,
-                                      folder: tab.location,
-                                      child: ValueListenableBuilder<DropSpot?>(
-                                        valueListenable:
-                                            widget.hooks.drag?.highlight ??
-                                            _noDrop,
-                                        builder: (context, spot, _) =>
-                                            layout.mode == ViewMode.list
-                                            ? RowsList(
-                                                tab: tab,
-                                                layout: layout,
-                                                active: widget.active,
-                                                callbacks: callbacks,
-                                                rename: rename,
-                                                cursorKey: widget.cursorRowKey,
-                                                dropRow: spot?.row,
-                                                onSort: (field) => unawaited(
-                                                  _cubit.toggleSortField(field),
+                                    child: RecentEntriesClock(
+                                      entries: tab.rows,
+                                      child: PanelDropZone(
+                                        hooks: widget.hooks.drag,
+                                        folder: tab.location,
+                                        child: ValueListenableBuilder<DropSpot?>(
+                                          valueListenable:
+                                              widget.hooks.drag?.highlight ??
+                                              _noDrop,
+                                          builder: (context, spot, _) =>
+                                              layout.mode == ViewMode.list
+                                              ? RowsList(
+                                                  tab: tab,
+                                                  layout: layout,
+                                                  active: widget.active,
+                                                  callbacks: callbacks,
+                                                  rename: rename,
+                                                  cursorKey:
+                                                      widget.cursorRowKey,
+                                                  dropRow: spot?.row,
+                                                  onSort: (field) => unawaited(
+                                                    _cubit.toggleSortField(
+                                                      field,
+                                                    ),
+                                                  ),
+                                                  onGeometry: (g) =>
+                                                      _cubit.geometry = g,
+                                                )
+                                              : RowsBrief(
+                                                  tab: tab,
+                                                  layout: layout,
+                                                  active: widget.active,
+                                                  callbacks: callbacks,
+                                                  rename: rename,
+                                                  cursorKey:
+                                                      widget.cursorRowKey,
+                                                  dropRow: spot?.row,
+                                                  onSort: (field) => unawaited(
+                                                    _cubit.toggleSortField(
+                                                      field,
+                                                    ),
+                                                  ),
+                                                  onGeometry: (g) =>
+                                                      _cubit.geometry = g,
                                                 ),
-                                                onGeometry: (g) =>
-                                                    _cubit.geometry = g,
-                                              )
-                                            : RowsBrief(
-                                                tab: tab,
-                                                layout: layout,
-                                                active: widget.active,
-                                                callbacks: callbacks,
-                                                rename: rename,
-                                                cursorKey: widget.cursorRowKey,
-                                                dropRow: spot?.row,
-                                                onSort: (field) => unawaited(
-                                                  _cubit.toggleSortField(field),
-                                                ),
-                                                onGeometry: (g) =>
-                                                    _cubit.geometry = g,
-                                              ),
+                                        ),
                                       ),
                                     ),
                                   ),

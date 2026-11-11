@@ -130,6 +130,11 @@
   "panelsVimMode": "Vim keys",
   "panelsVimModeHint": "h j k l, counts, / to search, v to select, yy dd p, marks and a : command line; see the cheat sheet",
   "panelHiddenShown": "Hidden items shown",
+  "panelRecentHour": "<1h",
+  "panelRecentAdded": "Added:",
+  "panelRecentDay": "1–24h",
+  "panelRecentHourHelp": "Added to this folder less than an hour ago",
+  "panelRecentDayHelp": "Added to this folder between 1 and 24 hours ago",
 
   "tabNew": "New tab",
   "tabClose": "Close tab",

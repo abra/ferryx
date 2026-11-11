@@ -8,6 +8,7 @@ import '../native/panel_drag_hooks.dart';
 import 'inline_rename.dart';
 import 'panel_row.dart';
 import 'panel_state.dart';
+import 'recent_entries.dart';
 import 'rows_header.dart';
 
 /// What the rows need from their panel: which row is where, and what a
@@ -49,6 +50,7 @@ RowLook rowLookOf(
   int index, {
   required bool active,
   String? dropRow,
+  DateTime? now,
 }) {
   final entry = tab.rows[index];
   return RowLook(
@@ -61,6 +63,7 @@ RowLook rowLookOf(
         !entry.isParent &&
         !tab.matches.containsKey(entry.key),
     dropTarget: dropRow != null && entry.key == dropRow,
+    recentAge: recentEntryAge(entry, now ?? DateTime.now()),
   );
 }
 
@@ -313,6 +316,7 @@ class _RowsListState extends State<RowsList> {
                             index,
                             active: active,
                             dropRow: widget.dropRow,
+                            now: RecentEntriesClock.nowOf(context),
                           ),
                           location: widget.tab.location,
                           renaming: widget.tab.renaming == index,

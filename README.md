@@ -44,6 +44,16 @@ opening a menu keeps the last area indicated. At the top outer corners,
 the outline follows the window's curve; the junction between panels stays straight.
 Tabs show selection with their normal platform colors, without a blue underline.
 
+Recently added files and folders have a soft mint background: stronger for
+**less than 1 hour**, paler for **1–24 hours**, then the usual background.
+The panel footer explains both shades; selection totals, search and Vim's
+command line take its place while in use. Current-file details remain beside
+the legend when there is room; a narrow Flat view prioritizes the relative
+path. Cursor and selection colors take priority. This uses the **date added
+to the folder** supplied by macOS;
+items without that date keep their usual background. Editing an existing
+file does not make it recent.
+
 Drag the divider to resize. Hovering or dragging shows both percentages.
 Double-click it, click **Equal panels**, or use **View → Make Panels Equal**
 to restore **50/50**. The split is remembered.

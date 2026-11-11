@@ -392,6 +392,23 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get panelHiddenShown => 'Hidden items shown';
 
   @override
+  String get panelRecentHour => '<1h';
+
+  @override
+  String get panelRecentAdded => 'Added:';
+
+  @override
+  String get panelRecentDay => '1–24h';
+
+  @override
+  String get panelRecentHourHelp =>
+      'Added to this folder less than an hour ago';
+
+  @override
+  String get panelRecentDayHelp =>
+      'Added to this folder between 1 and 24 hours ago';
+
+  @override
   String get tabNew => 'New tab';
 
   @override

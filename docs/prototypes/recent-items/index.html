@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Ferryx — недавно добавленные файлы</title>
+    <link rel="icon" href="../../../brand/ferryx-symbolic.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../panel-focus/prototype.css">
+    <link rel="stylesheet" href="../tabs-no-underline/prototype.css">
+    <link rel="stylesheet" href="prototype.css">
+    <script src="prototype.js" defer></script>
+  </head>
+  <body>
+    <header class="study-header">
+      <div class="study-title">
+        <span class="wordmark">FERRYX</span>
+        <h1>Недавно добавленные файлы</h1>
+        <span class="study-note">Интерактивный прототип · демоданные</span>
+      </div>
+      <div class="study-controls">
+        <div class="segmented" role="group" aria-label="Вариант подсветки">
+          <button data-variant="mint" aria-pressed="true"><b>A</b> Один цвет</button>
+          <button data-variant="duo" aria-pressed="false"><b>B</b> Два цвета</button>
+          <button data-variant="marker" aria-pressed="false"><b>C</b> Фон и маркер</button>
+        </div>
+        <div class="control-options">
+          <label>Тема <select id="theme"><option value="light">Светлая</option><option value="dark">Тёмная</option></select></label>
+          <label>Время <select id="elapsed"><option value="0">Сейчас</option><option value="2">Через 2 часа</option><option value="24">Через сутки</option></select></label>
+          <button class="demo-add" id="add-file">Добавить файл</button>
+          <button class="comparison-link" id="compare">Сравнить A / B / C</button>
+        </div>
+      </div>
+    </header>
+    <main class="study-stage" id="stage"></main>
+    <footer class="study-footer">
+      <p id="description"></p>
+      <p><kbd>Tab</kbd> — другая панель · <kbd>↑</kbd> <kbd>↓</kbd> / <kbd>j</kbd> <kbd>k</kbd> — текущая строка · <kbd>Space</kbd> — выделить</p>
+      <span>13 px текст · 22 px строка · масштаб 100%</span>
+    </footer>
+    <p class="sr-only" id="announcement" role="status" aria-live="polite"></p>
+  </body>
+</html>

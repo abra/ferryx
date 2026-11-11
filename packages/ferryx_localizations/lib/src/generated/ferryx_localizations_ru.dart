@@ -400,6 +400,22 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String get panelHiddenShown => 'Скрытые объекты показаны';
 
   @override
+  String get panelRecentHour => '<1 ч';
+
+  @override
+  String get panelRecentAdded => 'Добавлены:';
+
+  @override
+  String get panelRecentDay => '1–24 ч';
+
+  @override
+  String get panelRecentHourHelp => 'Добавлены в эту папку менее часа назад';
+
+  @override
+  String get panelRecentDayHelp =>
+      'Добавлены в эту папку от 1 до 24 часов назад';
+
+  @override
   String get tabNew => 'Новая вкладка';
 
   @override

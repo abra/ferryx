@@ -3,6 +3,7 @@ import 'package:domain_models/domain_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:panels_feature/src/panel/panel_row.dart';
+import 'package:panels_feature/src/panel/recent_entries.dart';
 
 /// The colours a row takes: the cursor emphasized in the active panel,
 /// greyed elsewhere; a selection tinted in the active panel, greyed
@@ -31,12 +32,16 @@ void main() {
     bool active = true,
     bool selected = false,
     bool dimmed = false,
+    bool dropTarget = false,
+    RecentEntryAge? recentAge,
   }) => RowLook(
     cursor: cursor,
     active: active,
     selected: selected,
     match: null,
     dimmed: dimmed,
+    dropTarget: dropTarget,
+    recentAge: recentAge,
   );
 
   testWidgets('the cursor row of the active panel takes the stronger '
@@ -114,5 +119,59 @@ void main() {
 
     expect(await iconColor(), colors.onCursor);
     expect(await iconColor(field: const SizedBox()), isNot(colors.onCursor));
+  });
+
+  testWidgets('recent fills work in both themes and both panels; the cursor, '
+      'selection and drop target always take priority', (tester) async {
+    for (final brightness in Brightness.values) {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.of(AppPlatformStyle.macos, brightness),
+          home: Builder(
+            builder: (c) {
+              context = c;
+              colors = c.appColors;
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      for (final age in RecentEntryAge.values) {
+        final fill = age == RecentEntryAge.hour
+            ? colors.recentHour
+            : colors.recentDay;
+        for (final active in [false, true]) {
+          expect(look(active: active, recentAge: age).background(colors), fill);
+          expect(
+            look(active: active, recentAge: age).foreground(context),
+            context.colors.onSurface,
+          );
+          expect(
+            look(
+              cursor: true,
+              active: active,
+              recentAge: age,
+            ).background(colors),
+            active ? colors.cursorFill : colors.selectionMuted,
+          );
+          expect(
+            look(
+              selected: true,
+              active: active,
+              recentAge: age,
+            ).background(colors),
+            active ? colors.accentSoft : colors.selectionMuted,
+          );
+          expect(
+            look(
+              dropTarget: true,
+              active: active,
+              recentAge: age,
+            ).background(colors),
+            colors.selectionAccent,
+          );
+        }
+      }
+    }
   });
 }

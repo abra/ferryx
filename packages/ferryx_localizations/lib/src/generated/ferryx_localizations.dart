@@ -722,6 +722,36 @@ abstract class FerryxLocalizations {
   /// **'Hidden items shown'**
   String get panelHiddenShown;
 
+  /// No description provided for @panelRecentHour.
+  ///
+  /// In en, this message translates to:
+  /// **'<1h'**
+  String get panelRecentHour;
+
+  /// No description provided for @panelRecentAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added:'**
+  String get panelRecentAdded;
+
+  /// No description provided for @panelRecentDay.
+  ///
+  /// In en, this message translates to:
+  /// **'1–24h'**
+  String get panelRecentDay;
+
+  /// No description provided for @panelRecentHourHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to this folder less than an hour ago'**
+  String get panelRecentHourHelp;
+
+  /// No description provided for @panelRecentDayHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to this folder between 1 and 24 hours ago'**
+  String get panelRecentDayHelp;
+
   /// No description provided for @tabNew.
   ///
   /// In en, this message translates to:

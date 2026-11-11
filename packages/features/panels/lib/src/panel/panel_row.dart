@@ -6,6 +6,7 @@ import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/material.dart';
 
 import 'file_icon.dart';
+import 'recent_entries.dart';
 
 /// How a row is drawn: under the cursor, selected, or plain, in the panel
 /// the keys are in or in the other one.
@@ -24,6 +25,7 @@ class RowLook {
     required this.match,
     this.dimmed = false,
     this.dropTarget = false,
+    this.recentAge,
   });
 
   final bool cursor;
@@ -42,6 +44,7 @@ class RowLook {
   /// A folder row files hang over and would be dropped into: the
   /// emphasized selection, as Finder lights it, wherever the keys are.
   final bool dropTarget;
+  final RecentEntryAge? recentAge;
 
   /// The cursor row in the active panel, or the drop's folder.
   bool get emphasized => (cursor && active) || dropTarget;
@@ -50,7 +53,11 @@ class RowLook {
     if (dropTarget) return colors.selectionAccent;
     if (cursor) return active ? colors.cursorFill : colors.selectionMuted;
     if (selected) return active ? colors.accentSoft : colors.selectionMuted;
-    return null;
+    return switch (recentAge) {
+      RecentEntryAge.hour => colors.recentHour,
+      RecentEntryAge.day => colors.recentDay,
+      null => null,
+    };
   }
 
   /// Painted over the fill without changing column positions or row size.
@@ -329,11 +336,21 @@ class _NameWithFolder extends StatelessWidget {
 String rowSemanticsLabel(BuildContext context, FileEntry entry) {
   final l10n = context.l10n;
   if (entry.isParent) return l10n.panelParentFolder;
-  final label = entry.folder.isEmpty
+  var label = entry.folder.isEmpty
       ? entry.name
       : l10n.flatRowLabel(entry.name, entry.folder);
-  if (entry.tags.isEmpty) return label;
-  return l10n.tagsRowLabel(label, l10n.tagNames(entry.tags.map((t) => t.name)));
+  if (entry.tags.isNotEmpty) {
+    label = l10n.tagsRowLabel(
+      label,
+      l10n.tagNames(entry.tags.map((t) => t.name)),
+    );
+  }
+  final age = recentEntryAge(entry, RecentEntriesClock.nowOf(context));
+  return switch (age) {
+    RecentEntryAge.hour => l10n.joinedDetails(label, l10n.panelRecentHourHelp),
+    RecentEntryAge.day => l10n.joinedDetails(label, l10n.panelRecentDayHelp),
+    null => label,
+  };
 }
 
 /// A folder with nothing to show, in either view.
