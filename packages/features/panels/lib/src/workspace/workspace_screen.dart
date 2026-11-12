@@ -1100,6 +1100,7 @@ class _KeyHintsLine extends StatelessWidget {
       terminalFocus,
       shelfFocus,
       FocusManager.instance,
+      panel.screenItems,
     ]),
     builder: (context, _) {
       if (previewFocus.hasFocus) {
@@ -1140,6 +1141,7 @@ class _KeyHintsLine extends StatelessWidget {
                     vim: vim,
                     hasRegister: hasShelf,
                     hasMultipleTabs: state.tabs.length > 1 && !typing,
+                    screenItems: panel.geometry.rowsPerPage,
                   ),
                 ],
           shortcutMap: shortcutMap,

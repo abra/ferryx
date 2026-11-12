@@ -566,6 +566,24 @@ abstract class FerryxLocalizations {
   /// **'{count, plural, =0{no items} =1{1 item} other{{count} items}}'**
   String panelItemsCount(int count);
 
+  /// Current position among shown items in a Vim panel; excludes the parent-folder row. Numbers are formatted through FerryxFormatting.
+  ///
+  /// In en, this message translates to:
+  /// **'{position} / {count}'**
+  String panelCursorPosition(String position, String count);
+
+  /// Position when a flat view reached its item limit and may contain more files.
+  ///
+  /// In en, this message translates to:
+  /// **'{position} / {count}+'**
+  String panelCursorPositionCapped(String position, String count);
+
+  /// No description provided for @panelCursorPositionHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Item {position} of {count} in the current list'**
+  String panelCursorPositionHelp(String position, String count);
+
   /// No description provided for @panelSelectedSummary.
   ///
   /// In en, this message translates to:
@@ -4249,6 +4267,18 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Half a Page Up'**
   String get cmdVimHalfPageUp;
+
+  /// No description provided for @cmdVimBlockNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Block'**
+  String get cmdVimBlockNext;
+
+  /// No description provided for @cmdVimBlockPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Block'**
+  String get cmdVimBlockPrevious;
 
   /// No description provided for @cmdVimColumnNext.
   ///

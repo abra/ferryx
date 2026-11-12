@@ -92,15 +92,15 @@ class PanelFooter extends StatelessWidget {
         keepPath: tab.isVirtual,
       );
     }
-    // `..` leads the rows when it is there.
-    final rows = tab.rows;
-    final count =
-        rows.length - (rows.isNotEmpty && rows.first.isParent ? 1 : 0);
+    final count = tab.itemCount;
+    final position = vim == null ? null : tab.cursorPosition;
     final free = tab.listing?.freeBytes;
     final flat = tab.flat;
     final right = [
       ?shelfNote,
-      if (flat == null)
+      if (position != null)
+        l10n.itemPosition(position, count, capped: flat?.capped == true)
+      else if (flat == null)
         l10n.panelItemsCount(count)
       else if (flat.capped)
         l10n.flatCappedCount(count)
@@ -148,7 +148,12 @@ class PanelFooter extends StatelessWidget {
                     constraints: BoxConstraints(
                       maxWidth: constraints.maxWidth / 2,
                     ),
-                    child: _Line(right, muted),
+                    child: AppTooltip(
+                      message: position == null
+                          ? right
+                          : l10n.itemPositionHelp(position, count),
+                      child: _Line(right, muted),
+                    ),
                   ),
                 ],
               ),

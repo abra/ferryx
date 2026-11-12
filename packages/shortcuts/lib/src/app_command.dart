@@ -249,6 +249,8 @@ enum AppCommand {
   vimScrollBottom(CommandScope.panel),
   vimHalfPageDown(CommandScope.panel),
   vimHalfPageUp(CommandScope.panel),
+  vimBlockNext(CommandScope.panel),
+  vimBlockPrevious(CommandScope.panel),
   vimColumnNext(CommandScope.panel),
   vimColumnPrevious(CommandScope.panel),
   // `h` and `l`: a column either way where the names stand in columns,

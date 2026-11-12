@@ -212,6 +212,57 @@ void main() {
     expect((visual.last as KeyHint).word, HintWord.back);
   });
 
+  test('block hints appear for large Vim lists after tabs; editing and marks keep priority', () {
+    final large = tab(rows: [for (var i = 0; i < 100; i++) file]);
+    for (final tabs in [false, true]) {
+      final hints = commands(
+        hintsFor(
+          tab: large,
+          vim: true,
+          hasRegister: false,
+          hasMultipleTabs: tabs,
+          screenItems: 40,
+        ),
+      );
+      expect(hints.take(tabs ? 4 : 2), [
+        if (tabs) ...[AppCommand.previousTab, AppCommand.nextTab],
+        AppCommand.vimBlockPrevious,
+        AppCommand.vimBlockNext,
+      ]);
+    }
+    for (final (vim, screen) in [(false, 40), (true, 100)]) {
+      expect(
+        commands(
+          hintsFor(
+            tab: large,
+            vim: vim,
+            hasRegister: false,
+            screenItems: screen,
+          ),
+        ),
+        isNot(contains(AppCommand.vimBlockNext)),
+      );
+    }
+    for (final current in [
+      large.copyWith(renaming: 1),
+      large.copyWith(searching: true),
+      large.copyWith(selected: {'a.txt'}),
+      large.copyWith(quickSearch: 'a'),
+    ]) {
+      expect(
+        commands(
+          hintsFor(
+            tab: current,
+            vim: true,
+            hasRegister: false,
+            screenItems: 40,
+          ),
+        ),
+        isNot(contains(AppCommand.vimBlockNext)),
+      );
+    }
+  });
+
   test('an empty folder says how to fill it', () {
     expect(
       commands(

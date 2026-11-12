@@ -555,6 +555,10 @@ class _PanelViewState extends State<PanelView> {
     AppCommand.vimScrollBottom: () => _cubit.scrollCursor(ScrollAlign.bottom),
     AppCommand.vimHalfPageDown: () => _cubit.moveCursor(_halfPage * _count),
     AppCommand.vimHalfPageUp: () => _cubit.moveCursor(-_halfPage * _count),
+    AppCommand.vimBlockNext: () =>
+        _cubit.moveBlock(forward: true, count: _count),
+    AppCommand.vimBlockPrevious: () =>
+        _cubit.moveBlock(forward: false, count: _count),
     AppCommand.vimColumnNext: () => _cubit.moveColumn(_count),
     AppCommand.vimColumnPrevious: () => _cubit.moveColumn(-_count),
     AppCommand.vimLeft: () =>

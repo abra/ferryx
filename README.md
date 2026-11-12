@@ -498,6 +498,7 @@ text fields keep normal editing and terminal input goes to the shell.
 | Move between name columns | `h` / `l` |
 | First / last row | `gg` / `G`; counts such as `3G` |
 | Top / middle / bottom visible row | `H` / `M` / `L` |
+| Previous / next screen-sized block | `{` / `}`; counts such as `3}` |
 | Scroll the cursor into place | `zz` / `zt` / `zb` |
 | Jump by first letter; repeat | `f` / `F`, then `;` / `,` |
 | Visual selection / toggle marks | `v` / `x` or Space |
@@ -519,6 +520,16 @@ Unfinished counts and key sequences end when you change focus, tabs or folders;
 `f` never traps Tab or the arrow keys. Shortcuts with modifiers remain available
 while the `/` search prompt is open. Esc clears search before clearing marked
 files; in Visual mode it ends Visual mode first. The bottom hints follow each step.
+
+`{` and `}` jump between block boundaries anchored at the first file, with
+one screen of items per block. A panel showing 40 items has boundaries
+1, 41, 81 and so on, even in a folder with 100,000 files. The `..` row is
+excluded; the last jump stops at the final item. Counts cross several
+boundaries, and Visual mode extends the selection. Blocks follow the current
+sort, filter and view size. The Vim footer shows the current position and
+shown item count, such as **41 / 300**; a trailing **+** marks a Flat view
+that reached its result limit. Long lists also offer the brace keys in the
+bottom browsing hints.
 
 The `:` command line has ↑/↓ history, preserves the draft you were typing,
 and cycles completions with Tab / Shift+Tab. Tab commands include a terminal

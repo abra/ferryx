@@ -66,12 +66,14 @@ List<PanelHint> hintsFor({
   required bool vim,
   required bool hasRegister,
   bool hasMultipleTabs = false,
+  int screenItems = 20,
 }) {
   final hints = _hintsFor(
     tab: tab,
     vim: vim,
     hasRegister: hasRegister,
     hasMultipleTabs: hasMultipleTabs,
+    screenItems: screenItems,
   );
   // A flat view names its way back first.
   if (tab != null &&
@@ -88,6 +90,7 @@ List<PanelHint> _hintsFor({
   required bool vim,
   required bool hasRegister,
   required bool hasMultipleTabs,
+  required int screenItems,
 }) {
   if (tab == null) return const [CommandHint(AppCommand.switchPanel)];
   if (tab.renaming != null) {
@@ -141,13 +144,19 @@ List<PanelHint> _hintsFor({
     ];
   }
   final browsing = _browsingHints(tab, hasRegister: hasRegister, vim: vim);
-  return hasMultipleTabs
-      ? [
-          const CommandHint(AppCommand.previousTab),
-          const CommandHint(AppCommand.nextTab),
-          ...browsing.take(3),
-        ]
-      : browsing;
+  final navigation = [
+    if (hasMultipleTabs) ...const [
+      CommandHint(AppCommand.previousTab),
+      CommandHint(AppCommand.nextTab),
+    ],
+    if (vim && screenItems > 0 && tab.itemCount > screenItems) ...const [
+      CommandHint(AppCommand.vimBlockPrevious),
+      CommandHint(AppCommand.vimBlockNext),
+    ],
+  ];
+  return navigation.isEmpty
+      ? browsing
+      : [...navigation, ...browsing.take(5 - navigation.length)];
 }
 
 List<PanelHint> _browsingHints(

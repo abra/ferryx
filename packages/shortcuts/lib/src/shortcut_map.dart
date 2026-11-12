@@ -111,7 +111,7 @@ class ShortcutMap {
   /// folder and into the item in a table, a column left and right where
   /// the names stand in columns, as vifm's ls-like view has them (`gl`,
   /// `gf` and `-` go in and out in either); `gg`/`G` and counts, `w`/`b`
-  /// by a column too, `H M L` and
+  /// by a column too, `{`/`}` between screen-sized blocks, `H M L` and
   /// `zz zt zb` on the screen, `⌃d ⌃u ⌃f ⌃b` by half a page and a page
   /// (on desktops whose command key is not Control), `⌃o ⌃i` back and
   /// forward; `v` selects as the cursor moves, `Space` and `x` toggle a
@@ -164,6 +164,14 @@ class ShortcutMap {
     add(AppCommand.vimScreenTop, key(LogicalKeyboardKey.keyH, shift: true));
     add(AppCommand.vimScreenMiddle, key(LogicalKeyboardKey.keyM, shift: true));
     add(AppCommand.vimScreenBottom, key(LogicalKeyboardKey.keyL, shift: true));
+    add(
+      AppCommand.vimBlockNext,
+      key(LogicalKeyboardKey.bracketRight, shift: true),
+    );
+    add(
+      AppCommand.vimBlockPrevious,
+      key(LogicalKeyboardKey.bracketLeft, shift: true),
+    );
     add(AppCommand.vimScrollCenter, seq(z, z));
     add(AppCommand.vimScrollTop, seq(z, LogicalKeyboardKey.keyT));
     add(AppCommand.vimScrollBottom, seq(z, LogicalKeyboardKey.keyB));
@@ -831,6 +839,8 @@ const _defaults = <AppCommand, List<Chord>>{
   AppCommand.vimScrollBottom: [],
   AppCommand.vimHalfPageDown: [],
   AppCommand.vimHalfPageUp: [],
+  AppCommand.vimBlockNext: [],
+  AppCommand.vimBlockPrevious: [],
   AppCommand.vimColumnNext: [],
   AppCommand.vimColumnPrevious: [],
   AppCommand.vimLeft: [],

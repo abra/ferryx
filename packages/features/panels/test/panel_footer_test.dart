@@ -1,6 +1,9 @@
 import 'package:component_library/component_library.dart';
+import 'package:domain_models/domain_models.dart';
+import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:panels_feature/panels_feature.dart';
 import 'package:panels_feature/src/panel/panel_footer.dart';
@@ -118,5 +121,136 @@ void main() {
       ).extension<AppMetrics>()!.typeScale.mono;
       expect(face.fontFamily, mono.fontFamily);
     });
+
+    testWidgets(
+      'position follows the cursor and filter in both languages and themes',
+      (tester) async {
+        for (final language in ['en', 'ru']) {
+          for (final brightness in Brightness.values) {
+            await h.pump(
+              tester,
+              locale: Locale(language),
+              brightness: brightness,
+              size: const Size(900, 600),
+              textScale: 1.3,
+            );
+            final panel = find.byType(PanelView).first;
+            final c = tester.element(panel).read<PanelCubit>();
+            final footer = find.descendant(
+              of: panel,
+              matching: find.byType(PanelFooter),
+            );
+            final l10n = tester.element(footer).l10n;
+            expect(
+              find.descendant(
+                of: footer,
+                matching: find.text(l10n.panelItemsCount(3)),
+              ),
+              findsOneWidget,
+            );
+            c.moveCursorTo(2);
+            await h.settle(tester);
+            expect(
+              find.descendant(
+                of: footer,
+                matching: find.text(l10n.itemPosition(2, 3)),
+              ),
+              findsOneWidget,
+            );
+            expect(
+              find.descendant(
+                of: footer,
+                matching: find.byWidgetPredicate(
+                  (widget) =>
+                      widget is AppTooltip &&
+                      widget.message == l10n.itemPositionHelp(2, 3),
+                ),
+              ),
+              findsOneWidget,
+            );
+            await tester.runAsync(
+              () => h.preferences.update(
+                (p) => p.copyWith(quickSearchOnlyMatching: true),
+              ),
+            );
+            c.quickSearchType('a');
+            await h.settle(tester);
+            expect(
+              find.descendant(
+                of: footer,
+                matching: find.text(l10n.itemPosition(1, 1)),
+              ),
+              findsOneWidget,
+            );
+            c.quickSearchType('no-match');
+            await h.settle(tester);
+            expect(
+              find.descendant(
+                of: footer,
+                matching: find.text(l10n.panelItemsCount(0)),
+              ),
+              findsOneWidget,
+            );
+            expect(tester.takeException(), isNull);
+            await tester.pumpWidget(const SizedBox());
+          }
+        }
+      },
+    );
+
+    testWidgets(
+      'large totals are localized and capped Flat results keep their plus marker',
+      (tester) async {
+        const file = FileEntry(
+          name: 'a.txt',
+          path: '/a.txt',
+          kind: EntryKind.file,
+          isDir: false,
+        );
+        for (final language in ['en', 'ru']) {
+          final l10n = lookupFerryxLocalizations(Locale(language));
+          for (final capped in [false, true]) {
+            await tester.pumpWidget(
+              MaterialApp(
+                theme: AppTheme.light(AppPlatformStyle.macos),
+                locale: Locale(language),
+                localizationsDelegates: FerryxSupportedLocales.delegates,
+                supportedLocales: FerryxSupportedLocales.locales,
+                home: Scaffold(
+                  body: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: PanelFooter(
+                      tab: PanelTabState(
+                        id: 't',
+                        location: const Location.native('/'),
+                        sort: const SortOptions(),
+                        rows: List.filled(100000, file),
+                        cursor: 120,
+                        flat: capped
+                            ? const FlatView(
+                                generation: 1,
+                                walking: false,
+                                capped: true,
+                              )
+                            : null,
+                      ),
+                      active: true,
+                      vim: const VimLine(mode: VimMode.normal),
+                    ),
+                  ),
+                ),
+              ),
+            );
+            expect(
+              find.text(
+                l10n.itemPosition(121, 100000, capped: capped),
+              ),
+              findsOneWidget,
+            );
+            expect(tester.takeException(), isNull);
+          }
+        }
+      },
+    );
   });
 }

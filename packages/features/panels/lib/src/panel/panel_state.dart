@@ -129,6 +129,16 @@ class PanelTabState extends Equatable {
   FileEntry? get focused =>
       cursor >= 0 && cursor < rows.length ? rows[cursor] : null;
 
+  /// `..` is navigation, outside the file blocks and position counter.
+  int get firstItemIndex => rows.isNotEmpty && rows.first.isParent ? 1 : 0;
+
+  int get itemCount => rows.length - firstItemIndex;
+
+  /// One-based position among the shown items; absent on `..` or no cursor.
+  int? get cursorPosition => cursor >= firstItemIndex && cursor < rows.length
+      ? cursor - firstItemIndex + 1
+      : null;
+
   /// The rows an action works on: the selection in row order, else the
   /// focused item unless it is `..`.
   List<FileEntry> get targets {

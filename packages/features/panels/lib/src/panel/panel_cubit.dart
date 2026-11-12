@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:domain_models/domain_models.dart';
 import 'package:file_repository/file_repository.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:monitoring/monitoring.dart';
 import 'package:network_service/network_service.dart';
@@ -93,7 +94,19 @@ class PanelCubit extends Cubit<PanelState> {
   int _nextTabNumber = 1;
 
   /// Rows per page and per column, as the view last measured them.
-  PanelGeometry geometry = const PanelGeometry();
+  PanelGeometry _geometry = const PanelGeometry();
+  PanelGeometry get geometry => _geometry;
+
+  final _screenItems = ValueNotifier<int>(const PanelGeometry().rowsPerPage);
+
+  /// Hints observe capacity changes without rebuilding listings on scroll.
+  ValueListenable<int> get screenItems => _screenItems;
+
+  set geometry(PanelGeometry value) {
+    if (isClosed) return;
+    _geometry = value;
+    _screenItems.value = value.rowsPerPage;
+  }
 
   /// Each row's name folded for quick search: folded once, a typed key
   /// then folds only the query. A row a read again kept is the same
@@ -1028,6 +1041,27 @@ class PanelCubit extends Cubit<PanelState> {
     direction * math.max(geometry.rowsPerPage, 1),
     selecting: selecting,
   );
+
+  /// Screen-sized blocks anchored at the first item, independent of scroll
+  /// offset and listing length. Only explicit counts span multiple blocks.
+  void moveBlock({required bool forward, int count = 1}) {
+    final tab = state.active;
+    if (tab == null || tab.itemCount == 0 || count <= 0) return;
+    final first = tab.firstItemIndex;
+    final size = math.max(geometry.rowsPerPage, 1);
+    final position = tab.cursor - first;
+    final int block;
+    if (position < 0) {
+      if (!forward) return;
+      block = count - 1;
+    } else if (forward) {
+      block = position ~/ size + count;
+    } else {
+      block = position ~/ size - count + (position % size == 0 ? 0 : 1);
+    }
+    final target = first + (block * size).clamp(0, tab.itemCount - 1);
+    if (target != tab.cursor) moveCursorTo(target);
+  }
 
   /// ← and → in brief mode step by a column; in list mode they do
   /// nothing here (the view may bind them to other things).
@@ -2006,6 +2040,7 @@ class PanelCubit extends Cubit<PanelState> {
 
   @override
   Future<void> close() async {
+    if (isClosed) return;
     _loads.clear();
     _searchSorts.clear();
     for (final task in _searchTasks.values.toList()) {
@@ -2024,6 +2059,7 @@ class PanelCubit extends Cubit<PanelState> {
     for (final tab in state.tabs) {
       if (tab.search == null) await _files.closeListing(tab.id);
     }
-    return super.close();
+    await super.close();
+    _screenItems.dispose();
   }
 }

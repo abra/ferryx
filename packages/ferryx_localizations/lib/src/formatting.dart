@@ -22,6 +22,31 @@ DateFormat _date(
 
 /// Human formatting of sizes, dates, durations and error kinds.
 extension FerryxFormatting on FerryxLocalizations {
+  /// Grouped counts reuse one formatter per locale while the cursor moves.
+  String itemPosition(int position, int count, {bool capped = false}) {
+    final number = _number(
+      'integer',
+      localeName,
+      () => NumberFormat.decimalPattern(localeName),
+    );
+    final at = number.format(position), total = number.format(count);
+    return capped
+        ? panelCursorPositionCapped(at, total)
+        : panelCursorPosition(at, total);
+  }
+
+  String itemPositionHelp(int position, int count) {
+    final number = _number(
+      'integer',
+      localeName,
+      () => NumberFormat.decimalPattern(localeName),
+    );
+    return panelCursorPositionHelp(
+      number.format(position),
+      number.format(count),
+    );
+  }
+
   /// `3.4 MB`, `12 KB`, `512 B`, in the locale's digits.
   String fileSize(int bytes) {
     const units = 1024;

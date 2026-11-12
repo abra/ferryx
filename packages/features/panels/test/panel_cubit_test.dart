@@ -19,9 +19,17 @@ class _CountedFile extends FileEntry {
     required super.name,
     required super.path,
     required this.onKeyRead,
+    this.onParentRead,
   }) : super(kind: EntryKind.file, isDir: false);
 
   final void Function() onKeyRead;
+  final void Function()? onParentRead;
+
+  @override
+  bool get isParent {
+    onParentRead?.call();
+    return super.isParent;
+  }
 
   @override
   String get key {
@@ -779,6 +787,191 @@ void main() {
       expect(tab.searching, isFalse);
       expect(tab.selected, isEmpty);
     });
+  });
+
+  group('screen-sized file blocks', () {
+    setUp(() async {
+      fs.folders['/home'] = [
+        for (var i = 1; i <= 125; i++)
+          fs.file('/home', 'file-${i.toString().padLeft(3, '0')}.txt'),
+      ];
+      await cubit.start(null, home);
+      cubit.geometry = const PanelGeometry(rowsPerPage: 40);
+    });
+
+    test('anchors ignore .., counts cross boundaries, ends do not wrap', () {
+      for (final (cursor, forward, count, expected) in [
+        (0, true, 1, 1),
+        (0, true, 3, 81),
+        (0, false, 1, 0),
+        (1, true, 1, 41),
+        (25, true, 1, 41),
+        (95, true, 1, 121),
+        (95, false, 1, 81),
+        (81, false, 1, 41),
+        (95, false, 2, 41),
+        (41, true, 2, 121),
+        (121, true, 1, 125),
+        (125, true, 1, 125),
+        (125, false, 1, 121),
+        (1, false, 1, 1),
+        (1, true, 9999, 125),
+        (125, false, 9999, 1),
+      ]) {
+        cubit.moveCursorTo(cursor);
+        cubit.moveBlock(forward: forward, count: count);
+        expect(
+          cubit.state.active!.cursor,
+          expected,
+          reason: 'cursor=$cursor, forward=$forward, count=$count',
+        );
+        expect(
+          cubit.state.active!.cursorPosition,
+          expected == 0 ? null : expected,
+        );
+      }
+      for (final count in [0, -1]) {
+        final before = cubit.state;
+        cubit.moveBlock(forward: true, count: count);
+        expect(cubit.state, same(before));
+      }
+      cubit.moveLast();
+      final before = cubit.state;
+      cubit.moveBlock(forward: true);
+      expect(cubit.state, same(before), reason: 'no redundant scroll request');
+    });
+
+    test(
+      'only capacity changes notify hints, without emitting file state',
+      () async {
+        var updates = 0;
+        cubit.screenItems.addListener(() => updates++);
+        final before = cubit.state;
+        cubit.geometry = const PanelGeometry(
+          rowsPerPage: 40,
+          firstVisibleRow: 20,
+        );
+        expect(updates, 0);
+        cubit.geometry = const PanelGeometry(rowsPerPage: 10);
+        expect(updates, 1);
+        expect(cubit.screenItems.value, 10);
+        expect(cubit.state, same(before));
+        await cubit.close();
+        expect(
+          () => cubit.geometry = const PanelGeometry(rowsPerPage: 20),
+          returnsNormally,
+        );
+      },
+    );
+
+    test(
+      'works without .. and in empty, parent-only and single-item lists',
+      () async {
+        fs.folders['/'] = [...fs.folders['/home']!];
+        await cubit.open(const Location.native('/'));
+        expect(cubit.state.active!.firstItemIndex, 0);
+        cubit.moveBlock(forward: true);
+        expect(cubit.state.active!.cursor, 40);
+        expect(cubit.state.active!.cursorPosition, 41);
+        cubit.moveBlock(forward: false);
+        expect(cubit.state.active!.cursor, 0);
+        for (final path in ['/', '/home']) {
+          fs.folders[path] = [];
+          await cubit.open(Location.native(path));
+          final before = cubit.state;
+          cubit.moveBlock(forward: true);
+          cubit.moveBlock(forward: false);
+          expect(cubit.state, same(before));
+          expect(cubit.state.active!.itemCount, 0);
+          expect(cubit.state.active!.cursorPosition, isNull);
+        }
+        fs.folders['/home'] = [fs.file('/home', 'only.txt')];
+        await cubit.refresh();
+        cubit.moveBlock(forward: true);
+        expect(cubit.state.active!.cursorPosition, 1);
+        cubit.moveBlock(forward: false);
+        expect(cubit.state.active!.cursorPosition, 1);
+      },
+    );
+
+    test('Normal preserves marks; Visual grows and shrinks the range', () {
+      cubit.toggleSelectionAt(100);
+      cubit.moveCursorTo(5);
+      final selected = cubit.state.active!.selected;
+      cubit.moveBlock(forward: true);
+      expect(cubit.state.active!.selected, same(selected));
+      cubit.moveCursorTo(5);
+      cubit.toggleVisual();
+      cubit.moveBlock(forward: true);
+      expect(cubit.state.active!.selected, {
+        'file-100.txt',
+        for (var i = 5; i <= 41; i++)
+          'file-${i.toString().padLeft(3, '0')}.txt',
+      });
+      cubit.moveBlock(forward: false);
+      expect(cubit.state.active!.cursor, 1);
+      expect(cubit.state.active!.selected, {
+        'file-100.txt',
+        for (var i = 1; i <= 5; i++) 'file-${i.toString().padLeft(3, '0')}.txt',
+      });
+      expect(cubit.state.active!.selected, isNot(contains('..')));
+    });
+
+    test(
+      'uses the shown order after filtering, sorting and geometry changes',
+      () async {
+        await preferences.update(
+          (p) => p.copyWith(quickSearchOnlyMatching: true),
+        );
+        cubit.quickSearchType('file-0');
+        expect(cubit.state.active!.itemCount, 99);
+        cubit.moveCursorTo(20);
+        cubit.moveBlock(forward: true);
+        expect(cubit.state.active!.focused!.name, 'file-041.txt');
+        await cubit.sortReverse();
+        cubit.moveCursorTo(20);
+        cubit.moveBlock(forward: true);
+        expect(cubit.state.active!.focused!.name, 'file-059.txt');
+        cubit.geometry = const PanelGeometry(rowsPerPage: 10);
+        cubit.moveBlock(forward: true);
+        expect(cubit.state.active!.cursorPosition, 51);
+        expect(cubit.state.active!.focused!.name, 'file-049.txt');
+        cubit.geometry = const PanelGeometry(rowsPerPage: 0);
+        cubit.moveBlock(forward: true);
+        expect(cubit.state.active!.cursorPosition, 52);
+      },
+    );
+
+    test(
+      'a large listing keeps a bounded step and constant work without I/O',
+      () async {
+        var reads = 0;
+        fs.folders['/'] = [
+          for (var i = 0; i < 100000; i++)
+            _CountedFile(
+              name: i.toString().padLeft(6, '0'),
+              path: '/$i',
+              onKeyRead: () => reads++,
+              onParentRead: () => reads++,
+            ),
+        ];
+        await cubit.open(const Location.native('/'));
+        clearInteractions(files);
+        clearInteractions(operations);
+        reads = 0;
+        cubit.moveBlock(forward: true);
+        expect(cubit.state.active!.cursor, 40);
+        expect(reads, lessThan(20));
+        cubit.moveBlock(forward: true, count: 9999);
+        expect(cubit.state.active!.cursor, 99999);
+        expect(reads, lessThan(40));
+        cubit.moveBlock(forward: false, count: 9999);
+        expect(cubit.state.active!.cursor, 0);
+        expect(reads, lessThan(60));
+        verifyZeroInteractions(files);
+        verifyZeroInteractions(operations);
+      },
+    );
   });
 
   blocTest<PanelCubit, PanelState>(

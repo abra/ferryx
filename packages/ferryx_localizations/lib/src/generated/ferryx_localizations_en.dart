@@ -272,6 +272,21 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   }
 
   @override
+  String panelCursorPosition(String position, String count) {
+    return '$position / $count';
+  }
+
+  @override
+  String panelCursorPositionCapped(String position, String count) {
+    return '$position / $count+';
+  }
+
+  @override
+  String panelCursorPositionHelp(String position, String count) {
+    return 'Item $position of $count in the current list';
+  }
+
+  @override
   String panelSelectedSummary(int count, String size) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2434,6 +2449,12 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get cmdVimHalfPageUp => 'Half a Page Up';
+
+  @override
+  String get cmdVimBlockNext => 'Next Block';
+
+  @override
+  String get cmdVimBlockPrevious => 'Previous Block';
 
   @override
   String get cmdVimColumnNext => 'Next Column';

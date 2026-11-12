@@ -274,6 +274,21 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   }
 
   @override
+  String panelCursorPosition(String position, String count) {
+    return '$position / $count';
+  }
+
+  @override
+  String panelCursorPositionCapped(String position, String count) {
+    return '$position / $count+';
+  }
+
+  @override
+  String panelCursorPositionHelp(String position, String count) {
+    return 'Объект $position из $count в текущем списке';
+  }
+
+  @override
   String panelSelectedSummary(int count, String size) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2474,6 +2489,12 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get cmdVimHalfPageUp => 'На полстраницы вверх';
+
+  @override
+  String get cmdVimBlockNext => 'Следующий блок';
+
+  @override
+  String get cmdVimBlockPrevious => 'Предыдущий блок';
 
   @override
   String get cmdVimColumnNext => 'Следующая колонка';

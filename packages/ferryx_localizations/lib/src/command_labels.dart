@@ -217,6 +217,8 @@ extension CommandLabels on FerryxLocalizations {
     AppCommand.vimScrollBottom => cmdVimScrollBottom,
     AppCommand.vimHalfPageDown => cmdVimHalfPageDown,
     AppCommand.vimHalfPageUp => cmdVimHalfPageUp,
+    AppCommand.vimBlockNext => cmdVimBlockNext,
+    AppCommand.vimBlockPrevious => cmdVimBlockPrevious,
     AppCommand.vimColumnNext => cmdVimColumnNext,
     AppCommand.vimColumnPrevious => cmdVimColumnPrevious,
     AppCommand.vimLeft => cmdVimLeft,

@@ -1945,6 +1945,25 @@ ShortcutMap.conflicts compares effective desktop modifiers within overlapping
 scopes. Primary and Control must be resolved before checking Windows/Linux
 bindings; the settings warning and regression matrix use these semantics.
 
+Vim's `vimBlockPrevious` / `vimBlockNext` (`{` / `}`) use
+`PanelCubit.moveBlock`: boundaries start at the first non-parent row and
+stand `geometry.rowsPerPage` apart. A backward motion inside a block reaches
+its start; from a boundary it reaches the previous one. Explicit counts
+span boundaries arithmetically, clamped to the shown items, with no wrapping
+or redundant scroll requests at an end. From `..`, forward reaches the
+first item and backward stays put. Target calculation is O(1), independent
+of listing length, and calls the existing cursor path (which applies Visual
+ranges). It reads no files. Sort and filtering are already reflected in
+`PanelTabState.rows`; geometry covers List, Brief and thumbnail layouts.
+`firstItemIndex`, `itemCount` and `cursorPosition` keep block and footer
+numbering consistent. A capacity-only `screenItems` listenable updates hints
+on resize without emitting file state or reacting to scroll offset changes.
+The Vim footer replaces the item total with a
+localized position/total, adding `+` for capped Flat results. Block hints
+appear only for multi-screen browsing; tab, editing and selection contexts
+retain their priorities. Default chords are Vim-only and share the existing
+shifted bracket/brace event normalization and input guards.
+
 ### Interface motion
 
 Shared motion lives in component_library: AppMotion.short (160 ms),

@@ -189,6 +189,36 @@ void main() {
       expect(map.labelOf(AppCommand.moveDown, TargetPlatform.macOS), '↓');
     });
 
+    test('file blocks use bare braces only in Vim and respect overrides', () {
+      for (final platform in [
+        TargetPlatform.macOS,
+        TargetPlatform.windows,
+        TargetPlatform.linux,
+      ]) {
+        final map = ShortcutMap.forUser(platform, vimMotions: true);
+        for (final (command, key, label) in [
+          (AppCommand.vimBlockPrevious, LogicalKeyboardKey.bracketLeft, '{'),
+          (AppCommand.vimBlockNext, LogicalKeyboardKey.bracketRight, '}'),
+        ]) {
+          expect(map.commandFor(Chord(key, shift: true)), command);
+          expect(map.labelOf(command, platform, vim: true), label);
+          expect(command.section, CommandSection.vim);
+          expect(ShortcutMap.defaults(platform).chordsFor(command), isEmpty);
+        }
+        final custom = const Chord(LogicalKeyboardKey.keyQ);
+        final rebound = ShortcutMap.forUser(
+          platform,
+          vimMotions: true,
+          overrides: {
+            AppCommand.vimBlockNext.name: [ChordCodec.encode(custom)],
+            AppCommand.vimBlockPrevious.name: [],
+          },
+        );
+        expect(rebound.chordsFor(AppCommand.vimBlockNext), [custom]);
+        expect(rebound.chordsFor(AppCommand.vimBlockPrevious), isEmpty);
+      }
+    });
+
     test('the orthodox function keys are in place', () {
       final map = ShortcutMap.defaults(TargetPlatform.macOS);
       expect(map.labelOf(AppCommand.copyTo, TargetPlatform.macOS), 'F5');
