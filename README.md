@@ -44,8 +44,9 @@ button dismisses the error without clearing marks.
 
 An accent outline identifies the area receiving keyboard input: a file
 panel, the terminal or preview. It follows focus after a click or Tab;
-opening a menu keeps the last area indicated. At the top outer corners,
-the outline follows the window's curve; the junction between panels stays straight.
+opening a menu keeps the last area indicated. In file panels it surrounds
+the files, starting below the column headings and ending above the bottom
+status bar. The path, toolbar and tabs sit above the outline.
 Tabs show selection with their normal platform colors, without a blue underline.
 
 Panels and auxiliary bars open and close smoothly; dialogs, menus and the

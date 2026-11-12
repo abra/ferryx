@@ -95,8 +95,8 @@ The desktop details the library keeps for every screen:
   inside the tab. An inactive tab paints its top edge above its hover fill.
   macOS 26 keeps rounded tabs on the bar. Both use the
   shared surface roles and normal platform colours for selected tabs,
-  without an accent underline. The surrounding `AppFocusArea` outline
-  identifies the area receiving keys.
+  without an accent underline. The file area's `AppFocusFrame` outline
+  identifies the panel receiving keys below its column headings.
 - Bars at the bottom: the panel's footer stands as high as the hint line
   under it (27 and a line on macOS 15, as Finder's path and status bars):
   the item or the selection at the start, the count and the free space at
@@ -166,13 +166,19 @@ The desktop details the library keeps for every screen:
   on any focus (`AppOutlineInputBorder.halo`); buttons, pop-ups, boxes and
   switches draw `FocusRing` in keyboard mode only (a ⌘ or ⌃ chord does not
   switch that mode on).
-  `AppFocusArea` marks the innermost area receiving keys with a 2 pt inset
-  accent outline, painted in the foreground through
-  `AppRoundedRectangleBorder`. It adds no padding or hit target and keeps
-  its child mounted when focus moves.
+  `AppFocusArea` tracks the innermost area receiving keys. `AppFocusFrame`
+  paints its 2 pt inset accent outline in the foreground through
+  `AppRoundedRectangleBorder`, without adding padding or a hit target.
+  A panel disables its area's default outline and places a frame around
+  the file list, ending above the read-error strip and footer. A paint-only
+  top inset excludes the List/Brief column headings using their shared `panelRowHeight`;
+  thumbnails use no inset. The frame is square, below the path and tabs.
+  Keeping the focus area around the whole panel preserves toolbar, tab,
+  rename and command-line focus; a nested terminal retains its own frame.
+  Moving focus or changing the frame's bounds keeps content mounted.
   Menus retain the last active area; an inactive window clears its outline.
-  A panel rounds only the top corners meeting the native window's corners;
-  panel junctions stay square. `WindowChrome` publishes the generation's
+  Other areas round corners only where they meet a native window edge.
+  `WindowChrome` publishes the generation's
   `radius.window` through `WindowDecorScope`, and resets it to zero in native
   full screen. Changing the outline shape does not clip or reparent content.
 - Dialogs: `AppDialog` runs the default (last) action on Return whatever

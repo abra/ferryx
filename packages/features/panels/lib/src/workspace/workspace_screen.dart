@@ -1461,9 +1461,6 @@ class _SidePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = Radius.circular(
-      decor.integrated ? WindowDecor.of(context).cornerRadius : 0,
-    );
     return BlocProvider<PanelCubit>.value(
       value: cubit,
       child: PanelView(
@@ -1482,10 +1479,6 @@ class _SidePanel extends StatelessWidget {
         shortcutMap: shortcutMap,
         hooks: hooks,
         windowDecor: decor,
-        focusBorderRadius: BorderRadius.only(
-          topLeft: leading ? radius : Radius.zero,
-          topRight: trailing ? radius : Radius.zero,
-        ),
         cursorRowKey: cursorKey,
         terminal: terminal,
         retainTerminalOnExit: retainTerminalOnExit,

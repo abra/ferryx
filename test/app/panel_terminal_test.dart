@@ -105,6 +105,21 @@ void main() {
         final rightBefore = tester.getRect(panel(PanelSide.right));
         await open(tester);
         final state = tester.state(getPane());
+        final fileFrame = find
+            .descendant(
+              of: panel(PanelSide.left),
+              matching: find.byWidgetPredicate(
+                (widget) => widget is AppFocusFrame && widget.visible,
+                skipOffstage: false,
+              ),
+              skipOffstage: false,
+            )
+            .first;
+        expect(AppFocusArea.activeOf(tester.element(fileFrame)), isFalse);
+        expect(
+          tester.getRect(fileFrame).bottom,
+          lessThanOrEqualTo(tester.getRect(getPane()).top),
+        );
         final session = sessions.single;
         session.emit(
           TerminalOutput(utf8.encode('session survives every move\r\n')),
@@ -125,11 +140,13 @@ void main() {
         strip.onSelect(0);
         await tester.pumpAndSettle();
         expect(getPane(), findsNothing);
+        expect(AppFocusArea.activeOf(tester.element(fileFrame)), isTrue);
         expect(find.byType(TerminalPane, skipOffstage: false), findsOneWidget);
         strip = tester.widget<AppTabStrip>(find.byType(AppTabStrip));
         strip.onSelect(1);
         await tester.pumpAndSettle();
         expect(tester.state(getPane()), same(state));
+        expect(AppFocusArea.activeOf(tester.element(fileFrame)), isFalse);
         expect(
           tester.widget<TerminalPane>(getPane()).focusNode.hasFocus,
           isTrue,

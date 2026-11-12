@@ -18,6 +18,7 @@ class AppFocusArea extends StatefulWidget {
   const AppFocusArea({
     required this.child,
     this.borderRadius = BorderRadius.zero,
+    this.showOutline = true,
     super.key,
   });
 
@@ -25,6 +26,10 @@ class AppFocusArea extends StatefulWidget {
 
   /// Only corners meeting a rounded window edge need rounding.
   final BorderRadiusGeometry borderRadius;
+
+  /// Use a descendant [AppFocusFrame] to outline only part of this area.
+  /// Focus tracking and selection colors still cover the whole area.
+  final bool showOutline;
 
   /// Whether the area around [context] is the one the keys are in; true
   /// outside every area (a dialog's own content). False everywhere while
@@ -88,29 +93,69 @@ class _AppFocusAreaState extends State<AppFocusArea> {
   @override
   Widget build(BuildContext context) {
     final active = _active == this && AppWindowActivity.of(context);
-    // Foreground paint keeps the outline over opaque content without
-    // changing its layout, hit testing or mounted state as focus moves.
     return _ActiveArea(
       active: active,
       child: Focus(
         focusNode: _node,
-        child: DecoratedBox(
-          position: DecorationPosition.foreground,
-          decoration: ShapeDecoration(
-            shape: AppRoundedRectangleBorder(
-              borderRadius: widget.borderRadius,
-              side: BorderSide(
-                color: active
-                    ? context.appColors.accent
-                    : const Color(0x00000000),
-                width: AppSizes.focusFrameWidth,
-                strokeAlign: BorderSide.strokeAlignInside,
-              ),
-            ),
-          ),
+        child: AppFocusFrame(
+          visible: widget.showOutline,
+          borderRadius: widget.borderRadius,
           child: widget.child,
         ),
       ),
+    );
+  }
+}
+
+/// Outlines part of the nearest [AppFocusArea] without adding a focus scope.
+/// Insets affect only the foreground paint, keeping content and hit targets
+/// in place when the active area or frame bounds change.
+class AppFocusFrame extends StatelessWidget {
+  const AppFocusFrame({
+    required this.child,
+    this.insets = EdgeInsets.zero,
+    this.borderRadius = BorderRadius.zero,
+    this.visible = true,
+    super.key,
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry insets;
+  final BorderRadiusGeometry borderRadius;
+  final bool visible;
+
+  @override
+  Widget build(BuildContext context) {
+    final inset = insets.resolve(Directionality.of(context));
+    final active = visible && AppFocusArea.activeOf(context);
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        child,
+        Positioned.fill(
+          left: inset.left,
+          top: inset.top,
+          right: inset.right,
+          bottom: inset.bottom,
+          child: IgnorePointer(
+            child: DecoratedBox(
+              position: DecorationPosition.foreground,
+              decoration: ShapeDecoration(
+                shape: AppRoundedRectangleBorder(
+                  borderRadius: borderRadius,
+                  side: BorderSide(
+                    color: active
+                        ? context.appColors.accent
+                        : const Color(0x00000000),
+                    width: AppSizes.focusFrameWidth,
+                    strokeAlign: BorderSide.strokeAlignInside,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

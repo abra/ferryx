@@ -62,6 +62,12 @@ void main() {
         );
         await tester.pump();
         final before = panel.state.active!;
+        final fileFrame = find.descendant(
+          of: find.byType(PanelView).first,
+          matching: find.byWidgetPredicate(
+            (widget) => widget is AppFocusFrame && widget.visible,
+          ),
+        );
         await h.press(
           tester,
           vim ? LogicalKeyboardKey.keyI : LogicalKeyboardKey.space,
@@ -69,8 +75,10 @@ void main() {
         );
         expect(find.byType(ViewerScreen), findsOneWidget);
         expect(panelWidget.focusNode.hasFocus, isTrue);
+        expect(AppFocusArea.activeOf(tester.element(fileFrame)), isTrue);
         await h.press(tester, LogicalKeyboardKey.tab);
         expect(panelWidget.focusNode.hasFocus, isFalse);
+        expect(AppFocusArea.activeOf(tester.element(fileFrame)), isFalse);
         await h.press(
           tester,
           LogicalKeyboardKey.keyF,
@@ -105,6 +113,7 @@ void main() {
         await tester.pumpAndSettle();
         await h.press(tester, LogicalKeyboardKey.tab);
         expect(panelWidget.focusNode.hasFocus, isTrue);
+        expect(AppFocusArea.activeOf(tester.element(fileFrame)), isTrue);
         await h.press(tester, LogicalKeyboardKey.escape);
         expect(find.byType(ViewerScreen), findsNothing);
         expect(tester.takeException(), isNull);

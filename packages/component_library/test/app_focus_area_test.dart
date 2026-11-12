@@ -12,15 +12,18 @@ bool _active(WidgetTester tester, String label) => AppFocusArea.activeOf(
   tester.element(find.byKey(ValueKey('probe $label'))),
 );
 
+DecoratedBox _frameBox(WidgetTester tester, Finder frame) =>
+    tester.widget<DecoratedBox>(
+      find.descendant(of: frame, matching: find.byType(DecoratedBox)).last,
+    );
+
 /// The foreground outline of the area around [label].
 Color _outline(WidgetTester tester, String label) {
   final area = find.ancestor(
     of: find.byKey(ValueKey('probe $label')),
     matching: find.byType(AppFocusArea),
   );
-  final decoration = tester.widget<DecoratedBox>(
-    find.descendant(of: area.first, matching: find.byType(DecoratedBox)).first,
-  );
+  final decoration = _frameBox(tester, area.first);
   final shape =
       (decoration.decoration as ShapeDecoration).shape
           as AppRoundedRectangleBorder;
@@ -220,5 +223,99 @@ void main() {
     await tester.pumpWidget(app(area: true));
     await tester.pump();
     expect(_active(tester, 'field'), isTrue);
+  });
+
+  testWidgets('a relocated frame keeps the whole focus area active, defers '
+      'to a nested area, and changes bounds without moving content', (
+    tester,
+  ) async {
+    final header = FocusNode();
+    final files = FocusNode();
+    final terminal = FocusNode();
+    addTearDown(header.dispose);
+    addTearDown(files.dispose);
+    addTearDown(terminal.dispose);
+    final frame = find.byKey(const ValueKey('content frame'));
+    late StateSetter update;
+    var inset = 20.0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(AppPlatformStyle.macos),
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) {
+              update = setState;
+              return AppFocusArea(
+                showOutline: false,
+                child: Column(
+                  children: [
+                    _field('header', header),
+                    Expanded(
+                      child: AppFocusFrame(
+                        key: const ValueKey('content frame'),
+                        insets: EdgeInsets.only(top: inset),
+                        child: _field('files', files),
+                      ),
+                    ),
+                    AppFocusArea(child: _field('terminal', terminal)),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    Color color() =>
+        ((_frameBox(tester, frame).decoration as ShapeDecoration).shape
+                as AppRoundedRectangleBorder)
+            .side
+            .color;
+    final accent = tester.element(frame).appColors.accent;
+    final field = find.byKey(const ValueKey('probe files'));
+    final fieldState = tester.state(
+      find.descendant(of: field, matching: find.byType(TextField)),
+    );
+    final fieldBounds = tester.getRect(field);
+    header.requestFocus();
+    await tester.pump();
+    expect(color(), accent, reason: 'header belongs to the same focus area');
+    expect(
+      _outline(tester, 'header').a,
+      0,
+      reason: 'the full-area frame is hidden',
+    );
+    expect(
+      tester.getRect(find.byWidget(_frameBox(tester, frame))).top,
+      tester.getRect(frame).top + inset,
+    );
+
+    terminal.requestFocus();
+    await tester.pump();
+    expect(color().a, 0);
+    expect(_outline(tester, 'terminal'), accent);
+    await tester.tap(field);
+    await tester.pump();
+    expect(
+      files.hasFocus,
+      isTrue,
+      reason: 'the frame lets pointer input through',
+    );
+    expect(color(), accent);
+    update(() => inset = 40);
+    await tester.pump();
+    expect(
+      tester.getRect(find.byWidget(_frameBox(tester, frame))).top,
+      tester.getRect(frame).top + inset,
+    );
+    expect(tester.getRect(field), fieldBounds);
+    expect(
+      tester.state(
+        find.descendant(of: field, matching: find.byType(TextField)),
+      ),
+      same(fieldState),
+    );
+    expect(files.hasFocus, isTrue);
+    expect(tester.takeException(), isNull);
   });
 }

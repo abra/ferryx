@@ -111,7 +111,6 @@ class PanelView extends StatefulWidget {
     required this.hooks,
     this.registerNote,
     this.windowDecor = WindowDecor.none,
-    this.focusBorderRadius = BorderRadius.zero,
     this.cursorRowKey,
     this.terminal,
     this.retainTerminalOnExit = true,
@@ -120,7 +119,6 @@ class PanelView extends StatefulWidget {
   });
 
   final FocusNode focusNode;
-  final BorderRadius focusBorderRadius;
   final bool active;
   final List<PanelLayout> layouts;
   final bool showTabBarAlways;
@@ -907,7 +905,7 @@ class _PanelViewState extends State<PanelView> {
           }
         },
         child: AppFocusArea(
-          borderRadius: widget.focusBorderRadius,
+          showOutline: false,
           child: CommandHandlers(
             onInvoked: _commandInvoked,
             handlers: widget.terminal?.focusScope.hasFocus == true
@@ -1047,78 +1045,92 @@ class _PanelViewState extends State<PanelView> {
                           // The rows on the content colour, white or near black,
                           // as a table's in an AppKit window (Finder's list).
                           Expanded(
-                            child: ColoredBox(
-                              color: context.colors.surface,
-                              child: Stack(
-                                children: [
-                                  Positioned.fill(
-                                    child: RecentEntriesClock(
-                                      entries: tab.rows,
-                                      child: PanelDropZone(
-                                        hooks: widget.hooks.drag,
-                                        folder: tab.location,
-                                        child: ValueListenableBuilder<DropSpot?>(
-                                          valueListenable:
-                                              widget.hooks.drag?.highlight ??
-                                              _noDrop,
-                                          builder: (context, spot, _) =>
-                                              layout.mode == ViewMode.thumbnails
-                                              ? RowsThumbnails(
-                                                  tab: tab,
-                                                  active: widget.active,
-                                                  callbacks: callbacks,
-                                                  rename: rename,
-                                                  provider: widget.thumbnails,
-                                                  cursorKey:
-                                                      widget.cursorRowKey,
-                                                  dropRow: spot?.row,
-                                                  onGeometry: (g) =>
-                                                      _cubit.geometry = g,
-                                                )
-                                              : layout.mode == ViewMode.list
-                                              ? RowsList(
-                                                  tab: tab,
-                                                  layout: layout,
-                                                  active: widget.active,
-                                                  callbacks: callbacks,
-                                                  rename: rename,
-                                                  cursorKey:
-                                                      widget.cursorRowKey,
-                                                  dropRow: spot?.row,
-                                                  onSort: (field) => unawaited(
-                                                    _cubit.toggleSortField(
-                                                      field,
-                                                    ),
+                            child: AppFocusFrame(
+                              // List/Brief headers share the row height;
+                              // thumbnails start at the content edge.
+                              insets: EdgeInsets.only(
+                                top: layout.mode == ViewMode.thumbnails
+                                    ? 0
+                                    : panelRowHeight(context),
+                              ),
+                              child: ColoredBox(
+                                color: context.colors.surface,
+                                child: Stack(
+                                  children: [
+                                    Positioned.fill(
+                                      child: RecentEntriesClock(
+                                        entries: tab.rows,
+                                        child: PanelDropZone(
+                                          hooks: widget.hooks.drag,
+                                          folder: tab.location,
+                                          child: ValueListenableBuilder<DropSpot?>(
+                                            valueListenable:
+                                                widget.hooks.drag?.highlight ??
+                                                _noDrop,
+                                            builder: (context, spot, _) =>
+                                                layout.mode ==
+                                                    ViewMode.thumbnails
+                                                ? RowsThumbnails(
+                                                    tab: tab,
+                                                    active: widget.active,
+                                                    callbacks: callbacks,
+                                                    rename: rename,
+                                                    provider: widget.thumbnails,
+                                                    cursorKey:
+                                                        widget.cursorRowKey,
+                                                    dropRow: spot?.row,
+                                                    onGeometry: (g) =>
+                                                        _cubit.geometry = g,
+                                                  )
+                                                : layout.mode == ViewMode.list
+                                                ? RowsList(
+                                                    tab: tab,
+                                                    layout: layout,
+                                                    active: widget.active,
+                                                    callbacks: callbacks,
+                                                    rename: rename,
+                                                    cursorKey:
+                                                        widget.cursorRowKey,
+                                                    dropRow: spot?.row,
+                                                    onSort: (field) =>
+                                                        unawaited(
+                                                          _cubit
+                                                              .toggleSortField(
+                                                                field,
+                                                              ),
+                                                        ),
+                                                    onGeometry: (g) =>
+                                                        _cubit.geometry = g,
+                                                  )
+                                                : RowsBrief(
+                                                    tab: tab,
+                                                    layout: layout,
+                                                    active: widget.active,
+                                                    callbacks: callbacks,
+                                                    rename: rename,
+                                                    cursorKey:
+                                                        widget.cursorRowKey,
+                                                    dropRow: spot?.row,
+                                                    onSort: (field) =>
+                                                        unawaited(
+                                                          _cubit
+                                                              .toggleSortField(
+                                                                field,
+                                                              ),
+                                                        ),
+                                                    onGeometry: (g) =>
+                                                        _cubit.geometry = g,
                                                   ),
-                                                  onGeometry: (g) =>
-                                                      _cubit.geometry = g,
-                                                )
-                                              : RowsBrief(
-                                                  tab: tab,
-                                                  layout: layout,
-                                                  active: widget.active,
-                                                  callbacks: callbacks,
-                                                  rename: rename,
-                                                  cursorKey:
-                                                      widget.cursorRowKey,
-                                                  dropRow: spot?.row,
-                                                  onSort: (field) => unawaited(
-                                                    _cubit.toggleSortField(
-                                                      field,
-                                                    ),
-                                                  ),
-                                                  onGeometry: (g) =>
-                                                      _cubit.geometry = g,
-                                                ),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  if (tab.loading && tab.listing == null)
-                                    const Positioned.fill(
-                                      child: _LoadingVeil(),
-                                    ),
-                                ],
+                                    if (tab.loading && tab.listing == null)
+                                      const Positioned.fill(
+                                        child: _LoadingVeil(),
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
