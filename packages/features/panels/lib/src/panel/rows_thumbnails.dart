@@ -41,12 +41,26 @@ class RowsThumbnails extends StatefulWidget {
 
 class _RowsThumbnailsState extends State<RowsThumbnails> {
   final _scroll = ScrollController();
+  late final _follow = AppScrollReveal(_scroll);
+  bool _jumpNextReveal = true;
+  bool? _reduceMotion;
+  (Size, double, int)? _layout;
   int _columns = 1, _page = 1;
   double _extent = 1;
   @override
   void initState() {
     super.initState();
     _scroll.addListener(_geometry);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduced = context.reduceMotion;
+    if (reduced != _reduceMotion) {
+      _reduceMotion = reduced;
+      if (_follow.isAnimating) _follow.schedule(_reveal);
+    }
   }
 
   void _geometry() {
@@ -65,9 +79,14 @@ class _RowsThumbnailsState extends State<RowsThumbnails> {
   @override
   void didUpdateWidget(RowsThumbnails oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.tab.cursor != oldWidget.tab.cursor ||
+    final changed =
+        widget.tab.id != oldWidget.tab.id ||
+        widget.tab.location != oldWidget.tab.location;
+    _jumpNextReveal |= changed;
+    if (changed ||
+        widget.tab.cursor != oldWidget.tab.cursor ||
         widget.tab.scrollRequest != oldWidget.tab.scrollRequest) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _reveal());
+      _follow.schedule(_reveal);
     }
   }
 
@@ -75,23 +94,19 @@ class _RowsThumbnailsState extends State<RowsThumbnails> {
     if (!mounted || !_scroll.hasClients || widget.tab.cursor < 0) return;
     final top = (widget.tab.cursor ~/ _columns) * _extent;
     final bottom = top + _extent;
-    final viewport = _scroll.position.viewportDimension;
-    final target = switch (widget.tab.scrollAlign) {
-      ScrollAlign.top => top,
-      ScrollAlign.center => top - (viewport - _extent) / 2,
-      ScrollAlign.bottom => bottom - viewport,
-      ScrollAlign.reveal =>
-        top < _scroll.offset
-            ? top
-            : bottom > _scroll.offset + viewport
-            ? bottom - viewport
-            : _scroll.offset,
-    };
-    _scroll.jumpTo(target.clamp(0, _scroll.position.maxScrollExtent));
+    _follow.reveal(
+      start: top,
+      end: bottom,
+      alignment: widget.tab.scrollAlign.alignment,
+      reduceMotion: context.reduceMotion,
+      immediate: _jumpNextReveal,
+    );
+    _jumpNextReveal = false;
   }
 
   @override
   void dispose() {
+    _follow.dispose();
     _scroll.dispose();
     super.dispose();
   }
@@ -108,130 +123,139 @@ class _RowsThumbnailsState extends State<RowsThumbnails> {
           AppSizes.thumbnailImageHeight +
           panelRowHeight(context) +
           2 * AppSpacing.sm;
-      final resized = columns != _columns || extent != _extent;
+      final layout = (constraints.biggest, extent, columns);
+      if (layout != _layout) {
+        _layout = layout;
+        _jumpNextReveal = true;
+        _follow.schedule(_reveal);
+      }
       _columns = columns;
       _extent = extent;
       _page = math.max(1, (constraints.maxHeight / extent).floor()) * columns;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _geometry();
-        if (resized) _reveal();
       });
       if (widget.tab.rows.isEmpty) {
         return EmptyRows(read: widget.tab.listing != null);
       }
-      return Scrollbar(
-        controller: _scroll,
-        child: GridView.builder(
+      return NotificationListener<UserScrollNotification>(
+        onNotification: _follow.onUserScroll,
+        child: Scrollbar(
           controller: _scroll,
-          scrollCacheExtent: const ScrollCacheExtent.pixels(0),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
-            mainAxisExtent: extent,
-          ),
-          itemCount: widget.tab.rows.length,
-          itemBuilder: (context, index) {
-            final entry = widget.tab.rows[index];
-            final look = rowLookOf(
-              widget.tab,
-              index,
-              active: widget.active && AppFocusArea.activeOf(context),
-              dropRow: widget.dropRow,
-              now: RecentEntriesClock.nowOf(context),
-            );
-            final renaming = widget.tab.renaming == index;
-            return Semantics(
-              selected: look.selected || look.cursor,
-              button: true,
-              label: rowSemanticsLabel(context, entry),
-              child: HintTarget(
-                onActivate: () => widget.callbacks.onDoubleTap(index),
-                onActivateAlt: () => widget.callbacks.onTapDown(
-                  index,
-                  toggle: true,
-                  range: false,
-                ),
-                child: RowDragArea(
-                  index: index,
-                  entry: entry,
-                  location: widget.tab.location,
-                  renaming: renaming,
-                  drag: widget.callbacks.drag,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTapDown: (_) => widget.callbacks.onTapDown(
-                      index,
-                      toggle: Chord.primaryHeld(Theme.of(context).platform),
-                      range: HardwareKeyboard.instance.isShiftPressed,
-                    ),
-                    onDoubleTap: () => widget.callbacks.onDoubleTap(index),
-                    onSecondaryTapDown: (details) => widget.callbacks
-                        .onSecondaryTapDown(index, details.globalPosition),
-                    child: Container(
-                      key: index == widget.tab.cursor
-                          ? widget.cursorKey
-                          : ValueKey(entry.key),
-                      margin: EdgeInsets.all(context.metrics.tableRowInset),
-                      padding: const EdgeInsets.all(AppSpacing.sm),
-                      foregroundDecoration: renaming
-                          ? null
-                          : look.cursorDecoration(context.appColors),
-                      decoration: BoxDecoration(
-                        color: look.background(context.appColors),
-                        borderRadius: BorderRadius.circular(
-                          context.metrics.radius.tableRow,
-                        ),
+          child: GridView.builder(
+            controller: _scroll,
+            scrollCacheExtent: const ScrollCacheExtent.pixels(0),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              mainAxisExtent: extent,
+            ),
+            itemCount: widget.tab.rows.length,
+            itemBuilder: (context, index) {
+              final entry = widget.tab.rows[index];
+              final look = rowLookOf(
+                widget.tab,
+                index,
+                active: widget.active && AppFocusArea.activeOf(context),
+                dropRow: widget.dropRow,
+                now: RecentEntriesClock.nowOf(context),
+              );
+              final renaming = widget.tab.renaming == index;
+              return Semantics(
+                selected: look.selected || look.cursor,
+                button: true,
+                label: rowSemanticsLabel(context, entry),
+                child: HintTarget(
+                  onActivate: () => widget.callbacks.onDoubleTap(index),
+                  onActivateAlt: () => widget.callbacks.onTapDown(
+                    index,
+                    toggle: true,
+                    range: false,
+                  ),
+                  child: RowDragArea(
+                    index: index,
+                    entry: entry,
+                    location: widget.tab.location,
+                    renaming: renaming,
+                    drag: widget.callbacks.drag,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTapDown: (_) => widget.callbacks.onTapDown(
+                        index,
+                        toggle: Chord.primaryHeld(Theme.of(context).platform),
+                        range: HardwareKeyboard.instance.isShiftPressed,
                       ),
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: _Thumbnail(
-                              key: ValueKey(entry.key),
-                              entry: entry,
-                              location: widget.tab.locationOf(entry),
-                              provider: widget.provider,
-                            ),
+                      onDoubleTap: () => widget.callbacks.onDoubleTap(index),
+                      onSecondaryTapDown: (details) => widget.callbacks
+                          .onSecondaryTapDown(index, details.globalPosition),
+                      child: Container(
+                        key: index == widget.tab.cursor
+                            ? widget.cursorKey
+                            : ValueKey(entry.key),
+                        margin: EdgeInsets.all(context.metrics.tableRowInset),
+                        padding: const EdgeInsets.all(AppSpacing.sm),
+                        foregroundDecoration: renaming
+                            ? null
+                            : look.cursorDecoration(context.appColors),
+                        decoration: BoxDecoration(
+                          color: look.background(context.appColors),
+                          borderRadius: BorderRadius.circular(
+                            context.metrics.radius.tableRow,
                           ),
-                          SizedBox(
-                            height: panelRowHeight(context),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: renaming
-                                      ? InlineRename(
-                                          name: entry.name,
-                                          caret: widget.rename.caret,
-                                          shortcutMap:
-                                              widget.rename.shortcutMap,
-                                          onCommit:
-                                              widget.callbacks.onRenameCommit,
-                                          onCancel:
-                                              widget.callbacks.onRenameCancel,
-                                        )
-                                      : AppMiddleEllipsis(
-                                          entry.name,
-                                          style: context.text.bodyMedium!
-                                              .copyWith(
-                                                color: look.foreground(context),
-                                              ),
-                                        ),
-                                ),
-                                if (look.selected)
-                                  Icon(
-                                    AppIcons.check,
-                                    size: AppIconSize.xs,
-                                    color: look.checkMark(context.appColors),
+                        ),
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: _Thumbnail(
+                                key: ValueKey(entry.key),
+                                entry: entry,
+                                location: widget.tab.locationOf(entry),
+                                provider: widget.provider,
+                              ),
+                            ),
+                            SizedBox(
+                              height: panelRowHeight(context),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: renaming
+                                        ? InlineRename(
+                                            name: entry.name,
+                                            caret: widget.rename.caret,
+                                            shortcutMap:
+                                                widget.rename.shortcutMap,
+                                            onCommit:
+                                                widget.callbacks.onRenameCommit,
+                                            onCancel:
+                                                widget.callbacks.onRenameCancel,
+                                          )
+                                        : AppMiddleEllipsis(
+                                            entry.name,
+                                            style: context.text.bodyMedium!
+                                                .copyWith(
+                                                  color: look.foreground(
+                                                    context,
+                                                  ),
+                                                ),
+                                          ),
                                   ),
-                              ],
+                                  if (look.selected)
+                                    Icon(
+                                      AppIcons.check,
+                                      size: AppIconSize.xs,
+                                      color: look.checkMark(context.appColors),
+                                    ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       );
     },

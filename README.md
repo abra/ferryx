@@ -53,6 +53,12 @@ Panels and auxiliary bars open and close smoothly; dialogs, menus and the
 command palette use short fades. Transitions follow the system's **Reduce
 Motion** setting. Keyboard commands and file navigation respond immediately.
 
+The file list scrolls smoothly to follow keyboard navigation, horizontally
+between columns and vertically in List and thumbnail views. Repeated keys
+update the current destination; distant jumps go straight to the target.
+Mouse and trackpad input take over immediately. **Reduce Motion** also
+disables these scroll animations.
+
 Recently added files and folders have a soft **mint background for less than
 1 hour**, **lavender for 1–3 hours**, **amber for 3–24 hours**, then the usual
 background. The footer legend shows **<1h**, **<3h** and **3–24h**;

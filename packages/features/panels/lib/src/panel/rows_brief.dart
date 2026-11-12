@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:shortcuts/shortcuts.dart';
 
 import 'inline_rename.dart';
+import 'brief_column_offsets.dart';
 import 'panel_row.dart';
 import 'panel_state.dart';
 import 'recent_entries.dart';
@@ -63,6 +64,8 @@ class RowsBrief extends StatefulWidget {
   static int debugMeasures = 0;
   @visibleForTesting
   static int debugColumnsBuilt = 0;
+  @visibleForTesting
+  static int debugOffsetBuilds = 0;
 
   @override
   State<RowsBrief> createState() => _RowsBriefState();
@@ -70,10 +73,16 @@ class RowsBrief extends StatefulWidget {
 
 class _RowsBriefState extends State<RowsBrief> {
   final _scroll = ScrollController();
-  int _lastScrollRequest = -1;
+  late final _follow = AppScrollReveal(_scroll);
+  bool _jumpNextReveal = true;
+  bool? _reduceMotion;
+  (Size, int)? _layout;
   int _rowsPerColumn = 1;
   int _visibleColumns = RowsBrief.fixedColumns;
   List<double> _columnWidths = const [];
+  BriefColumnOffsets _offsets = BriefColumnOffsets(const []);
+  (int, double)? _fixedMeasure;
+  List<double> _fixedWidths = const [];
 
   /// What the names were last measured for, and the widths they gave: a
   /// move of the cursor builds the list again, its names and room stay.
@@ -86,16 +95,20 @@ class _RowsBriefState extends State<RowsBrief> {
     _scroll.addListener(_onScroll);
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduced = context.reduceMotion;
+    if (reduced != _reduceMotion) {
+      _reduceMotion = reduced;
+      if (_follow.isAnimating) _follow.schedule(_reveal);
+    }
+  }
+
   /// The first column in view, for `H`, `M` and `L`.
   void _onScroll() {
     if (!_scroll.hasClients || _columnWidths.isEmpty) return;
-    var left = 0.0;
-    var column = 0;
-    while (column < _columnWidths.length - 1 &&
-        left + _columnWidths[column] <= _scroll.offset) {
-      left += _columnWidths[column];
-      column++;
-    }
+    final column = _offsets.columnAt(_scroll.offset);
     widget.onGeometry(
       PanelGeometry(
         rowsPerPage: _rowsPerColumn * _visibleColumns,
@@ -108,15 +121,20 @@ class _RowsBriefState extends State<RowsBrief> {
   @override
   void didUpdateWidget(RowsBrief oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.tab.scrollRequest != _lastScrollRequest ||
+    final changed =
+        widget.tab.id != oldWidget.tab.id ||
+        widget.tab.location != oldWidget.tab.location;
+    _jumpNextReveal |= changed;
+    if (changed ||
+        widget.tab.scrollRequest != oldWidget.tab.scrollRequest ||
         widget.tab.cursor != oldWidget.tab.cursor) {
-      _lastScrollRequest = widget.tab.scrollRequest;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _reveal());
+      _follow.schedule(_reveal);
     }
   }
 
   @override
   void dispose() {
+    _follow.dispose();
     _scroll.dispose();
     super.dispose();
   }
@@ -125,22 +143,15 @@ class _RowsBriefState extends State<RowsBrief> {
     if (!mounted || !_scroll.hasClients || _columnWidths.isEmpty) return;
     final cursor = widget.tab.cursor;
     if (cursor < 0) return;
-    final column = cursor ~/ _rowsPerColumn;
-    var left = 0.0;
-    for (var i = 0; i < column && i < _columnWidths.length; i++) {
-      left += _columnWidths[i];
-    }
-    final right =
-        left + _columnWidths[math.min(column, _columnWidths.length - 1)];
-    final viewport = _scroll.position.viewportDimension;
-    final offset = _scroll.offset;
-    if (left < offset) {
-      _scroll.jumpTo(left);
-    } else if (right > offset + viewport) {
-      _scroll.jumpTo(
-        (right - viewport).clamp(0, _scroll.position.maxScrollExtent),
-      );
-    }
+    final column = (cursor ~/ _rowsPerColumn).clamp(0, _offsets.length - 1);
+    _follow.reveal(
+      start: _offsets.startOf(column),
+      end: _offsets.endOf(column),
+      alignment: widget.tab.scrollAlign.alignment,
+      reduceMotion: context.reduceMotion,
+      immediate: _jumpNextReveal,
+    );
+    _jumpNextReveal = false;
   }
 
   /// What a cell holds besides its name: the row's inset and padding, the
@@ -168,7 +179,12 @@ class _RowsBriefState extends State<RowsBrief> {
         widget.tab.isFlat ||
         rows.length > RowsBrief.measuredRowsAtMost) {
       final width = (available / RowsBrief.fixedColumns).floorToDouble();
-      return List.filled(columns, width);
+      final measure = (columns, width);
+      if (_fixedMeasure != measure) {
+        _fixedMeasure = measure;
+        _fixedWidths = List.filled(columns, width);
+      }
+      return _fixedWidths;
     }
     final style = context.text.bodyMedium!;
     final scaler = MediaQuery.textScalerOf(context);
@@ -253,7 +269,20 @@ class _RowsBriefState extends State<RowsBrief> {
                 rowsPerColumn,
               );
               _rowsPerColumn = rowsPerColumn;
-              _columnWidths = widths;
+              final layout = (constraints.biggest, rowsPerColumn);
+              if (!identical(_columnWidths, widths) || _layout != layout) {
+                _layout = layout;
+                if (!identical(_columnWidths, widths)) {
+                  _columnWidths = widths;
+                  _offsets = BriefColumnOffsets(widths);
+                  assert(() {
+                    RowsBrief.debugOffsetBuilds++;
+                    return true;
+                  }());
+                }
+                _jumpNextReveal = true;
+                _follow.schedule(_reveal);
+              }
               final visibleColumns = widths.isEmpty
                   ? RowsBrief.fixedColumns
                   : math.max(1, (constraints.maxWidth / widths.first).floor());
@@ -262,40 +291,47 @@ class _RowsBriefState extends State<RowsBrief> {
               if (widget.tab.rows.isEmpty) {
                 return EmptyRows(read: widget.tab.listing != null);
               }
-              return Scrollbar(
-                controller: _scroll,
-                child: ListView.builder(
+              final uniform = identical(widths, _fixedWidths);
+              return NotificationListener<UserScrollNotification>(
+                onNotification: _follow.onUserScroll,
+                child: Scrollbar(
                   controller: _scroll,
-                  scrollDirection: Axis.horizontal,
-                  itemCount: widths.length,
-                  // The widths are known: a jump to the end lays out only
-                  // the columns it lands on, and the extent is exact.
-                  itemExtentBuilder: (column, _) => widths[column],
-                  addRepaintBoundaries: false,
-                  itemBuilder: (context, column) {
-                    assert(() {
-                      RowsBrief.debugColumnsBuilt++;
-                      return true;
-                    }());
-                    return SizedBox(
-                      width: widths[column],
-                      child: _BriefColumn(
-                        tab: widget.tab,
-                        active: active,
-                        start: column * rowsPerColumn,
-                        count: math.min(
-                          rowsPerColumn,
-                          widget.tab.rows.length - column * rowsPerColumn,
+                  child: ListView.builder(
+                    controller: _scroll,
+                    scrollDirection: Axis.horizontal,
+                    itemCount: widths.length,
+                    // The widths are known: a jump to the end lays out only
+                    // the columns it lands on, and the extent is exact.
+                    itemExtent: uniform ? widths.first : null,
+                    itemExtentBuilder: uniform
+                        ? null
+                        : (column, _) => widths[column],
+                    addRepaintBoundaries: false,
+                    itemBuilder: (context, column) {
+                      assert(() {
+                        RowsBrief.debugColumnsBuilt++;
+                        return true;
+                      }());
+                      return SizedBox(
+                        width: widths[column],
+                        child: _BriefColumn(
+                          tab: widget.tab,
+                          active: active,
+                          start: column * rowsPerColumn,
+                          count: math.min(
+                            rowsPerColumn,
+                            widget.tab.rows.length - column * rowsPerColumn,
+                          ),
+                          height: height,
+                          callbacks: widget.callbacks,
+                          rename: widget.rename,
+                          cursorKey: widget.cursorKey,
+                          dropRow: widget.dropRow,
+                          last: column == widths.length - 1,
                         ),
-                        height: height,
-                        callbacks: widget.callbacks,
-                        rename: widget.rename,
-                        cursorKey: widget.cursorKey,
-                        dropRow: widget.dropRow,
-                        last: column == widths.length - 1,
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               );
             },

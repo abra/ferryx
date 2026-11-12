@@ -149,12 +149,14 @@ void main() {
       // Medium: columns as wide as their names.
       await pump(tester, 1);
       final measured = RowsBrief.debugMeasures;
+      final offsets = RowsBrief.debugOffsetBuilds;
       for (var i = 0; i < 5; i++) {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
         await tester.pump();
       }
       expect(cubit.state.active!.cursor, 5);
       expect(RowsBrief.debugMeasures, measured);
+      expect(RowsBrief.debugOffsetBuilds, offsets);
     });
   });
 

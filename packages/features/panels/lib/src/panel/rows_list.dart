@@ -145,7 +145,10 @@ class RowsList extends StatefulWidget {
 
 class _RowsListState extends State<RowsList> {
   final _scroll = ScrollController();
-  int _lastScrollRequest = -1;
+  late final _follow = AppScrollReveal(_scroll);
+  bool _jumpNextReveal = true;
+  bool? _reduceMotion;
+  (Size, double)? _layout;
   int _rowsPerPage = 20;
   int _firstVisible = 0;
 
@@ -153,6 +156,16 @@ class _RowsListState extends State<RowsList> {
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduced = context.reduceMotion;
+    if (reduced != _reduceMotion) {
+      _reduceMotion = reduced;
+      if (_follow.isAnimating) _follow.schedule(_reveal);
+    }
   }
 
   /// The first row in view, for `H`, `M` and `L`.
@@ -176,15 +189,20 @@ class _RowsListState extends State<RowsList> {
   @override
   void didUpdateWidget(RowsList oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.tab.scrollRequest != _lastScrollRequest ||
+    final changed =
+        widget.tab.id != oldWidget.tab.id ||
+        widget.tab.location != oldWidget.tab.location;
+    _jumpNextReveal |= changed;
+    if (changed ||
+        widget.tab.scrollRequest != oldWidget.tab.scrollRequest ||
         widget.tab.cursor != oldWidget.tab.cursor) {
-      _lastScrollRequest = widget.tab.scrollRequest;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _reveal());
+      _follow.schedule(_reveal);
     }
   }
 
   @override
   void dispose() {
+    _follow.dispose();
     _scroll.dispose();
     super.dispose();
   }
@@ -228,29 +246,14 @@ class _RowsListState extends State<RowsList> {
     final height = panelRowHeight(context);
     final top = rowsInset + cursor * height;
     final bottom = top + height;
-    final viewport = _scroll.position.viewportDimension;
-    final offset = _scroll.offset;
-    final max = _scroll.position.maxScrollExtent;
-    switch (widget.tab.scrollAlign) {
-      case ScrollAlign.top:
-        _scroll.jumpTo(top.clamp(0, max));
-        return;
-      case ScrollAlign.center:
-        _scroll.jumpTo((top - (viewport - height) / 2).clamp(0, max));
-        return;
-      case ScrollAlign.bottom:
-        _scroll.jumpTo((bottom - viewport).clamp(0, max));
-        return;
-      case ScrollAlign.reveal:
-        break;
-    }
-    if (top < offset) {
-      _scroll.jumpTo(top);
-    } else if (bottom > offset + viewport) {
-      _scroll.jumpTo(
-        (bottom - viewport).clamp(0, _scroll.position.maxScrollExtent),
-      );
-    }
+    _follow.reveal(
+      start: top,
+      end: bottom,
+      alignment: widget.tab.scrollAlign.alignment,
+      reduceMotion: context.reduceMotion,
+      immediate: _jumpNextReveal,
+    );
+    _jumpNextReveal = false;
   }
 
   @override
@@ -263,6 +266,12 @@ class _RowsListState extends State<RowsList> {
     final wanted = [for (final c in wantedColumns) columnWidth(context, c)];
     return LayoutBuilder(
       builder: (context, constraints) {
+        final layout = (constraints.biggest, height);
+        if (layout != _layout) {
+          _layout = layout;
+          _jumpNextReveal = true;
+          _follow.schedule(_reveal);
+        }
         final (columns, widths) = _fitColumns(
           context,
           wantedColumns,
@@ -295,37 +304,40 @@ class _RowsListState extends State<RowsList> {
             Expanded(
               child: widget.tab.rows.isEmpty
                   ? EmptyRows(read: widget.tab.listing != null)
-                  : Scrollbar(
-                      controller: _scroll,
-                      child: ListView.builder(
+                  : NotificationListener<UserScrollNotification>(
+                      onNotification: _follow.onUserScroll,
+                      child: Scrollbar(
                         controller: _scroll,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: rowsInset,
-                        ),
-                        itemExtent: height,
-                        itemCount: widget.tab.rows.length,
-                        addRepaintBoundaries: false,
-                        itemBuilder: (context, index) => _ListRow(
-                          key: ValueKey(widget.tab.rows[index].key),
-                          index: index,
-                          entry: widget.tab.rows[index],
-                          columns: columns,
-                          widths: widths,
-                          look: rowLookOf(
-                            widget.tab,
-                            index,
-                            active: active,
-                            dropRow: widget.dropRow,
-                            now: RecentEntriesClock.nowOf(context),
+                        child: ListView.builder(
+                          controller: _scroll,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: rowsInset,
                           ),
-                          location: widget.tab.location,
-                          renaming: widget.tab.renaming == index,
-                          rename: widget.rename,
-                          callbacks: widget.callbacks,
-                          height: height,
-                          cursorKey: index == widget.tab.cursor
-                              ? widget.cursorKey
-                              : null,
+                          itemExtent: height,
+                          itemCount: widget.tab.rows.length,
+                          addRepaintBoundaries: false,
+                          itemBuilder: (context, index) => _ListRow(
+                            key: ValueKey(widget.tab.rows[index].key),
+                            index: index,
+                            entry: widget.tab.rows[index],
+                            columns: columns,
+                            widths: widths,
+                            look: rowLookOf(
+                              widget.tab,
+                              index,
+                              active: active,
+                              dropRow: widget.dropRow,
+                              now: RecentEntriesClock.nowOf(context),
+                            ),
+                            location: widget.tab.location,
+                            renaming: widget.tab.renaming == index,
+                            rename: widget.rename,
+                            callbacks: widget.callbacks,
+                            height: height,
+                            cursorKey: index == widget.tab.cursor
+                                ? widget.cursorKey
+                                : null,
+                          ),
                         ),
                       ),
                     ),

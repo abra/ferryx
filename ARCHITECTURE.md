@@ -1989,6 +1989,23 @@ overflow during the animation. List rows, cursor moves and progress events do
 not start surface transitions. Widget tests exercise intermediate frames,
 reversal, focus exclusion, reduced motion and live-view moves between hosts.
 
+File cursor reveals share `AppScrollReveal`. Requests coalesce after layout
+and read the latest cursor; near targets use the shared 160 ms curve, with
+100 ms retargets, while moves beyond one viewport jump directly. Futures
+carry a generation so interruption never clears a newer destination. A
+reversal into the current viewport stops the old animation. Native user
+scroll notifications drop pending keyboard reveals; wheel, trackpad and
+scrollbar motion keep Flutter's own activities. Initial layout, a different
+tab/folder and changed geometry reveal immediately. Rows observe changes to
+Reduce Motion and finish an active keyboard reveal without waiting for it.
+Focus/color changes alone do not reveal a manually scrolled cursor.
+
+Brief widths and their prefix offsets are cached by geometry. Uniform widths
+use `itemExtent`; measured widths retain `itemExtentBuilder`. Cursor ranges
+use O(1) prefix lookup and animation geometry uses O(log n) binary search,
+with no per-frame scans or name measurements. The three views retain lazy
+rows, their existing selection logic and scroll-controller ownership.
+
 ### Failed navigation
 
 Native listing reads preserve the OS error kind and path: existence and access

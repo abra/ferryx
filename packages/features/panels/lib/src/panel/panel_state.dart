@@ -403,7 +403,17 @@ class PanelGeometry extends Equatable {
 }
 
 /// How the view scrolls for the cursor.
-enum ScrollAlign { reveal, top, center, bottom }
+enum ScrollAlign {
+  reveal(null),
+  top(0),
+  center(0.5),
+  bottom(1);
+
+  const ScrollAlign(this.alignment);
+
+  /// Fraction of the viewport, or null to reveal with minimal movement.
+  final double? alignment;
+}
 
 /// Where the caret starts when a name is renamed in place.
 enum RenameCaret {
