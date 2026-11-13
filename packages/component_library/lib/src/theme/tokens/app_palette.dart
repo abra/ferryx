@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../extensions/app_colors_ext.dart';
 
@@ -110,6 +110,9 @@ class AppPalette {
       selectionFill: Color(0xFFEDF0F5),
       controlFill: Color(0xFFFFFFFF),
       controlBorder: Color(0xFFCCD8E8),
+      segmentedBackground: Color(0xFFEDF0F5),
+      segmentedSelected: Color(0xFFFFFFFF),
+      onSegmentedSelected: Color(0xFF253449),
       line: Color(0xFFDCE4EF),
       textMuted: Color(0xFF566880),
       textFaint: Color(0xFF6F8097),
@@ -176,6 +179,9 @@ class AppPalette {
       selectionFill: Color(0xFF1B2A40),
       controlFill: Color(0xFF17273F),
       controlBorder: Color(0xFF45638F),
+      segmentedBackground: Color(0xFF142238),
+      segmentedSelected: Color(0xFF516E91),
+      onSegmentedSelected: Color(0xFFF4F7FC),
       line: Color(0xFF263C5C),
       textMuted: Color(0xFF9AACCB),
       textFaint: Color(0xFF7E94B4),

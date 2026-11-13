@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'markdown_image.dart';
 import 'markup_search.dart';
@@ -132,7 +132,7 @@ class _RichTextPreviewState extends State<RichTextPreview>
     return PreviewSearchBinding(
       key: ValueKey((widget.generation, widget.html)),
       target: this,
-      child: Scrollbar(
+      child: AppScrollbar(
         controller: _scroll,
         child: ScrollConfiguration(
           behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
@@ -143,108 +143,117 @@ class _RichTextPreviewState extends State<RichTextPreview>
                 maxWidth: AppSizes.documentWideMaxWidth,
               ),
               child: SelectionArea(
-                child: HtmlWidget(
-                  _highlighted ?? widget.html,
-                  key: _htmlKey,
-                  textStyle: style,
-                  factoryBuilder: () =>
-                      _RepositoryWidgetFactory(() => _cellWidth),
-                  renderMode: _renderMode,
-                  enableCaching: true,
-                  rebuildTriggers: [
-                    widget.generation,
-                    widget.source,
-                    grid,
-                    cellWidth,
-                    _current,
-                  ],
-                  customStylesBuilder: (element) => switch (element.localName) {
-                    'mark' => {
-                      'background-color': _cssColor(
-                        context.appColors.highlight,
-                      ),
-                    },
-                    'table' => {
-                      'border': border,
-                      'border-collapse': 'collapse',
-                      'border-spacing': '0',
-                    },
-                    'td' || 'th' => {
-                      'border': border,
-                      'padding': '${AppSpacing.xs}px ${AppSpacing.sm}px',
-                    },
-                    'p'
-                        when _tableCellTags.contains(
-                          element.parent?.localName,
-                        ) =>
-                      {'margin': '0'},
-                    'h1' => {
-                      'font-size':
-                          '${type.editorHeading1.fontSize! / type.editorBody.fontSize!}em',
-                    },
-                    'h2' => {
-                      'font-size':
-                          '${type.editorHeading2.fontSize! / type.editorBody.fontSize!}em',
-                    },
-                    'h3' => {
-                      'font-size':
-                          '${type.editorHeading3.fontSize! / type.editorBody.fontSize!}em',
-                    },
-                    'code' || 'pre' || 'kbd' || 'samp' => {'font-family': mono},
-                    _ => null,
-                  },
-                  customWidgetBuilder: (element) {
-                    if (element.localName == 'ferryx-checkbox') {
-                      return InlineCustomWidget(
-                        child: AppCheckbox(
-                          value: element.attributes['checked'] == 'true',
-                          onChanged: null,
+                // This renderer still reads SDK theme types.
+                // ignore: deprecated_member_use
+                child: MaterialUiCompatibilityBridge(
+                  child: HtmlWidget(
+                    _highlighted ?? widget.html,
+                    key: _htmlKey,
+                    textStyle: style,
+                    factoryBuilder: () =>
+                        _RepositoryWidgetFactory(() => _cellWidth),
+                    renderMode: _renderMode,
+                    enableCaching: true,
+                    rebuildTriggers: [
+                      widget.generation,
+                      widget.source,
+                      grid,
+                      cellWidth,
+                      _current,
+                    ],
+                    customStylesBuilder: (element) => switch (element
+                        .localName) {
+                      'mark' => {
+                        'background-color': _cssColor(
+                          context.appColors.highlight,
                         ),
-                      );
-                    }
-                    if (element.localName == 'img') {
-                      return MarkdownImage(
-                        embeddedBytes: widget.images[element.attributes['src']],
-                        source: widget.source,
-                        reference:
-                            Uri.tryParse(element.attributes['src'] ?? '') ??
-                            Uri(),
-                        alt: element.attributes['alt'],
-                        generation: widget.generation,
-                      );
-                    }
-                    if (element.localName == 'a' &&
-                        element.attributes.containsKey('href')) {
-                      final href = element.attributes['href']!;
-                      final image = element.querySelector('img');
-                      return InlineCustomWidget(
-                        child: ViewerLink(
-                          href: href,
-                          label: element.text.isEmpty ? href : element.text,
-                          style: style.copyWith(
-                            color: context.appColors.link,
-                            decoration: TextDecoration.underline,
+                      },
+                      'table' => {
+                        'border': border,
+                        'border-collapse': 'collapse',
+                        'border-spacing': '0',
+                      },
+                      'td' || 'th' => {
+                        'border': border,
+                        'padding': '${AppSpacing.xs}px ${AppSpacing.sm}px',
+                      },
+                      'p'
+                          when _tableCellTags.contains(
+                            element.parent?.localName,
+                          ) =>
+                        {'margin': '0'},
+                      'h1' => {
+                        'font-size':
+                            '${type.editorHeading1.fontSize! / type.editorBody.fontSize!}em',
+                      },
+                      'h2' => {
+                        'font-size':
+                            '${type.editorHeading2.fontSize! / type.editorBody.fontSize!}em',
+                      },
+                      'h3' => {
+                        'font-size':
+                            '${type.editorHeading3.fontSize! / type.editorBody.fontSize!}em',
+                      },
+                      'code' ||
+                      'pre' ||
+                      'kbd' ||
+                      'samp' => {'font-family': mono},
+                      _ => null,
+                    },
+                    customWidgetBuilder: (element) {
+                      if (element.localName == 'ferryx-checkbox') {
+                        return InlineCustomWidget(
+                          child: AppCheckbox(
+                            value: element.attributes['checked'] == 'true',
+                            onChanged: null,
                           ),
-                          onActivate: () => _openLink(href),
-                          child: image == null
-                              ? null
-                              : MarkdownImage(
-                                  embeddedBytes:
-                                      widget.images[image.attributes['src']],
-                                  source: widget.source,
-                                  reference:
-                                      Uri.tryParse(
-                                        image.attributes['src'] ?? '',
-                                      ) ??
-                                      Uri(),
-                                  alt: image.attributes['alt'],
-                                  generation: widget.generation,
-                                ),
-                        ),
-                      );
-                    }
-                    return null;
-                  },
+                        );
+                      }
+                      if (element.localName == 'img') {
+                        return MarkdownImage(
+                          embeddedBytes:
+                              widget.images[element.attributes['src']],
+                          source: widget.source,
+                          reference:
+                              Uri.tryParse(element.attributes['src'] ?? '') ??
+                              Uri(),
+                          alt: element.attributes['alt'],
+                          generation: widget.generation,
+                        );
+                      }
+                      if (element.localName == 'a' &&
+                          element.attributes.containsKey('href')) {
+                        final href = element.attributes['href']!;
+                        final image = element.querySelector('img');
+                        return InlineCustomWidget(
+                          child: ViewerLink(
+                            href: href,
+                            label: element.text.isEmpty ? href : element.text,
+                            style: style.copyWith(
+                              color: context.appColors.link,
+                              decoration: TextDecoration.underline,
+                            ),
+                            onActivate: () => _openLink(href),
+                            child: image == null
+                                ? null
+                                : MarkdownImage(
+                                    embeddedBytes:
+                                        widget.images[image.attributes['src']],
+                                    source: widget.source,
+                                    reference:
+                                        Uri.tryParse(
+                                          image.attributes['src'] ?? '',
+                                        ) ??
+                                        Uri(),
+                                    alt: image.attributes['alt'],
+                                    generation: widget.generation,
+                                  ),
+                          ),
+                        );
+                      }
+                      return null;
+                    },
+                  ),
                 ),
               ),
             ),
@@ -345,7 +354,7 @@ class _HorizontalDocumentScrollState extends State<_HorizontalDocumentScroll> {
   }
 
   @override
-  Widget build(BuildContext context) => Scrollbar(
+  Widget build(BuildContext context) => AppScrollbar(
     controller: _scroll,
     thumbVisibility: true,
     // Lay out the table at its cell widths before clipping it to the pane.

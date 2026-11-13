@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:ferryx/app/app_menu_bar.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shortcuts/shortcuts.dart';
 
 void main() {
@@ -196,7 +196,7 @@ void main() {
     );
     await pump(tester);
     final copyBeforeFocus = item(tester, en.cmdCopyPaths).onSelected!;
-    await tester.tap(find.byType(TextField));
+    await tester.tap(find.byType(EditableText));
     await tester.pumpAndSettle();
     item(tester, en.cmdSelectAll).onSelected!();
     expect(text.selection, const TextSelection(baseOffset: 0, extentOffset: 5));

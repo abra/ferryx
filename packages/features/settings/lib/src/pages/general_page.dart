@@ -1,5 +1,5 @@
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:preferences_service/preferences_service.dart';
 
 import '../settings_rows.dart';

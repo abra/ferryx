@@ -1,7 +1,7 @@
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 

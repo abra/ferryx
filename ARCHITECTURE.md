@@ -54,6 +54,30 @@ features/* never import sibling features.
 
 ### Native look on each desktop
 
+On Flutter 3.50, design widgets and theme types come from the standalone
+`material_ui` / `cupertino_ui` packages. Every app surface uses
+`FerryxSupportedLocales.delegates`, which includes the standalone design
+localizations. Markdown and HTML renderers still use SDK design types;
+their subtrees use the official compatibility bridge to inherit the current
+theme and locale. Keep these legacy types out of feature APIs.
+
+On macOS, `AppTextField` uses `CupertinoTextField` for editing and desktop
+selection. Its shared `InputDecorator` retains the measured macOS bezel,
+focus halo, error presentation, search adornments and layout metrics.
+`AppCheckbox` uses the macOS-style `CupertinoCheckbox`, with one shared
+keyboard/semantics target covering its label; Space toggles it and Return
+continues to the dialog. `AppSpinner` uses `CupertinoActivityIndicator` and
+`AppScrollbar` uses `CupertinoScrollbar` for explicit and automatic scrollbars.
+`AppIconButton` and the segments of `AppSegmentedControl` use
+`CupertinoButton`, retaining the desktop hover/press fill, focus ring and
+compact metrics. The segmented group owns one Tab stop and arrow-key
+selection; each option remains a separate hint and accessibility target.
+Its selected tile has dedicated background/foreground palette roles so the
+current choice remains distinct in dark mode. The stock Cupertino segmented
+controls have a taller minimum height, so the shared compact layout stays.
+Other desktop styles keep their controls. Cupertino's mobile sliders,
+switches, sheets and alerts do not replace the existing desktop versions.
+
 One layout, Ferryx's Balanced light/dark palette and three sets of desktop
 conventions. Control geometry, typography and interaction follow Apple's
 Human Interface Guidelines on macOS (with macOS 26's own metrics,
@@ -771,7 +795,9 @@ sections and pages within the current section, not a guessed book-wide
 page total. Fixed documents offer page jumps and zoom. Reflowable books
 offer A− / A+ and reset controls, also present in the actions menu.
 `Preferences.documentFontSize` is persisted separately from `viewerFontSize`,
-clamped to 10–32 with a default of 15, and exposed in Settings → Viewer.
+clamped to 9–32 with a default of 15, and exposed in Settings → Viewer.
+Both preview font-size sliders share these bounds and a one-point step,
+so equal values align; their values and defaults remain independent.
 Changes update appearance and reflow the existing session without reopening
 its file. Primary − / + / 0 decrease, increase and reset book type size;
 the same commands zoom and fit fixed pages.

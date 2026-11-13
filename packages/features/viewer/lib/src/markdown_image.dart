@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'text_window.dart';
 import 'viewer_source.dart';

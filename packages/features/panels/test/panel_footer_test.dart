@@ -1,10 +1,10 @@
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:panels_feature/panels_feature.dart';
 import 'package:panels_feature/src/panel/panel_footer.dart';
 
@@ -82,11 +82,11 @@ void main() {
       await h.press(tester, LogicalKeyboardKey.keyT, meta: true);
       expect(hint('gt'), findsOneWidget);
       await h.press(tester, LogicalKeyboardKey.semicolon, shift: true);
-      expect(find.byType(TextField), findsOneWidget);
+      expect(find.byType(EditableText), findsOneWidget);
       expect(hint('gt'), findsNothing);
       expect(hint('gT'), findsNothing);
       await h.press(tester, LogicalKeyboardKey.escape);
-      expect(find.byType(TextField), findsNothing);
+      expect(find.byType(EditableText), findsNothing);
       expect(hint('gt'), findsOneWidget);
       expect(hint('gT'), findsOneWidget);
     });

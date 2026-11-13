@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pagecraft/all_formats.dart';
 
 /// Two lines of ten-point glyphs on a 200×100 pt page, drawn 1:1 into a

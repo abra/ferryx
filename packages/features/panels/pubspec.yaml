@@ -33,6 +33,7 @@ dependencies:
     path: ../../shortcuts
   network_service:
     path: ../../network_service
+  material_ui: ^1.11.0
 
 dev_dependencies:
   bloc_test: ^10.0.0

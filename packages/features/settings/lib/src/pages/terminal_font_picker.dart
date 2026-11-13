@@ -1,6 +1,6 @@
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// The catalog belongs to this page's lifetime, not to preference rebuilds.
 /// Keeping an unavailable saved family lets a temporarily missing font return.

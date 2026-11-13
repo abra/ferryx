@@ -22,6 +22,7 @@ dependencies:
     path: ../../preferences_service
   shortcuts:
     path: ../../shortcuts
+  material_ui: ^1.11.0
 
 dev_dependencies:
   mocktail: ^1.0.4

@@ -1,7 +1,7 @@
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shortcuts/shortcuts.dart';
 
 import '../native/panel_drag_hooks.dart';
@@ -306,7 +306,7 @@ class _RowsListState extends State<RowsList> {
                   ? EmptyRows(read: widget.tab.listing != null)
                   : NotificationListener<UserScrollNotification>(
                       onNotification: _follow.onUserScroll,
-                      child: Scrollbar(
+                      child: AppScrollbar(
                         controller: _scroll,
                         child: ListView.builder(
                           controller: _scroll,

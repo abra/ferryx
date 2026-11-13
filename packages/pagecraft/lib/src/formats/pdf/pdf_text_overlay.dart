@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/cupertino.dart' show CupertinoTheme;
-import 'package:flutter/cupertino.dart' show cupertinoTextSelectionControls;
+import 'package:cupertino_ui/cupertino_ui.dart' show CupertinoTheme;
+import 'package:cupertino_ui/cupertino_ui.dart'
+    show cupertinoTextSelectionControls;
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:native_text_selection/native_text_selection.dart';
 
 import 'pdf_text_layer.dart';

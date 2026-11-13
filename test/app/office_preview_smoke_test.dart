@@ -5,7 +5,7 @@ import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_backend/ferryx_backend.dart' show FerryxBackend;
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:file_repository/file_repository.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
     show ExternalLibrary;
 import 'package:flutter_test/flutter_test.dart';

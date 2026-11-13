@@ -1,8 +1,8 @@
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shortcuts/shortcuts.dart';
 import 'package:viewer_feature/src/file_diff_screen.dart';
 import 'package:viewer_feature/src/viewer_source.dart';

@@ -6,17 +6,17 @@
 
 import 'dart:async';
 
-import 'package:domain_models/domain_models.dart';
+import 'package:checksums_feature/checksums_feature.dart';
 import 'package:component_library/component_library.dart';
+import 'package:domain_models/domain_models.dart';
+import 'package:duplicates_feature/duplicates_feature.dart';
 import 'package:ferryx/app/dependency_container.dart';
 import 'package:ferryx/app/dialog_page.dart';
 import 'package:ferryx/app/terminal_link.dart';
 import 'package:ferryx/app/window_chrome.dart';
-import 'package:checksums_feature/checksums_feature.dart';
-import 'package:duplicates_feature/duplicates_feature.dart';
 import 'package:find_feature/find_feature.dart';
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:network_feature/network_feature.dart';
 import 'package:panels_feature/panels_feature.dart';
 import 'package:settings_feature/settings_feature.dart';

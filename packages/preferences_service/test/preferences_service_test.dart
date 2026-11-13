@@ -98,6 +98,13 @@ void main() {
         Preferences.fromJson({'documentFontSize': 99}).documentFontSize,
         Preferences.maxDocumentFontSize,
       );
+      final smallest = const Preferences().copyWith(
+        viewerFontSize: 9,
+        documentFontSize: 9,
+      );
+      final restored = Preferences.fromJson(smallest.toJson());
+      expect(restored.viewerFontSize, 9);
+      expect(restored.documentFontSize, 9);
     });
 
     test('the terminal block keeps its numbers in range', () {

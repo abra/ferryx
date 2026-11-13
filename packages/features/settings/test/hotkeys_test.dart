@@ -1,7 +1,7 @@
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:settings_feature/settings_feature.dart';
 import 'package:shortcuts/shortcuts.dart';
 

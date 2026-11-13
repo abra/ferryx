@@ -1,7 +1,8 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:cupertino_ui/cupertino_ui.dart' show CupertinoButton;
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'app_divider.dart';
 import 'focus_ring.dart';
@@ -15,7 +16,7 @@ import 'theme/hairlines.dart';
 /// Compact choice between a few options; ←/→ move the selection.
 ///
 /// Drawn as the platform's own: an NSSegmentedControl (a sunken track with
-/// a raised white segment), the Fluent segmented control (a raised segment
+/// a raised light segment), the Fluent segmented control (a raised segment
 /// with an accent pill under its label), a libadwaita toggle group.
 class AppSegmentedControl<T> extends StatelessWidget {
   const AppSegmentedControl({
@@ -72,6 +73,8 @@ class AppSegmentedControl<T> extends StatelessWidget {
             decoration: appEdgedBox(
               color: style == AppPlatformStyle.windows
                   ? colors.surfaceSunken
+                  : style == AppPlatformStyle.macos
+                  ? colors.segmentedBackground
                   : colors.selectionFill,
               edge: style == AppPlatformStyle.windows ? colors.line : null,
               radius: outer,
@@ -132,10 +135,14 @@ class _Segment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final windows = context.metrics.style == AppPlatformStyle.windows;
+    final platform = context.metrics.style;
+    final windows = platform == AppPlatformStyle.windows;
+    final mac = platform == AppPlatformStyle.macos;
     final raised = selected
         ? appEdgedBox(
-            color: context.isDark && !windows
+            color: mac
+                ? colors.segmentedSelected
+                : context.isDark && !windows
                 ? colors.controlFill
                 : context.colors.surface,
             edge: windows ? colors.line : null,
@@ -151,56 +158,71 @@ class _Segment extends StatelessWidget {
                   ],
           )
         : null;
-    return Semantics(
+    final content = Container(
+      height: height,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      decoration: raised,
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(bottom: windows ? _pillRoom : 0),
+            child: Text(
+              label,
+              style: context.text.bodyMedium?.copyWith(
+                color: mac
+                    ? selected
+                          ? colors.onSegmentedSelected
+                          : colors.textMuted
+                    : context.colors.onSurface,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (selected && windows)
+            Positioned(
+              bottom: 1,
+              child: Container(
+                width: 16,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: colors.accent,
+                  borderRadius: BorderRadius.circular(AppRadius.full),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+    final item = Semantics(
       button: true,
       selected: selected,
+      inMutuallyExclusiveGroup: true,
       // Each segment its own ⌘J label: the label picks it.
       child: HintTarget(
         onActivate: onTap,
-        child: GestureDetector(
-          onTap: onTap,
-          behavior: HitTestBehavior.opaque,
-          child: Container(
-            height: height,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            decoration: raised,
-            child: Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: [
-                Padding(
-                  // Fluent's pill sits under the label: every label moves up
-                  // by the pill's room, so none shifts when the choice does.
-                  padding: EdgeInsets.only(bottom: windows ? _pillRoom : 0),
-                  child: Text(
-                    label,
-                    // The platforms set every segment's label in the
-                    // label colour; the raised segment tells the choice.
-                    style: context.text.bodyMedium?.copyWith(
-                      color: context.colors.onSurface,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+        // The group owns one keyboard stop; each segment remains a hint target.
+        child: mac
+            ? ExcludeFocus(
+                child: CupertinoButton(
+                  onPressed: onTap,
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  pressedOpacity: 1,
+                  mouseCursor: SystemMouseCursors.basic,
+                  child: content,
                 ),
-                if (selected && windows)
-                  Positioned(
-                    bottom: 1,
-                    child: Container(
-                      width: 16,
-                      height: 3,
-                      decoration: BoxDecoration(
-                        color: colors.accent,
-                        borderRadius: BorderRadius.circular(AppRadius.full),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
+              )
+            : GestureDetector(
+                onTap: onTap,
+                behavior: HitTestBehavior.opaque,
+                child: content,
+              ),
       ),
     );
+    return mac ? MergeSemantics(child: item) : item;
   }
 }
 

@@ -3,9 +3,9 @@ import 'dart:math' as math;
 
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shortcuts/shortcuts.dart';
 
 import 'file_diff.dart';
@@ -367,7 +367,7 @@ class _DiffColumnState extends State<_DiffColumn> {
     painter.dispose();
     final gutter = character * 7 + AppSpacing.sm * 2;
     return LayoutBuilder(
-      builder: (context, constraints) => Scrollbar(
+      builder: (context, constraints) => AppScrollbar(
         controller: _horizontal,
         notificationPredicate: (notification) =>
             notification.metrics.axis == Axis.horizontal,
@@ -380,7 +380,7 @@ class _DiffColumnState extends State<_DiffColumn> {
               gutter + _longest * character + AppSpacing.md,
             ),
             height: constraints.maxHeight,
-            child: Scrollbar(
+            child: AppScrollbar(
               controller: widget.scroll,
               child: ListView.builder(
                 controller: widget.scroll,

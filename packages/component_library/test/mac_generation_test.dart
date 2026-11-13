@@ -1,6 +1,6 @@
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Pumps [child] under the macOS theme of [generation].
 Future<void> pumpMac(
@@ -116,7 +116,7 @@ void main() {
         Color fillOf(Finder container) {
           return switch (tester
               .widget<AnimatedContainer>(container)
-              .decoration!) {
+              .decoration) {
             final BoxDecoration box => box.color!,
             final ShapeDecoration shape => shape.color!,
             final other => throw StateError('$other'),
@@ -207,7 +207,7 @@ void main() {
           mainAxisSize: MainAxisSize.min,
           children: [
             AppSearchField(hintText: 'Search'),
-            TextField(),
+            AppTextField(),
           ],
         ),
         width: 300,
@@ -216,18 +216,18 @@ void main() {
         AppPlatformStyle.macos,
         generation: generation,
       );
-      final search = tester.widget<TextField>(
+      final search = tester.widget<InputDecorator>(
         find.descendant(
           of: find.byType(AppSearchField),
-          matching: find.byType(TextField),
+          matching: find.byType(InputDecorator),
         ),
       );
-      final border = search.decoration!.enabledBorder;
+      final border = search.decoration.enabledBorder;
       final radius = border is OutlineInputBorder
           ? border.borderRadius.topLeft.x
           : metrics.radius.control;
       expect(radius, metrics.radius.search);
-      final fields = find.byType(TextField);
+      final fields = find.byType(InputDecorator);
       expect(
         tester.getSize(fields.first).height,
         tester.getSize(fields.last).height,

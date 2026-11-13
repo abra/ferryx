@@ -2,13 +2,15 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Return in a one-line `TextField` runs its `onSubmitted` and then, unless
-/// the field has an `onEditingComplete`, Flutter takes the focus away from
+/// Return in a one-line Material or Cupertino field runs `onSubmitted`.
+/// Without `onEditingComplete`, Flutter then takes the focus away from
 /// it. A dialog that stays open after Return (a wrong password, a name
 /// already taken, a search started) is then left without the keys, and
 /// they go to whatever is behind it. So a field that submits says what
 /// happens to its focus: `onEditingComplete: () {}` keeps it.
-final _field = RegExp(r'(?<![A-Za-z_.])(TextField|TextFormField)\(');
+final _field = RegExp(
+  r'(?<![A-Za-z_.])(TextField|TextFormField|CupertinoTextField)\(',
+);
 
 /// The app's Dart files, the features' and the component library's.
 Iterable<File> _sources() sync* {

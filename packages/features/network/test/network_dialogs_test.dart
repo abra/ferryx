@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:network_feature/network_feature.dart';
 import 'package:network_service/testing.dart';
 import 'package:shortcuts/shortcuts.dart';
@@ -92,15 +92,17 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    String field(WidgetTester tester) =>
-        tester.widget<TextField>(find.byType(TextField).first).controller!.text;
+    String field(WidgetTester tester) => tester
+        .widget<EditableText>(find.byType(EditableText).first)
+        .controller
+        .text;
 
     testWidgets('the address shown is selected, so a new one typed replaces '
         'it instead of running on after it', (tester) async {
       await open(tester, recent: const ['ftp://files.lan']);
       TextEditingValue value() => tester
-          .widget<TextField>(find.byType(TextField).first)
-          .controller!
+          .widget<EditableText>(find.byType(EditableText).first)
+          .controller
           .value;
       const first = 'sftp://deploy@web.example.com';
       expect(value().text, first);
@@ -167,7 +169,7 @@ void main() {
         };
         await open(tester);
         await tester.enterText(
-          find.byType(TextField).first,
+          find.byType(EditableText).first,
           'sftp://me@box.lan',
         );
         await tester.testTextInput.receiveAction(TextInputAction.done);
@@ -183,11 +185,11 @@ void main() {
           ),
           findsOneWidget,
         );
-        await tester.enterText(find.byType(TextField).first, 'gopher://x');
+        await tester.enterText(find.byType(EditableText).first, 'gopher://x');
         await tester.pump();
         expect(find.text(en.networkNotAnAddress('gopher://x')), findsOneWidget);
         await tester.enterText(
-          find.byType(TextField).first,
+          find.byType(EditableText).first,
           'sftp://me@box.lan',
         );
         await tester.testTextInput.receiveAction(TextInputAction.done);
@@ -210,7 +212,7 @@ void main() {
       ) async {
         await open(tester);
         await tester.enterText(
-          find.byType(TextField).first,
+          find.byType(EditableText).first,
           'ftps://me@files.lan/pub',
         );
         await tester.pump();
@@ -218,7 +220,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text(en.networkServerNew), findsOneWidget);
         // The editor starts from the address: its host is filled.
-        expect(find.widgetWithText(TextField, 'files.lan'), findsOneWidget);
+        expect(find.widgetWithText(AppTextField, 'files.lan'), findsOneWidget);
         await tester.tap(find.text(en.actionSave));
         await tester.pumpAndSettle();
         expect(saved.last.map((s) => s.host), [
@@ -344,7 +346,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.text(en.networkPasswordWrong), findsOneWidget);
-      await tester.enterText(find.byType(TextField), 'secret');
+      await tester.enterText(find.byType(EditableText), 'secret');
       await tester.tap(find.text(en.networkRememberPassword));
       await tester.pump();
       await tester.testTextInput.receiveAction(TextInputAction.done);
@@ -387,7 +389,7 @@ void main() {
         // Closed without an answer: the core gave up on it.
         expect(service.answers.containsKey(4), isFalse);
         expect(find.text('Two factors'), findsOneWidget);
-        final fields = find.byType(TextField);
+        final fields = find.byType(EditableText);
         await tester.enterText(fields.at(0), '123456');
         await tester.enterText(fields.at(1), '0000');
         await tester.tap(find.text(en.networkContinue));
@@ -458,7 +460,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text(en.networkHostRequired), findsOneWidget);
 
-        final fields = find.byType(TextField);
+        final fields = find.byType(EditableText);
         await tester.enterText(fields.at(1), 'box.lan');
         await tester.enterText(fields.at(2), '99999');
         await tester.tap(find.text(en.actionSave));

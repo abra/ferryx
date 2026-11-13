@@ -1,8 +1,8 @@
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:panels_feature/src/dialogs/names_editor_dialog.dart';
 
@@ -35,11 +35,11 @@ void main() {
 
   Finder field() => find.descendant(
     of: find.byType(NamesEditorDialog),
-    matching: find.byType(TextField),
+    matching: find.byType(EditableText),
   );
 
   String text(WidgetTester tester) =>
-      tester.widget<TextField>(field()).controller!.text;
+      tester.widget<EditableText>(field()).controller.text;
 
   FilledButton renameButton(WidgetTester tester) =>
       tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Rename'));
@@ -129,7 +129,7 @@ void main() {
       find.textContaining('Line 3: “.hidden” is in this folder already'),
       findsOneWidget,
     );
-    tester.widget<TextField>(field()).controller!.selection =
+    tester.widget<EditableText>(field()).controller.selection =
         const TextSelection.collapsed(offset: 1);
     await h.settle(tester);
     expect(
@@ -183,11 +183,7 @@ void main() {
     h.folders['/home/many']!.add(h.file('/home/many', long));
     await h.pump(tester, left: '/home/many');
     await open(tester);
-    final editable = tester
-        .state<EditableTextState>(
-          find.descendant(of: field(), matching: find.byType(EditableText)),
-        )
-        .renderEditable;
+    final editable = tester.state<EditableTextState>(field()).renderEditable;
     final value = text(tester);
     Future<void> expectBeside(int line) async {
       final start = line == 0

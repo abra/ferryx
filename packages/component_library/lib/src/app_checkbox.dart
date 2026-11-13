@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:cupertino_ui/cupertino_ui.dart' show CupertinoCheckbox;
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'app_icons.dart';
 import 'focus_ring.dart';
@@ -124,22 +125,44 @@ class _AppCheckboxState extends State<AppCheckbox> {
                   FocusRing(
                     focused: _focused,
                     radius: radius,
-                    child: Container(
-                      width: box,
-                      height: box,
-                      decoration: appEdgedBox(
-                        color: fill,
-                        edge: edge,
-                        radius: radius,
-                      ),
-                      child: on
-                          ? Icon(
-                              widget.mixed ? AppIcons.minus : AppIcons.check,
-                              size: box - AppSpacing.xs,
-                              color: ink,
-                            )
-                          : null,
-                    ),
+                    child: style == AppPlatformStyle.macos
+                        ? SizedBox.square(
+                            dimension: box,
+                            // The labelled row owns focus and semantics.
+                            child: ExcludeFocus(
+                              child: ExcludeSemantics(
+                                child: CupertinoCheckbox(
+                                  value: widget.mixed ? null : widget.value,
+                                  tristate: widget.mixed,
+                                  onChanged: _enabled ? (_) => _flip() : null,
+                                  fillColor: WidgetStatePropertyAll(fill),
+                                  checkColor: ink,
+                                  side: BorderSide(
+                                    color: edge ?? Colors.transparent,
+                                  ),
+                                  mouseCursor: SystemMouseCursors.basic,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Container(
+                            width: box,
+                            height: box,
+                            decoration: appEdgedBox(
+                              color: fill,
+                              edge: edge,
+                              radius: radius,
+                            ),
+                            child: on
+                                ? Icon(
+                                    widget.mixed
+                                        ? AppIcons.minus
+                                        : AppIcons.check,
+                                    size: box - AppSpacing.xs,
+                                    color: ink,
+                                  )
+                                : null,
+                          ),
                   ),
                   if (label != null) ...[
                     const SizedBox(width: AppSpacing.sm),

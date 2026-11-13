@@ -1,9 +1,9 @@
 import 'dart:ui' as ui;
 
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// What [snapToPixels] makes of [rect] on a canvas [setUp] transformed.
 Rect _snapped(void Function(Canvas canvas) setUp, Rect rect) {

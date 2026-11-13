@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Leaves the keyboard focus where it is when a click lands outside the
 /// focused text field, as macOS, Windows and GNOME do: the focus moves only

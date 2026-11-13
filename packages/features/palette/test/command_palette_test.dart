@@ -1,8 +1,8 @@
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:palette_feature/palette_feature.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
@@ -152,7 +152,7 @@ void main() {
     );
     await openPalette(tester);
     expect(labels(tester), isNot(contains('Quick Look')));
-    await tester.enterText(find.byType(TextField), 'quick look');
+    await tester.enterText(find.byType(EditableText), 'quick look');
     await tester.pump();
     expect(labels(tester), isEmpty);
     expect(ran, isEmpty);
@@ -163,7 +163,7 @@ void main() {
     await pump(tester);
     await openPalette(tester);
     expect(panel.hasFocus, isFalse);
-    await tester.enterText(find.byType(TextField), 'copy');
+    await tester.enterText(find.byType(EditableText), 'copy');
     await tester.pump();
     expect(labels(tester).first, 'Copy To…');
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
@@ -223,7 +223,7 @@ void main() {
   testWidgets('in Russian, English words find commands too', (tester) async {
     await pump(tester, locale: const Locale('ru'));
     await openPalette(tester);
-    await tester.enterText(find.byType(TextField), 'refresh');
+    await tester.enterText(find.byType(EditableText), 'refresh');
     await tester.pump();
     final ru = lookupFerryxLocalizations(const Locale('ru'));
     expect(labels(tester), [ru.cmdRefresh]);

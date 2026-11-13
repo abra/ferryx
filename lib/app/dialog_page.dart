@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:component_library/component_library.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A go_router page shown as a modal dialog over the page below it, so a
 /// route like `/settings` keeps push/pop semantics while the workspace stays

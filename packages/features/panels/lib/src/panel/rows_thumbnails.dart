@@ -2,9 +2,8 @@ import 'dart:math' as math;
 
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shortcuts/shortcuts.dart';
 
 import 'file_icon.dart';
@@ -140,7 +139,7 @@ class _RowsThumbnailsState extends State<RowsThumbnails> {
       }
       return NotificationListener<UserScrollNotification>(
         onNotification: _follow.onUserScroll,
-        child: Scrollbar(
+        child: AppScrollbar(
           controller: _scroll,
           child: GridView.builder(
             controller: _scroll,

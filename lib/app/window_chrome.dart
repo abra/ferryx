@@ -12,8 +12,8 @@ import 'dart:async';
 import 'package:component_library/component_library.dart';
 import 'package:ferryx/app/window_frame.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:window_manager/window_manager.dart';
 
 /// What the title bar shows: the active panel's folder.

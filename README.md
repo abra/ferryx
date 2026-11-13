@@ -326,6 +326,8 @@ rendered Markdown, HTML, Office documents, other formatted text and CSV/TSV.
 Matches are highlighted and the arrows move between them. Use **Text** or
 **Hex** to inspect and search the original file; Go to Offset works on that
 source. Preview type size follows Settings → Viewer → Font size.
+Text and book font sizes have independent settings on the same 9–32 scale,
+in steps of 1.
 Text mode uses compact line spacing (1.35 times the font size).
 CSV/TSV keep values as text, including leading zeros, and do not assume
 the first row is a header. Long cell contents are available on hover and
@@ -550,6 +552,10 @@ for recursive file synchronization.
 </details>
 
 ## Settings
+
+On macOS, fields keep desktop text selection and editing shortcuts. Clearing
+a search field keeps its keyboard focus. Space toggles a checkbox; Return
+remains available to confirm the dialog.
 
 Settings groups appearance/language, panel layouts/search/Vim keys,
 viewer sizes, terminal shell/fonts, hotkeys, external editors/tools and

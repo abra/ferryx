@@ -1,7 +1,7 @@
 import 'package:component_library/component_library.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// WCAG contrast of [fg] painted over [bg] (alpha composited first).
 double contrast(Color fg, Color bg) {
@@ -268,6 +268,26 @@ void main() {
   });
 
   group('palettes', () {
+    test('segmented selections remain distinct and their labels readable', () {
+      for (final brightness in brightnesses) {
+        final colors = AppPalette.of(brightness).colors;
+        expect(
+          contrast(colors.onSegmentedSelected, colors.segmentedSelected),
+          greaterThanOrEqualTo(4.5),
+        );
+        expect(
+          contrast(colors.textMuted, colors.segmentedBackground),
+          greaterThanOrEqualTo(4.5),
+        );
+        if (brightness == Brightness.dark) {
+          expect(
+            contrast(colors.segmentedSelected, colors.segmentedBackground),
+            greaterThanOrEqualTo(3),
+          );
+        }
+      }
+    });
+
     test('selection text stays readable without borrowing button colours', () {
       for (final brightness in brightnesses) {
         final palette = AppPalette.of(brightness);

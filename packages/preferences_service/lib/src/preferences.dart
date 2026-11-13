@@ -54,9 +54,12 @@ class Preferences extends Equatable {
   });
 
   static const int schemaVersion = 1;
+  // Both preview size controls use the same scale.
+  static const double minViewerFontSize = 9;
+  static const double maxViewerFontSize = 32;
   static const double defaultDocumentFontSize = 15;
-  static const double minDocumentFontSize = 10;
-  static const double maxDocumentFontSize = 32;
+  static const double minDocumentFontSize = minViewerFontSize;
+  static const double maxDocumentFontSize = maxViewerFontSize;
 
   static double normalizeDocumentFontSize(double value) => value.isFinite
       ? value.clamp(minDocumentFontSize, maxDocumentFontSize).roundToDouble()
@@ -375,7 +378,7 @@ class Preferences extends Equatable {
       viewerFontSize: _doubleOr(
         json['viewerFontSize'],
         defaults.viewerFontSize,
-      ).clamp(9, 32),
+      ).clamp(minViewerFontSize, maxViewerFontSize),
       documentFontSize: normalizeDocumentFontSize(
         _doubleOr(json['documentFontSize'], defaults.documentFontSize),
       ),

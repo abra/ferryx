@@ -5,10 +5,10 @@ import 'dart:ui' as ui;
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:file_repository/file_repository.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pagecraft/testing.dart';
 import 'package:viewer_feature/src/document_preview_screen.dart';
 import 'package:viewer_feature/src/document_session.dart';
@@ -222,13 +222,14 @@ void main() {
           await tester.pumpAndSettle();
           await tester.tap(find.text(l10n.documentGoToPage));
           await tester.pumpAndSettle();
-          await tester.enterText(find.byType(TextField), '2');
+          await tester.enterText(find.byType(EditableText), '2');
           await tester.pump();
           await tester.tap(find.widgetWithText(FilledButton, l10n.actionGo));
           await _settle(
             tester,
             () =>
-                session.index == 1 && find.byType(TextField).evaluate().isEmpty,
+                session.index == 1 &&
+                find.byType(EditableText).evaluate().isEmpty,
           );
           expect(
             session.index,

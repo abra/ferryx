@@ -1,10 +1,10 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pagecraft/src/layout/column_decoration_painter.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pagecraft/all_formats.dart';
+import 'package:pagecraft/src/layout/column_decoration_painter.dart';
 
 const _red = 0xFFFF0000;
 const _blue = 0xFF0000FF;

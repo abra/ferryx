@@ -4,9 +4,9 @@ import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:file_repository/file_repository.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:monitoring/monitoring.dart';
 import 'package:operations_service/operations_service.dart';
@@ -407,7 +407,7 @@ void main() {
         platform: 'macos',
       );
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), line);
+      await tester.enterText(find.byType(EditableText), line);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
     }

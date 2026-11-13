@@ -5,3 +5,5 @@ formatter:
 analyzer:
   exclude:
     - build/**
+    # gen-l10n still emits unused SDK design delegates; app delegates are hand-owned.
+    - lib/src/generated/**

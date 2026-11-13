@@ -6,7 +6,7 @@
 library;
 
 import 'package:flutter/widgets.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart' show GlobalMaterialLocalizations;
 
 import 'src/generated/ferryx_localizations.dart';
 
@@ -29,9 +29,7 @@ abstract final class FerryxSupportedLocales {
   /// Delegates for `MaterialApp.localizationsDelegates`.
   static const List<LocalizationsDelegate<Object?>> delegates = [
     FerryxLocalizations.delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
+    ...GlobalMaterialLocalizations.delegates,
   ];
 }
 

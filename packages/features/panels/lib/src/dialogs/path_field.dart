@@ -1,6 +1,6 @@
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A labelled path field whose Tab completes the folder being typed, as
 /// Finder's Go to Folder does: each Tab takes the next completion; when

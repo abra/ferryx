@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 
 Future<void> showViewerLink(BuildContext context, String href) =>
     showAppDialog<void>(

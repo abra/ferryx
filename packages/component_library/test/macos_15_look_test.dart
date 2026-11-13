@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// What macOS 15 draws, measured beside AppKit at one pixel per point:
 /// Finder's list, NSTextField, NSPopUpButton, NSMenu, NSAlert and a sheet.
@@ -62,13 +62,13 @@ void main() {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(),
+              AppTextField(),
               AppSearchField(hintText: 'Search'),
             ],
           ),
         ),
       );
-      final theme = Theme.of(tester.element(find.byType(TextField).first));
+      final theme = Theme.of(tester.element(find.byType(InputDecorator).first));
       final border =
           theme.inputDecorationTheme.enabledBorder! as AppOutlineInputBorder;
       expect(border.borderRadius, BorderRadius.circular(6));
@@ -85,17 +85,17 @@ void main() {
           reason: 'focus, validation and disabling must preserve the corners',
         );
       }
-      final field = tester.getRect(find.byType(TextField).first);
+      final field = tester.getRect(find.byType(InputDecorator).first);
       final text = tester.getRect(find.byType(EditableText).first);
       expect(text.left - field.left, 4);
-      final search = tester.widget<TextField>(
+      final search = tester.widget<InputDecorator>(
         find.descendant(
           of: find.byType(AppSearchField),
-          matching: find.byType(TextField),
+          matching: find.byType(InputDecorator),
         ),
       );
       final searchBorder =
-          search.decoration!.enabledBorder! as OutlineInputBorder;
+          search.decoration.enabledBorder! as OutlineInputBorder;
       expect(searchBorder.borderRadius, border.borderRadius);
     });
   }
@@ -114,13 +114,13 @@ void main() {
       final context = tester.element(find.byType(AppSearchField));
       final colors = context.appColors;
       final decoration = tester
-          .widget<TextField>(
+          .widget<InputDecorator>(
             find.descendant(
               of: find.byType(AppSearchField),
-              matching: find.byType(TextField),
+              matching: find.byType(InputDecorator),
             ),
           )
-          .decoration!;
+          .decoration;
       expect(decoration.fillColor, colors.hoverFill);
       final edge = decoration.enabledBorder! as AppOutlineInputBorder;
       expect(edge.borderSide.color, colors.controlBorder);
@@ -144,14 +144,15 @@ void main() {
       ),
     );
     final decoration = tester
-        .widget<TextField>(
+        .widget<InputDecorator>(
           find.descendant(
             of: find.byType(AppSearchField),
-            matching: find.byType(TextField),
+            matching: find.byType(InputDecorator),
           ),
         )
-        .decoration!;
-    expect(decoration.fillColor, isNull);
+        .decoration;
+    final theme = Theme.of(tester.element(find.byType(AppSearchField)));
+    expect(decoration.fillColor, theme.inputDecorationTheme.fillColor);
   });
 
   testWidgets('a focused text field takes the accent halo outside its '
@@ -161,10 +162,10 @@ void main() {
     addTearDown(tester.view.reset);
     await pump(
       tester,
-      const SizedBox(width: 300, child: TextField(autofocus: true)),
+      const SizedBox(width: 300, child: AppTextField(autofocus: true)),
     );
     await tester.pumpAndSettle();
-    final field = tester.getRect(find.byType(TextField));
+    final field = tester.getRect(find.byType(InputDecorator));
     final above = await tester.runAsync(() async {
       final image = await captureImage(
         find.byType(Scaffold).evaluate().single,
@@ -346,12 +347,12 @@ void main() {
               width: 200,
               child: sidebar
                   ? const AppSearchField(hintText: 'Search', sidebar: true)
-                  : const TextField(),
+                  : const AppTextField(),
             ),
           ),
         );
         final grey = await pixels(tester);
-        final field = tester.getRect(find.byType(TextField));
+        final field = tester.getRect(find.byType(InputDecorator));
         final x = field.right.round() - 20;
         final top = field.top.round();
         final colors = AppTheme.light(AppPlatformStyle.macos)
@@ -413,7 +414,7 @@ void main() {
             maxHeight: 120,
             child: Column(
               children: [
-                TextField(focusNode: node),
+                AppTextField(focusNode: node),
                 const SizedBox(height: 400),
               ],
             ),
@@ -423,7 +424,7 @@ void main() {
       );
       node.requestFocus();
       await tester.pumpAndSettle();
-      final field = tester.getRect(find.byType(TextField));
+      final field = tester.getRect(find.byType(InputDecorator));
       final data = await tester.runAsync(() async {
         final image = await captureImage(
           find.byType(RepaintBoundary).evaluate().first,

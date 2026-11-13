@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:cupertino_ui/cupertino_ui.dart' show CupertinoActivityIndicator;
+import 'package:material_ui/material_ui.dart';
 
 import 'theme/app_platform_style.dart';
 import 'theme/extensions/build_context_ext.dart';
@@ -15,11 +16,15 @@ class AppSpinner extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox.square(
     dimension: size,
-    child: CircularProgressIndicator(
-      strokeWidth: size / 8,
-      color: context.metrics.style == AppPlatformStyle.macos
-          ? context.appColors.textMuted
-          : context.appColors.accent,
-    ),
+    child: context.metrics.style == AppPlatformStyle.macos
+        ? CupertinoActivityIndicator(
+            radius: size / 2,
+            color: context.appColors.textMuted,
+            animating: !MediaQuery.disableAnimationsOf(context),
+          )
+        : CircularProgressIndicator(
+            strokeWidth: size / 8,
+            color: context.appColors.accent,
+          ),
   );
 }

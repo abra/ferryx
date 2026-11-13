@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:cupertino_ui/cupertino_ui.dart' show CupertinoTextField;
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'theme/extensions/build_context_ext.dart';
+import 'theme/app_platform_style.dart';
 import 'theme/tokens/app_spacing.dart';
 
 /// A field in a form, a bezel around an inline name, or text inside an editor.
@@ -111,6 +113,9 @@ class AppTextField extends StatelessWidget {
           contentPadding: EdgeInsets.zero,
         );
     }
+    if (context.metrics.style == AppPlatformStyle.macos) {
+      return _MacTextField(field: this, style: resolved, decoration: input);
+    }
     return TextField(
       controller: controller,
       focusNode: focusNode,
@@ -135,6 +140,115 @@ class AppTextField extends StatelessWidget {
       onChanged: onChanged,
       onEditingComplete: onEditingComplete ?? _keepFocus,
       onSubmitted: onSubmitted,
+    );
+  }
+}
+
+/// Cupertino owns editing and desktop selection; the existing decorator keeps
+/// the macOS bezel, validation, adornments and control metrics consistent.
+class _MacTextField extends StatefulWidget {
+  const _MacTextField({
+    required this.field,
+    required this.style,
+    required this.decoration,
+  });
+
+  final AppTextField field;
+  final TextStyle style;
+  final InputDecoration decoration;
+
+  @override
+  State<_MacTextField> createState() => _MacTextFieldState();
+}
+
+class _MacTextFieldState extends State<_MacTextField> {
+  TextEditingController? _ownController;
+  FocusNode? _ownFocus;
+
+  TextEditingController get _controller =>
+      widget.field.controller ?? (_ownController ??= TextEditingController());
+  FocusNode get _focus =>
+      widget.field.focusNode ??
+      (_ownFocus ??= FocusNode(debugLabel: 'macOS field'));
+
+  @override
+  void didUpdateWidget(_MacTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.field.controller != widget.field.controller) {
+      if (widget.field.controller == null) {
+        _ownController = TextEditingController.fromValue(
+          oldWidget.field.controller?.value,
+        );
+      } else {
+        _ownController?.dispose();
+        _ownController = null;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _ownController?.dispose();
+    _ownFocus?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final field = widget.field;
+    return ListenableBuilder(
+      listenable: Listenable.merge([_controller, _focus]),
+      builder: (context, child) => MouseRegion(
+        cursor: field.enabled
+            ? SystemMouseCursors.text
+            : SystemMouseCursors.basic,
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          // The editor owns accessibility; the bezel just extends its hit area.
+          excludeFromSemantics: true,
+          onTap: field.enabled ? _focus.requestFocus : null,
+          child: InputDecorator(
+            decoration: widget.decoration.copyWith(
+              enabled: field.enabled,
+              hintMaxLines: widget.decoration.hintMaxLines ?? field.maxLines,
+            ),
+            baseStyle: widget.style,
+            isEmpty: _controller.text.isEmpty,
+            isFocused: _focus.hasFocus,
+            textAlign: field.textAlign,
+            child: child,
+          ),
+        ),
+      ),
+      child: CupertinoTextField(
+        controller: _controller,
+        focusNode: _focus,
+        autofocus: field.autofocus,
+        enabled: field.enabled,
+        readOnly: field.readOnly,
+        obscureText: field.obscureText,
+        selectAllOnFocus: field.selectAllOnFocus,
+        autocorrect: field.autocorrect,
+        enableSuggestions:
+            field.enableSuggestions ?? !(field.monospace || field.obscureText),
+        smartDashesType: SmartDashesType.disabled,
+        smartQuotesType: SmartQuotesType.disabled,
+        keyboardType: field.keyboardType,
+        inputFormatters: field.inputFormatters,
+        textInputAction: field.textInputAction,
+        textAlign: field.textAlign,
+        minLines: field.minLines,
+        maxLines: field.maxLines,
+        style: widget.style,
+        strutStyle: field.strutStyle,
+        // An empty decoration also suppresses Cupertino's disabled background.
+        decoration: const BoxDecoration(),
+        padding: EdgeInsets.zero,
+        cursorColor: context.theme.textSelectionTheme.cursorColor,
+        onChanged: field.onChanged,
+        onEditingComplete: field.onEditingComplete ?? AppTextField._keepFocus,
+        onSubmitted: field.onSubmitted,
+      ),
     );
   }
 }

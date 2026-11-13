@@ -1,6 +1,6 @@
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A labelled text field of the network's dialogs.
 class NetworkField extends StatelessWidget {

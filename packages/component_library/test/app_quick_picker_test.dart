@@ -1,8 +1,8 @@
 import 'package:component_library/component_library.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A host that filters [words] by the query typed, as a caller does.
 class _Host extends StatefulWidget {
@@ -193,7 +193,7 @@ void main() {
     await pump(tester, ['alpha', 'beta', 'alphabet']);
     await key(tester, LogicalKeyboardKey.arrowDown);
     expect(lit(tester), 'beta');
-    await tester.enterText(find.byType(TextField), 'alph');
+    await tester.enterText(find.byType(EditableText), 'alph');
     await tester.pump();
     expect(lit(tester), 'alpha');
     expect(find.text('beta'), findsNothing);
@@ -218,7 +218,7 @@ void main() {
     await pump(tester, const []);
     expect(find.text('Nothing yet'), findsOneWidget);
     await pump(tester, ['alpha']);
-    await tester.enterText(find.byType(TextField), 'zzz');
+    await tester.enterText(find.byType(EditableText), 'zzz');
     await tester.pump();
     expect(find.text('Nothing matches'), findsOneWidget);
     await key(tester, LogicalKeyboardKey.enter);

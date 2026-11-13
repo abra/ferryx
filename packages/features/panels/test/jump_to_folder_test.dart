@@ -1,9 +1,9 @@
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:monitoring/monitoring.dart';
 import 'package:panels_feature/panels_feature.dart';
@@ -172,7 +172,7 @@ void main() {
         ['/home/projects/ferryx', '/tmp'],
       );
       expect(find.text('~/projects'), findsOneWidget);
-      await tester.enterText(find.byType(TextField), 'tm');
+      await tester.enterText(find.byType(EditableText), 'tm');
       await tester.pump();
       await h.press(tester, LogicalKeyboardKey.enter);
       expect(panel(tester, 0).state.active!.location.path, '/tmp');
@@ -246,7 +246,7 @@ void main() {
           shift: true,
           character: ':',
         );
-        await tester.enterText(find.byType(TextField), line);
+        await tester.enterText(find.byType(EditableText), line);
         await h.press(tester, LogicalKeyboardKey.enter);
       }
 

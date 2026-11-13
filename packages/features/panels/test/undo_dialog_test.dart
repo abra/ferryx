@@ -1,12 +1,12 @@
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:panels_feature/src/dialogs/undo_dialog.dart';
-import 'package:panels_feature/src/workspace/context_menu.dart';
 import 'package:panels_feature/src/panel/panel_state.dart';
+import 'package:panels_feature/src/workspace/context_menu.dart';
 import 'package:panels_feature/src/workspace/key_hints.dart';
 import 'package:shortcuts/shortcuts.dart';
 

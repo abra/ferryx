@@ -5,17 +5,17 @@ import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:file_repository/file_repository.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
-import 'package:viewer_feature/viewer_feature.dart';
 import 'package:viewer_feature/src/markdown_format.dart';
 import 'package:viewer_feature/src/preview_search.dart';
-import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+import 'package:viewer_feature/viewer_feature.dart';
 
 class _Files extends Mock implements FileRepository {}
 
@@ -491,7 +491,7 @@ void main() {
     expect(button(en.cmdRefresh), findsNothing);
     await menu(tester);
     await pick(tester, en.cmdViewerGoTo);
-    await tester.enterText(find.byType(TextField), '10');
+    await tester.enterText(find.byType(EditableText), '10');
     await tester.tap(find.text(en.actionGo));
     await tester.pumpAndSettle();
     verify(() => files.readRange(file, 10, bytes.length - 10)).called(1);

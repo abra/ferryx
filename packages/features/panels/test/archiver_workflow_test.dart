@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:panels_feature/panels_feature.dart';
 
@@ -64,7 +64,7 @@ void main() {
       shift: true,
       character: ':',
     );
-    await tester.enterText(find.byType(TextField), text);
+    await tester.enterText(find.byType(EditableText), text);
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
   }
@@ -138,7 +138,10 @@ void main() {
       format.onChanged(ArchiveType.sevenZip);
       await tester.pumpAndSettle();
       expect(
-        tester.widget<TextField>(find.byType(TextField).first).controller!.text,
+        tester
+            .widget<EditableText>(find.byType(EditableText).first)
+            .controller
+            .text,
         'a.7z',
       );
       await tester.tap(find.text(en.actionCompress));
@@ -160,7 +163,7 @@ void main() {
       );
       engine.onChanged(seven.id);
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField).last, 'секрет');
+      await tester.enterText(find.byType(EditableText).last, 'секрет');
       await tester.pumpAndSettle();
       expect(find.text(en.archiveZipUnicodeFallback), findsOneWidget);
       await tester.tap(find.text(en.actionCompress));

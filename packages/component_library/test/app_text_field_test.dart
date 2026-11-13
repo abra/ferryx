@@ -1,7 +1,7 @@
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   for (final (style, generation) in [
@@ -88,36 +88,65 @@ void main() {
                 ),
               ),
             );
-            final fields = find.byType(TextField);
+            final fields = find.byType(AppTextField);
             expect(fields, findsNWidgets(7));
             final height = tester.getSize(fields.first).height;
             final metrics = AppMetrics.of(style, generation: generation);
             expect(height, greaterThanOrEqualTo(metrics.controlHeight));
             if (scale == 1) expect(height, closeTo(metrics.controlHeight, 0.5));
             for (final element in fields.evaluate()) {
-              final field = element.widget as TextField;
+              final host = find.byWidget(element.widget);
+              final field = tester.widget<EditableText>(
+                find.descendant(of: host, matching: find.byType(EditableText)),
+              );
+              final decoration = tester
+                  .widget<InputDecorator>(
+                    find.descendant(
+                      of: host,
+                      matching: find.byType(InputDecorator),
+                    ),
+                  )
+                  .decoration;
               expect(
-                tester.getSize(find.byWidget(field)).height,
+                tester.getSize(host).height,
                 closeTo(height, 0.5),
               );
               expect(
-                field.style!.fontSize,
+                field.style.fontSize,
                 theme.textTheme.bodyLarge!.fontSize,
               );
               expect(
-                field.decoration!.hintStyle!.fontSize,
-                field.style!.fontSize,
+                decoration.hintStyle!.fontSize,
+                field.style.fontSize,
               );
               expect(field.onEditingComplete, isNotNull);
             }
-            final path = tester.widget<TextField>(fields.at(1));
-            expect(path.style!.fontFamily, metrics.typeScale.monoFamily);
-            expect(
-              path.decoration!.hintStyle!.fontFamily,
-              path.style!.fontFamily,
+            final path = tester.widget<EditableText>(
+              find.descendant(
+                of: fields.at(1),
+                matching: find.byType(EditableText),
+              ),
             );
-            final disabled = tester.widget<TextField>(fields.at(5));
-            expect(disabled.style!.color, theme.disabledColor);
+            final pathDecoration = tester
+                .widget<InputDecorator>(
+                  find.descendant(
+                    of: fields.at(1),
+                    matching: find.byType(InputDecorator),
+                  ),
+                )
+                .decoration;
+            expect(path.style.fontFamily, metrics.typeScale.monoFamily);
+            expect(
+              pathDecoration.hintStyle!.fontFamily,
+              path.style.fontFamily,
+            );
+            final disabled = tester.widget<EditableText>(
+              find.descendant(
+                of: fields.at(5),
+                matching: find.byType(EditableText),
+              ),
+            );
+            expect(disabled.style.color, theme.disabledColor);
             expect(tester.takeException(), isNull);
           },
         );
@@ -192,7 +221,7 @@ void main() {
           ),
         ),
       );
-      final fields = find.byType(TextField);
+      final fields = find.byType(AppTextField);
       await tester.enterText(fields.first, 'a12b3');
       expect(number.text, '123');
       await tester.enterText(fields.last, '--first\n--second');
@@ -273,7 +302,7 @@ void main() {
           ),
         ),
       );
-      final field = tester.getRect(find.byType(TextField));
+      final field = tester.getRect(find.byType(AppTextField));
       final button = tester.getRect(find.byType(OutlinedButton));
       final label = tester.getRect(find.textContaining('Длинная'));
       final help = tester.getRect(find.textContaining('Подсказка'));

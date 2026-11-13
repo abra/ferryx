@@ -5,10 +5,10 @@
 
 import 'package:component_library/component_library.dart';
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Counts what a painter draws; a painter that drew another way would
 /// read as drawing nothing and fail the keyboard-mode test.

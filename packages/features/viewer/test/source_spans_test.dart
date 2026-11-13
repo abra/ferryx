@@ -1,6 +1,6 @@
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:viewer_feature/src/source_spans.dart';
 import 'package:viewer_feature/src/source_syntax.dart';
 import 'package:viewer_feature/src/text_window.dart';

@@ -1,7 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:xterm/xterm.dart';
 
 /// The emulator's type and colours from the theme, made once per change:

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Colour roles beyond [ColorScheme]: surfaces of the window, fills of
 /// interactive states, editor accents, ratings, hints, plates.
@@ -19,6 +19,9 @@ class AppColorsExt extends ThemeExtension<AppColorsExt> {
     required this.selectionFill,
     required this.controlFill,
     required this.controlBorder,
+    required this.segmentedBackground,
+    required this.segmentedSelected,
+    required this.onSegmentedSelected,
     required this.line,
     required this.textMuted,
     required this.textFaint,
@@ -101,6 +104,11 @@ class AppColorsExt extends ThemeExtension<AppColorsExt> {
 
   /// Edge of bordered controls.
   final Color controlBorder;
+
+  /// Track and raised selection of a segmented control, independent of fields.
+  final Color segmentedBackground;
+  final Color segmentedSelected;
+  final Color onSegmentedSelected;
 
   /// Hairlines and separators.
   final Color line;
@@ -252,6 +260,9 @@ class AppColorsExt extends ThemeExtension<AppColorsExt> {
       selectionFill: mix(selectionFill, other.selectionFill),
       controlFill: mix(controlFill, other.controlFill),
       controlBorder: mix(controlBorder, other.controlBorder),
+      segmentedBackground: mix(segmentedBackground, other.segmentedBackground),
+      segmentedSelected: mix(segmentedSelected, other.segmentedSelected),
+      onSegmentedSelected: mix(onSegmentedSelected, other.onSegmentedSelected),
       line: mix(line, other.line),
       textMuted: mix(textMuted, other.textMuted),
       textFaint: mix(textFaint, other.textFaint),

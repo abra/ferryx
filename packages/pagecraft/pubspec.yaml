@@ -26,6 +26,8 @@ dependencies:
   pdfrx: ^2.4.8
   pdfrx_engine: ^0.4.7
   xml: ^6.5.0
+  cupertino_ui: ^1.1.6
+  material_ui: ^1.11.0
 
 dependency_overrides:
   pdfium_dart:

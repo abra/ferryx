@@ -3,8 +3,8 @@ import 'dart:math' as math;
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shortcuts/shortcuts.dart';
 
 import 'inline_rename.dart';
@@ -294,7 +294,7 @@ class _RowsBriefState extends State<RowsBrief> {
               final uniform = identical(widths, _fixedWidths);
               return NotificationListener<UserScrollNotification>(
                 onNotification: _follow.onUserScroll,
-                child: Scrollbar(
+                child: AppScrollbar(
                   controller: _scroll,
                   child: ListView.builder(
                     controller: _scroll,

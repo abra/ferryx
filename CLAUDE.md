@@ -17,6 +17,14 @@ Guidance for Claude Code when working in this repository.
   (every Make target does, except `make codegen`: `flutter_rust_bridge_codegen`
   calls Flutter/Dart on PATH; use `fvm exec make codegen` to supply the
   project's pinned SDK).
+- Flutter 3.50 uses the standalone `material_ui` / `cupertino_ui` packages.
+  Use their imports and `FerryxSupportedLocales.delegates` for UI localization;
+  `gen-l10n` still emits SDK delegates in its generated convenience list.
+  Markdown and HTML renderers retain a scoped compatibility bridge until
+  those dependencies migrate. Keep that boundary covered by preview tests.
+- After changing the Flutter pin, stop the old `flutter run` session, run
+  `fvm flutter clean` and `make get`, then rebuild. Xcode's precompiled
+  FlutterMacOS modules must not survive a change of SDK headers.
 - Rust builds inside the Flutter build go through cargokit, which runs
   `rustup run stable cargo`. Keep the rustup toolchain current
   (`rustup update stable`). `macos/Podfile` pins `RUSTC` for every Cargokit
@@ -219,6 +227,14 @@ See `ARCHITECTURE.md`. The rules that matter most:
   desktops; geometry, typography and interaction follow macOS HIG, Fluent
   and GNOME HIG
   (`AppPlatformStyle`, see ARCHITECTURE.md "Native look on each desktop").
+  On macOS, text editing, checkboxes, spinners, scrollbars, icon buttons
+  and segmented options use
+  `cupertino_ui` behind shared `App*` components. Keep desktop chrome,
+  keyboard behavior and metrics; do not substitute mobile sheets, switches
+  or sliders indiscriminately. Explicit scrollbars use `AppScrollbar`.
+  Compact segmented options use `CupertinoButton` within the shared group
+  layout, with one Tab stop, arrow selection and the dedicated
+  `segmentedBackground` / `segmentedSelected` / `onSegmentedSelected` roles.
   Features never branch on `defaultTargetPlatform`; a difference belongs in
   the theme or a component-library widget. Menus go through `showAppMenu`,
   pop-up choices through `AppPopupButton`, dialogs through `AppDialog` with

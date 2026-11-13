@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:terminal_feature/src/terminal_look.dart';
 import 'package:terminal_feature/terminal_feature.dart';
 

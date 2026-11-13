@@ -2,10 +2,10 @@ import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:file_repository/file_repository.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:monitoring/monitoring.dart';
 import 'package:operations_service/operations_service.dart';
@@ -330,7 +330,7 @@ void main() {
     await pump(tester);
     await type(tester, 'j:');
     expect(find.text(en.vimModeCommand), findsOneWidget);
-    expect(find.byType(TextField), findsOneWidget);
+    expect(find.byType(EditableText), findsOneWidget);
     expect(find.text(en.vimCommandHint), findsOneWidget);
     // Neither `j` nor Backspace reaches the panel from the field.
     await type(tester, 'j');
@@ -338,15 +338,15 @@ void main() {
     await tester.pump();
     expect(tab().cursor, 1);
     expect(tab().location, home);
-    await tester.enterText(find.byType(TextField), '42');
+    await tester.enterText(find.byType(EditableText), '42');
     await type(tester, '\n');
     await tester.pumpAndSettle();
     expect(events, [':42']);
-    expect(find.byType(TextField), findsNothing);
+    expect(find.byType(EditableText), findsNothing);
     expect(find.text(en.vimModeNormal), findsOneWidget);
     expect(focus.hasFocus, isTrue);
     await type(tester, ':\x1b');
-    expect(find.byType(TextField), findsNothing);
+    expect(find.byType(EditableText), findsNothing);
     expect(events, [':42']);
   });
 

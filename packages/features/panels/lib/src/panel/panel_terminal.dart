@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:component_library/component_library.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A terminal supplied by the workspace; file tabs retain their own state.
 class PanelTerminal {

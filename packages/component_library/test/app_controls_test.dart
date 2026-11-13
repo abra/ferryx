@@ -1,7 +1,9 @@
+import 'dart:ui' show CheckedState, Tristate;
+
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   Future<void> pump(
@@ -60,7 +62,9 @@ void main() {
       );
       await tester.tap(find.text('Fixed'));
       await tester.pump();
-      expect(find.byIcon(AppIcons.check), findsOneWidget);
+      final semantics = tester.getSemantics(find.byType(AppCheckbox));
+      expect(semantics.flagsCollection.isChecked, CheckedState.isTrue);
+      expect(semantics.flagsCollection.isEnabled, Tristate.isFalse);
     });
   });
 
@@ -149,19 +153,19 @@ void main() {
         AppSearchField(hintText: 'Search', onChanged: changes.add),
       );
       expect(find.byIcon(AppIcons.cancel), findsNothing);
-      await tester.enterText(find.byType(TextField), 'abc');
+      await tester.enterText(find.byType(EditableText), 'abc');
       await tester.pump();
       expect(find.byIcon(AppIcons.cancel), findsOneWidget);
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pump();
       expect(find.byIcon(AppIcons.cancel), findsNothing);
       expect(changes.last, '');
-      await tester.enterText(find.byType(TextField), 'de');
+      await tester.enterText(find.byType(EditableText), 'de');
       await tester.pump();
       await tester.tap(find.byIcon(AppIcons.cancel));
       await tester.pump();
       expect(
-        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        tester.widget<EditableText>(find.byType(EditableText)).controller.text,
         isEmpty,
       );
     });
@@ -258,7 +262,7 @@ void main() {
       );
       await tester.tap(find.text('open'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'x');
+      await tester.enterText(find.byType(EditableText), 'x');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
       expect(submitted, 'x');

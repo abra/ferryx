@@ -1,10 +1,10 @@
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:panels_feature/panels_feature.dart';
 import 'package:preferences_service/preferences_service.dart';
@@ -213,7 +213,7 @@ void main() {
       await h.settle(tester);
       await tester.tap(find.text(l10n.actionRename));
       await h.settle(tester);
-      await tester.enterText(find.byType(TextField), 'Work project');
+      await tester.enterText(find.byType(EditableText), 'Work project');
       await tester.tap(find.widgetWithText(FilledButton, l10n.actionSave));
       await h.settle(tester);
       expect(await saved(tester), const [

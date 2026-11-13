@@ -5,8 +5,8 @@ import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:operations_service/operations_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 
@@ -702,12 +702,12 @@ class _Editor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) => Scrollbar(
+    builder: (context, constraints) => AppScrollbar(
       controller: vertical,
       child: SingleChildScrollView(
         controller: vertical,
         padding: const EdgeInsets.symmetric(vertical: _NamesBox._inset),
-        child: Scrollbar(
+        child: AppScrollbar(
           controller: horizontal,
           child: SingleChildScrollView(
             controller: horizontal,

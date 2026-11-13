@@ -1,6 +1,6 @@
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Components at a text size: what grows with the text keeps the room
 /// around it, and what lines up at one size lines up at every size.

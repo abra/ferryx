@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:native_text_selection/native_text_selection.dart';
 
 const _viewType = 'io.github.abra.native_text_selection/surface';

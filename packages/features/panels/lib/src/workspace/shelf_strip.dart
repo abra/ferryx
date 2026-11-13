@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../panel/file_icon.dart';
 import '../path_text.dart';

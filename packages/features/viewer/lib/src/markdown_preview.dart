@@ -1,10 +1,10 @@
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
-import 'package:markdown/markdown.dart' as md;
 import 'package:html/parser.dart' as html;
+import 'package:markdown/markdown.dart' as md;
+import 'package:material_ui/material_ui.dart';
 
 import 'markdown_format.dart';
 import 'preview_search.dart';
@@ -155,7 +155,7 @@ class _MarkdownBody extends StatelessWidget {
   final MarkdownStyleSheet style;
   @override
   Widget build(BuildContext context) {
-    return Scrollbar(
+    return AppScrollbar(
       controller: scroll,
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
@@ -165,21 +165,25 @@ class _MarkdownBody extends StatelessWidget {
             constraints: const BoxConstraints(
               maxWidth: AppSizes.documentWideMaxWidth,
             ),
-            child: Markdown(
-              key: ValueKey((source, generation)),
-              data: data,
-              selectable: true,
-              controller: scroll,
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              styleSheet: style,
-              builders: {'a': _LinkBuilder(source, generation)},
-              checkboxBuilder: (value) =>
-                  AppCheckbox(value: value, onChanged: null),
-              imageBuilder: (uri, title, alt) => MarkdownImage(
-                source: source,
-                reference: uri,
-                alt: alt,
-                generation: generation,
+            // This renderer still reads SDK theme and localization types.
+            // ignore: deprecated_member_use
+            child: MaterialUiCompatibilityBridge(
+              child: Markdown(
+                key: ValueKey((source, generation)),
+                data: data,
+                selectable: true,
+                controller: scroll,
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                styleSheet: style,
+                builders: {'a': _LinkBuilder(source, generation)},
+                checkboxBuilder: (value) =>
+                    AppCheckbox(value: value, onChanged: null),
+                imageBuilder: (uri, title, alt) => MarkdownImage(
+                  source: source,
+                  reference: uri,
+                  alt: alt,
+                  generation: generation,
+                ),
               ),
             ),
           ),
@@ -199,7 +203,7 @@ MarkdownStyleSheet _markdownStyle(BuildContext context, double fontSize) {
     color: context.colors.onSurface,
   );
   final body = sized(type.editorBody);
-  return MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+  return MarkdownStyleSheet(
     p: body,
     h1: sized(type.editorHeading1),
     h2: sized(type.editorHeading2),

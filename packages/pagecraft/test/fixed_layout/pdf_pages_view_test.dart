@@ -1,10 +1,10 @@
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pagecraft/testing.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:pagecraft/all_formats.dart';
+import 'package:pagecraft/testing.dart';
 
 const fixtures = 'test/fixtures/pdf';
 const portrait = Size(390, 844);

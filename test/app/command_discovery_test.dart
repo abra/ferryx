@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:palette_feature/palette_feature.dart';
 import 'package:panels_feature/src/panel/panel_header.dart';
 import 'package:shortcuts/shortcuts.dart';
@@ -40,7 +40,7 @@ void main() {
     );
     await h.settle(tester);
     expect(find.byType(PaletteView), findsOneWidget);
-    await tester.enterText(find.byType(TextField), 'New Tab');
+    await tester.enterText(find.byType(EditableText), 'New Tab');
     await h.settle(tester);
     await h.press(tester, LogicalKeyboardKey.enter);
     expect(find.byType(PaletteView), findsNothing);

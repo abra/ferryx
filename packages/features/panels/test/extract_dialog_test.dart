@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:panels_feature/src/dialogs/archive_password_dialog.dart';
 import 'package:panels_feature/src/dialogs/extract_dialog.dart';
 
@@ -140,14 +140,14 @@ void main() {
             : const FerryxException(FerryxErrorKind.wrongPassword, 'no');
       },
     );
-    final field = find.widgetWithText(TextField, '').last;
+    final field = find.widgetWithText(AppTextField, '').last;
     expect(find.text(en.archivePasswordLabel), findsOneWidget);
     await tester.enterText(field, 'wrong');
     await tester.tap(find.text(en.archiveExtractAction));
     await tester.pumpAndSettle();
     expect(find.text(en.archiveWrongPasswordFor('locked.7z')), findsOneWidget);
     expect(find.byType(ExtractDialog), findsOneWidget);
-    await tester.enterText(find.byType(TextField).last, 'right');
+    await tester.enterText(find.byType(EditableText).last, 'right');
     await tester.tap(find.text(en.archiveExtractAction));
     await tester.pumpAndSettle();
     expect(tried, ['wrong', 'right']);
@@ -176,14 +176,14 @@ void main() {
         return text == '/dest' ? const [] : ['/data/one/', '/data/two/'];
       },
     );
-    final field = find.byType(TextField).first;
+    final field = find.byType(EditableText).first;
     await tester.enterText(field, '/data/');
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.pumpAndSettle();
-    expect(tester.widget<TextField>(field).controller!.text, '/data/one/');
+    expect(tester.widget<EditableText>(field).controller.text, '/data/one/');
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.pumpAndSettle();
-    expect(tester.widget<TextField>(field).controller!.text, '/data/two/');
+    expect(tester.widget<EditableText>(field).controller.text, '/data/two/');
     expect(asked, ['/data/']);
   });
 
@@ -251,11 +251,11 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     expect(find.text(en.archivePasswordTitle('hidden.7z')), findsOneWidget);
-    await tester.enterText(find.byType(TextField), 'nope');
+    await tester.enterText(find.byType(EditableText), 'nope');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
     expect(find.text(en.archiveWrongPasswordFor('hidden.7z')), findsOneWidget);
-    await tester.enterText(find.byType(TextField), 'pw');
+    await tester.enterText(find.byType(EditableText), 'pw');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
     expect(await result, isTrue);
@@ -285,7 +285,7 @@ void main() {
     EditableTextState field() =>
         tester.state<EditableTextState>(find.byType(EditableText));
     expect(field().widget.focusNode.hasPrimaryFocus, isTrue);
-    await tester.enterText(find.byType(TextField), 'nope');
+    await tester.enterText(find.byType(EditableText), 'nope');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
     expect(tries, hasLength(1));

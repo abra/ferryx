@@ -21,6 +21,7 @@ dependencies:
     path: ../../operations_service
   shortcuts:
     path: ../../shortcuts
+  material_ui: ^1.11.0
 
 dev_dependencies:
   bloc_test: ^10.0.0

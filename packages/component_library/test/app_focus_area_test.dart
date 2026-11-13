@@ -2,9 +2,9 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Whether the area holding [label]'s field is the active one, as what it
 /// holds reads it.
@@ -164,7 +164,7 @@ void main() {
     );
     final pagesField = find.descendant(
       of: find.byKey(const ValueKey('probe pages')),
-      matching: find.byType(TextField),
+      matching: find.byType(EditableText),
     );
     final pagesState = tester.state(pagesField);
     final pagesRect = tester.getRect(pagesField);
@@ -274,7 +274,7 @@ void main() {
     final accent = tester.element(frame).appColors.accent;
     final field = find.byKey(const ValueKey('probe files'));
     final fieldState = tester.state(
-      find.descendant(of: field, matching: find.byType(TextField)),
+      find.descendant(of: field, matching: find.byType(EditableText)),
     );
     final fieldBounds = tester.getRect(field);
     header.requestFocus();
@@ -311,7 +311,7 @@ void main() {
     expect(tester.getRect(field), fieldBounds);
     expect(
       tester.state(
-        find.descendant(of: field, matching: find.byType(TextField)),
+        find.descendant(of: field, matching: find.byType(EditableText)),
       ),
       same(fieldState),
     );

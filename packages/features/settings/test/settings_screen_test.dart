@@ -1,8 +1,8 @@
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:settings_feature/settings_feature.dart';
 import 'package:settings_feature/src/pages/terminal_page.dart';
@@ -85,6 +85,56 @@ void main() {
     expect(icon.left - sidebar.left, 16);
   });
 
+  testWidgets('text and book size sliders align and save independently', (
+    tester,
+  ) async {
+    final service = await open(tester, section: SettingsSection.viewer);
+    addTearDown(() async {
+      final disposed = service.dispose();
+      await tester.pump();
+      await disposed;
+    });
+    await service.update(
+      (p) => p.copyWith(viewerFontSize: 14, documentFontSize: 14),
+    );
+    await tester.pumpAndSettle();
+
+    Finder sliderFor(String label) => find.descendant(
+      of: find.ancestor(
+        of: find.text(label),
+        matching: find.byType(SliderRow),
+      ),
+      matching: find.byType(Slider),
+    );
+    final textSlider = sliderFor(en.viewerFontSizeLabel);
+    final bookSlider = sliderFor(en.documentFontSizeLabel);
+    for (final finder in [textSlider, bookSlider]) {
+      final slider = tester.widget<Slider>(finder);
+      expect(slider.value, 14);
+      expect(slider.min, 9);
+      expect(slider.max, 32);
+      expect(slider.divisions, 23);
+    }
+    final textRect = tester.getRect(textSlider);
+    final bookRect = tester.getRect(bookSlider);
+    expect(textRect.left, bookRect.left);
+    expect(textRect.right, bookRect.right);
+
+    tester.widget<Slider>(textSlider).focusNode!.requestFocus();
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    expect(service.current.viewerFontSize, 15);
+    expect(service.current.documentFontSize, 14);
+
+    tester.widget<Slider>(bookSlider).focusNode!.requestFocus();
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pumpAndSettle();
+    expect(service.current.viewerFontSize, 15);
+    expect(service.current.documentFontSize, 13);
+  });
+
   testWidgets('the terminal page: the shell is written when the field is '
       'done, the size and the scrollback at once', (tester) async {
     final service = await testPreferences();
@@ -102,7 +152,7 @@ void main() {
     expect(find.text(en.terminalShellDefault('/bin/zsh')), findsOneWidget);
     final field = find.byType(ShellField);
     await tester.enterText(
-      find.descendant(of: field, matching: find.byType(TextField)),
+      find.descendant(of: field, matching: find.byType(EditableText)),
       '  /opt/homebrew/bin/fish ',
     );
     await tester.pump();
@@ -287,7 +337,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(
-      find.widgetWithText(TextField, ru.layoutShort),
+      find.widgetWithText(AppTextField, ru.layoutShort),
       findsOneWidget,
       reason: 'the name as shown',
     );
@@ -323,7 +373,7 @@ void main() {
     await tester.pumpAndSettle();
     final fields = find.descendant(
       of: find.byType(AppDialog),
-      matching: find.byType(TextField),
+      matching: find.byType(EditableText),
     );
     await tester.enterText(fields.at(0), 'Vim');
     await tester.enterText(fields.at(1), '/usr/bin/vim');

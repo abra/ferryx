@@ -10,7 +10,7 @@
 // the layers that can land between pixels (a dialog's, a menu's) are put
 // on whole pixels by `PixelSnap`.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'tokens/app_radius.dart';
 

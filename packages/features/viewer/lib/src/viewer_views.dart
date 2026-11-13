@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'hex_format.dart';
 import 'line_layout.dart';
@@ -67,10 +67,10 @@ class ViewerScrollFrame extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => Scrollbar(
+  Widget build(BuildContext context) => AppScrollbar(
     controller: vertical,
     notificationPredicate: (n) => n.metrics.axis == Axis.vertical,
-    child: Scrollbar(
+    child: AppScrollbar(
       controller: horizontal,
       notificationPredicate: (n) =>
           n.depth == 0 && n.metrics.axis == Axis.horizontal,

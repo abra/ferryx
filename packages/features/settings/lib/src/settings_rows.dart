@@ -1,5 +1,5 @@
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A page of settings: its groups one under the other, one content margin
 /// in from every edge and one apart (the window's scroll behaviour draws

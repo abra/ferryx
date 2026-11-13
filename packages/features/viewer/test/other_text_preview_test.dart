@@ -4,19 +4,19 @@ import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:file_repository/file_repository.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
-import 'package:viewer_feature/viewer_feature.dart';
 import 'package:viewer_feature/src/delimited_preview.dart';
 import 'package:viewer_feature/src/rich_text_preview.dart';
 import 'package:viewer_feature/src/viewer_footer.dart';
 import 'package:viewer_feature/src/viewer_views.dart';
+import 'package:viewer_feature/viewer_feature.dart';
 
 class _Files extends Mock implements FileRepository {
   _Files(String text) : content = Uint8List.fromList(utf8.encode(text));

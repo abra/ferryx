@@ -39,6 +39,7 @@ export 'src/app_control_row.dart';
 export 'src/app_popup_button.dart';
 export 'src/app_nav_item.dart';
 export 'src/app_scroll_keys.dart';
+export 'src/app_scrollbar.dart';
 export 'src/app_scroll_reveal.dart';
 export 'src/app_search_field.dart';
 export 'src/app_text_field.dart';

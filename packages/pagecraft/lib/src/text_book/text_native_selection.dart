@@ -1,7 +1,7 @@
 import 'dart:ui' as ui show BoxHeightStyle;
 
 import 'package:flutter/rendering.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:native_text_selection/native_text_selection.dart';
 
 import '../layout/text_page.dart';

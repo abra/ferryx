@@ -1,5 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:material_ui/material_ui.dart';
+
+import 'app_scrollbar.dart';
+import 'theme/app_platform_style.dart';
+import 'theme/extensions/build_context_ext.dart';
 
 /// Paints [child] on the pixels of the layer it is painted in: shifted by
 /// under half a device pixel, so its top left lands on one. The hairline
@@ -237,9 +241,8 @@ class _RenderWholePixelHeight extends RenderProxyBox {
   }
 }
 
-/// The app's scroll behaviour: Material's, with every scroll view on the
-/// pixels of its layer ([PixelSnap]), so the hairlines in it are crisp
-/// whatever height of text stands above it.
+/// Desktop scrolling with platform scrollbars and views placed on their
+/// layer's pixels ([PixelSnap]), so their hairlines remain crisp.
 class AppScrollBehavior extends MaterialScrollBehavior {
   const AppScrollBehavior();
 
@@ -248,5 +251,11 @@ class AppScrollBehavior extends MaterialScrollBehavior {
     BuildContext context,
     Widget child,
     ScrollableDetails details,
-  ) => PixelSnap(child: super.buildScrollbar(context, child, details));
+  ) => PixelSnap(
+    child:
+        context.metrics.style == AppPlatformStyle.macos &&
+            axisDirectionToAxis(details.direction) == Axis.vertical
+        ? AppScrollbar(controller: details.controller, child: child)
+        : super.buildScrollbar(context, child, details),
+  );
 }

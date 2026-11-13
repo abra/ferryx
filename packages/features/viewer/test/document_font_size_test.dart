@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:file_repository/file_repository.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 import 'package:viewer_feature/src/document_preview_screen.dart';
@@ -157,9 +157,22 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.minus);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
       await tester.pump();
-      expect(preferences.current.documentFontSize, 10);
+      await _settle(tester, () => book.ready);
+      expect(preferences.current.documentFontSize, 9);
+      expect(controller.layout.style.fontScale, 9 / 16);
+      expect(
+        tester
+            .widget<AppIconButton>(_button(l10n.documentFontDecrease))
+            .onPressed,
+        isNull,
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.minus);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+      await tester.pump();
+      expect(preferences.current.documentFontSize, 9);
       final restored = await PreferencesService.create(storage: storage);
-      expect(restored.current.documentFontSize, 10);
+      expect(restored.current.documentFontSize, 9);
       expect(restored.current.viewerFontSize, 13);
       await restored.dispose();
       expect(tester.takeException(), isNull);

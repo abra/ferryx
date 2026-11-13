@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:component_library/component_library.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   test('labels are single letters while they suffice, then pairs', () {
