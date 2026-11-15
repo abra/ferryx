@@ -176,6 +176,12 @@ or **server operations**.
   ⌃⌘A inverts them. Select by Mask (⌘=) accepts masks or regular expressions.
 - Control+Space toggles a mark without moving. The parent row (`..`) is
   never an operation target.
+- **Copy Names** (⇧⌘C on macOS, Ctrl+Shift+C on Windows/Linux) copies the
+  marked items' names, including extensions, as plain text, one per line.
+  **Copy Full Paths** (⌥⌘C / Ctrl+Alt+C) copies their full paths in the same
+  format. Both use the panel's displayed order, or the focused item when
+  nothing is marked; copying keeps the marks. The row context menu offers
+  both actions. In Vim mode, use `yn` for names and `yp` for full paths.
 - The delete dialog initially selects Trash; permanent deletion is a
   separate choice.
 - The Shelf collects local files from several folders. Add with ⌥⌘S,
@@ -476,6 +482,8 @@ monospace fields for paths and arguments. Enter keeps focus when a form stays op
 | Find files | ⌘F | Ctrl+F |
 | Full-window viewer / external editor | F3 / F4 | F3 / F4 |
 | Copy / Copy As | F5 / ⇧F5 | F5 / Shift+F5 |
+| Copy names as text | ⇧⌘C | Ctrl+Shift+C |
+| Copy full paths as text | ⌥⌘C | Ctrl+Alt+C |
 | Move / Move As | F6 / ⇧F6 | F6 / Shift+F6 |
 | Rename in place | ⌃F6 | Ctrl+F6 |
 | New folder | F7 | F7 |
@@ -515,6 +523,7 @@ text fields keep normal editing and terminal input goes to the shell.
 | Jump by first letter; repeat | `f` / `F`, then `;` / `,` |
 | Visual selection / toggle marks | `v` / `x` or Space |
 | Shelf copy / move / paste | `yy` / `dd` / `p` |
+| Copy names / full paths as text | `yn` / `yp` |
 | Move to Trash / delete permanently | `D` / `dD`; Cancel / Esc during the countdown |
 | Search; next / previous match | `/`, then `n` / `N` |
 | Next / previous tab | `gt` / `gT`, including counts such as `2gt` |

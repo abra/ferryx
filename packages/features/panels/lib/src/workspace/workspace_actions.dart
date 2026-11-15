@@ -209,11 +209,15 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     // Command
     AppCommand.fileAttributes: () => unawaited(_attributes()),
     AppCommand.copyItemName: () =>
-        unawaited(_copyText((t) => t.name, single: true)),
-    AppCommand.copyItemPath: () =>
-        unawaited(_copyText((t) => _shownPath(t.path))),
-    AppCommand.copyItemDirectory: () =>
-        unawaited(_copyText((t) => _shownPath(t.parentPath), single: true)),
+        unawaited(_copyText((t) => t.name, notice: _l10n.noticeNamesCopied)),
+    AppCommand.copyItemPath: () => unawaited(_copyPaths()),
+    AppCommand.copyItemDirectory: () => unawaited(
+      _copyText(
+        (t) => _shownPath(t.parentPath),
+        notice: _l10n.noticePathsCopied,
+        single: true,
+      ),
+    ),
     AppCommand.preview: () => unawaited(_preview()),
     AppCommand.internalViewer: () => unawaited(_view(preview: false)),
     AppCommand.externalEditor: () => unawaited(_externalEditor()),
@@ -1173,34 +1177,24 @@ extension _WorkspaceActions on _WorkspaceScreenState {
 
   // ─── Clipboard ───
 
-  Future<void> _copyPaths() async {
-    final targets = _targetsOrNotice();
-    if (targets.isEmpty) return;
-    await Clipboard.setData(
-      ClipboardData(
-        text: [for (final t in targets) _shownPath(t.path)].join('\n'),
-      ),
-    );
-    if (mounted) {
-      showAppNotice(context, _l10n.noticePathsCopied(targets.length));
-    }
-  }
+  Future<void> _copyPaths() => _copyText(
+    (t) => _shownPath(t.path),
+    notice: _l10n.noticePathsCopied,
+  );
 
   Future<void> _copyText(
     String Function(FileEntry entry) pick, {
+    required String Function(int count) notice,
     bool single = false,
-  }) async {
+  }) => _platformGuarded(() async {
     final targets = _targetsOrNotice();
     if (targets.isEmpty) return;
     final items = single ? [targets.first] : targets;
     await Clipboard.setData(ClipboardData(text: items.map(pick).join('\n')));
     if (mounted) {
-      showAppNotice(
-        context,
-        single ? _l10n.noticeNameCopied : _l10n.noticePathsCopied(items.length),
-      );
+      showAppNotice(context, notice(items.length));
     }
-  }
+  });
 
   Future<void> _pasteItems({required bool move}) => _guarded(() async {
     final tab = _tab;

@@ -480,10 +480,16 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String get menuShowInFiles => 'Показать в Файлах';
 
   @override
-  String get menuCopyPath => 'Скопировать путь';
+  String get menuCopyPath => 'Скопировать полный путь';
+
+  @override
+  String get menuCopyPaths => 'Скопировать полные пути';
 
   @override
   String get menuCopyName => 'Скопировать имя';
+
+  @override
+  String get menuCopyNames => 'Скопировать имена';
 
   @override
   String get menuNewFolder => 'Новая папка';
@@ -1220,13 +1226,23 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
       other: 'Скопировано $count пути',
       many: 'Скопировано $count путей',
       few: 'Скопировано $count пути',
-      one: 'Путь скопирован',
+      one: 'Скопирован $count путь',
     );
     return '$_temp0';
   }
 
   @override
-  String get noticeNameCopied => 'Имя скопировано';
+  String noticeNamesCopied(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Скопировано $count имени',
+      many: 'Скопировано $count имён',
+      few: 'Скопировано $count имени',
+      one: 'Скопировано $count имя',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get noticeNothingSelected => 'Ничего не выделено';
@@ -2185,10 +2201,10 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String get cmdFileAttributes => 'Атрибуты файла…';
 
   @override
-  String get cmdCopyItemName => 'Скопировать имя';
+  String get cmdCopyItemName => 'Скопировать имена';
 
   @override
-  String get cmdCopyItemPath => 'Скопировать путь';
+  String get cmdCopyItemPath => 'Скопировать полные пути';
 
   @override
   String get cmdCopyItemDirectory => 'Скопировать папку объекта';

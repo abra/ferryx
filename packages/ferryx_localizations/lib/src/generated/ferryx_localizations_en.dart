@@ -473,10 +473,16 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get menuShowInFiles => 'Show in Files';
 
   @override
-  String get menuCopyPath => 'Copy path';
+  String get menuCopyPath => 'Copy full path';
+
+  @override
+  String get menuCopyPaths => 'Copy full paths';
 
   @override
   String get menuCopyName => 'Copy name';
+
+  @override
+  String get menuCopyNames => 'Copy names';
 
   @override
   String get menuNewFolder => 'New folder';
@@ -1189,7 +1195,15 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   }
 
   @override
-  String get noticeNameCopied => 'Name copied';
+  String noticeNamesCopied(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count names copied',
+      one: 'Name copied',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get noticeNothingSelected => 'Nothing is selected';
@@ -2145,10 +2159,10 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get cmdFileAttributes => 'File Attributes…';
 
   @override
-  String get cmdCopyItemName => 'Copy Item Name';
+  String get cmdCopyItemName => 'Copy Names';
 
   @override
-  String get cmdCopyItemPath => 'Copy Item Path';
+  String get cmdCopyItemPath => 'Copy Full Paths';
 
   @override
   String get cmdCopyItemDirectory => 'Copy Item Folder';

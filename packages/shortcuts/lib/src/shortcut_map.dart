@@ -117,7 +117,7 @@ class ShortcutMap {
   /// forward; `v` selects as the cursor moves, `Space` and `x` toggle a
   /// row, `*` `#` the rows of the focused extension, `uv` none, `gv` the
   /// last selection; `yy` and `dd` take the rows to copy or move, `p`
-  /// puts them here, `uy` lets go; `yn yp yd` copy a name, a path, a
+  /// puts them here, `uy` lets go; `yn yp yd` copy names, full paths, a
   /// folder; `D` to the trash, `dD` for good, `dc` the folder sizes;
   /// `cw` renames, `A` and `I` at the name's end and start; `/` searches
   /// and `n`/`N` walk the matches, `f`/`F` jump to a name's first letter

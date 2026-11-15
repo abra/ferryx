@@ -869,14 +869,26 @@ abstract class FerryxLocalizations {
   /// No description provided for @menuCopyPath.
   ///
   /// In en, this message translates to:
-  /// **'Copy path'**
+  /// **'Copy full path'**
   String get menuCopyPath;
+
+  /// No description provided for @menuCopyPaths.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy full paths'**
+  String get menuCopyPaths;
 
   /// No description provided for @menuCopyName.
   ///
   /// In en, this message translates to:
   /// **'Copy name'**
   String get menuCopyName;
+
+  /// No description provided for @menuCopyNames.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy names'**
+  String get menuCopyNames;
 
   /// No description provided for @menuNewFolder.
   ///
@@ -1892,11 +1904,11 @@ abstract class FerryxLocalizations {
   /// **'{count, plural, =1{Path copied} other{{count} paths copied}}'**
   String noticePathsCopied(int count);
 
-  /// No description provided for @noticeNameCopied.
+  /// No description provided for @noticeNamesCopied.
   ///
   /// In en, this message translates to:
-  /// **'Name copied'**
-  String get noticeNameCopied;
+  /// **'{count, plural, =1{Name copied} other{{count} names copied}}'**
+  String noticeNamesCopied(int count);
 
   /// No description provided for @noticeNothingSelected.
   ///
@@ -3665,13 +3677,13 @@ abstract class FerryxLocalizations {
   /// No description provided for @cmdCopyItemName.
   ///
   /// In en, this message translates to:
-  /// **'Copy Item Name'**
+  /// **'Copy Names'**
   String get cmdCopyItemName;
 
   /// No description provided for @cmdCopyItemPath.
   ///
   /// In en, this message translates to:
-  /// **'Copy Item Path'**
+  /// **'Copy Full Paths'**
   String get cmdCopyItemPath;
 
   /// No description provided for @cmdCopyItemDirectory.

@@ -104,8 +104,16 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
         icon: AppIcons.star,
       ),
     if (tags) action(AppCommand.editTags, l10n.cmdEditTags, icon: AppIcons.tag),
-    action(AppCommand.copyItemPath, l10n.menuCopyPath, icon: AppIcons.link),
-    action(AppCommand.copyItemName, l10n.menuCopyName, icon: AppIcons.text),
+    action(
+      AppCommand.copyItemPath,
+      severalSelected ? l10n.menuCopyPaths : l10n.menuCopyPath,
+      icon: AppIcons.link,
+    ),
+    action(
+      AppCommand.copyItemName,
+      severalSelected ? l10n.menuCopyNames : l10n.menuCopyName,
+      icon: AppIcons.text,
+    ),
     if (native) ...[
       const AppMenuSeparator(),
       action(
