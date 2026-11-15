@@ -8,6 +8,53 @@ import 'package:viewer_feature/src/text_window.dart';
 void main() {
   for (final brightness in Brightness.values) {
     testWidgets(
+      '${brightness.name}: fragment edges retain syntax and active matches',
+      (tester) async {
+        const match = ViewerMatch(line: 0, start: 9999, end: 10005);
+        final matches = [
+          for (var i = 0; i < 9990; i += 10)
+            ViewerMatch(line: 0, start: i, end: i + 3),
+          match,
+          const ViewerMatch(line: 0, start: 20000, end: 20005),
+        ];
+        late TextSpan span;
+        late AppColorsExt colors;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.of(AppPlatformStyle.macos, brightness),
+            home: Builder(
+              builder: (context) {
+                colors = context.appColors;
+                span = sourceSpans(
+                  context,
+                  'abcdxyz',
+                  context.mono,
+                  const [
+                    SourceToken(0, 10003, 'string'),
+                    SourceToken(10003, 30000, 'keyword'),
+                  ],
+                  matches,
+                  match,
+                  sourceOffset: 10001,
+                );
+                return Text.rich(span);
+              },
+            ),
+          ),
+        );
+        expect(span.toPlainText(), 'abcdxyz');
+        final parts = span.children!.whereType<TextSpan>().toList();
+        expect(parts.map((part) => part.text), ['ab', 'cd', 'xyz']);
+        for (final part in parts.take(2)) {
+          expect(part.style!.backgroundColor, colors.accent);
+          expect(part.style!.color, colors.onAccent);
+        }
+        expect(parts.last.style!.color, colors.ink(5));
+        expect(parts.last.style!.backgroundColor, isNull);
+      },
+    );
+
+    testWidgets(
       '${brightness.name}: search stays readable over syntax without changing text',
       (tester) async {
         const source = 'final text = "Привет";';

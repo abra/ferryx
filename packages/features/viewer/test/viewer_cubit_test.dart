@@ -10,6 +10,7 @@ import 'package:viewer_feature/src/markdown_format.dart';
 import 'package:viewer_feature/src/text_preview_data.dart';
 import 'package:viewer_feature/src/text_preview_format.dart';
 import 'package:viewer_feature/src/source_syntax.dart';
+import 'package:viewer_feature/src/text_window.dart';
 
 /// A file held in memory.
 class FakeSource implements ViewerSource {
@@ -87,6 +88,41 @@ class ConvertedSource extends FakeSource implements ConvertedDocumentSource {
 
 void main() {
   group('ViewerCubit', () {
+    for (final transition in ['refresh', 'preview', 'close']) {
+      test('late window decoding cannot replace $transition', () async {
+        final entered = Completer<void>();
+        final decoded = Completer<DecodedWindow>();
+        var decodes = 0;
+        final cubit = ViewerCubit(
+          source: FakeSource(text('source')),
+          wrap: true,
+          windowDecoder: (bytes) {
+            if (decodes++ == 0) {
+              entered.complete();
+              return decoded.future;
+            }
+            return Future.value(decodeWindow(bytes));
+          },
+        );
+        addTearDown(cubit.close);
+        final loading = cubit.load();
+        await entered.future;
+        switch (transition) {
+          case 'refresh':
+            await cubit.refresh();
+          case 'preview':
+            cubit.setMode(ViewerMode.preview);
+            await cubit.stream.firstWhere((state) => !state.loading);
+          case 'close':
+            await cubit.close();
+        }
+        final settled = cubit.state;
+        decoded.complete(decodeWindow(text('obsolete')));
+        await loading;
+        expect(cubit.state, same(settled));
+      });
+    }
+
     test(
       'oversized office sources are rejected before reading or conversion',
       () async {

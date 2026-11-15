@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:component_library/component_library.dart';
@@ -7,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'hex_format.dart';
 import 'line_layout.dart';
+import 'text_layout.dart';
 import 'text_window.dart';
 import 'source_syntax.dart';
 import 'source_spans.dart';
@@ -122,6 +124,39 @@ class TextView extends StatefulWidget {
 
 class _TextViewState extends State<TextView> {
   final _horizontal = ScrollController();
+  TextLayout? _layout;
+  double _charWidth = 1;
+  double _textStart = 0;
+
+  @override
+  void didUpdateWidget(TextView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final changedWindow = !identical(oldWidget.window, widget.window);
+    if (changedWindow ||
+        oldWidget.current != widget.current ||
+        oldWidget.wrap != widget.wrap) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || widget.wrap || !_horizontal.hasClients) return;
+        final position = _horizontal.position;
+        final match = widget.current;
+        if (match == null) {
+          if (changedWindow) _horizontal.jumpTo(0);
+          return;
+        }
+        final left = _textStart + match.start * _charWidth;
+        final right = _textStart + match.end * _charWidth;
+        if (left < position.pixels ||
+            right > position.pixels + position.viewportDimension) {
+          _horizontal.jumpTo(
+            (left - position.viewportDimension / 3).clamp(
+              0,
+              position.maxScrollExtent,
+            ),
+          );
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -141,65 +176,101 @@ class _TextViewState extends State<TextView> {
         ? 0
         : (firstLine + lines.length - 1).toString().length;
     final gutter = digits == 0 ? 0.0 : digits * charWidth + AppSpacing.md;
+    _charWidth = charWidth;
+    _textStart = _inset + gutter;
     return LayoutBuilder(
       builder: (context, constraints) {
         final textWidth = constraints.maxWidth - _inset * 2 - gutter;
-        final LineLayout layout;
-        if (widget.wrap) {
-          layout = LineLayout(
+        final columns = math.max(1, (textWidth / charWidth).floor());
+        var layout = _layout;
+        if (layout == null ||
+            !identical(layout.sourceLines, lines) ||
+            layout.wrap != widget.wrap ||
+            layout.columns != columns ||
+            layout.lineHeight != lineHeight) {
+          layout = _layout = TextLayout(
+            sourceLines: lines,
             lineHeight: lineHeight,
-            rowsPerLine: [
-              for (final line in lines)
-                LineLayout.rowsFor(line.length, charWidth, textWidth),
-            ],
-          );
-        } else {
-          layout = LineLayout.uniform(
-            lineHeight: lineHeight,
-            lines: lines.length,
+            columns: columns,
+            wrap: widget.wrap,
           );
         }
         widget.onLayout(layout);
-        var longest = 0;
-        if (!widget.wrap) {
-          for (final line in lines) {
-            if (line.length > longest) longest = line.length;
-          }
-        }
+        final currentLayout = layout;
         final contentWidth = widget.wrap
             ? constraints.maxWidth
-            : (longest * charWidth + _inset * 2 + gutter).clamp(
+            : (layout.maxLineLength * charWidth + _inset * 2 + gutter).clamp(
                 constraints.maxWidth,
                 double.infinity,
               );
-        final list = ListView.builder(
-          controller: widget.controller,
-          physics: const ClampingScrollPhysics(),
-          itemCount: lines.length,
-          itemExtent: widget.wrap ? null : lineHeight,
-          itemExtentBuilder: widget.wrap
-              ? (index, dimensions) => layout.heightOfLine(index)
-              : null,
-          padding: EdgeInsets.zero,
-          itemBuilder: (context, index) => TextLine(
-            text: lines[index],
-            style: style,
-            matches: widget.matchesByLine[index],
-            current: widget.current?.line == index ? widget.current : null,
-            wrap: widget.wrap,
-            number: firstLine == null ? null : firstLine + index,
-            gutterWidth: gutter,
-            syntax: index < widget.syntax.length
-                ? widget.syntax[index]
-                : const [],
-          ),
-        );
-        if (widget.wrap) return list;
-        return ViewerScrollFrame(
-          vertical: widget.controller,
-          horizontal: _horizontal,
-          contentWidth: contentWidth,
-          child: list,
+        return ListenableBuilder(
+          listenable: _horizontal,
+          builder: (context, _) {
+            final horizontalOffset = _horizontal.hasClients
+                ? _horizontal.offset
+                : 0.0;
+            final list = ListView.builder(
+              controller: widget.controller,
+              physics: const ClampingScrollPhysics(),
+              itemCount: currentLayout.fragmentCount,
+              itemExtent: currentLayout.uniformFragments ? lineHeight : null,
+              itemExtentBuilder: currentLayout.uniformFragments
+                  ? null
+                  : (index, dimensions) =>
+                        currentLayout.heightOfFragment(index),
+              padding: EdgeInsets.zero,
+              itemBuilder: (context, index) {
+                final fragment = currentLayout.fragmentAt(index);
+                final text = lines[fragment.line];
+                var start = fragment.start;
+                var end = fragment.end;
+                if (!widget.wrap && text.length > maxTextParagraphLength) {
+                  // Overscan keeps edge glyphs intact while scrolling. The
+                  // full line width remains available to the scrollbar.
+                  const overscan = 32;
+                  start = scalarBoundaryBefore(
+                    text,
+                    (((horizontalOffset - _textStart) / charWidth).floor() -
+                            overscan)
+                        .clamp(0, text.length),
+                  );
+                  end = scalarBoundaryAfter(
+                    text,
+                    (start + columns + overscan * 2).clamp(start, text.length),
+                  );
+                }
+                return TextLine(
+                  text: start == 0 && end == text.length
+                      ? text
+                      : text.substring(start, end),
+                  sourceOffset: start,
+                  leadingWidth: widget.wrap ? 0 : start * charWidth,
+                  style: style,
+                  matches: widget.matchesByLine[fragment.line],
+                  current: widget.current?.line == fragment.line
+                      ? widget.current
+                      : null,
+                  // Long logical lines are hard-wrapped into lazy visual
+                  // rows; word wrapping again could clip a row's final word.
+                  wrap: widget.wrap && text.length <= maxTextParagraphLength,
+                  number: firstLine == null || fragment.start != 0
+                      ? null
+                      : firstLine + fragment.line,
+                  gutterWidth: gutter,
+                  syntax: fragment.line < widget.syntax.length
+                      ? widget.syntax[fragment.line]
+                      : const [],
+                );
+              },
+            );
+            if (widget.wrap) return list;
+            return ViewerScrollFrame(
+              vertical: widget.controller,
+              horizontal: _horizontal,
+              contentWidth: contentWidth,
+              child: list,
+            );
+          },
         );
       },
     );
@@ -217,6 +288,8 @@ class TextLine extends StatelessWidget {
     required this.wrap,
     this.number,
     this.gutterWidth = 0,
+    this.sourceOffset = 0,
+    this.leadingWidth = 0,
     this.syntax = const [],
     super.key,
   });
@@ -230,12 +303,18 @@ class TextLine extends StatelessWidget {
 
   /// The number's column and the gap after it.
   final double gutterWidth;
+
+  /// The fragment's UTF-16 offset in the logical line, for syntax and Find.
+  final int sourceOffset;
+
+  /// Offscreen columns before an unwrapped viewport fragment.
+  final double leadingWidth;
   final List<SourceToken> syntax;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final spans = syntax.isNotEmpty
+    final spans = syntax.isNotEmpty || (matches?.isNotEmpty ?? false)
         ? sourceSpans(
             context,
             text,
@@ -243,20 +322,22 @@ class TextLine extends StatelessWidget {
             syntax,
             matches ?? const [],
             current,
+            sourceOffset: sourceOffset,
           )
-        : matches == null || matches!.isEmpty
-        ? TextSpan(text: text, style: style)
-        : _lit(colors);
-    final line = Text.rich(
-      spans,
-      softWrap: wrap,
-      overflow: TextOverflow.clip,
-      maxLines: wrap ? null : 1,
+        : TextSpan(text: text, style: style);
+    final line = Padding(
+      padding: EdgeInsets.only(left: leadingWidth),
+      child: Text.rich(
+        spans,
+        softWrap: wrap,
+        overflow: TextOverflow.clip,
+        maxLines: wrap ? null : 1,
+      ),
     );
     final number = this.number;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: _inset),
-      child: number == null
+      child: gutterWidth == 0
           ? line
           : Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,7 +345,7 @@ class TextLine extends StatelessWidget {
                 SizedBox(
                   width: gutterWidth - AppSpacing.md,
                   child: Text(
-                    number.toString(),
+                    number?.toString() ?? '',
                     style: style.copyWith(
                       color: colors.textFaint,
                       fontFeatures: const [FontFeature.tabularFigures()],
@@ -279,29 +360,6 @@ class TextLine extends StatelessWidget {
               ],
             ),
     );
-  }
-
-  TextSpan _lit(AppColorsExt colors) {
-    final children = <TextSpan>[];
-    var at = 0;
-    for (final match in matches!) {
-      final start = match.start.clamp(0, text.length);
-      final end = match.end.clamp(start, text.length);
-      if (start > at) children.add(TextSpan(text: text.substring(at, start)));
-      final isCurrent = current == match;
-      children.add(
-        TextSpan(
-          text: text.substring(start, end),
-          style: style.copyWith(
-            backgroundColor: isCurrent ? colors.accent : colors.highlight,
-            color: isCurrent ? colors.onAccent : null,
-          ),
-        ),
-      );
-      at = end;
-    }
-    if (at < text.length) children.add(TextSpan(text: text.substring(at)));
-    return TextSpan(style: style, children: children);
   }
 }
 

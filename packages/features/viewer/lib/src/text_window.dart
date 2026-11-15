@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:meta/meta.dart';
 
 /// A match of the find query: a line (a hex row in hex mode) and the
@@ -40,6 +41,15 @@ class DecodedWindow {
   /// Enough NUL bytes that the bytes are not text.
   final bool binary;
 }
+
+typedef TextWindowDecoder = Future<DecodedWindow> Function(Uint8List bytes);
+
+/// Large windows decode off the UI isolate; even a one-line file is bounded
+/// by the viewer's read window, rather than the file's full size.
+Future<DecodedWindow> prepareTextWindow(Uint8List bytes) async =>
+    bytes.length >= 128 * 1024
+    ? compute(decodeWindow, bytes)
+    : decodeWindow(bytes);
 
 /// Decodes [bytes] as UTF-8, leniently, and splits them into lines. A
 /// line feed is one byte in UTF-8 and never part of another character,

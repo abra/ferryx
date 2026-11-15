@@ -156,8 +156,8 @@ class _ViewerScreenState extends State<ViewerScreen> {
           final layout = _layout;
           final match = state.current;
           if (layout == null || match == null) return;
-          final top = layout.offsetOfLine(match.line);
-          final bottom = top + layout.heightOfLine(match.line);
+          final top = layout.offsetOfPosition(match.line, match.start);
+          final bottom = top + layout.lineHeight;
           if (top < position.pixels ||
               bottom > position.pixels + position.viewportDimension) {
             final centred =
@@ -836,6 +836,11 @@ class _FindBar extends StatelessWidget {
     final metrics = context.metrics;
     final count = state.matches.length;
     final current = count == 0 ? 0 : state.currentMatch + 1;
+    final status = state.findQuery.isEmpty
+        ? ''
+        : count == 0
+        ? l10n.viewerNoMatch
+        : l10n.viewerMatches(current, count);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
@@ -848,29 +853,42 @@ class _FindBar extends StatelessWidget {
       child: Row(
         spacing: metrics.toolbarSpacing,
         children: [
-          SizedBox(
-            width: AppSizes.titleBarSearchWidth,
-            child: AppSearchField(
-              hintText: l10n.viewerFindHint,
-              controller: controller,
-              focusNode: focusNode,
-              onChanged: onChanged,
+          Expanded(
+            flex: 3,
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppSizes.titleBarSearchWidth,
+                ),
+                child: AppSearchField(
+                  hintText: l10n.viewerFindHint,
+                  controller: controller,
+                  focusNode: focusNode,
+                  onChanged: onChanged,
+                ),
+              ),
             ),
           ),
-          Text(
-            state.findQuery.isEmpty
-                ? ''
-                : count == 0
-                ? l10n.viewerNoMatch
-                : l10n.viewerMatches(current, count),
-            style: context.text.bodySmall?.copyWith(
-              color: count == 0 && state.findQuery.isNotEmpty
-                  ? colors.danger
-                  : colors.textMuted,
-              fontFeatures: const [FontFeature.tabularFigures()],
+          Expanded(
+            child: Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: AppTooltip(
+                message: status,
+                child: Text(
+                  status,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.text.bodySmall?.copyWith(
+                    color: count == 0 && state.findQuery.isNotEmpty
+                        ? colors.danger
+                        : colors.textMuted,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
             ),
           ),
-          const Spacer(),
           AppIconButton(
             icon: AppIcons.chevronUp,
             tooltip: l10n.cmdViewerFindPrevious,

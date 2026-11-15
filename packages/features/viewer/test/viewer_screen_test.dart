@@ -15,6 +15,9 @@ import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 import 'package:viewer_feature/src/markdown_format.dart';
 import 'package:viewer_feature/src/preview_search.dart';
+import 'package:viewer_feature/src/text_layout.dart';
+import 'package:viewer_feature/src/text_window.dart';
+import 'package:viewer_feature/src/viewer_views.dart';
 import 'package:viewer_feature/viewer_feature.dart';
 
 class _Files extends Mock implements FileRepository {}
@@ -141,6 +144,117 @@ void main() {
 
   AppMenuItem item(WidgetTester tester, String label) =>
       tester.widget<AppMenuItem>(find.widgetWithText(AppMenuItem, label));
+
+  Future<void> waitForText(
+    WidgetTester tester, {
+    DecodedWindow? previous,
+  }) async {
+    bool ready() {
+      final found = find.byType(TextView).evaluate();
+      return found.isNotEmpty &&
+          !identical((found.single.widget as TextView).window, previous);
+    }
+
+    for (var i = 0; i < 100 && !ready(); i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 10)),
+      );
+      await tester.pump();
+    }
+    expect(find.byType(TextView), findsOneWidget);
+    expect(ready(), isTrue);
+    await tester.pumpAndSettle();
+  }
+
+  for (final wrap in [true, false]) {
+    testWidgets(
+      'a 24 MiB one-line JSON stays lazy and searchable, wrap=$wrap',
+      (tester) async {
+        const fileSize = 24 * 1024 * 1024;
+        const windowSize = ViewerCubit.defaultWindowSize;
+        const marker = 'ferryx-preview-needle';
+        const markerOffset = windowSize - 500;
+        bytes = Uint8List(fileSize)..fillRange(0, fileSize, 0x61);
+        final prefix = utf8.encode('{"payload":"');
+        bytes.setRange(0, prefix.length, prefix);
+        bytes.setRange(
+          markerOffset,
+          markerOffset + marker.length,
+          utf8.encode(marker),
+        );
+        bytes.setRange(fileSize - 2, fileSize, utf8.encode('"}'));
+        await tester.runAsync(
+          () => preferences.update((p) => p.copyWith(viewerWrap: wrap)),
+        );
+        final files = await open(
+          tester,
+          width: 480,
+          location: const Location.native('/tmp/large.json'),
+          startInPreview: true,
+        );
+        await waitForText(tester);
+        final text = tester.widget<TextView>(find.byType(TextView));
+        expect(text.window.lines.single.length, windowSize);
+        expect(text.syntax, isEmpty);
+        expect(text.wrap, wrap);
+        verify(() => files.readRange(any(), 0, windowSize)).called(1);
+        void expectBoundedRendering() {
+          final lines = tester.widgetList<TextLine>(find.byType(TextLine));
+          expect(lines.length, lessThan(100));
+          expect(lines, isNotEmpty);
+          expect(
+            lines.every((line) => line.text.length <= maxTextParagraphLength),
+            isTrue,
+          );
+        }
+
+        expectBoundedRendering();
+        await menu(tester);
+        await pick(tester, en.cmdViewerFind);
+        await tester.enterText(find.byType(AppSearchField), marker);
+        await tester.pumpAndSettle();
+        expect(find.text(en.viewerMatches(1, 1)), findsOneWidget);
+        expectBoundedRendering();
+        final fragments = tester.widgetList<TextLine>(find.byType(TextLine));
+        expect(
+          fragments.any(
+            (line) =>
+                line.current != null &&
+                line.sourceOffset <= markerOffset &&
+                line.sourceOffset + line.text.length > markerOffset,
+          ),
+          isTrue,
+        );
+        final vertical = tester
+            .widget<TextView>(find.byType(TextView))
+            .controller;
+        if (wrap) expect(vertical.offset, greaterThan(10000));
+        final horizontal = find.descendant(
+          of: find.byType(TextView),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is Scrollable && widget.axis == Axis.horizontal,
+          ),
+        );
+        if (!wrap) {
+          final position = tester.state<ScrollableState>(horizontal).position;
+          expect(position.pixels, greaterThan(10000));
+          position.jumpTo(position.maxScrollExtent);
+          await tester.pumpAndSettle();
+          expectBoundedRendering();
+          final tail = tester
+              .widgetList<TextLine>(find.byType(TextLine))
+              .single;
+          expect(tail.sourceOffset + tail.text.length, windowSize);
+        }
+        await tester.tap(find.text(en.viewerLoadNext));
+        await tester.pump();
+        await waitForText(tester, previous: text.window);
+        verify(() => files.readRange(any(), windowSize, windowSize)).called(1);
+        expectBoundedRendering();
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   for (final name in ['notes.txt', 'settings.json', 'LICENSE']) {
     testWidgets('neighboring preview opens $name as searchable text', (

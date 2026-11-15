@@ -24,6 +24,7 @@ class ViewerCubit extends Cubit<ViewerState> {
     ViewerMode mode = ViewerMode.text,
     this.windowSize = defaultWindowSize,
     this.highlighter = highlightSource,
+    this.windowDecoder = prepareTextWindow,
   }) : super(ViewerState(mode: mode, wrap: wrap));
 
   /// How much of a file is read at once.
@@ -32,6 +33,7 @@ class ViewerCubit extends Cubit<ViewerState> {
   final ViewerSource source;
   final int windowSize;
   final SourceHighlighter highlighter;
+  final TextWindowDecoder windowDecoder;
   int _reads = 0;
   bool _hasWindow = false;
 
@@ -89,7 +91,8 @@ class ViewerCubit extends Cubit<ViewerState> {
           ? Uint8List(0)
           : await source.read(start, math.min(windowSize, size - start));
       if (read != _reads || isClosed) return;
-      final window = decodeWindow(bytes);
+      final window = await windowDecoder(bytes);
+      if (read != _reads || isClosed) return;
       _hasWindow = true;
       emit(
         _withMatches(

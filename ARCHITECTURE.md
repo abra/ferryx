@@ -770,6 +770,19 @@ UTF-16 offsets; `source_spans` merges syntax and Find ranges without altering
 the text, with search emphasis taking precedence. Theme/font/search changes
 reuse tokens. The highlighter is injectable for lifecycle and limit tests.
 
+Text/Hex reads stay bounded to 2 MiB. `prepareTextWindow` decodes windows
+of 128 KiB or more in a worker isolate; generation checks also retire late
+decoded windows. `TextLayout` keeps logical lines and source offsets intact
+while indexing lazy display fragments. Wrapped lines longer than 2,048
+UTF-16 code units use viewport-sized visual rows; unwrapped long lines
+shape only the horizontal viewport plus overscan and retain the full scroll
+extent. Slice boundaries preserve supplementary Unicode scalars. Uniform
+visual rows use a fixed sliver extent, and layout indexes are reused across
+scrolling and search changes. Find still searches the whole loaded source
+window, including matches across display fragments. Its current range reveals
+the wrapped row or horizontal position. `source_spans` binary-searches sorted
+token/match ranges and paints only those intersecting a visible fragment.
+
 `RelativeViewerSource` resolves Markdown/HTML images to repository-backed sources,
 preserving archive/server identity and rejecting absolute/external references
 and traversal above an archive root. There is no renderer-owned filesystem or

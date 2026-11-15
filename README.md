@@ -320,6 +320,10 @@ XLSB/OpenDocument formats are not supported by this preview.
 Code and configuration open in **Text**, with syntax coloring, Find,
 wrapping and Go to Offset. Coloring applies to files up to 256 KiB;
 larger files remain readable with windowed Text/Hex reads.
+Large text files load in 2 MiB parts. Very long lines, including minified
+JSON, render in visible fragments with wrapping or horizontal scrolling.
+Find searches the loaded part; use **Next part**, **Previous part** or
+**Go to Offset** to move through the file.
 
 Markdown, tables and formatted text open in **Preview**. **⌘F** searches
 rendered Markdown, HTML, Office documents, other formatted text and CSV/TSV.

@@ -39,6 +39,9 @@ class LineLayout {
     return (_uniform ? at : _prefix[at]) * lineHeight;
   }
 
+  /// Hex rows have no wrapped columns; text layouts refine this position.
+  double offsetOfPosition(int line, int column) => offsetOfLine(line);
+
   double heightOfLine(int line) =>
       (_uniform ? 1 : _rows[math.min(math.max(line, 0), _rows.length - 1)]) *
       lineHeight;
