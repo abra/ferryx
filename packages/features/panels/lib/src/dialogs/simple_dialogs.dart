@@ -166,6 +166,7 @@ class _TextDialogState extends State<_TextDialog> {
       autofocus: true,
       monospace: widget.monospace,
       onSubmitted: (_) => _submit(),
+      submitLabel: widget.confirmLabel,
     ),
     actions: [
       OutlinedButton(

@@ -215,10 +215,13 @@ void main() {
           await tester.pumpAndSettle();
           final l10n = lookupFerryxLocalizations(locale);
           await tester.tap(
-            find.text(
-              command == AppCommand.copyItemName
-                  ? l10n.menuCopyNames
-                  : l10n.menuCopyPaths,
+            find.descendant(
+              of: find.byType(AppMenuList<AppCommand>),
+              matching: find.text(
+                command == AppCommand.copyItemName
+                    ? l10n.menuCopyNames
+                    : l10n.menuCopyPaths,
+              ),
             ),
           );
           await tester.pumpAndSettle();

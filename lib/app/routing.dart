@@ -313,6 +313,7 @@ class _WorkspaceRoute extends StatelessWidget {
                 (context, {required paths, required base, algorithm}) =>
                     showChecksumsDialog(
                       context,
+                      shortcutMap: deps.shortcutMap,
                       paths: paths,
                       base: base,
                       algorithm: algorithm,

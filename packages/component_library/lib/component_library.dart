@@ -7,12 +7,16 @@
 /// widgets, never in feature code.
 library;
 
+export 'src/app_guidance_scope.dart';
+
 export 'src/app_dialog.dart';
 export 'src/app_named_items_dialog.dart';
 export 'src/app_divider.dart';
 export 'src/app_empty_state.dart';
 export 'src/app_fit_or_else.dart';
 export 'src/app_focus_area.dart';
+export 'src/app_focused_edit_hints.dart';
+export 'src/app_focused_control_hints.dart';
 export 'src/app_form_field.dart';
 export 'src/app_label_and_detail.dart';
 export 'src/app_label_row.dart';

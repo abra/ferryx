@@ -1,6 +1,7 @@
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
@@ -137,34 +138,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     maxHeight: AppSizes.panelDialogHeight,
                   ),
                   child: PixelSnap(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: Column(
                       children: [
-                        _Navigation(
-                          section: _section,
-                          groups: _groups,
-                          prefs: prefs,
-                          query: _query,
-                          controller: _search,
-                          onQuery: _onQuery,
-                          onSelect: (s) => setState(() => _section = s),
-                        ),
                         Expanded(
-                          child: _Content(
-                            section: _section,
-                            prefs: prefs,
-                            service: widget.preferencesService,
-                            platform: widget.platform,
-                            shortcutMap: map,
-                            version: widget.version,
-                            defaultShell: widget.defaultShell,
-                            loadMonospaceFonts: widget.loadMonospaceFonts,
-                            loadArchivers: widget.loadArchivers,
-                            validateArchiverOptions:
-                                widget.validateArchiverOptions,
-                            onClose: widget.onClose,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _Navigation(
+                                section: _section,
+                                groups: _groups,
+                                prefs: prefs,
+                                query: _query,
+                                controller: _search,
+                                onQuery: _onQuery,
+                                onSelect: (s) => setState(() => _section = s),
+                              ),
+                              Expanded(
+                                child: _Content(
+                                  section: _section,
+                                  prefs: prefs,
+                                  service: widget.preferencesService,
+                                  platform: widget.platform,
+                                  shortcutMap: map,
+                                  version: widget.version,
+                                  defaultShell: widget.defaultShell,
+                                  loadMonospaceFonts: widget.loadMonospaceFonts,
+                                  loadArchivers: widget.loadArchivers,
+                                  validateArchiverOptions:
+                                      widget.validateArchiverOptions,
+                                  onClose: widget.onClose,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                        _SettingsHints(shortcutMap: map),
                       ],
                     ),
                   ),
@@ -176,6 +184,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     },
   );
+}
+
+class _SettingsHints extends StatelessWidget {
+  const _SettingsHints({required this.shortcutMap});
+
+  final ShortcutMap shortcutMap;
+
+  List<AppKeyHint> _navigation(BuildContext context) {
+    final platform = Theme.of(context).platform;
+    final l10n = context.l10n;
+    final guidance = AppGuidanceScope.maybeOf(context);
+    final primaryFocus = FocusManager.instance.primaryFocus;
+    final focus =
+        ModalRoute.of(context)?.isCurrent != false &&
+            primaryFocus != null &&
+            primaryFocus.ancestors.contains(FocusScope.of(context))
+        ? attachedFocusContext(primaryFocus)
+        : null;
+    final search = focus?.findAncestorWidgetOfExactType<AppSearchField>();
+    final editing = focus?.findAncestorStateOfType<EditableTextState>();
+    final clear =
+        search != null && editing?.widget.controller.text.isNotEmpty == true;
+    final dismiss = shortcutMap.labelOf(AppCommand.dismiss, platform);
+    return [
+      if (clear)
+        AppKeyHint([
+          Chord.keyLabel(LogicalKeyboardKey.escape, platform),
+        ], l10n.actionClear)
+      else if (dismiss != null)
+        AppKeyHint([dismiss], l10n.actionClose),
+      AppKeyHint([
+        Chord.keyLabel(LogicalKeyboardKey.tab, platform),
+      ], guidance?.labels.nextControl ?? l10n.hintNextField),
+      if (guidance != null)
+        AppKeyHint([
+          const Chord(LogicalKeyboardKey.tab, shift: true).label(platform),
+        ], guidance.labels.previousControl),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (AppGuidanceScope.maybeOf(context)?.enabled == false) {
+      return const SizedBox.shrink();
+    }
+    return AppStatusBar(
+      child: ModalRoute.of(context)?.isCurrent == false
+          ? const SizedBox.shrink()
+          : ListenableBuilder(
+              listenable: FocusManager.instance,
+              builder: (context, _) => AppFocusedEditHints(
+                builder: (entries) => AppKeyHints(
+                  [...entries, ..._navigation(context)],
+                  singleLine: true,
+                ),
+                fallback: AppFocusedControlHints(
+                  builder: (entries) => AppKeyHints(
+                    [...entries, ..._navigation(context)],
+                    singleLine: true,
+                  ),
+                  fallback: AppKeyHints(_navigation(context), singleLine: true),
+                ),
+              ),
+            ),
+    );
+  }
 }
 
 /// The localized name and icon of a section.

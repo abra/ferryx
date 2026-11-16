@@ -69,6 +69,23 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
     verify(() => service.start(any())).called(1);
+    final l10n = lookupFerryxLocalizations(const Locale('en'));
+    expect(
+      tester
+          .widget<AppTextField>(
+            find.ancestor(
+              of: find.byWidget(nameField()),
+              matching: find.byType(AppTextField),
+            ),
+          )
+          .submitLabel,
+      l10n.findStart,
+      reason: 'Return in the field starts over; it does not press Stop',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    verify(() => service.start(any())).called(1);
+    verify(() => service.cancel(7)).called(1);
     expect(
       nameField().focusNode.hasPrimaryFocus,
       isTrue,
@@ -87,9 +104,22 @@ void main() {
       )
       ..add(const FindUpdate(findId: 7, done: true));
     await tester.pumpAndSettle();
+    final fieldHints = tester
+        .widget<AppKeyHints>(find.byType(AppKeyHints))
+        .hints;
+    expect(fieldHints.first.label, l10n.hintResults);
+    expect(fieldHints.first.keys, ['↓']);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.pumpAndSettle();
     expect(nameField().focusNode.hasFocus, isFalse);
+    final resultHints = tester
+        .widget<AppKeyHints>(find.byType(AppKeyHints))
+        .hints;
+    expect(resultHints.map((hint) => hint.label), contains(l10n.findGoTo));
+    expect(
+      resultHints.map((hint) => hint.label),
+      isNot(contains(l10n.findStart)),
+    );
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
     expect(await result, '/home/a.md');

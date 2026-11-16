@@ -1,10 +1,15 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shortcuts/shortcuts.dart' show Chord;
 
+import 'app_fit_or_else.dart';
+import 'app_guidance_scope.dart';
 import 'app_icons.dart';
 import 'app_key_cap.dart';
 import 'app_label_row.dart';
+import 'app_tooltip.dart';
 import 'focus_ring.dart';
 import 'theme/app_platform_style.dart';
 import 'theme/extensions/build_context_ext.dart';
@@ -400,10 +405,15 @@ class AppMenuDivider extends StatelessWidget {
 
 /// Footer line with key hints: `↑↓ select · ↩ open · Esc close`.
 class AppMenuFooter extends StatelessWidget {
-  const AppMenuFooter({required this.hints, super.key});
+  const AppMenuFooter({required this.hints, super.key}) : child = null;
+
+  /// The same quiet footer plate for guidance with adaptive content.
+  const AppMenuFooter.custom({required this.child, super.key})
+    : hints = const [];
 
   /// Pairs of key label and description.
   final List<(String, String)> hints;
+  final Widget? child;
 
   @override
   Widget build(BuildContext context) {
@@ -420,23 +430,153 @@ class AppMenuFooter extends StatelessWidget {
       decoration: BoxDecoration(
         border: AppBorder(top: BorderSide(color: context.appColors.line)),
       ),
-      child: Wrap(
-        spacing: AppSpacing.lg,
-        runSpacing: AppSpacing.xs,
-        children: [
-          for (final (keyLabel, text) in hints)
-            Row(
-              mainAxisSize: MainAxisSize.min,
+      child:
+          child ??
+          Wrap(
+            spacing: AppSpacing.lg,
+            runSpacing: AppSpacing.xs,
+            children: [
+              for (final (keyLabel, text) in hints)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppKeyCap(keyLabel),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(text, style: faint),
+                  ],
+                ),
+            ],
+          ),
+    );
+  }
+}
+
+/// The list's actual next steps; hosts retain ownership of localized copy.
+/// Short menus keep their width: captions give way to labelled key caps.
+class AppMenuNavigationHints extends StatelessWidget {
+  const AppMenuNavigationHints({
+    required this.canNavigate,
+    required this.canChoose,
+    this.canDismiss = true,
+    super.key,
+  });
+
+  final bool canNavigate;
+  final bool canChoose;
+  final bool canDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final guidance = AppGuidanceScope.maybeOf(context);
+    if (guidance == null || !guidance.enabled) return const SizedBox.shrink();
+    final platform = Theme.of(context).platform;
+    final labels = guidance.labels;
+    final hints = [
+      if (canNavigate)
+        (
+          [
+            Chord.keyLabel(LogicalKeyboardKey.arrowUp, platform),
+            Chord.keyLabel(LogicalKeyboardKey.arrowDown, platform),
+          ].join(),
+          labels.navigate,
+          true,
+        ),
+      if (canNavigate || canChoose)
+        (
+          Chord.keyLabel(LogicalKeyboardKey.enter, platform),
+          labels.choose,
+          canChoose,
+        ),
+      if (canDismiss)
+        (
+          Chord.keyLabel(LogicalKeyboardKey.escape, platform),
+          labels.dismiss,
+          true,
+        ),
+    ];
+    if (hints.isEmpty) return const SizedBox.shrink();
+    // Intrinsic menu sizing comes from the items, never the guidance copy.
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: AppSizes.menuMinWidth),
+      child: AppMenuFooter.custom(
+        child: ExcludeFocus(
+          child: AppFitOrElse(
+            fallback: Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.xs,
               children: [
-                AppKeyCap(keyLabel),
-                const SizedBox(width: AppSpacing.xs),
-                Text(text, style: faint),
+                for (final (key, label, visible) in hints)
+                  Visibility(
+                    visible: visible,
+                    maintainState: true,
+                    maintainAnimation: true,
+                    maintainSize: true,
+                    child: _MenuNavigationHint(
+                      keyLabel: key,
+                      label: label,
+                      compact: true,
+                    ),
+                  ),
               ],
             ),
-        ],
+            child: Row(
+              spacing: AppSpacing.md,
+              children: [
+                for (final (key, label, visible) in hints)
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: Visibility(
+                      visible: visible,
+                      maintainState: true,
+                      maintainAnimation: true,
+                      maintainSize: true,
+                      child: _MenuNavigationHint(keyLabel: key, label: label),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
+}
+
+class _MenuNavigationHint extends StatelessWidget {
+  const _MenuNavigationHint({
+    required this.keyLabel,
+    required this.label,
+    this.compact = false,
+  });
+
+  final String keyLabel;
+  final String label;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) => AppTooltip(
+    message: label,
+    shortcut: keyLabel,
+    child: compact
+        ? AppKeyCap(keyLabel)
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: AppSpacing.xs,
+            children: [
+              AppKeyCap(keyLabel),
+              Flexible(
+                child: Text(
+                  label,
+                  style: context.text.bodySmall?.copyWith(
+                    color: context.appColors.textMuted,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+  );
 }
 
 /// A keyboard-focusable wrapper used by menus that manage their own cursor.

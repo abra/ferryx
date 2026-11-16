@@ -41,14 +41,17 @@ void main() {
 
   tearDown(() => updates.close());
 
-  Future<DuplicatesCubit> pump(WidgetTester tester) async {
+  Future<DuplicatesCubit> pump(
+    WidgetTester tester, {
+    ShortcutMap? shortcutMap,
+  }) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final cubit = DuplicatesCubit(service: service);
     addTearDown(cubit.close);
     const platform = TargetPlatform.macOS;
-    final map = ShortcutMap.defaults(platform);
+    final map = shortcutMap ?? ShortcutMap.defaults(platform);
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(AppPlatformStyle.macos),
@@ -121,7 +124,24 @@ void main() {
     await search(tester);
     // ↓ to the heading, ↓ to the first file, Space marks it.
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<AppKeyHints>(find.byType(AppKeyHints))
+          .hints
+          .map((hint) => hint.label),
+      isNot(contains(en.dupesMark)),
+      reason: 'Space cannot mark a group heading',
+    );
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<AppKeyHints>(find.byType(AppKeyHints))
+          .hints
+          .map((hint) => hint.label),
+      contains(en.dupesMark),
+    );
     await tester.sendKeyEvent(LogicalKeyboardKey.space);
     await tester.pump();
     expect(cubit.state.marked, {'/home/a.jpg'});
@@ -156,4 +176,97 @@ void main() {
     await tester.pumpAndSettle();
     verifyNever(() => operations.start(any()));
   });
+
+  testWidgets(
+    'visible Actions exposes row and selection operations without bindings',
+    (
+      tester,
+    ) async {
+      final copied = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied.add((call.arguments as Map)['text'] as String);
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      var map = ShortcutMap.defaults(TargetPlatform.macOS);
+      for (final command in [
+        AppCommand.contextMenu,
+        AppCommand.copyPaths,
+        AppCommand.selectAll,
+        AppCommand.deselectAll,
+      ]) {
+        map = map.rebind(command, []);
+      }
+      final cubit = await pump(tester, shortcutMap: map);
+      final actions = find.widgetWithText(OutlinedButton, en.contextActions);
+      expect(tester.widget<OutlinedButton>(actions).onPressed, isNull);
+      await search(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<AppMenuItem>(find.widgetWithText(AppMenuItem, en.dupesMark))
+            .enabled,
+        isFalse,
+      );
+      await tester.tap(find.widgetWithText(AppMenuItem, en.cmdSelectAll));
+      await tester.pumpAndSettle();
+      final rows = tester
+          .widget<AppRowList>(find.byType(AppRowList))
+          .controller;
+      expect(rows.selected, {0, 1, 2});
+      cubit.toggleMarks([1]);
+      await tester.pumpAndSettle();
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      for (final label in [
+        en.dupesMark,
+        en.dupesReveal,
+        en.dupesCopyPaths,
+        en.cmdSelectAll,
+        en.cmdDeselectAll,
+      ]) {
+        expect(find.widgetWithText(AppMenuItem, label), findsOneWidget);
+      }
+      expect(
+        find.widgetWithText(AppMenuItem, en.dupesUnmark),
+        findsNothing,
+        reason: 'a mixed set will be marked, even when its first file was already marked',
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(cubit.state.marked, {'/home/a.jpg'});
+      expect(copied, isEmpty);
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppMenuItem, en.dupesMark));
+      await tester.pumpAndSettle();
+      expect(cubit.state.marked, {'/home/a.jpg', '/home/b.jpg'});
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppMenuItem, en.dupesCopyPaths));
+      await tester.pumpAndSettle();
+      expect(copied.single.split('\n'), ['/home/a.jpg', '/home/b.jpg']);
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppMenuItem, en.cmdDeselectAll));
+      await tester.pumpAndSettle();
+      expect(rows.selected, isEmpty);
+      expect(cubit.state.marked, {'/home/a.jpg', '/home/b.jpg'});
+      verifyNever(() => operations.start(any()));
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

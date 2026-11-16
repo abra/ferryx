@@ -136,6 +136,8 @@ class _RecordChordDialogState extends State<_RecordChordDialog> {
     return AppDialog(
       title: l10n.hotkeysRecordTitle(l10n.commandLabel(widget.command)),
       width: AppSizes.compactDialogWidth,
+      // Tab and Space are recorded here, rather than navigating controls.
+      showGuidance: false,
       body: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

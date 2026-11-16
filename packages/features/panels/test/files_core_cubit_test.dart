@@ -350,7 +350,14 @@ void main() {
       hints.whereType<CommandHint>().map((hint) => hint.command),
       containsAll([AppCommand.previousTab, AppCommand.nextTab]),
     );
-    expect(hints.length, lessThanOrEqualTo(5));
+    expect(
+      hints.whereType<CommandHint>().map((hint) => hint.command),
+      containsAll([
+        AppCommand.pasteItems,
+        AppCommand.newFolder,
+        AppCommand.switchPanel,
+      ]),
+    );
     const plainTab = PanelTabState(
       id: 't',
       location: home,

@@ -173,6 +173,40 @@ void main() {
     expect(recents.items, ['copyTo']);
   });
 
+  testWidgets('no-result guidance keeps Close without promising a command', (
+    tester,
+  ) async {
+    await pump(tester);
+    await openPalette(tester);
+    await tester.enterText(find.byType(EditableText), 'zzzz-no-such-command');
+    await tester.pumpAndSettle();
+    final l10n = lookupFerryxLocalizations(const Locale('en'));
+    expect(labels(tester), isEmpty);
+    expect(tester.widget<AppMenuFooter>(find.byType(AppMenuFooter)).hints, [
+      (
+        Chord.keyLabel(LogicalKeyboardKey.escape, platform),
+        l10n.paletteKeyClose,
+      ),
+    ]);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.byType(AppQuickPicker<AppCommand>), findsOneWidget);
+    expect(ran, isEmpty);
+    await tester.enterText(find.byType(EditableText), 'refresh');
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<AppMenuFooter>(find.byType(AppMenuFooter))
+          .hints
+          .map((hint) => hint.$2),
+      contains(l10n.paletteKeyRun),
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.byType(AppQuickPicker<AppCommand>), findsNothing);
+    expect(ran, isEmpty);
+  });
+
   testWidgets('the commands run lately lead the list next time', (
     tester,
   ) async {

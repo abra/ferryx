@@ -108,6 +108,7 @@ class _ServerEditorState extends State<ServerEditor> {
             hint: l10n.networkFieldNameHint,
             autofocus: true,
             onSubmitted: (_) => _save(),
+            submitLabel: l10n.actionSave,
           ),
           networkRowGap,
           AppControlRow(
@@ -134,6 +135,7 @@ class _ServerEditorState extends State<ServerEditor> {
                   label: l10n.networkFieldHost,
                   controller: _host,
                   onSubmitted: (_) => _save(),
+                  submitLabel: l10n.actionSave,
                 ),
               ),
               SizedBox(width: context.metrics.toolbarSpacing),
@@ -149,6 +151,7 @@ class _ServerEditorState extends State<ServerEditor> {
                     LengthLimitingTextInputFormatter(5),
                   ],
                   onSubmitted: (_) => _save(),
+                  submitLabel: l10n.actionSave,
                 ),
               ),
             ],
@@ -159,6 +162,7 @@ class _ServerEditorState extends State<ServerEditor> {
             controller: _user,
             hint: _protocol.hasKeys ? null : l10n.networkFieldUserHint,
             onSubmitted: (_) => _save(),
+            submitLabel: l10n.actionSave,
           ),
           networkRowGap,
           NetworkField(
@@ -167,6 +171,7 @@ class _ServerEditorState extends State<ServerEditor> {
             hint: l10n.networkFieldFolderHint,
             monospace: true,
             onSubmitted: (_) => _save(),
+            submitLabel: l10n.actionSave,
           ),
           if (_protocol.hasKeys) ...[
             networkRowGap,
@@ -189,6 +194,7 @@ class _ServerEditorState extends State<ServerEditor> {
                 hint: l10n.networkFieldKeyHint,
                 monospace: true,
                 onSubmitted: (_) => _save(),
+                submitLabel: l10n.actionSave,
               ),
             ],
           ],

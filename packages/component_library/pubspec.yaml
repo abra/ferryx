@@ -12,6 +12,8 @@ dependencies:
     sdk: flutter
   lucide_icons_flutter: ^3.1.14+2
   material_ui: ^1.11.0
+  shortcuts:
+    path: ../shortcuts
 
 flutter:
   fonts:

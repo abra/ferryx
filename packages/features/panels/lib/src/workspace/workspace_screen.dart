@@ -40,11 +40,14 @@ import '../panel/panel_side.dart';
 import '../panel/panel_state.dart';
 import '../panel/panel_terminal.dart';
 import '../panel/panel_view.dart';
+import '../panel/vim_command_line.dart';
 import '../panel/saved_panel.dart';
 import '../path_text.dart';
 import 'context_menu.dart';
 import 'folder_compare.dart';
 import 'key_hints.dart';
+import 'panel_actions.dart';
+import 'panel_actions_picker.dart';
 import 'shelf.dart';
 import 'shelf_strip.dart';
 import 'tag_menu.dart';
@@ -930,6 +933,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                                 hasShelf:
                                                     !workspace.shelf.isEmpty,
                                                 shortcutMap: widget.shortcutMap,
+                                                onActions: () => unawaited(
+                                                  _showPanelActions(),
+                                                ),
                                                 onHide: () =>
                                                     _hideKeyHints(context),
                                                 onHelp: () => unawaited(
@@ -1076,6 +1082,7 @@ class _KeyHintsLine extends StatelessWidget {
     required this.shortcutMap,
     required this.onHide,
     required this.onHelp,
+    required this.onActions,
   });
 
   final FocusNode terminalFocus;
@@ -1091,6 +1098,7 @@ class _KeyHintsLine extends StatelessWidget {
   final ShortcutMap shortcutMap;
   final VoidCallback onHide;
   final VoidCallback onHelp;
+  final VoidCallback onActions;
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
@@ -1122,33 +1130,59 @@ class _KeyHintsLine extends StatelessWidget {
         );
       }
       // A text field, including Vim's command line, consumes sequences as text.
+      final focused = attachedFocusContext(FocusManager.instance.primaryFocus);
       final typing =
-          FocusManager.instance.primaryFocus?.context
-              ?.findAncestorStateOfType<EditableTextState>() !=
-          null;
+          focused?.findAncestorStateOfType<EditableTextState>() != null;
+      final commandLine = focused
+          ?.findAncestorWidgetOfExactType<VimCommandLine>();
       return BlocBuilder<PanelCubit, PanelState>(
         bloc: panel,
-        builder: (context, state) => KeyHintStrip(
-          hints: shelfFocus.hasFocus
-              ? shelfHints
-              : [
-                  if (deletions.hasPending &&
-                      !typing &&
-                      state.active?.renaming == null)
-                    const KeyHint(LogicalKeyboardKey.escape, HintWord.cancel),
-                  ...hintsFor(
-                    tab: state.active,
-                    vim: vim,
-                    hasRegister: hasShelf,
-                    hasMultipleTabs: state.tabs.length > 1 && !typing,
-                    screenItems: panel.geometry.rowsPerPage,
-                  ),
-                ],
-          shortcutMap: shortcutMap,
-          vim: vim,
-          onHide: onHide,
-          onHelp: onHelp,
-        ),
+        builder: (context, state) {
+          final strip = KeyHintStrip(
+            hints: shelfFocus.hasFocus
+                ? shelfHints
+                : commandLine != null
+                ? commandLineHints
+                : [
+                    if (deletions.hasPending &&
+                        !typing &&
+                        state.active?.renaming == null)
+                      const KeyHint(LogicalKeyboardKey.escape, HintWord.cancel),
+                    ...hintsFor(
+                      tab: state.active,
+                      vim: vim,
+                      hasRegister: hasShelf,
+                      hasMultipleTabs: state.tabs.length > 1 && !typing,
+                      screenItems: panel.geometry.rowsPerPage,
+                    ),
+                  ],
+            shortcutMap: shortcutMap,
+            vim: vim && !typing && state.active?.renaming == null,
+            onActions:
+                !typing &&
+                    !shelfFocus.hasFocus &&
+                    state.active != null &&
+                    state.active?.renaming == null
+                ? onActions
+                : null,
+            onHide: onHide,
+            onHelp: onHelp,
+          );
+          if (commandLine != null || state.active?.renaming != null) {
+            return strip;
+          }
+          return AppFocusedEditHints(
+            fallback: strip,
+            builder: (entries) => KeyHintStrip(
+              hints: const [],
+              editingHints: entries,
+              shortcutMap: shortcutMap,
+              vim: false,
+              onHide: onHide,
+              onHelp: onHelp,
+            ),
+          );
+        },
       );
     },
   );

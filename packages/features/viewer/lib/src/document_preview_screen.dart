@@ -175,7 +175,7 @@ class _DocumentPreviewScreenState extends State<DocumentPreviewScreen> {
 
   void _resetZoom() {
     if (_cubit.state.fixed) {
-      _cubit.zoomTo(1);
+      _cubit.zoomTo(DocumentState.minZoom);
     } else {
       _setFontSize(Preferences.defaultDocumentFontSize);
     }
@@ -196,7 +196,7 @@ class _DocumentPreviewScreenState extends State<DocumentPreviewScreen> {
   Future<void> _goTo() async {
     final state = _cubit.state;
     if (!state.fixed) return _contents();
-    if (state.count == 0) return;
+    if (!state.canGoToPage) return;
     final index = await showAppDialog<int>(
       context,
       (_) => _DocumentPageDialog(current: state.index, count: state.count),
@@ -227,6 +227,7 @@ class _DocumentPreviewScreenState extends State<DocumentPreviewScreen> {
             label: l10n.documentGoToPage,
             shortcut: _chord(AppCommand.viewerGoTo),
             icon: AppIcons.goTo,
+            enabled: state.canGoToPage,
           ),
           const AppMenuSeparator(),
           AppMenuAction(
@@ -234,18 +235,21 @@ class _DocumentPreviewScreenState extends State<DocumentPreviewScreen> {
             label: l10n.cmdDocumentZoomIn,
             shortcut: _chord(AppCommand.documentZoomIn),
             icon: AppIcons.magnifyIn,
+            enabled: state.canZoomIn,
           ),
           AppMenuAction(
             value: AppCommand.documentZoomOut,
             label: l10n.cmdDocumentZoomOut,
             shortcut: _chord(AppCommand.documentZoomOut),
             icon: AppIcons.magnifyOut,
+            enabled: state.canZoomOut,
           ),
           AppMenuAction(
             value: AppCommand.documentFitPage,
             label: l10n.documentFitPage,
             shortcut: _chord(AppCommand.documentFitPage),
             icon: AppIcons.fillWindow,
+            enabled: state.canFitPage,
           ),
         ] else ...[
           if (state.session?.contents.isNotEmpty ?? false)
@@ -502,13 +506,13 @@ class _DocumentView extends StatelessWidget {
                     icon: AppIcons.goTo,
                     tooltip: l10n.documentGoToPage,
                     shortcut: chord(AppCommand.viewerGoTo),
-                    onPressed: onGoTo,
+                    onPressed: state.canGoToPage ? onGoTo : null,
                   ),
                   AppIconButton(
                     icon: AppIcons.magnifyOut,
                     tooltip: l10n.cmdDocumentZoomOut,
                     shortcut: chord(AppCommand.documentZoomOut),
-                    onPressed: state.zoom > 1
+                    onPressed: state.canZoomOut
                         ? () => onZoom(state.zoom - 0.5)
                         : null,
                   ),
@@ -516,7 +520,7 @@ class _DocumentView extends StatelessWidget {
                     icon: AppIcons.magnifyIn,
                     tooltip: l10n.cmdDocumentZoomIn,
                     shortcut: chord(AppCommand.documentZoomIn),
-                    onPressed: state.zoom < 4
+                    onPressed: state.canZoomIn
                         ? () => onZoom(state.zoom + 0.5)
                         : null,
                   ),
@@ -524,7 +528,9 @@ class _DocumentView extends StatelessWidget {
                     icon: AppIcons.fillWindow,
                     tooltip: l10n.documentFitPage,
                     shortcut: chord(AppCommand.documentFitPage),
-                    onPressed: state.zoom > 1 ? () => onZoom(1) : null,
+                    onPressed: state.canFitPage
+                        ? () => onZoom(DocumentState.minZoom)
+                        : null,
                   ),
                 ] else ...[
                   _DocumentFontButton(
@@ -720,11 +726,13 @@ class _DocumentFixedPageState extends State<_DocumentFixedPage> {
           (fitWidth * MediaQuery.devicePixelRatioOf(context) * widget.zoom)
               .ceil();
       return GestureDetector(
-        onDoubleTap: () => widget.onZoom(widget.zoom > 1 ? 1 : 2),
+        onDoubleTap: () => widget.onZoom(
+          widget.zoom > DocumentState.minZoom ? DocumentState.minZoom : 2,
+        ),
         child: InteractiveViewer(
           transformationController: _transform,
-          minScale: 1,
-          maxScale: 4,
+          minScale: DocumentState.minZoom,
+          maxScale: DocumentState.maxZoom,
           onInteractionEnd: (_) =>
               widget.onZoom(_transform.value.getMaxScaleOnAxis()),
           child: SizedBox.expand(

@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:operations_service/operations_service.dart';
 import 'package:preferences_service/preferences_service.dart';
+import 'package:shortcuts/shortcuts.dart';
 
 import 'find_cubit.dart';
 import 'find_results.dart';
@@ -83,6 +84,11 @@ class _FindDialogState extends State<_FindDialog> {
   final _name = TextEditingController();
   final _content = TextEditingController();
   final _sizeValue = TextEditingController();
+  final _resultsFocus = FocusNode(
+    debugLabel: 'find results',
+    canRequestFocus: false,
+    skipTraversal: true,
+  );
   late final _nameFocus = FocusNode(
     debugLabel: 'find name',
     onKeyEvent: _downToHits,
@@ -113,8 +119,13 @@ class _FindDialogState extends State<_FindDialog> {
   @override
   void initState() {
     super.initState();
+    for (final focus in [_resultsFocus, _nameFocus, _contentFocus]) {
+      focus.addListener(_focusChanged);
+    }
     if (widget.initial case final request?) _apply(request);
   }
+
+  void _focusChanged() => setState(() {});
 
   void _apply(FindRequest request) {
     _root.text = request.root;
@@ -152,6 +163,7 @@ class _FindDialogState extends State<_FindDialog> {
     _name.dispose();
     _content.dispose();
     _sizeValue.dispose();
+    _resultsFocus.dispose();
     _nameFocus.dispose();
     _contentFocus.dispose();
     super.dispose();
@@ -265,6 +277,50 @@ class _FindDialogState extends State<_FindDialog> {
         return AppDialog(
           title: l10n.findTitle,
           width: AppSizes.panelDialogWidth,
+          guidance: _resultsFocus.hasFocus
+              ? AppKeyHints([
+                  AppKeyHint([
+                    Chord.keyLabel(
+                      LogicalKeyboardKey.arrowUp,
+                      context.platform,
+                    ),
+                    Chord.keyLabel(
+                      LogicalKeyboardKey.arrowDown,
+                      context.platform,
+                    ),
+                  ], l10n.paletteKeySelect),
+                  if (hasSelection)
+                    AppKeyHint([
+                      Chord.keyLabel(
+                        LogicalKeyboardKey.enter,
+                        context.platform,
+                      ),
+                    ], l10n.findGoTo),
+                  AppKeyHint([
+                    Chord.keyLabel(LogicalKeyboardKey.escape, context.platform),
+                  ], l10n.actionClose),
+                ], singleLine: true)
+              : state.hits.isNotEmpty &&
+                    (_nameFocus.hasFocus || _contentFocus.hasFocus)
+              ? AppFocusedEditHints(
+                  fallback: const SizedBox.shrink(),
+                  builder: (entries) => AppKeyHints([
+                    AppKeyHint([
+                      Chord.keyLabel(
+                        LogicalKeyboardKey.arrowDown,
+                        context.platform,
+                      ),
+                    ], l10n.hintResults),
+                    ...entries,
+                    AppKeyHint([
+                      Chord.keyLabel(
+                        LogicalKeyboardKey.escape,
+                        context.platform,
+                      ),
+                    ], l10n.actionClose),
+                  ], singleLine: true),
+                )
+              : null,
           body: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -303,13 +359,17 @@ class _FindDialogState extends State<_FindDialog> {
               ),
               const SizedBox(height: AppSpacing.md),
               Flexible(
-                child: FindResults(
-                  state: state,
-                  selected: _selected,
-                  focusRequest: _focusHits,
-                  onSelect: (index) => setState(() => _selected = index),
-                  onGoTo: _goTo,
-                  onMenu: (index, anchor) => unawaited(_rowMenu(index, anchor)),
+                child: Focus(
+                  focusNode: _resultsFocus,
+                  child: FindResults(
+                    state: state,
+                    selected: _selected,
+                    focusRequest: _focusHits,
+                    onSelect: (index) => setState(() => _selected = index),
+                    onGoTo: _goTo,
+                    onMenu: (index, anchor) =>
+                        unawaited(_rowMenu(index, anchor)),
+                  ),
                 ),
               ),
             ],
@@ -514,6 +574,7 @@ class _Form extends StatelessWidget {
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 textAlign: TextAlign.end,
                 onSubmitted: (_) => onSubmit(),
+                submitLabel: l10n.findStart,
               ),
             ),
             AppPopupButton<int>(
@@ -640,6 +701,7 @@ class _Field extends StatelessWidget {
       monospace: monospace,
       hintText: hint,
       onSubmitted: (_) => onSubmitted(),
+      submitLabel: context.l10n.findStart,
     ),
   );
 }

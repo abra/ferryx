@@ -16,6 +16,7 @@ class NetworkField extends StatelessWidget {
     this.readOnly = false,
     this.onChanged,
     this.onSubmitted,
+    this.submitLabel,
     this.inputFormatters,
     this.keyboardType,
     super.key,
@@ -35,6 +36,7 @@ class NetworkField extends StatelessWidget {
   final bool readOnly;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+  final String? submitLabel;
   final List<TextInputFormatter>? inputFormatters;
   final TextInputType? keyboardType;
 
@@ -54,6 +56,7 @@ class NetworkField extends StatelessWidget {
       hintText: hint,
       onChanged: onChanged,
       onSubmitted: onSubmitted,
+      submitLabel: submitLabel,
     ),
   );
 }

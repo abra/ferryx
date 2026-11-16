@@ -179,18 +179,20 @@ class FolderJumpView extends StatelessWidget {
         initialQuery: initialQuery,
         actions: AppQuickPickerAction.values.toSet(),
         hints: [
-          (key(LogicalKeyboardKey.enter), l10n.jumpKeyOpen),
-          (
-            const Chord(
-              LogicalKeyboardKey.enter,
-              primary: true,
-            ).label(platform),
-            l10n.jumpKeyNewTab,
-          ),
-          (
-            const Chord(LogicalKeyboardKey.enter, alt: true).label(platform),
-            l10n.jumpKeyOtherPanel,
-          ),
+          if (state.matches.isNotEmpty) ...[
+            (key(LogicalKeyboardKey.enter), l10n.jumpKeyOpen),
+            (
+              const Chord(
+                LogicalKeyboardKey.enter,
+                primary: true,
+              ).label(platform),
+              l10n.jumpKeyNewTab,
+            ),
+            (
+              const Chord(LogicalKeyboardKey.enter, alt: true).label(platform),
+              l10n.jumpKeyOtherPanel,
+            ),
+          ],
           (key(LogicalKeyboardKey.escape), l10n.paletteKeyClose),
         ],
         onQueryChanged: context.read<FolderJumpCubit>().setQuery,

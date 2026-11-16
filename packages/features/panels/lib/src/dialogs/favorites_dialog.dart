@@ -16,12 +16,14 @@ Future<Location?> showFavoritesDialog(
   required List<Favorite> favorites,
   required Location current,
   required ValueChanged<List<Favorite>> onChanged,
+  ShortcutMap? shortcutMap,
 }) => showWorkspaceDialog<Location>(
   context,
   (context) => _FavoritesDialog(
     favorites: favorites,
     current: current,
     onChanged: onChanged,
+    shortcutMap: shortcutMap,
   ),
 );
 
@@ -30,11 +32,13 @@ class _FavoritesDialog extends StatefulWidget {
     required this.favorites,
     required this.current,
     required this.onChanged,
+    this.shortcutMap,
   });
 
   final List<Favorite> favorites;
   final Location current;
   final ValueChanged<List<Favorite>> onChanged;
+  final ShortcutMap? shortcutMap;
 
   @override
   State<_FavoritesDialog> createState() => _FavoritesDialogState();
@@ -44,6 +48,11 @@ class _FavoritesDialogState extends State<_FavoritesDialog> {
   late List<Favorite> _favorites = [...widget.favorites];
   final _rowFocus = <Location, FocusNode>{};
   final _doneFocus = FocusNode(debugLabel: 'favorites done');
+  final _listFocus = FocusNode(
+    debugLabel: 'favorites list',
+    canRequestFocus: false,
+    skipTraversal: true,
+  );
 
   /// The row the keys are on: the one with the focus, which Rename,
   /// Delete and Move act on.
@@ -52,11 +61,20 @@ class _FavoritesDialogState extends State<_FavoritesDialog> {
   DateTime? _lastTapAt;
 
   @override
+  void initState() {
+    super.initState();
+    _listFocus.addListener(_focusChanged);
+  }
+
+  void _focusChanged() => setState(() {});
+
+  @override
   void dispose() {
     for (final node in _rowFocus.values) {
       node.dispose();
     }
     _doneFocus.dispose();
+    _listFocus.dispose();
     super.dispose();
   }
 
@@ -201,6 +219,31 @@ class _FavoritesDialogState extends State<_FavoritesDialog> {
     final hasCurrent = _favorites.any((f) => f.location == widget.current);
     return AppDialog(
       title: l10n.favoritesTitle,
+      guidance: _listFocus.hasFocus && _favorites.isNotEmpty
+          ? AppKeyHints([
+              AppKeyHint([
+                Chord.keyLabel(LogicalKeyboardKey.enter, context.platform),
+              ], l10n.cmdOpenItem),
+              AppKeyHint([
+                Chord.keyLabel(LogicalKeyboardKey.escape, context.platform),
+              ], l10n.actionClose),
+              for (final command in [
+                AppCommand.contextMenu,
+                AppCommand.renameItem,
+                AppCommand.deleteItem,
+              ])
+                if (widget.shortcutMap?.labelOf(command, context.platform)
+                    case final key?)
+                  AppKeyHint(
+                    [
+                      key,
+                    ],
+                    command == AppCommand.deleteItem
+                        ? l10n.actionRemove
+                        : l10n.commandLabel(command),
+                  ),
+            ], singleLine: true)
+          : null,
       body: CommandHandlers(
         handlers: {
           AppCommand.renameItem: () {
@@ -216,40 +259,43 @@ class _FavoritesDialogState extends State<_FavoritesDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxHeight: AppSizes.pickerListMaxHeight,
+            Focus(
+              focusNode: _listFocus,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxHeight: AppSizes.pickerListMaxHeight,
+                ),
+                child: _favorites.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.lg,
+                        ),
+                        child: Text(
+                          l10n.favoritesEmpty,
+                          style: context.text.bodyMedium?.copyWith(
+                            color: colors.textMuted,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _favorites.length,
+                        itemBuilder: (context, index) => _FavoriteRow(
+                          key: ValueKey(_favorites[index].location.encode()),
+                          favorite: _favorites[index],
+                          focusNode: _rowFocus.putIfAbsent(
+                            _favorites[index].location,
+                            () => FocusNode(debugLabel: 'favorite'),
+                          ),
+                          selected: index == _focused,
+                          onFocused: _focusFavorite,
+                          onTap: () => _tap(index),
+                          onOpen: () => _open(index),
+                          onMenu: (anchor) => _menu(index, anchor),
+                        ),
+                      ),
               ),
-              child: _favorites.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.lg,
-                      ),
-                      child: Text(
-                        l10n.favoritesEmpty,
-                        style: context.text.bodyMedium?.copyWith(
-                          color: colors.textMuted,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: _favorites.length,
-                      itemBuilder: (context, index) => _FavoriteRow(
-                        key: ValueKey(_favorites[index].location.encode()),
-                        favorite: _favorites[index],
-                        focusNode: _rowFocus.putIfAbsent(
-                          _favorites[index].location,
-                          () => FocusNode(debugLabel: 'favorite'),
-                        ),
-                        selected: index == _focused,
-                        onFocused: _focusFavorite,
-                        onTap: () => _tap(index),
-                        onOpen: () => _open(index),
-                        onMenu: (anchor) => _menu(index, anchor),
-                      ),
-                    ),
             ),
             dialogRowGap,
             Wrap(

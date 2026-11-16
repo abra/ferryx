@@ -169,6 +169,7 @@ class _CopyMoveDialogState extends State<_CopyMoveDialog> {
             autofocus: true,
             monospace: !widget.asName,
             onSubmitted: (_) => _submit(),
+            submitLabel: widget.move ? l10n.actionMove : l10n.actionCopy,
           ),
           dialogRowGap,
           DialogToggle(

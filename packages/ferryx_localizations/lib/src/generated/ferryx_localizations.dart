@@ -2597,13 +2597,13 @@ abstract class FerryxLocalizations {
   /// No description provided for @generalKeyHintsLabel.
   ///
   /// In en, this message translates to:
-  /// **'Key hints under the panels'**
+  /// **'Contextual key hints'**
   String get generalKeyHintsLabel;
 
   /// No description provided for @generalKeyHintsNote.
   ///
   /// In en, this message translates to:
-  /// **'One line with the keys for what is under the cursor or selected'**
+  /// **'Quiet hints for the active area, menus and controls'**
   String get generalKeyHintsNote;
 
   /// No description provided for @hintsHide.
@@ -2617,6 +2617,132 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Shortcuts'**
   String get hintsHelp;
+
+  /// No description provided for @contextActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get contextActions;
+
+  /// No description provided for @contextActionsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Find an action'**
+  String get contextActionsHint;
+
+  /// No description provided for @contextActionsSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 selected item} other{{count} selected items}}'**
+  String contextActionsSelection(int count);
+
+  /// No description provided for @contextActionsFocused.
+  ///
+  /// In en, this message translates to:
+  /// **'Under the cursor: {name}'**
+  String contextActionsFocused(String name);
+
+  /// No description provided for @contextActionsFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Current folder'**
+  String get contextActionsFolder;
+
+  /// No description provided for @contextActionsChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The items changed. Choose the action again.'**
+  String get contextActionsChanged;
+
+  /// No description provided for @hintComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get hintComplete;
+
+  /// No description provided for @hintPreviousCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous command'**
+  String get hintPreviousCommand;
+
+  /// No description provided for @hintNextCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Next command'**
+  String get hintNextCommand;
+
+  /// No description provided for @hintNextField.
+  ///
+  /// In en, this message translates to:
+  /// **'Next field'**
+  String get hintNextField;
+
+  /// No description provided for @hintNavigate.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigate'**
+  String get hintNavigate;
+
+  /// No description provided for @hintChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get hintChoose;
+
+  /// No description provided for @hintNextControl.
+  ///
+  /// In en, this message translates to:
+  /// **'Next control'**
+  String get hintNextControl;
+
+  /// No description provided for @hintPreviousControl.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous control'**
+  String get hintPreviousControl;
+
+  /// No description provided for @hintToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle'**
+  String get hintToggle;
+
+  /// No description provided for @hintAdjust.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust'**
+  String get hintAdjust;
+
+  /// No description provided for @hintActivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
+  String get hintActivate;
+
+  /// No description provided for @hintResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Results'**
+  String get hintResults;
+
+  /// No description provided for @hintChangeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Change action'**
+  String get hintChangeAction;
+
+  /// No description provided for @viewerFindCloseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{key} — close search'**
+  String viewerFindCloseHint(String key);
+
+  /// No description provided for @viewerFindClearHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{key} — clear search'**
+  String viewerFindClearHint(String key);
 
   /// No description provided for @commandsButton.
   ///

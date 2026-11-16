@@ -63,6 +63,42 @@ void main() {
     expect(find.byType(AppDialog), findsOneWidget);
   }
 
+  testWidgets(
+    'a focused favorite advertises Open and Return opens its folder',
+    (
+      tester,
+    ) async {
+      await h.pump(tester);
+      await h.press(tester, LogicalKeyboardKey.keyB, meta: true, control: true);
+      final favorite = find.byWidgetPredicate(
+        (widget) => widget is AppNavItem && widget.label == 'tmp',
+      );
+      await tester.tap(favorite);
+      await h.settle(tester);
+      final hints = tester
+          .widget<AppKeyHints>(
+            find.descendant(
+              of: find.byType(AppDialog),
+              matching: find.byType(AppKeyHints),
+            ),
+          )
+          .hints;
+      expect(hints.first.label, l10n.cmdOpenItem);
+      expect(hints.first.keys, ['↩']);
+      expect(hints.map((hint) => hint.label), isNot(contains(l10n.actionDone)));
+
+      await h.press(tester, LogicalKeyboardKey.enter);
+
+      expect(find.byType(AppDialog), findsNothing);
+      expect(
+        panel(tester, 0).state.active!.location,
+        const Location.native('/tmp'),
+      );
+      expect(h.started, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   for (final scenario in [
     (panelMenu: false, focusFile: false),
     (panelMenu: true, focusFile: false),

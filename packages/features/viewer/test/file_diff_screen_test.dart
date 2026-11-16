@@ -27,6 +27,73 @@ class _Source implements ViewerSource {
 
 void main() {
   final en = lookupFerryxLocalizations(const Locale('en'));
+  for (final same in [false, true]) {
+    testWidgets(
+      'diff hints use actual bindings and omit absent changes: identical=$same',
+      (tester) async {
+        tester.view.physicalSize = const Size(1280, 700);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final map = ShortcutMap.defaults(TargetPlatform.macOS).rebind(
+          AppCommand.viewerFindNext,
+          const [Chord(LogicalKeyboardKey.keyN, primary: true)],
+        );
+        var closed = false;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light(AppPlatformStyle.macos),
+            localizationsDelegates: FerryxSupportedLocales.delegates,
+            supportedLocales: FerryxSupportedLocales.locales,
+            home: FileDiffScreen(
+              left: _Source('/before', 'a\nold\nc\nold2\ne'),
+              right: _Source(
+                '/after',
+                same ? 'a\nold\nc\nold2\ne' : 'a\nnew\nc\nnew2\ne',
+              ),
+              shortcutMap: map,
+              onClose: () => closed = true,
+            ),
+          ),
+        );
+        for (
+          var i = 0;
+          i < 100 && find.byType(ListView).evaluate().isEmpty;
+          i++
+        ) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 10)),
+          );
+          await tester.pump();
+        }
+        await tester.pump();
+        final hints = tester
+            .widget<AppKeyHints>(
+              find.descendant(
+                of: find.byType(AppStatusBar),
+                matching: find.byType(AppKeyHints),
+              ),
+            )
+            .hints;
+        expect(hints.any((hint) => hint.label == en.diffNext), !same);
+        expect(hints.any((hint) => hint.label == en.diffPrevious), !same);
+        if (!same) {
+          expect(hints.firstWhere((hint) => hint.label == en.diffNext).keys, [
+            map.labelOf(AppCommand.viewerFindNext, TargetPlatform.macOS),
+          ]);
+          expect(find.text(en.diffChangeCount(1, 2)), findsOneWidget);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+          await tester.pump();
+          expect(find.text(en.diffChangeCount(2, 2)), findsOneWidget);
+        }
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pump();
+        expect(closed, isTrue);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
   for (final brightness in Brightness.values) {
     testWidgets(
       'diff handles long paths, narrow window and scrolling in ${brightness.name}',

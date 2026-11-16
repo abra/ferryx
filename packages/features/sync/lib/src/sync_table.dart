@@ -3,6 +3,7 @@ import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shortcuts/shortcuts.dart';
 
 import 'sync_cubit.dart';
 import 'sync_plan.dart';
@@ -23,6 +24,7 @@ class SyncTable extends StatelessWidget {
     required this.onCycleTargets,
     required this.onReset,
     required this.allowedFor,
+    this.shortcutMap,
     super.key,
   });
 
@@ -43,6 +45,7 @@ class SyncTable extends StatelessWidget {
   /// The suggested action again for the rows shown at these indexes.
   final void Function(Iterable<int> shown) onReset;
   final List<RowAction> Function(CompareRow row) allowedFor;
+  final ShortcutMap? shortcutMap;
 
   KeyEventResult _onKey(KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
@@ -115,13 +118,36 @@ class SyncTable extends StatelessWidget {
           label: l10n.syncActionDefault,
           icon: AppIcons.undo,
         ),
+        const AppMenuSeparator(),
+        AppMenuAction(
+          value: const _Pick.selection(_Selection.all),
+          label: l10n.cmdSelectAll,
+          shortcut: shortcutMap?.labelOf(
+            AppCommand.selectAll,
+            context.platform,
+          ),
+          enabled: controller.selected.length < controller.count,
+        ),
+        AppMenuAction(
+          value: const _Pick.selection(_Selection.clear),
+          label: l10n.cmdDeselectAll,
+          shortcut: shortcutMap?.labelOf(
+            AppCommand.deselectAll,
+            context.platform,
+          ),
+          enabled: controller.selected.isNotEmpty,
+        ),
       ],
     );
     if (!context.mounted || picked == null) return;
-    switch (picked.action) {
-      case final action?:
+    switch (picked) {
+      case _Pick(selection: _Selection.all):
+        controller.selectAll();
+      case _Pick(selection: _Selection.clear):
+        controller.clear();
+      case _Pick(action: final action?):
         onAction(shown, action);
-      case null:
+      case _:
         onReset(shown);
     }
   }
@@ -151,16 +177,22 @@ class SyncTable extends StatelessWidget {
 }
 
 /// A choice of the row menu: an action, or the suggested one (`null`).
+enum _Selection { all, clear }
+
 class _Pick {
-  const _Pick(this.action);
+  const _Pick(this.action) : selection = null;
+
+  const _Pick.selection(this.selection) : action = null;
 
   final RowAction? action;
+  final _Selection? selection;
 
   @override
-  bool operator ==(Object other) => other is _Pick && other.action == action;
+  bool operator ==(Object other) =>
+      other is _Pick && other.action == action && other.selection == selection;
 
   @override
-  int get hashCode => action.hashCode;
+  int get hashCode => Object.hash(action, selection);
 }
 
 /// The columns' titles: the name, then each side's name centred over its

@@ -9,6 +9,7 @@ import 'app_focus_area.dart';
 import 'app_icons.dart';
 import 'app_key_cap.dart';
 import 'app_menu.dart';
+import 'app_scrollbar.dart';
 import 'app_label_and_detail.dart';
 import 'pixel_snap.dart';
 import 'popup_focus.dart';
@@ -99,6 +100,10 @@ Future<R?> showAppQuickPicker<R>(
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     duration: context.motion(AppMotion.short),
     reverseDuration: context.motion(AppMotion.quick),
+    capturedThemes: InheritedTheme.capture(
+      from: context,
+      to: Navigator.of(context, rootNavigator: true).context,
+    ),
   ),
 );
 
@@ -108,9 +113,11 @@ class _QuickPickerRoute<R> extends PopupRoute<R> {
     required this.barrierLabel,
     required this.duration,
     required this.reverseDuration,
+    required this.capturedThemes,
   });
 
   final WidgetBuilder builder;
+  final CapturedThemes capturedThemes;
 
   @override
   final String barrierLabel;
@@ -134,19 +141,21 @@ class _QuickPickerRoute<R> extends PopupRoute<R> {
     BuildContext context,
     Animation<double> animation,
     Animation<double> secondaryAnimation,
-  ) => Padding(
-    // Below the window's top row, as a palette opens under a title bar.
-    padding: EdgeInsets.fromLTRB(
-      AppSpacing.lg,
-      context.metrics.topBarHeight,
-      AppSpacing.lg,
-      AppSpacing.lg,
-    ),
-    child: Align(
-      alignment: Alignment.topCenter,
-      // The plate on whole pixels, wherever the centring puts it.
-      child: PixelSnap(
-        child: FocusScope(autofocus: true, child: Builder(builder: builder)),
+  ) => capturedThemes.wrap(
+    Padding(
+      // Below the window's top row, as a palette opens under a title bar.
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        context.metrics.topBarHeight,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
+      child: Align(
+        alignment: Alignment.topCenter,
+        // The plate on whole pixels, wherever the centring puts it.
+        child: PixelSnap(
+          child: FocusScope(autofocus: true, child: Builder(builder: builder)),
+        ),
       ),
     ),
   );
@@ -501,33 +510,52 @@ class _AppQuickPickerState<T> extends State<AppQuickPicker<T>> {
                               ? widget.emptyText ?? widget.noResultsText
                               : widget.noResultsText,
                         )
-                      : ListView.builder(
+                      : AppScrollbar(
                           controller: _scroll,
-                          shrinkWrap: true,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: _listPadding,
-                          ),
-                          itemExtent: extent,
-                          itemCount: _entries.length,
-                          itemBuilder: (context, index) =>
-                              switch (_entries[index]) {
-                                AppQuickPickerHeader<T>(:final title) =>
-                                  _QuickPickerCaption(title),
-                                final AppQuickPickerItem<T> item =>
-                                  _QuickPickerRow<T>(
-                                    item: item,
-                                    selected: index == _selected,
-                                    onHover: () => _select(index),
-                                    onTap: () => _pick(
-                                      index,
-                                      _actionOf(HardwareKeyboard.instance),
+                          // A long command list must advertise that there
+                          // are more choices before the user starts scrolling.
+                          thumbVisibility: true,
+                          child: ListView.builder(
+                            controller: _scroll,
+                            shrinkWrap: true,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: _listPadding,
+                            ),
+                            itemExtent: extent,
+                            itemCount: _entries.length,
+                            itemBuilder: (context, index) =>
+                                switch (_entries[index]) {
+                                  AppQuickPickerHeader<T>(:final title) =>
+                                    _QuickPickerCaption(title),
+                                  final AppQuickPickerItem<T> item =>
+                                    _QuickPickerRow<T>(
+                                      item: item,
+                                      selected: index == _selected,
+                                      onHover: () => _select(index),
+                                      onTap: () => _pick(
+                                        index,
+                                        _actionOf(HardwareKeyboard.instance),
+                                      ),
                                     ),
-                                  ),
-                              },
+                                },
+                          ),
                         ),
                 ),
               ),
-              if (widget.hints.isNotEmpty) AppMenuFooter(hints: widget.hints),
+              if (widget.hints.isNotEmpty)
+                AppMenuFooter(hints: widget.hints)
+              else
+                AppMenuNavigationHints(
+                  canNavigate: _firstItem() >= 0,
+                  canChoose:
+                      _selected >= 0 &&
+                      _entries.elementAtOrNull(_selected)
+                          is AppQuickPickerItem<T>,
+                  canDismiss:
+                      widget.onDismiss != null ||
+                      ModalRoute.of(context)?.popDisposition ==
+                          RoutePopDisposition.pop,
+                ),
             ],
           ),
         ),

@@ -328,13 +328,13 @@ void main() {
     expect(find.text('6. Photos'), findsOneWidget);
     expect(find.text('1. Short'), findsNothing);
 
-    await tester.ensureVisible(find.byKey(const ValueKey('layout-0')));
-    await tester.tap(
-      find.descendant(
-        of: find.byKey(const ValueKey('layout-0')),
-        matching: find.byTooltip(ru.hotkeysChange),
-      ),
+    final changeLayout = find.descendant(
+      of: find.byKey(const ValueKey('layout-0')),
+      matching: find.byTooltip(ru.hotkeysChange),
     );
+    await tester.ensureVisible(changeLayout);
+    await tester.pumpAndSettle();
+    await tester.tap(changeLayout);
     await tester.pumpAndSettle();
     expect(
       find.widgetWithText(AppTextField, ru.layoutShort),

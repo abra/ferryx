@@ -23,6 +23,7 @@ import 'delimited_preview.dart';
 import 'text_window.dart';
 import 'viewer_cubit.dart';
 import 'viewer_footer.dart';
+import 'viewer_search_hints.dart';
 import 'viewer_source.dart';
 import 'viewer_state.dart';
 import 'viewer_views.dart';
@@ -76,6 +77,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
       widget.focusScope ??
       (_ownedScope ??= FocusScopeNode(debugLabel: 'viewer'));
   final _findFocus = FocusNode(debugLabel: 'viewer find');
+  final _previewFindFocus = FocusNode(debugLabel: 'preview search');
   final _findController = TextEditingController();
   final _scroll = ScrollController();
   LineLayout? _layout;
@@ -107,6 +109,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
     _scroll.dispose();
     _findController.dispose();
     _findFocus.dispose();
+    _previewFindFocus.dispose();
     _contentFocus.dispose();
     _documentFocus.dispose();
     _ownedScope?.dispose();
@@ -220,7 +223,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
     AppCommand.viewerFindPrevious: () => _find(-1),
     AppCommand.viewerToggleWrap: _toggleWrap,
     AppCommand.confirm: () {
-      if (_findFocus.hasFocus) _find(1);
+      if (_findFocus.hasFocus || _previewFindFocus.hasFocus) _find(1);
     },
     AppCommand.dismiss: _dismiss,
     AppCommand.viewerToggleFullWindow: ?widget.onToggleFullWindow,
@@ -377,6 +380,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
                             topLine: _topLine,
                             contentFocus: _contentFocus,
                             findFocus: _findFocus,
+                            previewFindFocus: _previewFindFocus,
                             findController: _findController,
                             scroll: _scroll,
                             onLayout: _onLayout,
@@ -425,6 +429,7 @@ class _Frame extends StatelessWidget {
     required this.onFocusFiles,
     required this.contentFocus,
     required this.findFocus,
+    required this.previewFindFocus,
     required this.findController,
     required this.scroll,
     required this.onLayout,
@@ -459,6 +464,7 @@ class _Frame extends StatelessWidget {
   final VoidCallback? onFocusFiles;
   final FocusNode contentFocus;
   final FocusNode findFocus;
+  final FocusNode previewFindFocus;
   final TextEditingController findController;
   final ScrollController scroll;
   final ValueChanged<LineLayout> onLayout;
@@ -501,7 +507,11 @@ class _Frame extends StatelessWidget {
           onToggleFullWindow: onToggleFullWindow,
         ),
         if (state.mode == ViewerMode.preview)
-          _PreviewFindSlot(onFocusContent: onFocusContent),
+          _PreviewFindSlot(
+            onFocusContent: onFocusContent,
+            focusNode: previewFindFocus,
+            chord: chord,
+          ),
         AppPresence(
           resize: true,
           child: state.findShown && state.mode != ViewerMode.preview
@@ -554,6 +564,9 @@ class _Frame extends StatelessWidget {
           document: isDocumentName(source.displayName),
           shortcutMap: shortcutMap,
           showFiles: onFocusFiles != null,
+          findFocus: findFocus,
+          previewFindFocus: previewFindFocus,
+          searchablePreview: _searchablePreview(source.displayName),
         ),
       ],
     );
@@ -850,62 +863,73 @@ class _FindBar extends StatelessWidget {
         color: colors.surfaceRaised,
         border: AppBorder(bottom: BorderSide(color: colors.line)),
       ),
-      child: Row(
-        spacing: metrics.toolbarSpacing,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            flex: 3,
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: AppSizes.titleBarSearchWidth,
-                ),
-                child: AppSearchField(
-                  hintText: l10n.viewerFindHint,
-                  controller: controller,
-                  focusNode: focusNode,
-                  onChanged: onChanged,
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: AppTooltip(
-                message: status,
-                child: Text(
-                  status,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.text.bodySmall?.copyWith(
-                    color: count == 0 && state.findQuery.isNotEmpty
-                        ? colors.danger
-                        : colors.textMuted,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+          Row(
+            spacing: metrics.toolbarSpacing,
+            children: [
+              Expanded(
+                flex: 3,
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: AppSizes.titleBarSearchWidth,
+                    ),
+                    child: AppSearchField(
+                      hintText: l10n.viewerFindHint,
+                      controller: controller,
+                      focusNode: focusNode,
+                      onChanged: onChanged,
+                    ),
                   ),
                 ),
               ),
-            ),
+              Expanded(
+                child: Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: AppTooltip(
+                    message: status,
+                    child: Text(
+                      status,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.text.bodySmall?.copyWith(
+                        color: count == 0 && state.findQuery.isNotEmpty
+                            ? colors.danger
+                            : colors.textMuted,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              AppIconButton(
+                icon: AppIcons.chevronUp,
+                tooltip: l10n.cmdViewerFindPrevious,
+                shortcut: chord(AppCommand.viewerFindPrevious),
+                onPressed: count == 0 ? null : onPrevious,
+              ),
+              AppIconButton(
+                icon: AppIcons.chevronDown,
+                tooltip: l10n.cmdViewerFindNext,
+                shortcut: chord(AppCommand.viewerFindNext),
+                onPressed: count == 0 ? null : onNext,
+              ),
+              AppIconButton(
+                icon: AppIcons.close,
+                tooltip: l10n.actionClose,
+                shortcut: chord(AppCommand.dismiss),
+                onPressed: onClose,
+              ),
+            ],
           ),
-          AppIconButton(
-            icon: AppIcons.chevronUp,
-            tooltip: l10n.cmdViewerFindPrevious,
-            shortcut: chord(AppCommand.viewerFindPrevious),
-            onPressed: count == 0 ? null : onPrevious,
-          ),
-          AppIconButton(
-            icon: AppIcons.chevronDown,
-            tooltip: l10n.cmdViewerFindNext,
-            shortcut: chord(AppCommand.viewerFindNext),
-            onPressed: count == 0 ? null : onNext,
-          ),
-          AppIconButton(
-            icon: AppIcons.close,
-            tooltip: l10n.actionClose,
-            shortcut: chord(AppCommand.dismiss),
-            onPressed: onClose,
+          ViewerSearchHints(
+            chord: chord,
+            focusNode: focusNode,
+            hasQuery: state.findQuery.isNotEmpty,
+            hasMatches: count > 0,
           ),
         ],
       ),
@@ -1211,6 +1235,9 @@ class _StatusBar extends StatelessWidget {
     required this.document,
     required this.shortcutMap,
     required this.showFiles,
+    required this.findFocus,
+    required this.previewFindFocus,
+    required this.searchablePreview,
   });
 
   final ViewerState state;
@@ -1218,6 +1245,9 @@ class _StatusBar extends StatelessWidget {
   final bool document;
   final ShortcutMap shortcutMap;
   final bool showFiles;
+  final FocusNode findFocus;
+  final FocusNode previewFindFocus;
+  final bool searchablePreview;
 
   @override
   Widget build(BuildContext context) {
@@ -1253,17 +1283,54 @@ class _StatusBar extends StatelessWidget {
           l10n.fileSize(state.size),
         ),
     ];
-    return ViewerFooter(
-      status: parts.reduce(l10n.joinedDetails),
-      shortcutMap: shortcutMap,
-      showFiles: showFiles,
+    final previewSearch = PreviewSearchScope.maybeOf(context)!;
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        findFocus,
+        previewFindFocus,
+        previewSearch,
+      ]),
+      builder: (context, _) {
+        final preview = state.mode == ViewerMode.preview;
+        final searching = preview ? previewSearch.shown : state.findShown;
+        final clearSearch =
+            searching &&
+            (preview
+                ? previewFindFocus.hasFocus && previewSearch.query.isNotEmpty
+                : findFocus.hasFocus && state.findQuery.isNotEmpty);
+        final commands = [
+          if (!searching && !state.loading && state.error == null) ...[
+            if (state.windowed && !preview) AppCommand.viewerGoTo,
+            if (!preview || searchablePreview) AppCommand.viewerFind,
+          ],
+        ];
+        return ViewerFooter(
+          status: parts.reduce(l10n.joinedDetails),
+          shortcutMap: shortcutMap,
+          showFiles: showFiles,
+          searchShown: searching,
+          clearSearch: clearSearch,
+          hints: [
+            for (final command in commands)
+              if (shortcutMap.labelOf(command, context.platform)
+                  case final key?)
+                AppKeyHint([key], l10n.commandLabel(command)),
+          ],
+        );
+      },
     );
   }
 }
 
 class _PreviewFindSlot extends StatelessWidget {
-  const _PreviewFindSlot({required this.onFocusContent});
+  const _PreviewFindSlot({
+    required this.onFocusContent,
+    required this.focusNode,
+    required this.chord,
+  });
   final VoidCallback onFocusContent;
+  final FocusNode focusNode;
+  final String? Function(AppCommand command) chord;
   @override
   Widget build(BuildContext context) {
     final search = PreviewSearchScope.maybeOf(context)!;
@@ -1274,6 +1341,8 @@ class _PreviewFindSlot extends StatelessWidget {
         child: search.shown
             ? PreviewFindBar(
                 controller: search,
+                focusNode: focusNode,
+                chord: chord,
                 onClose: () {
                   search.hide();
                   onFocusContent();

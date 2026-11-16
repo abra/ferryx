@@ -40,6 +40,9 @@ class DocumentFailure {
 }
 
 class DocumentState {
+  static const minZoom = 1.0;
+  static const maxZoom = 4.0;
+
   const DocumentState({
     this.session,
     this.loading = true,
@@ -48,7 +51,7 @@ class DocumentState {
     this.count = 0,
     this.canPrevious = false,
     this.canNext = false,
-    this.zoom = 1,
+    this.zoom = minZoom,
   });
 
   final DocumentSession? session;
@@ -60,6 +63,10 @@ class DocumentState {
   final bool canNext;
   final double zoom;
   bool get fixed => session?.fixedPages != null;
+  bool get canZoomIn => fixed && zoom < maxZoom;
+  bool get canZoomOut => fixed && zoom > minZoom;
+  bool get canFitPage => canZoomOut;
+  bool get canGoToPage => fixed && count > 0;
 }
 
 /// Owns one opening attempt, including its temporary file and late result.
@@ -134,7 +141,7 @@ class DocumentCubit extends Cubit<DocumentState> {
         count: session.count,
         canPrevious: session.canPrevious,
         canNext: session.canNext,
-        zoom: state.index == session.index ? state.zoom : 1,
+        zoom: state.index == session.index ? state.zoom : DocumentState.minZoom,
       ),
     );
   }
@@ -208,7 +215,7 @@ class DocumentCubit extends Cubit<DocumentState> {
         count: state.count,
         canPrevious: state.canPrevious,
         canNext: state.canNext,
-        zoom: zoom.clamp(1, 4),
+        zoom: zoom.clamp(DocumentState.minZoom, DocumentState.maxZoom),
       ),
     );
   }

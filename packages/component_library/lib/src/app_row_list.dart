@@ -296,10 +296,16 @@ class AppRowListState extends State<AppRowList> {
     return keyboardMenuAnchor(context);
   }
 
-  /// Opens the lead row's menu, as the menu key does.
-  void openMenu() {
-    final lead = widget.controller.lead;
-    if (lead >= 0) widget.onMenu?.call(lead, leadAnchor());
+  /// Opens the current targets' menu, from a toolbar or the menu key.
+  /// Select All can establish targets before any row holds the lead.
+  void openMenu({Rect? anchor}) {
+    final controller = widget.controller;
+    final index = controller.lead >= 0
+        ? controller.lead
+        : controller.targets.firstOrNull;
+    if (index != null && index < controller.count) {
+      widget.onMenu?.call(index, anchor ?? leadAnchor());
+    }
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {

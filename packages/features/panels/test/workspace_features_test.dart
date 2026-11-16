@@ -108,6 +108,23 @@ void main() {
       const Location.native('/home/docs/alpha.txt'),
       const Location.native('/home/docs/beta.txt'),
     ));
+    // Marks may outlive a filtered/replaced listing: two keys are not
+    // necessarily two visible targets for the comparison handler.
+    h.folders['/home/docs']!.removeWhere((row) => row.name == 'beta.txt');
+    await panel.refresh();
+    await tester.pumpAndSettle();
+    final current = panel.state.active!;
+    // Keep a stale selected key to exercise the handler's defensive guard.
+    panel.emit(
+      panel.state.withActive(
+        current.copyWith(
+          selected: {'alpha.txt', 'beta.txt'},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await command(tester, AppCommand.compareFiles);
+    expect(pairs, hasLength(2));
     expect(h.started, isEmpty);
     expect(tester.takeException(), isNull);
   });

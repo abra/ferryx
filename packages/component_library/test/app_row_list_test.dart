@@ -56,10 +56,12 @@ void main() {
   group('AppRowList', () {
     late AppRowListController rows;
     late List<String> events;
+    late List<Rect> menuAnchors;
 
     setUp(() {
       rows = AppRowListController(100);
       events = [];
+      menuAnchors = [];
     });
 
     Future<void> pump(WidgetTester tester) async {
@@ -75,7 +77,10 @@ void main() {
                 autofocus: true,
                 header: const Text('Header'),
                 onActivate: (i) => events.add('open $i'),
-                onMenu: (i, _) => events.add('menu $i'),
+                onMenu: (i, anchor) {
+                  events.add('menu $i');
+                  menuAnchors.add(anchor);
+                },
                 onKey: (event) {
                   if (event is KeyDownEvent &&
                       event.logicalKey == LogicalKeyboardKey.space) {
@@ -95,6 +100,31 @@ void main() {
       );
       await tester.pump();
     }
+
+    testWidgets(
+      'a toolbar menu targets Select All without a lead and ignores empty rows',
+      (
+        tester,
+      ) async {
+        await pump(tester);
+        final list = tester.state<AppRowListState>(find.byType(AppRowList));
+        const anchor = Rect.fromLTWH(20, 30, 80, 24);
+        list.openMenu(anchor: anchor);
+        expect(events, isEmpty);
+        rows.selectAll();
+        await tester.pump();
+        expect(rows.lead, -1);
+        list.openMenu(anchor: anchor);
+        expect(events, ['menu 0']);
+        expect(menuAnchors, [anchor]);
+        expect(rows.targets, hasLength(100));
+        rows.reset(0);
+        await tester.pump();
+        list.openMenu(anchor: anchor);
+        expect(events, ['menu 0']);
+        expect(tester.takeException(), isNull);
+      },
+    );
 
     testWidgets('the keys walk and select; the lead stays in view', (
       tester,

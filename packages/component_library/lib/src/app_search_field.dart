@@ -23,6 +23,7 @@ class AppSearchField extends StatefulWidget {
     this.focusNode,
     this.onChanged,
     this.onSubmitted,
+    this.submitLabel,
     this.autofocus = false,
     this.sidebar = false,
     super.key,
@@ -33,6 +34,7 @@ class AppSearchField extends StatefulWidget {
   final FocusNode? focusNode;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+  final String? submitLabel;
   final bool autofocus;
   final bool sidebar;
 
@@ -135,6 +137,7 @@ class _AppSearchFieldState extends State<AppSearchField> {
           ),
           onChanged: widget.onChanged,
           onSubmitted: widget.onSubmitted,
+          submitLabel: widget.submitLabel,
         ),
       ),
     );

@@ -762,6 +762,85 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     return keyboardMenuAnchor(context);
   }
 
+  PanelActionContext _panelActionContext() {
+    final tab = _tab;
+    return PanelActionContext(
+      tab: tab,
+      opposite: _opposite.state.active,
+      shortcuts: widget.shortcutMap,
+      vim: _prefs.vimMode,
+      hasShelf: !_workspace.state.shelf.isEmpty,
+      hasArchives:
+          tab?.location.isNative == true &&
+          tab!.targets.any(
+            (entry) => !entry.isDir && widget.files.isArchive(entry.path),
+          ),
+      finderTags: widget.capabilities.finderTags,
+      isFavorite: _isFavoriteLocation,
+      comparisonAvailable: widget.navigation.openComparison != null,
+      deletionPending: _deletions.pendingFor(_workspace.state.active) != null,
+    );
+  }
+
+  Future<void> _showPanelActions() async {
+    final tab = _tab;
+    if (tab == null || tab.renaming != null) return;
+    final side = _workspace.state.active;
+    final actions = panelActionsFor(_panelActionContext());
+    final picked = await showAppQuickPicker<AppCommand>(
+      context,
+      builder: (_) => PanelActionsPicker(
+        actions: actions,
+        selectionCount: tab.selected.length,
+        focusedName: tab.focused?.name,
+        shortcutMap: widget.shortcutMap,
+        vim: _prefs.vimMode,
+      ),
+    );
+    if (!mounted) return;
+    if (_workspace.state.active == side) _focusOf(side).requestFocus();
+    if (picked == null) return;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    final current = _tab;
+    final action = actions.firstWhere((action) => action.command == picked);
+    // Watcher updates may remove a marked file while the picker is open.
+    // Never silently retarget an action to another row or panel.
+    final sameItems = switch (action.target) {
+      PanelActionTarget.targets => listEquals(
+        tab.targets.map((entry) => entry.key).toList(),
+        current?.targets.map((entry) => entry.key).toList(),
+      ),
+      PanelActionTarget.focusedItem =>
+        tab.focused?.key == current?.focused?.key,
+      PanelActionTarget.directory => true,
+    };
+    if (_workspace.state.active != side ||
+        current?.id != tab.id ||
+        current?.location != tab.location ||
+        !sameItems ||
+        !panelActionsFor(
+          _panelActionContext(),
+        ).any((action) => action.command == picked)) {
+      showAppNotice(context, _l10n.contextActionsChanged);
+      return;
+    }
+    await _runPanelAction(picked);
+  }
+
+  Future<void> _runPanelAction(AppCommand command, {Rect? anchor}) async {
+    if (command == AppCommand.share) {
+      await _share(anchor: anchor);
+    } else {
+      // Use the same handler chain as keys. Panel-local commands also own
+      // mode transitions (for example yy/dd end Visual mode after taking it).
+      final source = attachedFocusContext(_focusOf(_workspace.state.active));
+      if (source != null) {
+        Actions.maybeInvoke<CommandIntent>(source, CommandIntent(command));
+      }
+    }
+  }
+
   Future<void> _rowMenu(Rect anchor) async {
     final tab = _tab;
     final focused = tab?.focused;
@@ -771,6 +850,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
       anchor: anchor,
       entries: rowMenuEntries(
         context,
+        actionContext: _panelActionContext(),
         entry: focused,
         location: tab.location,
         severalSelected: tab.selected.length > 1,
@@ -781,17 +861,11 @@ extension _WorkspaceActions on _WorkspaceScreenState {
       ),
     );
     if (picked == null || !mounted) return;
-    if (picked == AppCommand.enterItem) {
-      final request = await _active.enter();
-      if (request != null) await _openFile(request);
+    if (picked == AppCommand.contextMenu) {
+      await _showPanelActions();
       return;
     }
-    if (picked == AppCommand.share) {
-      // The picker points where the menu was opened.
-      await _share(anchor: anchor);
-      return;
-    }
-    _globalHandlers(context)[picked]?.call();
+    await _runPanelAction(picked, anchor: anchor);
   }
 
   Future<void> _panelMenu(Rect anchor) async {
@@ -834,6 +908,10 @@ extension _WorkspaceActions on _WorkspaceScreenState {
       ],
     );
     if (picked == null || !mounted) return;
+    if (picked == AppCommand.contextMenu) {
+      await _showPanelActions();
+      return;
+    }
     _globalHandlers(context)[picked]?.call();
   }
 
@@ -1326,6 +1404,7 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     if (tab == null) return;
     final picked = await showFavoritesDialog(
       context,
+      shortcutMap: widget.shortcutMap,
       favorites: _prefs.favorites,
       current: tab.location,
       onChanged: (favorites) => unawaited(

@@ -275,21 +275,21 @@ class _FileDiffScreenState extends State<FileDiffScreen> {
                               ),
                             ),
                     ),
-                    AppStatusBar(
-                      child: Text(
-                        result == null
-                            ? ''
-                            : result.identicalBytes
-                            ? l10n.diffIdentical
-                            : result.failure != null
-                            ? ''
-                            : result.changes.isEmpty
-                            ? l10n.diffLineEndings
-                            : l10n.diffChangeCount(
-                                _change + 1,
-                                result.changes.length,
-                              ),
-                      ),
+                    _DiffFooter(
+                      shortcutMap: widget.shortcutMap,
+                      hasChanges: hasChanges,
+                      status: result == null
+                          ? ''
+                          : result.identicalBytes
+                          ? l10n.diffIdentical
+                          : result.failure != null
+                          ? ''
+                          : result.changes.isEmpty
+                          ? l10n.diffLineEndings
+                          : l10n.diffChangeCount(
+                              _change + 1,
+                              result.changes.length,
+                            ),
                     ),
                   ],
                 );
@@ -297,6 +297,58 @@ class _FileDiffScreenState extends State<FileDiffScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DiffFooter extends StatelessWidget {
+  const _DiffFooter({
+    required this.status,
+    required this.shortcutMap,
+    required this.hasChanges,
+  });
+
+  final String status;
+  final ShortcutMap shortcutMap;
+  final bool hasChanges;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final hints = [
+      for (final (command, label) in [
+        (AppCommand.dismiss, l10n.actionClose),
+        if (hasChanges) ...[
+          (AppCommand.viewerFindNext, l10n.diffNext),
+          (AppCommand.viewerFindPrevious, l10n.diffPrevious),
+        ],
+      ])
+        if (shortcutMap.labelOf(command, context.platform) case final key?)
+          AppKeyHint([key], label),
+    ];
+    return AppStatusBar(
+      child: Row(
+        spacing: AppSpacing.md,
+        children: [
+          Expanded(
+            child: AppTooltip(
+              message: status,
+              child: Text(status, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+          ),
+          if (AppGuidanceScope.maybeOf(context)?.enabled != false)
+            Flexible(
+              flex: 3,
+              child: Visibility(
+                visible: ModalRoute.of(context)?.isCurrent != false,
+                maintainState: true,
+                maintainAnimation: true,
+                maintainSize: true,
+                child: AppKeyHints(hints, singleLine: true),
+              ),
+            ),
+        ],
       ),
     );
   }

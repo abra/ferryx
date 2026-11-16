@@ -268,6 +268,7 @@ class _ConnectDialogState extends State<ConnectDialog> {
                   readOnly: state.connecting,
                   onChanged: _cubit.typeAddress,
                   onSubmitted: (_) => unawaited(_cubit.connect()),
+                  submitLabel: state.canConnect ? l10n.networkConnect : null,
                 ),
               ),
               const SizedBox(height: AppSpacing.xs),

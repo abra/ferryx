@@ -97,12 +97,14 @@ class PaletteView extends StatelessWidget {
           hintText: l10n.paletteHint,
           noResultsText: l10n.paletteNoResults,
           hints: [
-            (
-              '${key(LogicalKeyboardKey.arrowUp)}'
-                  '${key(LogicalKeyboardKey.arrowDown)}',
-              l10n.paletteKeySelect,
-            ),
-            (key(LogicalKeyboardKey.enter), l10n.paletteKeyRun),
+            if (state.rows.any((row) => row is PaletteCommandRow)) ...[
+              (
+                '${key(LogicalKeyboardKey.arrowUp)}'
+                    '${key(LogicalKeyboardKey.arrowDown)}',
+                l10n.paletteKeySelect,
+              ),
+              (key(LogicalKeyboardKey.enter), l10n.paletteKeyRun),
+            ],
             (key(LogicalKeyboardKey.escape), l10n.paletteKeyClose),
           ],
           onQueryChanged: context.read<PaletteCubit>().setQuery,

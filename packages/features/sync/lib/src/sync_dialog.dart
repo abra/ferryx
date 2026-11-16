@@ -75,6 +75,14 @@ class _SyncDialogState extends State<SyncDialog> {
   SyncCubit get _cubit => context.read<SyncCubit>();
 
   @override
+  void initState() {
+    super.initState();
+    _tableFocus.addListener(_focusChanged);
+  }
+
+  void _focusChanged() => setState(() {});
+
+  @override
   void dispose() {
     _left.dispose();
     _right.dispose();
@@ -169,6 +177,14 @@ class _SyncDialogState extends State<SyncDialog> {
       builder: (context, state) => AppDialog(
         title: l10n.syncTitle,
         width: AppSizes.resultsDialogWidth,
+        guidance: _tableFocus.hasFocus && state.visibleCount > 0
+            ? _KeysHint(
+                state: state,
+                rows: _rows,
+                shortcutMap: widget.shortcutMap,
+                allowedFor: _cubit.allowedFor,
+              )
+            : null,
         body: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: appDialogBodyMaxHeight(context),
@@ -197,7 +213,29 @@ class _SyncDialogState extends State<SyncDialog> {
                 onChanged: _cubit.setOptions,
               ),
               const SizedBox(height: AppSpacing.sm),
-              _Status(state: state),
+              Row(
+                children: [
+                  Expanded(child: _Status(state: state)),
+                  const SizedBox(width: AppSpacing.md),
+                  ListenableBuilder(
+                    listenable: _rows,
+                    builder: (buttonContext, _) => OutlinedButton.icon(
+                      style: AppButtonStyles.small(context),
+                      iconAlignment: IconAlignment.end,
+                      icon: const Icon(
+                        AppIcons.chevronDown,
+                        size: AppIconSize.sm,
+                      ),
+                      label: Text(l10n.contextActions),
+                      onPressed: _rows.targets.isEmpty
+                          ? null
+                          : () => _tableKey.currentState?.openMenu(
+                              anchor: keyboardMenuAnchor(buttonContext),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: AppSpacing.xs),
               Flexible(
                 child: SizedBox(
@@ -210,6 +248,7 @@ class _SyncDialogState extends State<SyncDialog> {
                           _tableKey.currentState?.openMenu(),
                     },
                     child: SyncTable(
+                      shortcutMap: widget.shortcutMap,
                       tableKey: _tableKey,
                       state: state,
                       controller: _rows,
@@ -223,8 +262,6 @@ class _SyncDialogState extends State<SyncDialog> {
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.xs),
-              const _KeysHint(),
             ],
           ),
         ),
@@ -322,6 +359,7 @@ class _Field extends StatelessWidget {
       controller: controller,
       monospace: true,
       onSubmitted: (_) => onSubmit(),
+      submitLabel: context.l10n.syncCompare,
     ),
   );
 }
@@ -414,6 +452,7 @@ class _Options extends StatelessWidget {
                     monospace: true,
                     hintText: l10n.syncMaskHint,
                     onSubmitted: (_) => onSubmit(),
+                    submitLabel: l10n.syncCompare,
                   ),
                 ),
               ],
@@ -607,25 +646,54 @@ class _Status extends StatelessWidget {
   }
 }
 
-/// The table's keys, as a quiet line under it.
+/// Only actions the focused table can apply to its current targets.
 class _KeysHint extends StatelessWidget {
-  const _KeysHint();
+  const _KeysHint({
+    required this.state,
+    required this.rows,
+    required this.shortcutMap,
+    required this.allowedFor,
+  });
+
+  final SyncState state;
+  final AppRowListController rows;
+  final ShortcutMap shortcutMap;
+  final List<RowAction> Function(CompareRow row) allowedFor;
 
   @override
-  Widget build(BuildContext context) {
-    final platform = Theme.of(context).platform;
-    String key(LogicalKeyboardKey k) => Chord.keyLabel(k, platform);
-    return Text(
-      context.l10n.syncKeysHint(
-        key(LogicalKeyboardKey.space),
-        key(LogicalKeyboardKey.arrowRight),
-        key(LogicalKeyboardKey.arrowLeft),
-      ),
-      style: context.text.bodySmall?.copyWith(
-        color: context.appColors.textMuted,
-      ),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: rows,
+    builder: (context, _) {
+      final l10n = context.l10n;
+      final platform = Theme.of(context).platform;
+      String key(LogicalKeyboardKey k) => Chord.keyLabel(k, platform);
+      final targets = rows.targets;
+      bool can(RowAction action) => targets.any(
+        (index) => allowedFor(state.rowAt(index)).contains(action),
+      );
+      return AppKeyHints([
+        AppKeyHint([
+          key(LogicalKeyboardKey.arrowUp),
+          key(LogicalKeyboardKey.arrowDown),
+        ], l10n.paletteKeySelect),
+        if (targets.isNotEmpty)
+          AppKeyHint([key(LogicalKeyboardKey.space)], l10n.hintChangeAction),
+        if (can(RowAction.copyToRight))
+          AppKeyHint([
+            key(LogicalKeyboardKey.arrowRight),
+          ], l10n.syncActionCopyRight),
+        if (can(RowAction.copyToLeft))
+          AppKeyHint([
+            key(LogicalKeyboardKey.arrowLeft),
+          ], l10n.syncActionCopyLeft),
+        if (can(RowAction.skip))
+          AppKeyHint([key(LogicalKeyboardKey.backspace)], l10n.syncActionSkip),
+        if (targets.isNotEmpty)
+          if (shortcutMap.labelOf(AppCommand.contextMenu, platform)
+              case final menu?)
+            AppKeyHint([menu], l10n.cmdContextMenu),
+        AppKeyHint([key(LogicalKeyboardKey.escape)], l10n.actionClose),
+      ], singleLine: true);
+    },
+  );
 }

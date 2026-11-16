@@ -148,12 +148,16 @@ class _SecretDialogState extends State<SecretDialog> {
             ),
             networkRowGap,
           ],
-          NetworkField(
-            label: widget.label(l10n),
-            controller: _secret,
-            autofocus: true,
-            obscure: true,
-            onSubmitted: (_) => _submit(),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _secret,
+            builder: (context, value, _) => NetworkField(
+              label: widget.label(l10n),
+              controller: _secret,
+              autofocus: true,
+              obscure: true,
+              onSubmitted: (_) => _submit(),
+              submitLabel: value.text.isNotEmpty ? l10n.networkConnect : null,
+            ),
           ),
           if (widget.retry) ...[
             const SizedBox(height: AppSpacing.xs),
@@ -348,6 +352,9 @@ class _PromptsDialogState extends State<PromptsDialog> {
               obscure: !question.prompts[i].$2,
               onSubmitted: i == question.prompts.length - 1
                   ? (_) => _submit()
+                  : null,
+              submitLabel: i == question.prompts.length - 1
+                  ? l10n.networkContinue
                   : null,
             ),
           ],

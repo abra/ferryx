@@ -4,6 +4,8 @@ import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shortcuts/shortcuts.dart';
 
+import 'panel_actions.dart';
+
 /// What a right click on a row offers; every item is a command the
 /// window handles, so the menu and the keys never disagree. Every item
 /// carries an icon, so the labels line up.
@@ -13,6 +15,7 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
   required Location location,
   required bool severalSelected,
   required ShortcutMap map,
+  PanelActionContext? actionContext,
   bool archive = false,
   bool tags = false,
   bool isFavorite = false,
@@ -41,7 +44,7 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
     FileManager.explorer => l10n.menuShowInExplorer,
     FileManager.files => l10n.menuShowInFiles,
   };
-  return [
+  final entries = <AppMenuEntry<AppCommand>>[
     if (entry.isDir)
       action(AppCommand.enterItem, l10n.cmdEnterItem, icon: AppIcons.folderOpen)
     else
@@ -145,6 +148,43 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
         danger: true,
       ),
     ],
+  ];
+  final available = actionContext == null
+      ? null
+      : {for (final action in panelActionsFor(actionContext)) action.command};
+  final visible = <AppMenuEntry<AppCommand>>[];
+  for (final entry in entries) {
+    if (entry is AppMenuSeparator<AppCommand>) {
+      if (visible.isNotEmpty && visible.last is! AppMenuSeparator<AppCommand>) {
+        visible.add(entry);
+      }
+      continue;
+    }
+    if (entry case AppMenuAction<AppCommand>(:final value)) {
+      // Copy from an archive is the existing immediate extraction alias;
+      // the full picker offers Extract To with an explicit destination.
+      final capability = !native && !remote && value == AppCommand.copyTo
+          ? AppCommand.extractTo
+          : value;
+      if (!map.isAvailable(value) ||
+          (available != null && !available.contains(capability))) {
+        continue;
+      }
+    }
+    visible.add(entry);
+  }
+  if (visible.isNotEmpty && visible.last is AppMenuSeparator<AppCommand>) {
+    visible.removeLast();
+  }
+  return [
+    ...visible,
+    if (visible.isNotEmpty) const AppMenuSeparator(),
+    // The context-menu shortcut opens this menu, not the expanded picker.
+    AppMenuAction(
+      value: AppCommand.contextMenu,
+      label: l10n.contextActions,
+      icon: AppIcons.more,
+    ),
   ];
 }
 
@@ -343,6 +383,12 @@ List<AppMenuEntry<AppCommand>> panelMenuEntries(
       label: l10n.cmdOpenSettings,
       icon: AppIcons.settings,
       shortcut: chord(AppCommand.openSettings),
+    ),
+    const AppMenuSeparator(),
+    AppMenuAction(
+      value: AppCommand.contextMenu,
+      label: l10n.contextActions,
+      icon: AppIcons.more,
     ),
   ];
 }

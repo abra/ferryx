@@ -4,8 +4,17 @@ import 'dart:math' as math;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shortcuts/shortcuts.dart' show Chord;
 
 import 'app_text_field.dart';
+import 'app_focused_edit_hints.dart';
+import 'app_focused_control_hints.dart';
+import 'app_guidance_scope.dart';
+import 'app_key_hints.dart';
+import 'app_key_cap.dart';
+import 'app_search_field.dart';
+import 'app_scrollbar.dart';
+import 'app_status_bar.dart';
 import 'app_identity.dart';
 import 'focus_ring.dart';
 import 'pixel_snap.dart';
@@ -39,6 +48,8 @@ class AppDialog extends StatelessWidget {
     this.width = AppSizes.dialogWidth,
     this.alert = false,
     this.destructive = false,
+    this.guidance,
+    this.showGuidance = true,
     super.key,
   });
 
@@ -48,6 +59,19 @@ class AppDialog extends StatelessWidget {
   final double width;
   final bool alert;
   final bool destructive;
+
+  /// Replaces the automatic guidance in its existing quiet, fixed-height slot.
+  /// Custom keyboard surfaces can compose [AppFocusedEditHints] and
+  /// [AppFocusedControlHints] with their own list/field actions here.
+  final Widget? guidance;
+
+  /// Key-recording or other custom keyboard surfaces can own their guidance.
+  final bool showGuidance;
+
+  bool _showGuidance(BuildContext context) =>
+      !alert &&
+      showGuidance &&
+      (guidance != null || AppGuidanceScope.maybeOf(context)?.enabled != false);
 
   @override
   Widget build(BuildContext context) {
@@ -294,6 +318,10 @@ class _Standard extends StatelessWidget {
                 ),
               ),
             ],
+            if (dialog._showGuidance(context)) ...[
+              const SizedBox(height: AppSpacing.sm),
+              _DialogGuidance(dialog: dialog),
+            ],
             SizedBox(
               height: centered ? AppSpacing.lg : context.metrics.contentMargin,
             ),
@@ -399,6 +427,10 @@ class _ContentDialog extends StatelessWidget {
                       ),
                     ),
                   ],
+                  if (dialog._showGuidance(context)) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    _DialogGuidance(dialog: dialog),
+                  ],
                 ],
               ),
             ),
@@ -502,6 +534,7 @@ class _PromptDialogState extends State<_PromptDialog> {
       controller: _controller,
       autofocus: true,
       onSubmitted: (_) => _submit(),
+      submitLabel: widget.confirmLabel,
     ),
     actions: [
       OutlinedButton(
@@ -748,6 +781,171 @@ class _DefaultIntent extends Intent {
   const _DefaultIntent();
 }
 
+/// A stable slot: caret/selection changes update guidance, not the form size.
+class _DialogGuidance extends StatelessWidget {
+  const _DialogGuidance({required this.dialog});
+
+  final AppDialog dialog;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: AppStatusBar.heightOf(context),
+    child: ModalRoute.of(context)?.isCurrent == false
+        ? const SizedBox.shrink()
+        : ExcludeFocus(
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child:
+                  dialog.guidance ??
+                  AppFocusedEditHints(
+                    fallback: AppFocusedControlHints(
+                      fallback: _DialogCommandHints(dialog: dialog),
+                      builder: (hints) => _DialogCommandHints(
+                        dialog: dialog,
+                        controlHints: hints,
+                      ),
+                    ),
+                    builder: (hints) => _DialogCommandHints(
+                      dialog: dialog,
+                      editHints: hints,
+                    ),
+                  ),
+            ),
+          ),
+  );
+}
+
+class _DialogCommandHints extends StatelessWidget {
+  const _DialogCommandHints({
+    required this.dialog,
+    this.editHints = const [],
+    this.controlHints = const [],
+  });
+
+  final AppDialog dialog;
+  final List<AppKeyHint> editHints;
+  final List<AppKeyHint> controlHints;
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: FocusManager.instance,
+    builder: (context, _) {
+      final focus = FocusManager.instance.primaryFocus;
+      final route = ModalRoute.of(context);
+      final focusScope = FocusScope.of(context);
+      final hasLocalFocus =
+          route?.isCurrent != false &&
+          focus?.ancestors.contains(focusScope) == true;
+      final focused = hasLocalFocus ? attachedFocusContext(focus) : null;
+      final editable = focused?.findAncestorStateOfType<EditableTextState>();
+      final target = _DialogKeys.defaultOf(
+        dialog.actions,
+        destructive: dialog.destructive,
+      );
+      final label = switch (target) {
+        ButtonStyleButton(child: Text(:final data)) => data,
+        _ => null,
+      };
+      final fieldClearsSearch =
+          focused?.findAncestorWidgetOfExactType<AppSearchField>() != null &&
+          editable?.widget.controller.text.isNotEmpty == true;
+      final platform = Theme.of(context).platform;
+      final guidance = AppGuidanceScope.maybeOf(context);
+      final labels = guidance?.enabled == true ? guidance!.labels : null;
+      final hints = [
+        ...controlHints,
+        if (hasLocalFocus &&
+            label != null &&
+            _DefaultAction(target).isEnabled(const _DefaultIntent()))
+          AppKeyHint(
+            [Chord.keyLabel(LogicalKeyboardKey.enter, platform)],
+            label,
+          ),
+        ...editHints,
+        if (fieldClearsSearch && labels != null)
+          AppKeyHint(
+            [Chord.keyLabel(LogicalKeyboardKey.escape, platform)],
+            labels.clear,
+          )
+        else if (route?.isCurrent != false &&
+            route?.popDisposition != RoutePopDisposition.doNotPop &&
+            !fieldClearsSearch)
+          AppKeyHint(
+            [Chord.keyLabel(LogicalKeyboardKey.escape, platform)],
+            MaterialLocalizations.of(context).cancelButtonLabel,
+          ),
+        // Fields may use Tab for completion instead of focus traversal.
+        if (hasLocalFocus &&
+            labels != null &&
+            editable == null &&
+            focusScope.traversalDescendants.take(2).length > 1)
+          AppKeyHint(
+            [Chord.keyLabel(LogicalKeyboardKey.tab, platform)],
+            labels.nextControl,
+          ),
+      ];
+      return _DialogHintRow(hints: hints);
+    },
+  );
+}
+
+/// Labels remain text, separate from the action buttons' labels and styling.
+class _DialogHintRow extends StatefulWidget {
+  const _DialogHintRow({required this.hints});
+
+  final List<AppKeyHint> hints;
+
+  @override
+  State<_DialogHintRow> createState() => _DialogHintRowState();
+}
+
+class _DialogHintRowState extends State<_DialogHintRow> {
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AppScrollbar(
+    controller: _scroll,
+    thumbVisibility: true,
+    scrollbarOrientation: ScrollbarOrientation.bottom,
+    child: SingleChildScrollView(
+      controller: _scroll,
+      scrollDirection: Axis.horizontal,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: AppSpacing.md,
+          children: [
+            for (final hint in widget.hints)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                spacing: AppSpacing.xs,
+                children: [
+                  for (final key in hint.keys) AppKeyCap(key),
+                  RichText(
+                    textScaler: MediaQuery.textScalerOf(context),
+                    text: TextSpan(
+                      text: hint.label,
+                      style: context.text.bodySmall?.copyWith(
+                        color: context.appColors.textMuted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 class _DefaultAction extends Action<_DefaultIntent> {
   _DefaultAction(this.target);
 
@@ -762,7 +960,7 @@ class _DefaultAction extends Action<_DefaultIntent> {
   @override
   bool isEnabled(_DefaultIntent intent) =>
       _press != null &&
-      FocusManager.instance.primaryFocus?.context
+      attachedFocusContext(FocusManager.instance.primaryFocus)
               ?.findAncestorStateOfType<EditableTextState>() ==
           null;
 

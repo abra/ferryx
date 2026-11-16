@@ -7,10 +7,12 @@ import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:file_repository/file_repository.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:pagecraft/testing.dart';
 import 'package:viewer_feature/src/document_preview_screen.dart';
+import 'package:viewer_feature/src/document_cubit.dart';
 import 'package:viewer_feature/src/document_session.dart';
 import 'package:viewer_feature/viewer_feature.dart';
 
@@ -268,6 +270,120 @@ void main() {
       },
     );
   }
+
+  testWidgets('fixed-page menu matches toolbar at zoom and page boundaries', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(1000, 700)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final directory = await tester.runAsync(
+      () => Directory.systemTemp.createTemp('ferryx-document-actions-'),
+    );
+    final file = File('${directory!.path}/book.pdf')
+      ..writeAsBytesSync(pdfFixture());
+    addTearDown(() => directory.deleteSync(recursive: true));
+    final source = _Source(file.path, 'book.pdf');
+    DocumentSession? session;
+    final l10n = lookupFerryxLocalizations(const Locale('en'));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(AppPlatformStyle.macos),
+        localizationsDelegates: FerryxSupportedLocales.delegates,
+        supportedLocales: FerryxSupportedLocales.locales,
+        home: Scaffold(
+          body: DocumentPreviewScreen(
+            source: source,
+            generation: 0,
+            opener: (path, format, appearance) async =>
+                session = await openDocumentSession(path, format, appearance),
+          ),
+        ),
+      ),
+    );
+    await _settle(tester, () => session?.ready ?? false);
+    await tester.pump();
+    final cubit = tester
+        .widget<BlocBuilder<DocumentCubit, DocumentState>>(
+          find.byType(BlocBuilder<DocumentCubit, DocumentState>),
+        )
+        .bloc!;
+    Finder button(String tooltip) => find.byWidgetPredicate(
+      (widget) => widget is AppIconButton && widget.tooltip == tooltip,
+    );
+    Future<void> rendered() => _settle(
+      tester,
+      () => tester
+          .widgetList<RawImage>(find.byType(RawImage))
+          .any((image) => image.image != null),
+    );
+    Future<void> checkMenu({bool goTo = true}) async {
+      await rendered();
+      final expected = [
+        (l10n.cmdDocumentZoomIn, cubit.state.zoom < DocumentState.maxZoom),
+        (l10n.cmdDocumentZoomOut, cubit.state.zoom > DocumentState.minZoom),
+        (l10n.documentFitPage, cubit.state.zoom > DocumentState.minZoom),
+        (l10n.documentGoToPage, goTo),
+      ];
+      for (final (label, enabled) in expected) {
+        expect(
+          tester.widget<AppIconButton>(button(label)).onPressed != null,
+          enabled,
+          reason: 'toolbar: $label',
+        );
+      }
+      await tester.tap(button(l10n.documentActions));
+      await tester.pumpAndSettle();
+      for (final (label, enabled) in expected) {
+        expect(
+          tester
+              .widget<AppMenuItem>(
+                find.widgetWithText(AppMenuItem, label),
+              )
+              .enabled,
+          enabled,
+          reason: 'menu: $label',
+        );
+      }
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+    }
+
+    expect(cubit.state.zoom, 1);
+    await checkMenu();
+    for (var step = 0; step < 6; step++) {
+      await tester.tap(button(l10n.cmdDocumentZoomIn));
+      await tester.pump();
+    }
+    expect(cubit.state.zoom, 4);
+    expect(
+      tester
+          .widget<InteractiveViewer>(find.byType(InteractiveViewer))
+          .transformationController!
+          .value
+          .getMaxScaleOnAxis(),
+      4,
+    );
+    await checkMenu();
+    await tester.tap(button(l10n.documentActions));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(AppMenuItem, l10n.documentFitPage));
+    await rendered();
+    await tester.pumpAndSettle();
+    expect(cubit.state.zoom, 1);
+    await checkMenu();
+
+    // Partial/no-page state must not promise a page-jump dialog.
+    cubit.emit(DocumentState(session: session, loading: false, count: 0));
+    await tester.pump();
+    await tester.pump();
+    expect(cubit.state.count, 0);
+    await checkMenu(goTo: false);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await _settle(tester, () => source.leases.single.released.isCompleted);
+  });
 }
 
 // Native I/O completes on real time; callbacks and widget layout need pumps.

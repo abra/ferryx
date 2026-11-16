@@ -36,6 +36,7 @@ class AppTextField extends StatelessWidget {
     this.maxLines = 1,
     this.onChanged,
     this.onSubmitted,
+    this.submitLabel,
     this.onEditingComplete,
     this.style,
     this.strutStyle,
@@ -64,6 +65,10 @@ class AppTextField extends StatelessWidget {
   final int? maxLines;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+
+  /// Explicit next step for contextual hints when Return submits this field.
+  /// Keep null while validation or a busy state prevents that action.
+  final String? submitLabel;
   final VoidCallback? onEditingComplete;
 
   /// Embedded editors may align text to their surrounding rows.

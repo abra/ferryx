@@ -182,6 +182,8 @@ or **server operations**.
   format. Both use the panel's displayed order, or the focused item when
   nothing is marked; copying keeps the marks. The row context menu offers
   both actions. In Vim mode, use `yn` for names and `yp` for full paths.
+  Selection hints prioritize these two shortcuts, including when marking
+  items with Space in Vim Normal mode or using Visual selection.
 - The delete dialog initially selects Trash; permanent deletion is a
   separate choice.
 - The Shelf collects local files from several folders. Add with ⌥⌘S,
@@ -465,6 +467,31 @@ Vim example: `:connect sftp://me@host/srv`.
 names in any UI language. **Shortcuts** (⌘/ / Ctrl+/) shows current bindings.
 **Settings → Hotkeys** assigns or replaces them. Click hints (⌘J / Ctrl+J)
 label controls; the footer suggests keys for the current area/selection.
+In the file list, **Actions** opens a searchable list of available operations,
+including commands without a shortcut. Click an action or press Enter to run
+it. The list distinguishes marked files from the item under the cursor and
+the current folder, and remains available after marking with Space, mouse
+selection, Visual mode or quick search. The row context menu also links to
+**Actions**. Selection, quick search, renaming and the Vim `:` command line
+each have their own short hints. Hints use your assigned shortcuts;
+unavailable archive/server operations are omitted.
+
+While editing a field, guidance follows its text and selection: select all,
+copy/cut selected text, paste, and submit where the field names its action.
+Form dialogs and Settings show this guidance locally. Search in preview
+distinguishes **Esc to clear** a nonempty input from **Esc to close search**,
+and offers match navigation when results exist.
+
+Menus and choice lists show navigation, selection and closing keys. In
+Settings, the footer follows the focused control: Space for a switch or
+pop-up, arrows for segments and sliders. Search results, Favourites,
+checksums, duplicates, synchronization and file comparison suggest actions
+for the current row. Checksums, duplicates and synchronization also have a
+visible **Actions** menu for their results. A foreground menu owns the hints until it closes;
+the underlying window keeps its layout. Compact menus use labelled keycaps
+with descriptions on hover. **Settings → General → Contextual key hints**
+controls automatic guidance; task-specific instructions remain available.
+
 Form fields share text sizing, spacing and focus indicators, including
 monospace fields for paths and arguments. Enter keeps focus when a form stays open.
 

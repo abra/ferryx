@@ -22,6 +22,7 @@ Future<void> showChecksumsDialog(
   required String base,
   required ChecksumService service,
   ChecksumAlgorithm? algorithm,
+  ShortcutMap? shortcutMap,
 }) => showAppDialog<void>(
   context,
   (context) => BlocProvider(
@@ -31,16 +32,20 @@ Future<void> showChecksumsDialog(
       base: base,
       algorithm: algorithm,
     )..start(),
-    child: const ChecksumsDialog(),
+    child: ChecksumsDialog(shortcutMap: shortcutMap),
   ),
 );
 
 class ChecksumsDialog extends StatefulWidget {
-  const ChecksumsDialog({super.key});
+  const ChecksumsDialog({this.shortcutMap, super.key});
+
+  final ShortcutMap? shortcutMap;
 
   @override
   State<ChecksumsDialog> createState() => _ChecksumsDialogState();
 }
+
+enum _RowAction { copyHash, copyLine, selectAll, deselectAll }
 
 class _ChecksumsDialogState extends State<ChecksumsDialog> {
   final _expected = TextEditingController();
@@ -54,7 +59,10 @@ class _ChecksumsDialogState extends State<ChecksumsDialog> {
   void initState() {
     super.initState();
     _expected.addListener(_onExpected);
+    _tableFocus.addListener(_focusChanged);
   }
+
+  void _focusChanged() => setState(() {});
 
   @override
   void dispose() {
@@ -103,26 +111,54 @@ class _ChecksumsDialogState extends State<ChecksumsDialog> {
   Future<void> _menu(int index, Rect anchor) async {
     final l10n = context.l10n;
     final targets = _rows.targets.isEmpty ? [index] : _rows.targets;
-    final picked = await showAppMenu<bool>(
+    final picked = await showAppMenu<_RowAction>(
       context: context,
       anchor: anchor,
       entries: [
         AppMenuAction(
-          value: false,
+          value: _RowAction.copyHash,
           label: l10n.checksumCopyHash,
           icon: AppIcons.copy,
           enabled: _hashesOf(targets).isNotEmpty,
         ),
         AppMenuAction(
-          value: true,
+          value: _RowAction.copyLine,
           label: l10n.checksumCopyLine,
           icon: AppIcons.text,
           enabled: _hashesOf(targets).isNotEmpty,
         ),
+        const AppMenuSeparator(),
+        AppMenuAction(
+          value: _RowAction.selectAll,
+          label: l10n.cmdSelectAll,
+          shortcut: widget.shortcutMap?.labelOf(
+            AppCommand.selectAll,
+            context.platform,
+          ),
+          enabled: _rows.selected.length < _rows.count,
+        ),
+        AppMenuAction(
+          value: _RowAction.deselectAll,
+          label: l10n.cmdDeselectAll,
+          shortcut: widget.shortcutMap?.labelOf(
+            AppCommand.deselectAll,
+            context.platform,
+          ),
+          enabled: _rows.selected.isNotEmpty,
+        ),
       ],
     );
     if (picked == null || !mounted) return;
-    await _copy(picked ? _linesOf(targets) : _hashesOf(targets));
+    switch (picked) {
+      case _RowAction.copyHash:
+        await _copy(_hashesOf(targets));
+      case _RowAction.copyLine:
+        await _copy(_linesOf(targets));
+      case _RowAction.selectAll:
+        _rows.selectAll();
+      case _RowAction.deselectAll:
+        _rows.clear();
+    }
   }
 
   Future<void> _save() async {
@@ -179,6 +215,45 @@ class _ChecksumsDialogState extends State<ChecksumsDialog> {
               ? l10n.checksumVerifyTitle(_cubit.sumsName)
               : l10n.checksumTitle,
           width: AppSizes.resultsDialogWidth,
+          guidance: _tableFocus.hasFocus && state.files.isNotEmpty
+              ? ListenableBuilder(
+                  listenable: _rows,
+                  builder: (context, _) => AppKeyHints([
+                    AppKeyHint([
+                      Chord.keyLabel(
+                        LogicalKeyboardKey.arrowUp,
+                        context.platform,
+                      ),
+                      Chord.keyLabel(
+                        LogicalKeyboardKey.arrowDown,
+                        context.platform,
+                      ),
+                    ], l10n.paletteKeySelect),
+                    if (_rows.targets.any(
+                      (index) => state.outcomeOf(index)?.hash != null,
+                    ))
+                      if (widget.shortcutMap?.labelOf(
+                            AppCommand.copyPaths,
+                            context.platform,
+                          )
+                          case final copy?)
+                        AppKeyHint([copy], l10n.checksumCopyHash),
+                    if (_rows.targets.isNotEmpty)
+                      if (widget.shortcutMap?.labelOf(
+                            AppCommand.contextMenu,
+                            context.platform,
+                          )
+                          case final menu?)
+                        AppKeyHint([menu], l10n.cmdContextMenu),
+                    AppKeyHint([
+                      Chord.keyLabel(
+                        LogicalKeyboardKey.escape,
+                        context.platform,
+                      ),
+                    ], l10n.actionClose),
+                  ], singleLine: true),
+                )
+              : null,
           body: ConstrainedBox(
             constraints: BoxConstraints(
               maxHeight: appDialogBodyMaxHeight(context),
@@ -203,7 +278,29 @@ class _ChecksumsDialogState extends State<ChecksumsDialog> {
                   ),
                 ],
                 const SizedBox(height: AppSpacing.sm),
-                _Status(state: state),
+                Row(
+                  children: [
+                    Expanded(child: _Status(state: state)),
+                    const SizedBox(width: AppSpacing.md),
+                    ListenableBuilder(
+                      listenable: _rows,
+                      builder: (buttonContext, _) => OutlinedButton.icon(
+                        style: AppButtonStyles.small(context),
+                        iconAlignment: IconAlignment.end,
+                        icon: const Icon(
+                          AppIcons.chevronDown,
+                          size: AppIconSize.sm,
+                        ),
+                        label: Text(l10n.contextActions),
+                        onPressed: _rows.targets.isEmpty
+                            ? null
+                            : () => _tableKey.currentState?.openMenu(
+                                anchor: keyboardMenuAnchor(buttonContext),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: AppSpacing.xs),
                 Flexible(
                   child: SizedBox(

@@ -36,10 +36,22 @@ enum HintWord {
   cancel,
   back,
   keepMatches,
+  run,
+  complete,
+  previousCommand,
+  nextCommand,
   // ─── Interface ───
   reveal,
   remove,
 }
+
+const commandLineHints = [
+  KeyHint(LogicalKeyboardKey.enter, HintWord.run),
+  KeyHint(LogicalKeyboardKey.tab, HintWord.complete),
+  KeyHint(LogicalKeyboardKey.arrowUp, HintWord.previousCommand),
+  KeyHint(LogicalKeyboardKey.arrowDown, HintWord.nextCommand),
+  KeyHint(LogicalKeyboardKey.escape, HintWord.cancel),
+];
 
 /// The keys of the shelf's strip while it has them.
 const shelfHints = [
@@ -68,19 +80,49 @@ List<PanelHint> hintsFor({
   bool hasMultipleTabs = false,
   int screenItems = 20,
 }) {
-  final hints = _hintsFor(
+  final proposed = _hintsFor(
     tab: tab,
     vim: vim,
     hasRegister: hasRegister,
     hasMultipleTabs: hasMultipleTabs,
     screenItems: screenItems,
   );
+  final location = tab?.location;
+  final hints = [
+    for (final hint in proposed)
+      if (location == null || hint is! CommandHint)
+        hint
+      else if (location.isNative)
+        hint
+      else if (hint.command == AppCommand.copyTo)
+        CommandHint(
+          hint.command,
+          labelCommand: location.isRemote ? null : AppCommand.extractTo,
+        )
+      else if (location.isRemote && hint.command == AppCommand.moveToTrash)
+        const CommandHint(AppCommand.deletePermanently)
+      else if (!const {
+            AppCommand.vimYank,
+            AppCommand.vimCut,
+            AppCommand.vimPaste,
+            AppCommand.compress,
+            AppCommand.checksums,
+          }.contains(hint.command) &&
+          (location.isRemote ||
+              !const {
+                AppCommand.moveTo,
+                AppCommand.moveToTrash,
+                AppCommand.pasteItems,
+                AppCommand.newFolder,
+              }.contains(hint.command)))
+        hint,
+  ];
   // A flat view names its way back first.
   if (tab != null &&
       tab.isFlat &&
       tab.renaming == null &&
       !(vim && tab.searching)) {
-    return [const CommandHint(AppCommand.toggleFlatView), ...hints.take(4)];
+    return [const CommandHint(AppCommand.toggleFlatView), ...hints];
   }
   return hints;
 }
@@ -121,10 +163,27 @@ List<PanelHint> _hintsFor({
         CommandHint(AppCommand.vimSearchPrevious),
       ],
       const CommandHint(AppCommand.clearQuickSearch),
+      if (tab.matches.isNotEmpty) ...[
+        CommandHint(
+          AppCommand.enterItem,
+          labelCommand: tab.focused?.isDir == false
+              ? AppCommand.openItem
+              : null,
+        ),
+        if (tab.focused?.isDir == false)
+          const CommandHint(AppCommand.showPreview),
+        const CommandHint(AppCommand.toggleSelectionMoveDown),
+      ],
+      if (tab.selected.isNotEmpty) ...const [
+        CommandHint(AppCommand.copyItemName),
+        CommandHint(AppCommand.copyItemPath),
+      ],
     ];
   }
   if (vim && tab.visual) {
     return const [
+      CommandHint(AppCommand.copyItemName),
+      CommandHint(AppCommand.copyItemPath),
       CommandHint(AppCommand.vimYank),
       CommandHint(AppCommand.vimCut),
       CommandHint(AppCommand.moveToTrash),
@@ -133,6 +192,8 @@ List<PanelHint> _hintsFor({
   }
   if (tab.selected.isNotEmpty) {
     return const [
+      CommandHint(AppCommand.copyItemName),
+      CommandHint(AppCommand.copyItemPath),
       CommandHint(AppCommand.copyTo),
       CommandHint(AppCommand.moveTo),
       CommandHint(AppCommand.moveToTrash),
@@ -154,9 +215,7 @@ List<PanelHint> _hintsFor({
       CommandHint(AppCommand.vimBlockNext),
     ],
   ];
-  return navigation.isEmpty
-      ? browsing
-      : [...navigation, ...browsing.take(5 - navigation.length)];
+  return navigation.isEmpty ? browsing : [...navigation, ...browsing];
 }
 
 List<PanelHint> _browsingHints(
@@ -234,6 +293,8 @@ class KeyHintStrip extends StatelessWidget {
     required this.vim,
     required this.onHide,
     required this.onHelp,
+    this.editingHints,
+    this.onActions,
     super.key,
   });
 
@@ -242,6 +303,11 @@ class KeyHintStrip extends StatelessWidget {
   final bool vim;
   final VoidCallback onHide;
   final VoidCallback onHelp;
+  final List<AppKeyHint>? editingHints;
+
+  /// Opens executable actions, including commands without a key binding.
+  /// Omitted in editors that commit or cancel on focus loss.
+  final VoidCallback? onActions;
 
   @override
   Widget build(BuildContext context) {
@@ -275,12 +341,21 @@ class KeyHintStrip extends StatelessWidget {
                 HintWord.cancel => l10n.actionCancel,
                 HintWord.back => l10n.hintBack,
                 HintWord.keepMatches => l10n.hintKeepMatches,
+                HintWord.run => l10n.paletteKeyRun,
+                HintWord.complete => l10n.hintComplete,
+                HintWord.previousCommand => l10n.hintPreviousCommand,
+                HintWord.nextCommand => l10n.hintNextCommand,
                 HintWord.reveal => l10n.shelfHintReveal,
                 HintWord.remove => l10n.shelfHintRemove,
               },
             ),
           );
       }
+    }
+    if (editingHints case final editing?) {
+      entries
+        ..clear()
+        ..addAll(editing);
     }
     final sheet = shortcutMap.labelOf(
       AppCommand.cheatSheet,
@@ -292,36 +367,50 @@ class KeyHintStrip extends StatelessWidget {
         left: metrics.tableRowInset + AppSpacing.sm,
         right: AppSpacing.xs,
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: AppKeyHints(entries, singleLine: true),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          AppTooltip(
-            message: l10n.cmdCheatSheet,
-            shortcut: sheet,
-            child: TextButton(
-              onPressed: onHelp,
-              style: AppButtonStyles.bar(context),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                spacing: AppSpacing.xs,
-                children: [
-                  const Icon(AppIcons.keyboard, size: AppIconSize.sm),
-                  Text(l10n.hintsHelp),
-                  if (sheet != null) AppKeyCap(sheet),
-                ],
+      child: Visibility(
+        visible: ModalRoute.of(context)?.isCurrent != false,
+        maintainState: true,
+        maintainAnimation: true,
+        maintainSize: true,
+        child: Row(
+          children: [
+            Expanded(
+              child: AppKeyHints(entries, singleLine: true),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            if (onActions != null) ...[
+              TextButton(
+                onPressed: onActions,
+                style: AppButtonStyles.bar(context),
+                child: Text(l10n.contextActions),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+            ],
+            AppTooltip(
+              message: l10n.cmdCheatSheet,
+              shortcut: sheet,
+              child: TextButton(
+                onPressed: onHelp,
+                style: AppButtonStyles.bar(context),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: AppSpacing.xs,
+                  children: [
+                    const Icon(AppIcons.keyboard, size: AppIconSize.sm),
+                    Text(l10n.hintsHelp),
+                    if (sheet != null) AppKeyCap(sheet),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          AppIconButton(
-            icon: AppIcons.close,
-            tooltip: l10n.hintsHide,
-            onPressed: onHide,
-          ),
-        ],
+            const SizedBox(width: AppSpacing.sm),
+            AppIconButton(
+              icon: AppIcons.close,
+              tooltip: l10n.hintsHide,
+              onPressed: onHide,
+            ),
+          ],
+        ),
       ),
     );
   }

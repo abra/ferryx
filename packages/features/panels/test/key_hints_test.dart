@@ -89,7 +89,12 @@ void main() {
         AppCommand.previousTab,
         AppCommand.nextTab,
       ]);
-      expect(hints.length, lessThanOrEqualTo(5));
+      expect(
+        commands(hints).skip(2),
+        commands(
+          hintsFor(tab: current, vim: true, hasRegister: true),
+        ),
+      );
       final single = commands(
         hintsFor(tab: current, vim: true, hasRegister: true),
       );
@@ -127,6 +132,8 @@ void main() {
       hasMultipleTabs: true,
     );
     expect(commands(hints), [
+      AppCommand.copyItemName,
+      AppCommand.copyItemPath,
       AppCommand.copyTo,
       AppCommand.moveTo,
       AppCommand.moveToTrash,
@@ -139,6 +146,75 @@ void main() {
       AppCommand.vimPaste,
     );
   });
+
+  test('archive and server hints describe available file operations', () {
+    final marked = tab(selected: {'a.txt'});
+    final archive = hintsFor(
+      tab: marked.copyWith(
+        location: const Location.inArchive(archive: '/books.zip'),
+      ),
+      vim: false,
+      hasRegister: false,
+    );
+    expect(commands(archive), [
+      AppCommand.copyItemName,
+      AppCommand.copyItemPath,
+      AppCommand.copyTo,
+      AppCommand.clearQuickSearch,
+    ]);
+    expect(
+      archive
+          .whereType<CommandHint>()
+          .firstWhere((h) => h.command == AppCommand.copyTo)
+          .labelCommand,
+      AppCommand.extractTo,
+    );
+    final remote = commands(
+      hintsFor(
+        tab: marked.copyWith(
+          location: const Location.remote(
+            server: 'sftp://me@box:22',
+            path: '/home',
+          ),
+        ),
+        vim: true,
+        hasRegister: true,
+      ),
+    );
+    expect(remote, contains(AppCommand.deletePermanently));
+    expect(remote, isNot(contains(AppCommand.moveToTrash)));
+    expect(remote, isNot(contains(AppCommand.compress)));
+  });
+
+  test(
+    'checksum verification is suggested only for native files',
+    () {
+      const sums = FileEntry(
+        name: 'SHA256SUMS',
+        path: '/home/SHA256SUMS',
+        kind: EntryKind.file,
+        isDir: false,
+      );
+      for (final location in const [
+        home,
+        Location.inArchive(archive: '/books.zip'),
+        Location.remote(server: 'sftp://me@box:22', path: '/home'),
+      ]) {
+        final hints = commands(
+          hintsFor(
+            tab: tab(rows: const [sums]).copyWith(location: location),
+            vim: false,
+            hasRegister: false,
+          ),
+        );
+        expect(
+          hints.contains(AppCommand.checksums),
+          location.isNative,
+          reason: '$location',
+        );
+      }
+    },
+  );
 
   test(
     'ordinary browsing offers the shelf instead of an unbound Vim paste',
@@ -197,6 +273,8 @@ void main() {
       AppCommand.vimSearchNext,
       AppCommand.vimSearchPrevious,
       AppCommand.clearQuickSearch,
+      AppCommand.enterItem,
+      AppCommand.toggleSelectionMoveDown,
     ]);
     final visual = hintsFor(
       tab: tab(cursor: 1, visualAnchor: 1, selected: {'docs'}),
@@ -205,6 +283,8 @@ void main() {
       hasMultipleTabs: true,
     );
     expect(commands(visual), [
+      AppCommand.copyItemName,
+      AppCommand.copyItemPath,
       AppCommand.vimYank,
       AppCommand.vimCut,
       AppCommand.moveToTrash,
@@ -437,6 +517,84 @@ void main() {
             cursor == 2 ? l10n.cmdOpenItem : l10n.cmdEnterItem,
           );
           expect(tester.takeException(), isNull);
+        }
+      }
+    }
+  });
+
+  testWidgets('selection copy hints follow the locale, mode and bindings', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(1200, 600)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    const platform = TargetPlatform.macOS;
+    Finder keyCap(String label) => find.byWidgetPredicate(
+      (widget) => widget is AppKeyCap && widget.label == label,
+    );
+    for (final language in ['en', 'ru']) {
+      final locale = Locale(language);
+      final l10n = lookupFerryxLocalizations(locale);
+      for (final vim in [false, true]) {
+        for (final visual in [false, true]) {
+          final hints = hintsFor(
+            tab: tab(
+              cursor: 2,
+              selected: {'a.txt'},
+              visualAnchor: visual ? 2 : null,
+            ),
+            vim: vim,
+            hasRegister: false,
+          );
+          for (final rebound in [false, true]) {
+            final defaults = ShortcutMap.forUser(platform, vimMotions: vim);
+            final map = rebound
+                ? defaults
+                      .rebind(AppCommand.copyItemName, [
+                        Chord(
+                          LogicalKeyboardKey.keyN,
+                          primary: true,
+                          alt: true,
+                        ),
+                      ])
+                      .rebind(AppCommand.copyItemPath, [])
+                : defaults;
+            await tester.pumpWidget(
+              MaterialApp(
+                theme: AppTheme.light(AppPlatformStyle.macos),
+                locale: locale,
+                localizationsDelegates: FerryxSupportedLocales.delegates,
+                supportedLocales: FerryxSupportedLocales.locales,
+                home: Material(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: KeyHintStrip(
+                      hints: hints,
+                      shortcutMap: map,
+                      vim: vim,
+                      onHide: () {},
+                      onHelp: () {},
+                    ),
+                  ),
+                ),
+              ),
+            );
+            final name = rebound ? '⌥⌘N' : (vim ? 'yn' : '⇧⌘C');
+            final path = vim ? 'yp' : '⌥⌘C';
+            expect(keyCap(name), findsOneWidget);
+            expect(find.text(l10n.cmdCopyItemName), findsOneWidget);
+            expect(keyCap(path), rebound ? findsNothing : findsOneWidget);
+            expect(
+              find.text(l10n.cmdCopyItemPath),
+              rebound ? findsNothing : findsOneWidget,
+            );
+            expect(
+              tester.widget<AppKeyCap>(keyCap(name)).typed,
+              vim && !rebound,
+            );
+            expect(tester.takeException(), isNull);
+          }
         }
       }
     }

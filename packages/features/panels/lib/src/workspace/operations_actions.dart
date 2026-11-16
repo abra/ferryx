@@ -24,6 +24,7 @@ extension _OperationsActions on _WorkspaceScreenState {
     final opposite = other?.focused;
     final List<Location> locations;
     if (tab.selected.length == 2 &&
+        selected.length == 2 &&
         selected.every((entry) => !entry.isDir && !entry.isParent)) {
       locations = [for (final entry in selected) tab.locationOf(entry)];
     } else if (tab.focused case final focused?

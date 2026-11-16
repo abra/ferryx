@@ -1,5 +1,20 @@
 import 'package:flutter/widgets.dart';
 
+/// The focused control's context only while its render subtree is attached.
+///
+/// A focus node can briefly keep a deactivated (but still mounted) context
+/// while a form rebuilds or a GlobalKey moves. Ancestor lookup is unsafe then.
+/// Element.renderObject walks downward without requiring an active element;
+/// checking its attachment works in release builds as well as in debug mode.
+BuildContext? attachedFocusContext(FocusNode? node) {
+  final context = node?.context;
+  return context is Element &&
+          context.mounted &&
+          context.renderObject?.attached == true
+      ? context
+      : null;
+}
+
 /// Pushes [route] on the root navigator and, once it closes, gives the
 /// focus back to what held it when it opened, as native menus and popovers
 /// do, a text field with its selection as it was. The navigator's own guess
@@ -53,4 +68,6 @@ void focusWithSelection(
 }
 
 TextEditingController? _controllerOf(FocusNode? node) =>
-    node?.context?.findAncestorWidgetOfExactType<EditableText>()?.controller;
+    attachedFocusContext(node)
+        ?.findAncestorWidgetOfExactType<EditableText>()
+        ?.controller;

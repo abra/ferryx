@@ -1602,17 +1602,95 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   String get confirmDeleteLabel => 'Ask before deleting permanently';
 
   @override
-  String get generalKeyHintsLabel => 'Key hints under the panels';
+  String get generalKeyHintsLabel => 'Contextual key hints';
 
   @override
   String get generalKeyHintsNote =>
-      'One line with the keys for what is under the cursor or selected';
+      'Quiet hints for the active area, menus and controls';
 
   @override
   String get hintsHide => 'Hide the hints';
 
   @override
   String get hintsHelp => 'Shortcuts';
+
+  @override
+  String get contextActions => 'Actions';
+
+  @override
+  String get contextActionsHint => 'Find an action';
+
+  @override
+  String contextActionsSelection(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count selected items',
+      one: '1 selected item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String contextActionsFocused(String name) {
+    return 'Under the cursor: $name';
+  }
+
+  @override
+  String get contextActionsFolder => 'Current folder';
+
+  @override
+  String get contextActionsChanged =>
+      'The items changed. Choose the action again.';
+
+  @override
+  String get hintComplete => 'Complete';
+
+  @override
+  String get hintPreviousCommand => 'Previous command';
+
+  @override
+  String get hintNextCommand => 'Next command';
+
+  @override
+  String get hintNextField => 'Next field';
+
+  @override
+  String get hintNavigate => 'Navigate';
+
+  @override
+  String get hintChoose => 'Choose';
+
+  @override
+  String get hintNextControl => 'Next control';
+
+  @override
+  String get hintPreviousControl => 'Previous control';
+
+  @override
+  String get hintToggle => 'Toggle';
+
+  @override
+  String get hintAdjust => 'Adjust';
+
+  @override
+  String get hintActivate => 'Activate';
+
+  @override
+  String get hintResults => 'Results';
+
+  @override
+  String get hintChangeAction => 'Change action';
+
+  @override
+  String viewerFindCloseHint(String key) {
+    return '$key — close search';
+  }
+
+  @override
+  String viewerFindClearHint(String key) {
+    return '$key — clear search';
+  }
 
   @override
   String get commandsButton => 'Commands';

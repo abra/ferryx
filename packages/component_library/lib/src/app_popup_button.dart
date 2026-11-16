@@ -35,17 +35,26 @@ class AppPopupButton<T> extends StatelessWidget {
 
   Future<void> _open(BuildContext context) async {
     final box = context.findRenderObject()! as RenderBox;
-    final picked = await showAppMenu<T>(
+    // A null option is data (e.g. the system language), not dismissal.
+    final options = List<(T, String)>.of(items, growable: false);
+    final current = options.indexWhere((option) => option.$1 == value);
+    final picked = await showAppMenu<int>(
       context: context,
       anchor: box.localToGlobal(Offset.zero) & box.size,
       // Opens on the current choice, so ↑/↓ step from it.
-      initialValue: value,
+      initialValue: current < 0 ? null : current,
       entries: [
-        for (final (option, label) in items)
-          AppMenuAction(value: option, label: label, checked: option == value),
+        for (var i = 0; i < options.length; i++)
+          AppMenuAction(
+            value: i,
+            label: options[i].$2,
+            checked: options[i].$1 == value,
+          ),
       ],
     );
-    if (picked != null && picked != value) onChanged(picked);
+    if (picked == null || !context.mounted) return;
+    final option = options[picked].$1;
+    if (option != value) onChanged(option);
   }
 
   @override

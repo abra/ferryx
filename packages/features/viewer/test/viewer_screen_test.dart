@@ -18,6 +18,7 @@ import 'package:viewer_feature/src/preview_search.dart';
 import 'package:viewer_feature/src/text_layout.dart';
 import 'package:viewer_feature/src/text_window.dart';
 import 'package:viewer_feature/src/viewer_views.dart';
+import 'package:viewer_feature/src/viewer_search_hints.dart';
 import 'package:viewer_feature/viewer_feature.dart';
 
 class _Files extends Mock implements FileRepository {}
@@ -164,6 +165,89 @@ void main() {
     expect(find.byType(TextView), findsOneWidget);
     expect(ready(), isTrue);
     await tester.pumpAndSettle();
+  }
+
+  for (final preview in [false, true]) {
+    testWidgets(
+      'search hints track input, results and Escape, preview=$preview',
+      (
+        tester,
+      ) async {
+        bytes = Uint8List.fromList(utf8.encode('needle and another needle.'));
+        await open(
+          tester,
+          location: Location.native(preview ? '/tmp/find.md' : '/tmp/find.txt'),
+        );
+        await menu(tester);
+        await pick(tester, en.cmdViewerFind);
+        final dismiss = ShortcutMap.defaults(
+          TargetPlatform.macOS,
+        ).labelOf(AppCommand.dismiss, TargetPlatform.macOS)!;
+        expect(find.text(en.viewerFindCloseHint(dismiss)), findsOneWidget);
+        expect(find.text(en.viewerCloseHint(dismiss)), findsNothing);
+        final guidance = find.byType(ViewerSearchHints);
+        Finder cap(String label) => find.descendant(
+          of: guidance,
+          matching: find.byWidgetPredicate(
+            (widget) => widget is AppKeyCap && widget.label == label,
+          ),
+        );
+        final enter = Chord.keyLabel(
+          LogicalKeyboardKey.enter,
+          TargetPlatform.macOS,
+        );
+        expect(cap(enter), findsNothing);
+
+        await tester.enterText(find.byType(AppSearchField), 'needle');
+        await tester.pump(const Duration(milliseconds: 220));
+        for (
+          var i = 0;
+          i < 100 && find.text(en.viewerMatches(1, 2)).evaluate().isEmpty;
+          i++
+        ) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 15)),
+          );
+          await tester.pump(const Duration(milliseconds: 20));
+        }
+        expect(find.text(en.viewerMatches(1, 2)), findsOneWidget);
+        expect(cap(enter), findsOneWidget);
+        expect(cap('⌘G'), findsOneWidget);
+        expect(find.text(en.viewerFindClearHint(dismiss)), findsOneWidget);
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
+        expect(find.text(en.viewerMatches(2, 2)), findsOneWidget);
+
+        final input = tester.widget<AppSearchField>(
+          find.byType(AppSearchField),
+        );
+        input.focusNode!.unfocus();
+        await tester.pumpAndSettle();
+        expect(cap(enter), findsNothing);
+        expect(find.text(en.viewerFindCloseHint(dismiss)), findsOneWidget);
+        input.focusNode!.requestFocus();
+        await tester.pumpAndSettle();
+        expect(find.text(en.viewerFindClearHint(dismiss)), findsOneWidget);
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+        expect(find.byType(AppSearchField), findsOneWidget);
+        expect(
+          tester
+              .widget<AppSearchField>(find.byType(AppSearchField))
+              .controller!
+              .text,
+          isEmpty,
+        );
+        expect(cap(enter), findsNothing);
+        expect(find.text(en.viewerFindCloseHint(dismiss)), findsOneWidget);
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+        expect(find.byType(AppSearchField), findsNothing);
+        expect(find.text(en.viewerCloseHint(dismiss)), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
 
   for (final wrap in [true, false]) {
@@ -466,7 +550,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(en.viewerLinkTitle), findsOneWidget);
       expect(find.text('https://example.com/docs'), findsWidgets);
-      await tester.tap(find.text(en.actionDone));
+      await tester.tap(find.widgetWithText(FilledButton, en.actionDone));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     },

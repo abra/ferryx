@@ -1644,17 +1644,89 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   String get confirmDeleteLabel => 'Спрашивать перед безвозвратным удалением';
 
   @override
-  String get generalKeyHintsLabel => 'Подсказки клавиш под панелями';
+  String get generalKeyHintsLabel => 'Контекстные подсказки клавиш';
 
   @override
   String get generalKeyHintsNote =>
-      'Одна строка с клавишами для того, что под курсором или выделено';
+      'Ненавязчивые подсказки для активной области, меню и элементов управления';
 
   @override
   String get hintsHide => 'Скрыть подсказки';
 
   @override
   String get hintsHelp => 'Клавиши';
+
+  @override
+  String get contextActions => 'Действия';
+
+  @override
+  String get contextActionsHint => 'Найти действие';
+
+  @override
+  String contextActionsSelection(int count) {
+    return 'Выбрано: $count';
+  }
+
+  @override
+  String contextActionsFocused(String name) {
+    return 'Под курсором: $name';
+  }
+
+  @override
+  String get contextActionsFolder => 'Текущая папка';
+
+  @override
+  String get contextActionsChanged =>
+      'Список файлов изменился. Выберите действие снова.';
+
+  @override
+  String get hintComplete => 'Дополнить';
+
+  @override
+  String get hintPreviousCommand => 'Предыдущая команда';
+
+  @override
+  String get hintNextCommand => 'Следующая команда';
+
+  @override
+  String get hintNextField => 'Следующее поле';
+
+  @override
+  String get hintNavigate => 'Навигация';
+
+  @override
+  String get hintChoose => 'Выбрать';
+
+  @override
+  String get hintNextControl => 'Следующий элемент';
+
+  @override
+  String get hintPreviousControl => 'Предыдущий элемент';
+
+  @override
+  String get hintToggle => 'Переключить';
+
+  @override
+  String get hintAdjust => 'Изменить';
+
+  @override
+  String get hintActivate => 'Выполнить';
+
+  @override
+  String get hintResults => 'Результаты';
+
+  @override
+  String get hintChangeAction => 'Изменить действие';
+
+  @override
+  String viewerFindCloseHint(String key) {
+    return '$key — закрыть поиск';
+  }
+
+  @override
+  String viewerFindClearHint(String key) {
+    return '$key — очистить поиск';
+  }
 
   @override
   String get commandsButton => 'Команды';

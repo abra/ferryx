@@ -50,6 +50,10 @@ void main() {
           await tester.scrollUntilVisible(
             find.text('Archive option 11'),
             100,
+            scrollable: find.descendant(
+              of: find.byType(AppDialogScrollBody),
+              matching: find.byType(Scrollable),
+            ),
           );
           expect(find.text('Archive option 11').hitTestable(), findsOneWidget);
           expect(find.text('Extract').hitTestable(), findsOneWidget);

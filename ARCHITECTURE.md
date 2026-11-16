@@ -1083,6 +1083,48 @@ elsewhere — features never ask the platform.
 
 ### Keyboard model
 
+Contextual guidance is presentation state, not a second command dispatcher.
+The panels' `hintsFor` derives suggestions from selection, search, location
+and Vim mode; `KeyHintStrip` resolves current `ShortcutMap` bindings for
+the compact inline suggestions. Full discovery is separate: `panelActionsFor`
+derives available operations from location, targets and capabilities, without
+requiring a key binding. The visible Actions button opens `PanelActionsPicker`,
+searchable by localized or English command names, grouped by marked targets,
+focused item and current folder. Picks use the existing command handler chain
+at the source panel after focus returns, retaining Vim operator transitions;
+a changed tab or target set invalidates the pick instead
+of silently operating on another file. Text editors retain inline guidance
+without opening that picker, since focus loss may commit or cancel an edit.
+The Vim command-line focus owns
+its Run/complete/history/cancel hints instead of inheriting file commands.
+`AppFocusedEditHints` observes the active route/focus scope and its existing
+editable controller, exposing native editing affordances without reading
+the clipboard. Shared components use `Chord` from `shortcuts` for native
+key labels; they do not dispatch application commands or depend on features.
+`AppTextField.submitLabel` explicitly describes an owned
+submit callback; generic fields do not infer a submit action. Form dialogs
+reserve a stable guidance slot; Settings and the workspace reuse the same
+resolver. Viewer search hints follow its actual focus/query/match state,
+including the search field's clear-before-close Escape behavior.
+
+The composition root's `ContextGuidance` supplies localized
+`AppGuidanceLabels` and the user's hint visibility to `AppGuidanceScope`,
+an `InheritedTheme` captured by pop-up routes. `AppFocusedControlHints`
+describes the existing handlers of focused controls; it does not add a
+parallel keyboard model. Menus and pickers share compact guidance, omit
+unavailable choices and reserve room for their actionable rows in small
+windows. A dialog may override its one guidance slot for a focused result
+list, or opt out when recording keys. Covered routes hide their guidance
+without changing the underlying layout. Native macOS menus retain their
+system presentation and command equivalents.
+
+Result dialogs expose their existing row menus through visible Actions buttons;
+`AppRowListState.openMenu` accepts a button anchor and falls back to a selected
+row when Select All has left no lead row. Keyboard, mouse and toolbar routes
+therefore share command availability and execution.
+Focus readers use `attachedFocusContext` before ancestor lookups: a form
+can replace its focused subtree while the retired context is still mounted.
+
 - A single `CommandIntent` type carries an `AppCommand`. `CommandShortcuts`
   at the app root (global scope only) raises intents; `CommandDispatcherAction`
   walks the `CommandHandlers` chain from the focused widget outward.

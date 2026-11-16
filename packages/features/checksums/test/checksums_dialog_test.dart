@@ -42,7 +42,10 @@ void main() {
 
   tearDown(() => updates.close());
 
-  Future<ChecksumsCubit> pump(WidgetTester tester) async {
+  Future<ChecksumsCubit> pump(
+    WidgetTester tester, {
+    ShortcutMap? shortcutMap,
+  }) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -53,19 +56,21 @@ void main() {
     );
     addTearDown(cubit.close);
     const platform = TargetPlatform.macOS;
+    final map = shortcutMap ?? ShortcutMap.defaults(platform);
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(AppPlatformStyle.macos),
         localizationsDelegates: FerryxSupportedLocales.delegates,
         supportedLocales: FerryxSupportedLocales.locales,
         home: CommandShortcuts(
-          shortcuts: ShortcutMap.defaults(
+          shortcuts: map.toShortcuts(
             platform,
-          ).toShortcuts(platform, scopes: const {CommandScope.global}),
+            scopes: const {CommandScope.global},
+          ),
           child: Scaffold(
             body: BlocProvider.value(
               value: cubit,
-              child: const ChecksumsDialog(),
+              child: ChecksumsDialog(shortcutMap: map),
             ),
           ),
         ),
@@ -136,4 +141,154 @@ void main() {
     await tester.pumpAndSettle();
     expect(copied, [_hash]);
   });
+
+  testWidgets('hash copy guidance follows the actual rebind and row focus', (
+    tester,
+  ) async {
+    final copied = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copied.add((call.arguments as Map)['text'] as String);
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    const chord = Chord(
+      LogicalKeyboardKey.keyH,
+      primary: true,
+      control: true,
+      shift: true,
+    );
+    final map = ShortcutMap.defaults(TargetPlatform.macOS)
+        .rebind(AppCommand.copyPaths, [chord])
+        .rebind(AppCommand.contextMenu, []);
+    await pump(tester, shortcutMap: map);
+    await tester.tap(find.text('a.iso'));
+    await tester.pumpAndSettle();
+    final hints = tester.widget<AppKeyHints>(find.byType(AppKeyHints)).hints;
+    expect(
+      hints.any(
+        (hint) =>
+            hint.label == en.checksumCopyHash &&
+            hint.keys.single == chord.label(TargetPlatform.macOS),
+      ),
+      isTrue,
+    );
+    expect(hints.map((hint) => hint.label), isNot(contains(en.cmdContextMenu)));
+
+    for (final key in [
+      LogicalKeyboardKey.metaLeft,
+      LogicalKeyboardKey.controlLeft,
+      LogicalKeyboardKey.shiftLeft,
+    ]) {
+      await tester.sendKeyDownEvent(key);
+    }
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyH);
+    for (final key in [
+      LogicalKeyboardKey.shiftLeft,
+      LogicalKeyboardKey.controlLeft,
+      LogicalKeyboardKey.metaLeft,
+    ]) {
+      await tester.sendKeyUpEvent(key);
+    }
+    await tester.pumpAndSettle();
+    expect(copied, [_hash]);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'visible Actions retains complete row commands when their keys are unbound',
+    (
+      tester,
+    ) async {
+      final copied = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied.add((call.arguments as Map)['text'] as String);
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      var map = ShortcutMap.defaults(TargetPlatform.macOS);
+      for (final command in [
+        AppCommand.contextMenu,
+        AppCommand.copyPaths,
+        AppCommand.selectAll,
+        AppCommand.deselectAll,
+      ]) {
+        map = map.rebind(command, []);
+      }
+      await pump(tester, shortcutMap: map);
+      final actions = find.widgetWithText(OutlinedButton, en.contextActions);
+      expect(tester.widget<OutlinedButton>(actions).onPressed, isNull);
+      await tester.tap(find.text('a.iso'));
+      await tester.pumpAndSettle();
+      final rows = tester
+          .widget<AppRowList>(find.byType(AppRowList))
+          .controller;
+      Focus.of(
+        tester.element(
+          find.descendant(
+            of: actions,
+            matching: find.text(en.contextActions),
+          ),
+        ),
+      ).requestFocus();
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.space);
+      await tester.pumpAndSettle();
+      for (final label in [
+        en.checksumCopyHash,
+        en.checksumCopyLine,
+        en.cmdSelectAll,
+        en.cmdDeselectAll,
+      ]) {
+        expect(find.widgetWithText(AppMenuItem, label), findsOneWidget);
+      }
+      expect(
+        tester
+            .widget<AppMenuItem>(
+              find.widgetWithText(AppMenuItem, en.checksumCopyHash),
+            )
+            .shortcut,
+        isNull,
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(copied, isEmpty);
+      expect(rows.selected, {0});
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppMenuItem, en.cmdSelectAll));
+      await tester.pumpAndSettle();
+      expect(rows.selected, {0, 1});
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppMenuItem, en.checksumCopyLine));
+      await tester.pumpAndSettle();
+      expect(copied, ['$_hash  a.iso\nffff  b.iso']);
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppMenuItem, en.cmdDeselectAll));
+      await tester.pumpAndSettle();
+      expect(rows.selected, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

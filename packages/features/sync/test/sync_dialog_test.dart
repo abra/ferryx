@@ -53,6 +53,7 @@ void main() {
     WidgetTester tester, {
     double textScale = 1,
     Locale locale = const Locale('en'),
+    ShortcutMap? shortcutMap,
   }) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
@@ -62,7 +63,7 @@ void main() {
     cubit = SyncCubit(service: service, options: const CompareOptions());
     addTearDown(cubit.close);
     const platform = TargetPlatform.macOS;
-    final map = ShortcutMap.defaults(platform);
+    final map = shortcutMap ?? ShortcutMap.defaults(platform);
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(AppPlatformStyle.macos),
@@ -155,6 +156,123 @@ void main() {
     expect(cubit.state.actionOf(0), RowAction.copyToRight);
     expect(cubit.state.actionOf(1), RowAction.copyToRight);
   });
+
+  testWidgets('row guidance offers only copy directions the row supports', (
+    tester,
+  ) async {
+    await pump(tester);
+    await compareWith(tester, [row('only-left.txt', CompareState.leftOnly)]);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    final hints = tester.widget<AppKeyHints>(find.byType(AppKeyHints)).hints;
+    expect(hints.map((hint) => hint.label), contains(en.hintChangeAction));
+    expect(hints.map((hint) => hint.label), contains(en.syncActionCopyRight));
+    expect(
+      hints.map((hint) => hint.label),
+      isNot(contains(en.syncActionCopyLeft)),
+    );
+    expect(
+      hints.map((hint) => hint.label),
+      isNot(contains(en.syncSynchronize)),
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    expect(cubit.state.actionOf(0), RowAction.copyToRight);
+    verifyNever(() => service.synchronize(any()));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'visible Actions offers a complete plan menu without a context binding',
+    (
+      tester,
+    ) async {
+      var map = ShortcutMap.defaults(TargetPlatform.macOS);
+      for (final command in [
+        AppCommand.contextMenu,
+        AppCommand.selectAll,
+        AppCommand.deselectAll,
+      ]) {
+        map = map.rebind(command, []);
+      }
+      await pump(tester, shortcutMap: map);
+      final actions = find.widgetWithText(OutlinedButton, en.contextActions);
+      expect(tester.widget<OutlinedButton>(actions).onPressed, isNull);
+      await compareWith(tester, [
+        row('left.txt', CompareState.leftOnly),
+        row('right.txt', CompareState.rightOnly),
+      ]);
+      cubit.setOptions(
+        cubit.state.options.copyWith(
+          direction: SyncDirection.leftToRight,
+          deleteMissing: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      final rows = tester
+          .widget<AppRowList>(find.byType(AppRowList))
+          .controller;
+      expect(rows.targets, [1]);
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      for (final label in [
+        en.syncActionCopyRight,
+        en.syncActionCopyLeft,
+        en.syncActionDeleteLeft,
+        en.syncActionDeleteRight,
+        en.syncActionSkip,
+        en.syncActionDefault,
+        en.cmdSelectAll,
+        en.cmdDeselectAll,
+      ]) {
+        expect(find.widgetWithText(AppMenuItem, label), findsOneWidget);
+      }
+      expect(
+        tester
+            .widget<AppMenuItem>(
+              find.widgetWithText(AppMenuItem, en.syncActionCopyRight),
+            )
+            .enabled,
+        isFalse,
+      );
+      expect(
+        tester
+            .widget<AppMenuItem>(
+              find.widgetWithText(AppMenuItem, en.syncActionDeleteRight),
+            )
+            .enabled,
+        isTrue,
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(cubit.state.actionOf(1), RowAction.deleteRight);
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppMenuItem, en.syncActionSkip));
+      await tester.pumpAndSettle();
+      expect(cubit.state.actionOf(1), RowAction.skip);
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppMenuItem, en.syncActionDefault));
+      await tester.pumpAndSettle();
+      expect(cubit.state.actionOf(1), RowAction.deleteRight);
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppMenuItem, en.cmdSelectAll));
+      await tester.pumpAndSettle();
+      expect(rows.selected, {0, 1});
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppMenuItem, en.cmdDeselectAll));
+      await tester.pumpAndSettle();
+      expect(rows.selected, isEmpty);
+      verifyNever(() => service.synchronize(any()));
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('a click on the action walks it', (tester) async {
     await pump(tester);

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:component_library/component_library.dart';
 import 'package:ferryx/app/app_menu_bar.dart';
+import 'package:ferryx/app/context_guidance.dart';
 import 'package:ferryx/app/dependency_scope.dart';
 import 'package:ferryx/app/routing.dart';
 import 'package:ferryx/app/window_chrome.dart';
@@ -153,7 +154,10 @@ class _FerryxAppState extends State<FerryxApp> {
           child: AppWindowActivity(
             child: AppIdentity(
               icon: const AssetImage(_appIcon),
-              child: TapOutsideKeepsFocus(child: app),
+              child: ContextGuidance(
+                enabled: preferences.showKeyHints,
+                child: TapOutsideKeepsFocus(child: app),
+              ),
             ),
           ),
         );

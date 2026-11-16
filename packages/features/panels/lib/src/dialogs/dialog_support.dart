@@ -19,6 +19,7 @@ class DialogField extends StatelessWidget {
     this.autofocus = false,
     this.focusNode,
     this.onSubmitted,
+    this.submitLabel,
     this.obscure = false,
     this.monospace = false,
     this.enabled = true,
@@ -35,6 +36,7 @@ class DialogField extends StatelessWidget {
   final bool autofocus;
   final FocusNode? focusNode;
   final ValueChanged<String>? onSubmitted;
+  final String? submitLabel;
   final bool obscure;
   final bool monospace;
   final bool enabled;
@@ -66,6 +68,7 @@ class DialogField extends StatelessWidget {
       monospace: monospace,
       hintText: hint,
       onSubmitted: onSubmitted,
+      submitLabel: submitLabel,
     ),
   );
 }

@@ -168,6 +168,12 @@ void main() {
           return never.future;
         };
         await open(tester);
+        expect(
+          tester
+              .widget<AppTextField>(find.byType(AppTextField).first)
+              .submitLabel,
+          en.networkConnect,
+        );
         await tester.enterText(
           find.byType(EditableText).first,
           'sftp://me@box.lan',
@@ -187,6 +193,12 @@ void main() {
         );
         await tester.enterText(find.byType(EditableText).first, 'gopher://x');
         await tester.pump();
+        expect(
+          tester
+              .widget<AppTextField>(find.byType(AppTextField).first)
+              .submitLabel,
+          isNull,
+        );
         expect(find.text(en.networkNotAnAddress('gopher://x')), findsOneWidget);
         await tester.enterText(
           find.byType(EditableText).first,

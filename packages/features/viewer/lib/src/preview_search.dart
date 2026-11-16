@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:component_library/component_library.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shortcuts/shortcuts.dart';
+
+import 'viewer_search_hints.dart';
 
 class PreviewSearchHit {
   const PreviewSearchHit(this.anchor, this.excerpt);
@@ -229,29 +232,31 @@ class PreviewFindBar extends StatefulWidget {
   const PreviewFindBar({
     required this.controller,
     required this.onClose,
+    required this.focusNode,
+    required this.chord,
     super.key,
   });
   final PreviewSearchController controller;
   final VoidCallback onClose;
+  final FocusNode focusNode;
+  final String? Function(AppCommand command) chord;
   @override
   State<PreviewFindBar> createState() => _PreviewFindBarState();
 }
 
 class _PreviewFindBarState extends State<PreviewFindBar> {
   late final _text = TextEditingController(text: widget.controller.query);
-  final _focus = FocusNode(debugLabel: 'preview search');
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _focus.requestFocus();
+      if (mounted) widget.focusNode.requestFocus();
     });
   }
 
   @override
   void dispose() {
     _text.dispose();
-    _focus.dispose();
     super.dispose();
   }
 
@@ -286,7 +291,7 @@ class _PreviewFindBarState extends State<PreviewFindBar> {
                 Expanded(
                   child: AppSearchField(
                     controller: _text,
-                    focusNode: _focus,
+                    focusNode: widget.focusNode,
                     hintText: l10n.viewerFindHint,
                     onChanged: search.setQuery,
                     onSubmitted: (_) => search.next(1),
@@ -308,6 +313,12 @@ class _PreviewFindBarState extends State<PreviewFindBar> {
                   onPressed: widget.onClose,
                 ),
               ],
+            ),
+            ViewerSearchHints(
+              chord: widget.chord,
+              focusNode: widget.focusNode,
+              hasQuery: search.query.isNotEmpty,
+              hasMatches: search.hits.isNotEmpty,
             ),
             if (search.query.isNotEmpty)
               Text(

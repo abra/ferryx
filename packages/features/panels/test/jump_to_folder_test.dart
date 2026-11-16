@@ -1,5 +1,6 @@
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
+import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,7 @@ import 'package:monitoring/monitoring.dart';
 import 'package:panels_feature/panels_feature.dart';
 import 'package:panels_feature/src/dialogs/jump_to_folder.dart';
 import 'package:panels_feature/src/path_text.dart';
+import 'package:shortcuts/shortcuts.dart';
 
 import 'support/workspace_harness.dart';
 
@@ -197,6 +199,40 @@ void main() {
       // The folder shown is not offered; the one before it is.
       await h.press(tester, LogicalKeyboardKey.enter, alt: true);
       expect(panel(tester, 1).state.active!.location.path, '/home/docs');
+    });
+
+    testWidgets('a no-result jump does not advertise opening folders or tabs', (
+      tester,
+    ) async {
+      h.frecency.visit('/home/projects/ferryx');
+      await h.pump(tester);
+      await openJump(tester);
+      await tester.enterText(find.byType(EditableText), 'zzzz-no-such-folder');
+      await tester.pumpAndSettle();
+      final l10n = lookupFerryxLocalizations(const Locale('en'));
+      expect(tester.widget<AppMenuFooter>(find.byType(AppMenuFooter)).hints, [
+        (
+          Chord.keyLabel(LogicalKeyboardKey.escape, TargetPlatform.macOS),
+          l10n.paletteKeyClose,
+        ),
+      ]);
+      await h.press(tester, LogicalKeyboardKey.enter, meta: true);
+      expect(find.byType(AppQuickPicker<String>), findsOneWidget);
+      expect(panel(tester, 0).state.tabs, hasLength(1));
+      expect(panel(tester, 0).state.active!.location.path, '/home/docs');
+      await tester.enterText(find.byType(EditableText), 'ferryx');
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<AppMenuFooter>(find.byType(AppMenuFooter))
+            .hints
+            .map((hint) => hint.$2),
+        contains(l10n.jumpKeyNewTab),
+      );
+      await h.press(tester, LogicalKeyboardKey.escape);
+      expect(find.byType(AppQuickPicker<String>), findsNothing);
+      expect(h.started, isEmpty);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('a folder gone from the disk leaves the list with a notice', (

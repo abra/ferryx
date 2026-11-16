@@ -59,6 +59,8 @@ class DuplicatesDialog extends StatefulWidget {
   State<DuplicatesDialog> createState() => _DuplicatesDialogState();
 }
 
+enum _RowAction { mark, reveal, copyPaths, selectAll, deselectAll }
+
 class _DuplicatesDialogState extends State<DuplicatesDialog> {
   late final _root = TextEditingController(text: widget.root);
   final _mask = TextEditingController();
@@ -72,6 +74,14 @@ class _DuplicatesDialogState extends State<DuplicatesDialog> {
   bool _hidden = false;
 
   DuplicatesCubit get _cubit => context.read<DuplicatesCubit>();
+
+  @override
+  void initState() {
+    super.initState();
+    _tableFocus.addListener(_focusChanged);
+  }
+
+  void _focusChanged() => setState(() {});
 
   @override
   void dispose() {
@@ -213,34 +223,67 @@ class _DuplicatesDialogState extends State<DuplicatesDialog> {
   Future<void> _rowMenu(int index, Rect anchor) async {
     final l10n = context.l10n;
     final file = _cubit.state.fileAt(index);
-    if (file == null) return;
-    final picked = await showAppMenu<int>(
+    final targets = _rows.targets.isEmpty ? [index] : _rows.targets;
+    final paths = _pathsOf(targets);
+    final allMarked =
+        paths.isNotEmpty && paths.every(_cubit.state.marked.contains);
+    final picked = await showAppMenu<_RowAction>(
       context: context,
       anchor: anchor,
       entries: [
         AppMenuAction(
-          value: 0,
-          label: _cubit.state.marked.contains(file.path)
-              ? l10n.dupesUnmark
-              : l10n.dupesMark,
+          value: _RowAction.mark,
+          label: allMarked ? l10n.dupesUnmark : l10n.dupesMark,
           icon: AppIcons.check,
+          enabled: paths.isNotEmpty,
         ),
-        AppMenuAction(value: 1, label: l10n.dupesReveal, icon: AppIcons.reveal),
         AppMenuAction(
-          value: 2,
+          value: _RowAction.reveal,
+          label: l10n.dupesReveal,
+          icon: AppIcons.reveal,
+          enabled: file != null,
+        ),
+        AppMenuAction(
+          value: _RowAction.copyPaths,
           label: l10n.dupesCopyPaths,
           icon: AppIcons.link,
+          enabled: paths.isNotEmpty || _cubit.state.marked.isNotEmpty,
+        ),
+        const AppMenuSeparator(),
+        AppMenuAction(
+          value: _RowAction.selectAll,
+          label: l10n.cmdSelectAll,
+          shortcut: widget.shortcutMap.labelOf(
+            AppCommand.selectAll,
+            context.platform,
+          ),
+          enabled: _rows.selected.length < _rows.count,
+        ),
+        AppMenuAction(
+          value: _RowAction.deselectAll,
+          label: l10n.cmdDeselectAll,
+          shortcut: widget.shortcutMap.labelOf(
+            AppCommand.deselectAll,
+            context.platform,
+          ),
+          enabled: _rows.selected.isNotEmpty,
         ),
       ],
     );
     if (!mounted) return;
     switch (picked) {
-      case 0:
+      case _RowAction.mark:
         _cubit.toggleMarks(_rows.targets.isEmpty ? [index] : _rows.targets);
-      case 1:
-        Navigator.of(context).pop(file.path);
-      case 2:
+      case _RowAction.reveal:
+        if (file != null) Navigator.of(context).pop(file.path);
+      case _RowAction.copyPaths:
         await _copyPaths();
+      case _RowAction.selectAll:
+        _rows.selectAll();
+      case _RowAction.deselectAll:
+        _rows.clear();
+      case null:
+        break;
     }
   }
 
@@ -252,6 +295,55 @@ class _DuplicatesDialogState extends State<DuplicatesDialog> {
       builder: (context, state) => AppDialog(
         title: l10n.dupesTitle,
         width: AppSizes.resultsDialogWidth,
+        guidance: _tableFocus.hasFocus && state.rows.isNotEmpty
+            ? ListenableBuilder(
+                listenable: _rows,
+                builder: (context, _) {
+                  final hasFile = _rows.targets.any(
+                    (row) => state.fileAt(row) != null,
+                  );
+                  return AppKeyHints([
+                    AppKeyHint([
+                      Chord.keyLabel(
+                        LogicalKeyboardKey.arrowUp,
+                        context.platform,
+                      ),
+                      Chord.keyLabel(
+                        LogicalKeyboardKey.arrowDown,
+                        context.platform,
+                      ),
+                    ], l10n.paletteKeySelect),
+                    if (hasFile) ...[
+                      AppKeyHint([
+                        Chord.keyLabel(
+                          LogicalKeyboardKey.space,
+                          context.platform,
+                        ),
+                      ], l10n.dupesMark),
+                      if (widget.shortcutMap.labelOf(
+                            AppCommand.copyPaths,
+                            context.platform,
+                          )
+                          case final copy?)
+                        AppKeyHint([copy], l10n.cmdCopyItemPath),
+                    ],
+                    if (_rows.targets.isNotEmpty)
+                      if (widget.shortcutMap.labelOf(
+                            AppCommand.contextMenu,
+                            context.platform,
+                          )
+                          case final menu?)
+                        AppKeyHint([menu], l10n.cmdContextMenu),
+                    AppKeyHint([
+                      Chord.keyLabel(
+                        LogicalKeyboardKey.escape,
+                        context.platform,
+                      ),
+                    ], l10n.actionClose),
+                  ], singleLine: true);
+                },
+              )
+            : null,
         body: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: appDialogBodyMaxHeight(context),
@@ -292,6 +384,36 @@ class _DuplicatesDialogState extends State<DuplicatesDialog> {
                     ),
                     label: Text(l10n.dupesMark),
                   ),
+                  const SizedBox(width: AppSpacing.sm),
+                  ListenableBuilder(
+                    listenable: _rows,
+                    builder: (buttonContext, _) {
+                      final index =
+                          _rows.targets
+                              .where(
+                                (row) => state.fileAt(row) != null,
+                              )
+                              .firstOrNull ??
+                          _rows.targets.firstOrNull;
+                      return OutlinedButton.icon(
+                        style: AppButtonStyles.small(context),
+                        iconAlignment: IconAlignment.end,
+                        icon: const Icon(
+                          AppIcons.chevronDown,
+                          size: AppIconSize.sm,
+                        ),
+                        label: Text(l10n.contextActions),
+                        onPressed: index == null
+                            ? null
+                            : () => unawaited(
+                                _rowMenu(
+                                  index,
+                                  keyboardMenuAnchor(buttonContext),
+                                ),
+                              ),
+                      );
+                    },
+                  ),
                 ],
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -322,8 +444,10 @@ class _DuplicatesDialogState extends State<DuplicatesDialog> {
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.xs),
-              _Footer(state: state),
+              if (state.marked.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.xs),
+                _Footer(state: state),
+              ],
             ],
           ),
         ),
@@ -411,6 +535,7 @@ class _Conditions extends StatelessWidget {
             controller: root,
             monospace: true,
             onSubmitted: (_) => onSubmit(),
+            submitLabel: l10n.findStart,
           ),
         ),
         if (other != null) ...[
@@ -439,6 +564,7 @@ class _Conditions extends StatelessWidget {
                     monospace: true,
                     hintText: l10n.findNameHint,
                     onSubmitted: (_) => onSubmit(),
+                    submitLabel: l10n.findStart,
                   ),
                 ),
               ],
@@ -456,6 +582,7 @@ class _Conditions extends StatelessWidget {
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     textAlign: TextAlign.end,
                     onSubmitted: (_) => onSubmit(),
+                    submitLabel: l10n.findStart,
                   ),
                 ),
                 AppPopupButton<int>(
@@ -557,7 +684,7 @@ class _Status extends StatelessWidget {
   }
 }
 
-/// The marks so far, and the key that marks.
+/// The marks and their size, separate from focus-dependent key guidance.
 class _Footer extends StatelessWidget {
   const _Footer({required this.state});
 
@@ -566,32 +693,18 @@ class _Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final platform = Theme.of(context).platform;
     final style = context.text.bodySmall?.copyWith(
       color: context.appColors.textMuted,
       fontFeatures: const [FontFeature.tabularFigures()],
     );
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            l10n.dupesKeysHint(
-              Chord.keyLabel(LogicalKeyboardKey.space, platform),
-            ),
-            style: style,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        if (state.marked.isNotEmpty)
-          Text(
-            l10n.joinedDetails(
-              l10n.dupesMarked(state.marked.length),
-              l10n.fileSize(state.markedBytes),
-            ),
-            style: style,
-          ),
-      ],
+    return Text(
+      l10n.joinedDetails(
+        l10n.dupesMarked(state.marked.length),
+        l10n.fileSize(state.markedBytes),
+      ),
+      style: style,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }
