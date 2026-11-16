@@ -5,6 +5,29 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 void main() {
+  test(
+    'streamed row remapping preserves selection and range anchor atomically',
+    () {
+      final rows = AppRowListController(1000);
+      addTearDown(rows.dispose);
+      rows.moveTo(100);
+      rows.moveTo(999, extend: true);
+      var notifications = 0;
+      rows.addListener(() => notifications++);
+      rows.remapRows(1010, (index) => index + 10);
+      expect(notifications, 1);
+      expect(rows.lead, 1009);
+      expect(rows.selected, {for (var i = 110; i <= 1009; i++) i});
+      rows.moveTo(115, extend: true);
+      expect(rows.selected, {110, 111, 112, 113, 114, 115});
+      rows.remapRows(20, (index) => index == 115 ? 5 : null);
+      expect(rows.lead, 5);
+      expect(rows.selected, {5});
+      rows.moveTo(7, extend: true);
+      expect(rows.selected, {5, 6, 7});
+    },
+  );
+
   group('AppRowListController', () {
     test('moves, extends a run from the anchor, flips rows', () {
       final rows = AppRowListController(10);

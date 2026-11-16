@@ -1,7 +1,11 @@
+import 'dart:collection';
+
 import 'package:domain_models/domain_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meta/meta.dart';
 import 'package:operations_service/operations_service.dart';
+
+part 'duplicate_results.dart';
 
 /// A row of the results: a group's heading, or one of its files.
 @immutable
@@ -72,6 +76,21 @@ class DuplicatesState {
     FileRow(:final group, :final file) => groups[group].files[file],
     GroupRow() => null,
   };
+
+  /// Locate a row from an earlier streamed snapshot after groups move.
+  int? movedRowFrom(DuplicatesState previous, int index) {
+    final before = previous.rows;
+    final after = rows;
+    if (identical(before, after)) return index;
+    if (before is! _Rows ||
+        after is! _Rows ||
+        index < 0 ||
+        index >= before.length) {
+      return null;
+    }
+    final (node, _, offset) = before.locate(index);
+    return after.movedIndex(node, offset);
+  }
 
   /// What all the groups could free.
   int get wasted => groups.fold(0, (sum, g) => sum + g.wasted);
@@ -197,9 +216,13 @@ class DuplicatesCubit extends Cubit<DuplicatesState> {
 
   final DuplicatesService _service;
   late final TaskSession<DuplicatesUpdate> _task;
+  _Node? _root;
+  int _sequence = 0;
 
   Future<void> start(DuplicatesRequest request) async {
     if (isClosed) return;
+    _root = null;
+    _sequence = 0;
     emit(
       DuplicatesState(
         roots: request.roots,
@@ -231,18 +254,16 @@ class DuplicatesCubit extends Cubit<DuplicatesState> {
   }
 
   void _onUpdate(DuplicatesUpdate update) {
-    var groups = state.groups;
     if (update.groups.isNotEmpty) {
-      groups = [...groups];
       for (final group in update.groups) {
-        groups.insert(_insertAt(groups, group), group);
+        _root = _insert(_root, group, _sequence++);
       }
     }
     emit(
       state.copyWith(
         running: !update.done,
-        groups: groups,
-        rows: identical(groups, state.groups) ? null : flatten(groups),
+        groups: update.groups.isEmpty ? null : _Groups(_root),
+        rows: update.groups.isEmpty ? null : _Rows(_root),
         phase: update.phase,
         filesScanned: update.filesScanned,
         candidates: update.candidates,
@@ -253,21 +274,6 @@ class DuplicatesCubit extends Cubit<DuplicatesState> {
         error: update.error,
       ),
     );
-  }
-
-  /// Where [group] goes so the most wasted space stays first.
-  static int _insertAt(List<DuplicateGroup> groups, DuplicateGroup group) {
-    var low = 0;
-    var high = groups.length;
-    while (low < high) {
-      final mid = (low + high) >> 1;
-      if (groups[mid].wasted >= group.wasted) {
-        low = mid + 1;
-      } else {
-        high = mid;
-      }
-    }
-    return low;
   }
 
   // ─── Marks ───
@@ -313,10 +319,14 @@ class DuplicatesCubit extends Cubit<DuplicatesState> {
           ],
         ),
     ].where((g) => g.files.length > 1).toList();
+    _root = null;
+    for (final group in groups) {
+      _root = _insert(_root, group, _sequence++);
+    }
     emit(
       state.copyWith(
-        groups: groups,
-        rows: flatten(groups),
+        groups: _Groups(_root),
+        rows: _Rows(_root),
         marked: state.marked.difference(paths),
       ),
     );

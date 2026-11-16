@@ -43,6 +43,23 @@ void main() {
   });
 
   group('find', () {
+    test('dense text and byte matches retain a bounded result set', () {
+      final dense = 'a' * 20000;
+      expect(findInLines([dense], 'a'), hasLength(10000));
+      expect(findInBytes(bytesOf(dense), 'a'), hasLength(10000));
+    });
+
+    test('byte search preserves overlapping and cross-row matches', () {
+      expect(findInBytes(bytesOf('aaaaa'), 'AAA'), [
+        const ViewerMatch(line: 0, start: 0, end: 3),
+        const ViewerMatch(line: 0, start: 1, end: 4),
+        const ViewerMatch(line: 0, start: 2, end: 5),
+      ]);
+      expect(findInBytes(bytesOf('${'a' * 4096}b'), '${'a' * 1024}b'), [
+        const ViewerMatch(line: 192, start: 0, end: 16),
+      ]);
+    });
+
     test('in lines, case-insensitively, every occurrence', () {
       final matches = findInLines(['Needle', 'hay', 'needle needle'], 'NEEDLE');
       expect(matches, [

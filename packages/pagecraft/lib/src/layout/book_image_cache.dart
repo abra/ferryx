@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -45,6 +46,10 @@ class BookImageCache extends ChangeNotifier {
   int _imagesTotal = 0;
   final _decoding = <String, int>{};
   bool _disposed = false;
+  static const _maxProbes = 4;
+  int _activeProbes = 0;
+  final _probeQueue = Queue<_ProbeJob>();
+  final _inFlightProbes = <String, Future<void>>{};
 
   /// The intrinsic sizes of [keys] that have one, probing the headers of
   /// those not seen yet. Images that cannot be read or are not a
@@ -54,10 +59,34 @@ class BookImageCache extends ChangeNotifier {
       for (final k in keys.toSet())
         if (!_sizes.containsKey(k)) k,
     ];
-    await Future.wait(missing.map(_probe));
+    await Future.wait(missing.map(_queueProbe));
     return {
       for (final k in keys) k: ?_sizes[k],
     };
+  }
+
+  Future<void> _queueProbe(String key) {
+    if (_disposed) return Future.value();
+    return _inFlightProbes.putIfAbsent(key, () {
+      final job = _ProbeJob(key);
+      _probeQueue.add(job);
+      scheduleMicrotask(_pumpProbes);
+      return job.completer.future;
+    });
+  }
+
+  void _pumpProbes() {
+    while (!_disposed && _activeProbes < _maxProbes && _probeQueue.isNotEmpty) {
+      final job = _probeQueue.removeFirst();
+      _activeProbes++;
+      _probe(job.key)
+          .then(job.completer.complete, onError: job.completer.completeError)
+          .whenComplete(() {
+            _activeProbes--;
+            _inFlightProbes.remove(job.key);
+            _pumpProbes();
+          });
+    }
   }
 
   Future<void> _probe(String key) async {
@@ -216,6 +245,11 @@ class BookImageCache extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    while (_probeQueue.isNotEmpty) {
+      final job = _probeQueue.removeFirst();
+      _inFlightProbes.remove(job.key);
+      job.completer.complete();
+    }
     for (final decoded in _images.values) {
       decoded.image.dispose();
     }
@@ -230,4 +264,10 @@ class _Decoded {
 
   final ui.Image image;
   final int bytes;
+}
+
+class _ProbeJob {
+  _ProbeJob(this.key);
+  final String key;
+  final completer = Completer<void>();
 }

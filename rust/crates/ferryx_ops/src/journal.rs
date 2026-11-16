@@ -92,7 +92,34 @@ pub struct Step {
     pub truncated: bool,
 }
 
+impl Change {
+    pub(crate) fn owned_bytes(&self) -> usize {
+        match self {
+            Change::Created { path, .. } | Change::FolderRemoved { path } | Change::Overwritten { path } => {
+                path.capacity()
+            }
+            Change::Moved { from, to } => from.capacity().saturating_add(to.capacity()),
+            Change::Trashed { receipt } => {
+                receipt.original.capacity().saturating_add(receipt.token.as_ref().map_or(0, String::capacity))
+            }
+        }
+    }
+}
+
 impl Step {
+    fn retained_bytes(&self) -> usize {
+        std::mem::size_of::<Step>()
+            .saturating_add(self.first_name.capacity())
+            .saturating_add(self.changes.capacity().saturating_mul(std::mem::size_of::<Change>()))
+            .saturating_add(self.changes.iter().map(Change::owned_bytes).sum::<usize>())
+    }
+
+    fn truncate(&mut self) {
+        self.changes = Vec::new();
+        self.truncated = true;
+        self.first_name = self.first_name.chars().take(256).collect();
+    }
+
     pub fn summary(&self) -> StepSummary {
         StepSummary {
             id: self.id,
@@ -171,13 +198,33 @@ struct Stacks {
 }
 
 /// The undo and redo stacks, shared by every caller.
-#[derive(Default)]
 pub struct Journal {
     stacks: Mutex<Stacks>,
+    max_bytes: usize,
+    max_changes: usize,
     listener: Mutex<Option<JournalListener>>,
 }
 
+impl Default for Journal {
+    fn default() -> Self {
+        Self {
+            stacks: Mutex::new(Stacks::default()),
+            max_bytes: Self::MAX_BYTES,
+            max_changes: Self::MAX_CHANGES,
+            listener: Mutex::new(None),
+        }
+    }
+}
+
 impl Journal {
+    pub(crate) const MAX_BYTES: usize = 64 * 1024 * 1024;
+    pub(crate) const MAX_CHANGES: usize = 200_000;
+
+    #[cfg(test)]
+    fn with_limits(max_bytes: usize, max_changes: usize) -> Self {
+        Self { max_bytes, max_changes, ..Self::default() }
+    }
+
     /// Steps kept for undo; the oldest goes first.
     pub const CAPACITY: usize = 100;
 
@@ -208,10 +255,12 @@ impl Journal {
         }
         let id = {
             let mut stacks = self.stacks.lock();
-            let step = stacks.make(record);
+            let mut step = stacks.make(record);
+            self.fit_step(&mut step);
             let id = step.id;
+            stacks.redo = Vec::new();
             stacks.push_undo(step);
-            stacks.redo.clear();
+            self.enforce_budget(&mut stacks, Direction::Undo);
             id
         };
         self.notify();
@@ -248,6 +297,17 @@ impl Journal {
     /// other stack, what was `left` back on its own, so the next undo (or
     /// redo) takes it up again.
     pub fn finish_walk(&self, direction: Direction, step: &Step, done: Vec<Change>, left: Vec<Change>) {
+        self.finish_walk_with_overflow(direction, step, done, left, false);
+    }
+
+    pub(crate) fn finish_walk_with_overflow(
+        &self,
+        direction: Direction,
+        step: &Step,
+        done: Vec<Change>,
+        left: Vec<Change>,
+        overflow: bool,
+    ) {
         {
             let mut stacks = self.stacks.lock();
             let template = |changes: Vec<Change>| StepRecord {
@@ -255,25 +315,83 @@ impl Journal {
                 items: step.items,
                 first_name: step.first_name.clone(),
                 changes,
-                truncated: false,
+                truncated: overflow,
             };
-            if !left.is_empty() {
+            if !left.is_empty() || overflow {
                 let mut back = stacks.make(template(left));
                 back.at_ms = step.at_ms;
+                self.fit_step(&mut back);
                 match direction {
                     Direction::Undo => stacks.push_undo(back),
                     Direction::Redo => stacks.redo.push(back),
                 }
             }
-            if !done.is_empty() {
-                let inverse = stacks.make(template(done));
+            let has_done = !done.is_empty() || overflow;
+            if has_done {
+                let mut inverse = stacks.make(template(done));
+                self.fit_step(&mut inverse);
                 match direction {
                     Direction::Undo => stacks.redo.push(inverse),
                     Direction::Redo => stacks.push_undo(inverse),
                 }
             }
+            let preferred = if has_done {
+                match direction {
+                    Direction::Undo => Direction::Redo,
+                    Direction::Redo => Direction::Undo,
+                }
+            } else {
+                direction
+            };
+            self.enforce_budget(&mut stacks, preferred);
         }
         self.notify();
+    }
+
+    fn fit_step(&self, step: &mut Step) {
+        if step.truncated || step.retained_bytes() > self.max_bytes || step.changes.len() > self.max_changes {
+            step.truncate();
+        }
+    }
+
+    fn enforce_budget(&self, stacks: &mut Stacks, protect: Direction) {
+        stacks.undo.shrink_to_fit();
+        stacks.redo.shrink_to_fit();
+        while stacks.retained_bytes() > self.max_bytes
+            || stacks.undo.len() + stacks.redo.len() > Self::CAPACITY
+            || stacks.undo.iter().chain(stacks.redo.iter()).map(|step| step.changes.len()).sum::<usize>()
+                > self.max_changes
+        {
+            match protect {
+                Direction::Undo if stacks.redo.len() > 1 => {
+                    stacks.redo.remove(0);
+                }
+                Direction::Redo if stacks.undo.len() > 1 => {
+                    stacks.undo.pop_front();
+                }
+                Direction::Undo if stacks.undo.len() > 1 => {
+                    stacks.undo.pop_front();
+                }
+                Direction::Redo if stacks.redo.len() > 1 => {
+                    stacks.redo.remove(0);
+                }
+                Direction::Undo if !stacks.redo.is_empty() => {
+                    stacks.redo.remove(0);
+                }
+                Direction::Redo if !stacks.undo.is_empty() => {
+                    stacks.undo.pop_front();
+                }
+                Direction::Undo if !stacks.undo.is_empty() => {
+                    stacks.undo.pop_front();
+                }
+                Direction::Redo if !stacks.redo.is_empty() => {
+                    stacks.redo.remove(0);
+                }
+                _ => break,
+            }
+            stacks.undo.shrink_to_fit();
+            stacks.redo.shrink_to_fit();
+        }
     }
 
     /// Drops the step `id` from the top of its stack (one that cannot be
@@ -286,8 +404,8 @@ impl Journal {
     pub fn clear(&self) {
         {
             let mut stacks = self.stacks.lock();
-            stacks.undo.clear();
-            stacks.redo.clear();
+            stacks.undo = VecDeque::new();
+            stacks.redo = Vec::new();
         }
         self.notify();
     }
@@ -301,6 +419,13 @@ impl Journal {
 }
 
 impl Stacks {
+    fn retained_bytes(&self) -> usize {
+        self.undo.iter().chain(self.redo.iter()).map(Step::retained_bytes).sum::<usize>().saturating_add(
+            (self.undo.capacity() - self.undo.len() + self.redo.capacity() - self.redo.len())
+                .saturating_mul(std::mem::size_of::<Step>()),
+        )
+    }
+
     fn make(&mut self, record: StepRecord) -> Step {
         self.next_id += 1;
         Step {
@@ -339,6 +464,105 @@ mod tests {
 
     fn record(kind: StepKind, changes: Vec<Change>) -> StepRecord {
         StepRecord::for_paths(kind, &[PathBuf::from("/a/first.txt")], changes)
+    }
+
+    #[test]
+    fn aggregate_storage_evicts_older_steps() {
+        let journal = Journal::with_limits(4096, 100);
+        for i in 0..40 {
+            let path = format!("/{i}/{}", "x".repeat(1024));
+            journal.record(record(StepKind::Copy, vec![created(&path)]));
+        }
+        let stacks = journal.stacks.lock();
+        assert!(stacks.undo.len() < 40, "large owned paths must be bounded across steps");
+        assert!(!stacks.undo.back().unwrap().truncated);
+    }
+
+    #[test]
+    fn oversized_step_is_truncated_and_a_later_small_step_is_usable() {
+        let journal = Journal::with_limits(4096, 100);
+        let path = format!("/{}", "x".repeat(8192));
+        journal.record(record(StepKind::Copy, vec![created(&path)]));
+        let oversized = journal.peek(Direction::Undo).unwrap();
+        assert!(oversized.truncated);
+        assert!(oversized.changes.is_empty());
+        journal.record(record(StepKind::Copy, vec![created("/small")]));
+        assert!(!journal.peek(Direction::Undo).unwrap().truncated);
+    }
+
+    #[test]
+    fn unused_change_vector_capacity_counts_towards_budget() {
+        let journal = Journal::with_limits(4096, 100);
+        let mut changes = Vec::with_capacity(100);
+        changes.push(created("/small"));
+        journal.record(record(StepKind::Copy, changes));
+        let step = journal.peek(Direction::Undo).unwrap();
+        assert!(step.truncated);
+        assert!(step.changes.is_empty());
+    }
+
+    #[test]
+    fn partial_walks_limit_total_steps_and_keep_the_latest_inverse() {
+        let journal = Journal::new();
+        let changes = (0..Journal::CAPACITY + 2).map(|i| created(&format!("/item-{i}"))).collect();
+        let mut id = journal.record(record(StepKind::Copy, changes)).unwrap();
+        for i in 0..Journal::CAPACITY {
+            let step = journal.take(Direction::Undo, id).unwrap();
+            let mut left = step.changes.clone();
+            left.pop();
+            journal.finish_walk(Direction::Undo, &step, vec![created(&format!("/inverse-{i}"))], left);
+            id = journal.peek(Direction::Undo).unwrap().id;
+        }
+        let stacks = journal.stacks.lock();
+        assert!(stacks.undo.len() + stacks.redo.len() <= Journal::CAPACITY);
+        assert_eq!(stacks.redo.first().unwrap().changes, vec![created("/inverse-1")]);
+        assert_eq!(stacks.redo.last().unwrap().changes, vec![created("/inverse-99")]);
+        assert_eq!(stacks.undo.back().unwrap().changes.len(), 2);
+    }
+
+    #[test]
+    fn walk_budget_counts_both_stacks_and_keeps_the_new_inverse() {
+        let journal = Journal::with_limits(4096, 100);
+        journal.record(record(StepKind::Copy, vec![created(&format!("/{}", "a".repeat(1800)))]));
+        let id = journal.record(record(StepKind::Copy, vec![created("/new")])).unwrap();
+        let step = journal.take(Direction::Undo, id).unwrap();
+        let inverse = created(&format!("/{}", "b".repeat(2500)));
+        journal.finish_walk(Direction::Undo, &step, vec![inverse.clone()], vec![]);
+        let stacks = journal.stacks.lock();
+        assert!(stacks.retained_bytes() <= journal.max_bytes);
+        assert!(stacks.undo.is_empty());
+        assert_eq!(stacks.redo.last().unwrap().changes, vec![inverse]);
+    }
+
+    #[test]
+    fn overflowed_walk_keeps_only_truncated_markers() {
+        let journal = Journal::new();
+        let id = journal.record(record(StepKind::Copy, vec![created("/a")])).unwrap();
+        let step = journal.take(Direction::Undo, id).unwrap();
+        journal.finish_walk_with_overflow(
+            Direction::Undo,
+            &step,
+            vec![created("/done")],
+            vec![created("/left")],
+            true,
+        );
+        for direction in [Direction::Undo, Direction::Redo] {
+            let marker = journal.peek(direction).unwrap();
+            assert!(marker.truncated);
+            assert!(marker.changes.is_empty());
+        }
+    }
+
+    #[test]
+    fn change_count_limit_includes_undo_and_redo() {
+        let journal = Journal::with_limits(65536, 2);
+        let id = journal.record(record(StepKind::Copy, vec![created("/a"), created("/b")])).unwrap();
+        let step = journal.take(Direction::Undo, id).unwrap();
+        journal.finish_walk(Direction::Undo, &step, vec![created("/inverse")], vec![created("/left")]);
+        let stacks = journal.stacks.lock();
+        assert_eq!(stacks.undo.len(), 1);
+        assert_eq!(stacks.redo.len(), 1);
+        assert_eq!(stacks.undo[0].changes.len() + stacks.redo[0].changes.len(), 2);
     }
 
     #[test]

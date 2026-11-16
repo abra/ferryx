@@ -14,6 +14,7 @@ import 'source_syntax.dart';
 import 'text_window.dart';
 import 'viewer_source.dart';
 import 'viewer_state.dart';
+import 'window_search.dart';
 
 /// The viewer over one [ViewerSource]: a window of the file at a time,
 /// the mode, the find.
@@ -25,7 +26,9 @@ class ViewerCubit extends Cubit<ViewerState> {
     this.windowSize = defaultWindowSize,
     this.highlighter = highlightSource,
     this.windowDecoder = prepareTextWindow,
-  }) : super(ViewerState(mode: mode, wrap: wrap));
+    WindowSearcher? searcher,
+  }) : _findWorker = searcher ?? WindowSearchWorker(),
+       super(ViewerState(mode: mode, wrap: wrap));
 
   /// How much of a file is read at once.
   static const int defaultWindowSize = 2 * 1024 * 1024;
@@ -36,6 +39,9 @@ class ViewerCubit extends Cubit<ViewerState> {
   final TextWindowDecoder windowDecoder;
   int _reads = 0;
   bool _hasWindow = false;
+  final WindowSearcher _findWorker;
+  Timer? _findTimer;
+  int _findRevision = 0;
 
   /// Reads the window at [offset] (the first by default).
   Future<void> load({
@@ -43,7 +49,8 @@ class ViewerCubit extends Cubit<ViewerState> {
     ViewerScroll scroll = ViewerScroll.top,
   }) async {
     final read = ++_reads;
-    emit(state.copyWith(loading: true, clearError: true));
+    _cancelFind();
+    emit(_withoutMatches(state.copyWith(loading: true, clearError: true)));
     try {
       // Document decoders own their reads and cancellation. Do not read or
       // decode a binary text window before the first document page.
@@ -94,21 +101,18 @@ class ViewerCubit extends Cubit<ViewerState> {
       final window = await windowDecoder(bytes);
       if (read != _reads || isClosed) return;
       _hasWindow = true;
-      emit(
-        _withMatches(
-          state.copyWith(
-            size: size,
-            offset: start,
-            bytes: bytes,
-            generation: state.generation + 1,
-            window: window,
-            syntax: const [],
-            loading: false,
-            clearError: true,
-            scroll: scroll,
-            scrollRequest: state.scrollRequest + 1,
-          ),
-          keepCurrent: false,
+      _updateMatches(
+        state.copyWith(
+          size: size,
+          offset: start,
+          bytes: bytes,
+          generation: state.generation + 1,
+          window: window,
+          syntax: const [],
+          loading: false,
+          clearError: true,
+          scroll: scroll,
+          scrollRequest: state.scrollRequest + 1,
         ),
       );
       if (state.mode == ViewerMode.text) unawaited(_highlight(read));
@@ -206,15 +210,12 @@ class ViewerCubit extends Cubit<ViewerState> {
   void setMode(ViewerMode mode) {
     if (mode == state.mode) return;
     ++_reads;
-    emit(
-      _withMatches(
-        state.copyWith(
-          mode: mode,
-          loading: false,
-          clearError: true,
-          findShown: mode == ViewerMode.preview ? false : state.findShown,
-        ),
-        keepCurrent: false,
+    _updateMatches(
+      state.copyWith(
+        mode: mode,
+        loading: false,
+        clearError: true,
+        findShown: mode == ViewerMode.preview ? false : state.findShown,
       ),
     );
     if (mode == ViewerMode.preview || !_hasWindow) {
@@ -230,26 +231,15 @@ class ViewerCubit extends Cubit<ViewerState> {
 
   void showFind() => emit(state.copyWith(findShown: true));
 
-  void hideFind() => emit(
-    _withMatches(
-      state.copyWith(findShown: false, findQuery: ''),
-      keepCurrent: false,
-    ),
+  void hideFind() => _updateMatches(
+    state.copyWith(findShown: false, findQuery: ''),
   );
 
   void setFindQuery(String query) {
     if (query == state.findQuery) return;
-    final next = _withMatches(
+    _updateMatches(
       state.copyWith(findQuery: query),
-      keepCurrent: false,
-    );
-    emit(
-      next.matches.isEmpty
-          ? next
-          : next.copyWith(
-              scroll: ViewerScroll.match,
-              scrollRequest: next.scrollRequest + 1,
-            ),
+      reveal: true,
     );
   }
 
@@ -272,25 +262,98 @@ class ViewerCubit extends Cubit<ViewerState> {
     );
   }
 
-  /// [state] with its matches found again in its window and mode; the
-  /// current match goes to the first unless kept.
-  ViewerState _withMatches(ViewerState state, {required bool keepCurrent}) {
-    final matches = switch (state.mode) {
-      ViewerMode.text => findInLines(state.window.lines, state.findQuery),
-      ViewerMode.hex => findInBytes(state.bytes, state.findQuery),
-      ViewerMode.preview => const <ViewerMatch>[],
-    };
-    final current = matches.isEmpty
-        ? -1
-        : keepCurrent &&
-              state.currentMatch >= 0 &&
-              state.currentMatch < matches.length
-        ? state.currentMatch
-        : 0;
-    return state.copyWith(
-      matches: matches,
-      matchesByLine: matchesByLine(matches),
-      currentMatch: current,
+  ViewerState _withoutMatches(ViewerState base) => base.copyWith(
+    matches: const [],
+    matchesByLine: const {},
+    currentMatch: -1,
+    findSearching: false,
+    findCapped: false,
+    findFailed: false,
+  );
+
+  void _cancelFind() {
+    _findRevision++;
+    _findTimer?.cancel();
+    _findTimer = null;
+    _findWorker.cancel();
+  }
+
+  void _updateMatches(ViewerState base, {bool reveal = false}) {
+    _cancelFind();
+    final next = _withoutMatches(base);
+    if (base.findQuery.isEmpty ||
+        base.mode == ViewerMode.preview ||
+        base.loading) {
+      emit(next);
+      return;
+    }
+    final hex = base.mode == ViewerMode.hex;
+    if (base.bytes.length < 128 * 1024) {
+      _publishMatches(
+        next,
+        searchWindow(
+          lines: base.window.lines,
+          bytes: base.bytes,
+          query: base.findQuery,
+          hex: hex,
+        ),
+        reveal: reveal,
+      );
+      return;
+    }
+    emit(next.copyWith(findSearching: true));
+    final revision = _findRevision;
+    // Coalesce typing before starting an isolate. New input cancels an
+    // already-running worker too; it never accumulates obsolete searches.
+    _findTimer = Timer(const Duration(milliseconds: 100), () {
+      _findTimer = null;
+      unawaited(_findMatches(base, revision, reveal));
+    });
+  }
+
+  Future<void> _findMatches(ViewerState base, int revision, bool reveal) async {
+    try {
+      final hex = base.mode == ViewerMode.hex;
+      final result = await _findWorker.search(
+        lines: hex ? const [] : base.window.lines,
+        bytes: hex ? base.bytes : Uint8List(0),
+        query: base.findQuery,
+        hex: hex,
+      );
+      if (isClosed || revision != _findRevision || result == null) return;
+      _publishMatches(state, result, reveal: reveal);
+    } on Object catch (error, stack) {
+      if (isClosed || revision != _findRevision) return;
+      addError(error, stack);
+      emit(state.copyWith(findSearching: false, findFailed: true));
+    }
+  }
+
+  void _publishMatches(
+    ViewerState base,
+    WindowSearchResult result, {
+    required bool reveal,
+  }) {
+    emit(
+      base.copyWith(
+        matches: result.matches,
+        matchesByLine: matchesByLine(result.matches),
+        currentMatch: result.matches.isEmpty ? -1 : 0,
+        findSearching: false,
+        findCapped: result.capped,
+        findFailed: false,
+        scroll: reveal && result.matches.isNotEmpty ? ViewerScroll.match : null,
+        scrollRequest: reveal && result.matches.isNotEmpty
+            ? base.scrollRequest + 1
+            : null,
+      ),
     );
+  }
+
+  @override
+  Future<void> close() {
+    ++_reads;
+    _cancelFind();
+    return super.close();
   }
 }

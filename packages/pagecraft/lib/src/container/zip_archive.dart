@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import '../pagecraft_exception.dart';
@@ -36,6 +37,10 @@ class ZipArchive {
   /// thousands of entries at most, and the directory is held in memory.
   static const maxCentralDirectoryBytes = 64 * 1024 * 1024;
 
+  /// Maximum compressed and uncompressed bytes held for a single entry.
+  static const maxEntryBytes = 128 * 1024 * 1024;
+  static const maxCompressedEntryBytes = 128 * 1024 * 1024;
+
   /// Opens the file and parses its central directory.
   ///
   /// Throws [PagecraftException] when the file is not a ZIP archive or its
@@ -55,12 +60,13 @@ class ZipArchive {
 
   /// Reads one entry's bytes, inflating when needed.
   ///
-  /// [maxBytes] refuses entries whose uncompressed size is above it before
-  /// anything is read, so a caller with a memory budget can rely on it.
+  /// [maxBytes] lowers the default output limit of [maxEntryBytes]. Both the
+  /// declared and actual output sizes are checked. Compressed input is also
+  /// limited to [maxCompressedEntryBytes].
   Future<Uint8List> read(ZipEntry entry, {int? maxBytes}) {
     if (_closed) throw StateError('ZipArchive is closed: $path');
     _checkReadable(entry, maxBytes);
-    return _synchronized(() => _readEntry(_file, entry));
+    return _synchronized(() => _readEntry(_file, entry, maxBytes));
   }
 
   /// Reads [entry] from the archive at [path] in a fresh file handle.
@@ -75,7 +81,7 @@ class ZipArchive {
     _checkReadable(entry, maxBytes);
     final file = await File(path).open();
     try {
-      return await _readEntry(file, entry);
+      return await _readEntry(file, entry, maxBytes);
     } finally {
       await file.close();
     }
@@ -94,13 +100,28 @@ class ZipArchive {
   }
 
   static void _checkReadable(ZipEntry entry, int? maxBytes) {
+    if (maxBytes != null && maxBytes < 0) {
+      throw ArgumentError.value(maxBytes, 'maxBytes');
+    }
+    if (entry.compressedSize > maxCompressedEntryBytes) {
+      throw PagecraftException('Compressed entry too large: ${entry.name}');
+    }
+    maxBytes = maxBytes == null || maxBytes > maxEntryBytes
+        ? maxEntryBytes
+        : maxBytes;
+    if (entry.compression == ZipCompression.stored &&
+        entry.compressedSize > entry.uncompressedSize) {
+      throw PagecraftException(
+        'Stored entry exceeds size limit: ${entry.name}',
+      );
+    }
     if (entry.isEncrypted) {
       throw PagecraftException('Encrypted entry: ${entry.name}');
     }
     if (entry.compression == ZipCompression.unsupported) {
       throw PagecraftException('Unsupported compression: ${entry.name}');
     }
-    if (maxBytes != null && entry.uncompressedSize > maxBytes) {
+    if (entry.uncompressedSize > maxBytes) {
       throw PagecraftException(
         'Entry too large: ${entry.name} is ${entry.uncompressedSize} bytes, '
         'limit $maxBytes',
@@ -111,6 +132,7 @@ class ZipArchive {
   static Future<Uint8List> _readEntry(
     RandomAccessFile file,
     ZipEntry entry,
+    int? maxBytes,
   ) async {
     await file.setPosition(entry.localHeaderOffset);
     final header = await file.read(_localHeaderLength);
@@ -129,7 +151,9 @@ class ZipArchive {
     }
     final bytes = switch (entry.compression) {
       ZipCompression.stored => compressed,
-      ZipCompression.deflate => _inflate(compressed, entry),
+      ZipCompression.deflate => await Isolate.run(
+        () => _inflate(compressed, entry, maxBytes),
+      ),
       ZipCompression.unsupported => throw StateError('checked earlier'),
     };
     if (bytes.length != entry.uncompressedSize) {
@@ -141,10 +165,25 @@ class ZipArchive {
     return bytes;
   }
 
-  static Uint8List _inflate(Uint8List compressed, ZipEntry entry) {
+  static Uint8List _inflate(
+    Uint8List compressed,
+    ZipEntry entry,
+    int? maxBytes,
+  ) {
+    final limit = [
+      entry.uncompressedSize,
+      maxBytes ?? maxEntryBytes,
+      maxEntryBytes,
+    ].reduce((a, b) => a < b ? a : b);
+    final output = _BoundedInflateSink(limit, entry.name);
     try {
-      final bytes = ZLibDecoder(raw: true).convert(compressed);
-      return bytes is Uint8List ? bytes : Uint8List.fromList(bytes);
+      final decoder = ZLibDecoder(raw: true).startChunkedConversion(output);
+      for (var offset = 0; offset < compressed.length; offset += 4096) {
+        final end = (offset + 4096).clamp(0, compressed.length);
+        decoder.add(Uint8List.sublistView(compressed, offset, end));
+      }
+      decoder.close();
+      return output.bytes.takeBytes();
     } on FormatException catch (e) {
       throw PagecraftException('Damaged deflate stream: ${entry.name} ($e)');
     }
@@ -313,4 +352,21 @@ class ZipArchive {
   static const _localHeaderLength = 30;
   static const _encryptedFlag = 1 << 0;
   static const _utf8Flag = 1 << 11;
+}
+
+class _BoundedInflateSink implements Sink<List<int>> {
+  _BoundedInflateSink(this.limit, this.name);
+  final int limit;
+  final String name;
+  final bytes = BytesBuilder(copy: false);
+  @override
+  void add(List<int> chunk) {
+    if (bytes.length + chunk.length > limit) {
+      throw PagecraftException('Inflated entry exceeds size limit: $name');
+    }
+    bytes.add(chunk);
+  }
+
+  @override
+  void close() {}
 }

@@ -763,6 +763,24 @@ Text/Hex. Generation checks discard obsolete reads, native conversion and
 syntax results after mode changes or disposal; a stale conversion does not
 start a sanitizer worker. Parse/limit failures are typed and localized.
 
+Source-window search retains at most 10,000 matches and reports `10,000+`
+when truncated. Small windows search synchronously; windows of at least
+128 KiB use a cancellable isolate after 100 ms of input coalescing. Query,
+window, mode and lifecycle changes cancel pending or running work; results
+are revision-checked. Hex search uses KMP with ASCII folding and overlapping
+matches, avoiding repeated-prefix quadratic scans. The input names the
+current window when the file is larger than it. Standalone raster previews
+decode to the viewport's physical dimensions with fit/no-upscaling and a
+4,096-pixel bound on each side; owned image providers are evicted on resize,
+refresh and disposal.
+
+Pagecraft ZIP reads cap compressed input and actual inflated output at
+128 MiB per entry; caller limits may lower output further. Output is checked
+incrementally against both the declared size and the actual budget while
+inflating in an isolate. EPUB text has a 16 MiB entry limit. Image dimension
+probes share in-flight work, queue at most four reads, and stop queued reads
+on disposal; retained encoded/pixel data keep their separate cache budgets.
+
 `source_syntax` selects a `re_highlight` grammar for recognized source/config
 files up to 256 KiB and tokenizes in an isolate. Windowed reading and exact
 source bytes remain unchanged for larger files. Token spans use line-relative
@@ -1583,7 +1601,11 @@ records after their children. Undo therefore recreates the source folders
 before moving files back, including after a skip, error or cancellation.
 Names that swapped (a batch rename) go back through temporary names. A
 step keeps up to 200 000 changes, beyond that it is on record as too big
-to undo; the stack keeps 100 steps in memory for the process lifetime;
+to undo; undo and redo share limits of 200 000 retained changes, 64 MiB of
+retained allocations and 100 steps. Accounting includes owned paths/strings and change-vector
+capacity. Old steps are evicted; an oversized single step becomes a truncated
+marker instead of offering incomplete undo. Recorder overflow releases its
+tracking allocations. The history stays in memory for the process lifetime;
 a new step empties redo. Permanent deletion and server operations are
 never recorded.
 
@@ -1676,6 +1698,13 @@ Rows are grouped (size × copies, space to free); Space marks, "Mark"
 keeps the newest, the oldest or the shortest path of each group; Move to
 Trash goes through the operations runner, so ⌘Z puts the files back; a
 group with every copy marked is warned about.
+
+Streamed duplicate groups use immutable persistent AVL snapshots ordered by
+wasted bytes and arrival sequence. Subtree group/row counts provide indexed
+lazy list views without inserting into or flattening the whole accumulated
+result per batch. Group iteration is linear. Row identity is remapped across
+insertions by the shared `AppRowListController.remapRows`, preserving selected
+files, lead and range anchor with one notification.
 
 ## Network locations
 

@@ -36,10 +36,13 @@ class ZipEpubFiles implements EpubFiles {
 
   final ZipArchive archive;
 
+  static const maxTextBytes = 16 * 1024 * 1024;
+
   @override
   Future<String?> readText(String path) async {
-    final bytes = await readBytes(path);
-    return bytes == null ? null : decodeEpubText(bytes);
+    final entry = _entry(path);
+    if (entry == null) return null;
+    return decodeEpubText(await archive.read(entry, maxBytes: maxTextBytes));
   }
 
   @override

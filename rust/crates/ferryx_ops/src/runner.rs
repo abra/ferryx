@@ -263,7 +263,6 @@ impl Reported {
 }
 
 /// The changes an operation made, for the journal.
-#[derive(Default)]
 struct Recorder {
     changes: Vec<Change>,
     /// Items this operation created: what is made inside them needs no
@@ -274,15 +273,68 @@ struct Recorder {
     /// Walking a step: the changes it did not get to.
     left: Vec<Change>,
     overflow: bool,
+    owned_bytes: usize,
+    tracking_bytes: usize,
+    max_bytes: usize,
+    max_changes: usize,
+}
+
+impl Default for Recorder {
+    fn default() -> Self {
+        Self {
+            changes: Vec::new(),
+            created: HashSet::new(),
+            overwritten: HashSet::new(),
+            left: Vec::new(),
+            overflow: false,
+            owned_bytes: 0,
+            tracking_bytes: 0,
+            max_bytes: Journal::MAX_BYTES,
+            max_changes: MAX_CHANGES,
+        }
+    }
 }
 
 impl Recorder {
     fn push(&mut self, change: Change) {
-        if self.changes.len() >= MAX_CHANGES {
-            self.overflow = true;
+        if self.overflow {
             return;
         }
+        self.owned_bytes = self.owned_bytes.saturating_add(change.owned_bytes());
         self.changes.push(change);
+        self.enforce_limit();
+    }
+
+    fn push_left(&mut self, change: Change) {
+        if self.overflow {
+            return;
+        }
+        self.owned_bytes = self.owned_bytes.saturating_add(change.owned_bytes());
+        self.left.push(change);
+        self.enforce_limit();
+    }
+
+    fn enforce_limit(&mut self) {
+        let bytes = self
+            .owned_bytes
+            .saturating_add(self.tracking_bytes)
+            .saturating_add(
+                (self.changes.capacity() + self.left.capacity())
+                    .saturating_mul(std::mem::size_of::<Change>()),
+            )
+            .saturating_add(
+                (self.created.capacity() + self.overwritten.capacity())
+                    .saturating_mul(std::mem::size_of::<PathBuf>() + 1),
+            );
+        if self.changes.len().saturating_add(self.left.len()) > self.max_changes || bytes > self.max_bytes {
+            self.changes = Vec::new();
+            self.left = Vec::new();
+            self.created = HashSet::new();
+            self.overwritten = HashSet::new();
+            self.owned_bytes = 0;
+            self.tracking_bytes = 0;
+            self.overflow = true;
+        }
     }
 
     fn inside_created(&self, path: &Path) -> bool {
@@ -650,13 +702,16 @@ impl OpContext {
     /// (attributes set), so its fingerprint is the final one.
     pub fn record_created(&self, path: &Path) {
         let mut recorder = self.recorder.lock();
-        if recorder.created.contains(path)
+        if recorder.overflow
+            || recorder.created.contains(path)
             || recorder.overwritten.contains(path)
             || recorder.inside_created(path)
         {
             return;
         }
-        recorder.created.insert(path.to_path_buf());
+        let tracked = path.to_path_buf();
+        recorder.tracking_bytes = recorder.tracking_bytes.saturating_add(tracked.capacity());
+        recorder.created.insert(tracked);
         recorder.push(Change::Created { path: path.to_path_buf(), fingerprint: Fingerprint::of(path) });
     }
 
@@ -664,9 +719,13 @@ impl OpContext {
     /// lost, and what takes its place is no new item.
     pub fn record_overwritten(&self, path: &Path) {
         let mut recorder = self.recorder.lock();
-        if !recorder.inside_created(path) && recorder.overwritten.insert(path.to_path_buf()) {
-            recorder.push(Change::Overwritten { path: path.to_path_buf() });
+        if recorder.overflow || recorder.inside_created(path) || recorder.overwritten.contains(path) {
+            return;
         }
+        let tracked = path.to_path_buf();
+        recorder.tracking_bytes = recorder.tracking_bytes.saturating_add(tracked.capacity());
+        recorder.overwritten.insert(tracked);
+        recorder.push(Change::Overwritten { path: path.to_path_buf() });
     }
 
     /// Records the item at `from` as renamed to `to` (what it replaced is
@@ -686,13 +745,19 @@ impl OpContext {
     /// have their own creation/removal records, even for a partial move.
     pub(crate) fn record_moved_by_copy(&self, mark: usize, from: &Path, to: &Path) {
         let mut recorder = self.recorder.lock();
+        if recorder.overflow {
+            return;
+        }
         let mark = mark.min(recorder.changes.len());
         let created = recorder.changes[mark..]
             .iter()
             .position(|c| matches!(c, Change::Created { path, .. } if path == to));
         if let Some(offset) = created {
-            recorder.changes.remove(mark + offset);
-            recorder.created.remove(to);
+            let change = recorder.changes.remove(mark + offset);
+            recorder.owned_bytes = recorder.owned_bytes.saturating_sub(change.owned_bytes());
+            if let Some(path) = recorder.created.take(to) {
+                recorder.tracking_bytes = recorder.tracking_bytes.saturating_sub(path.capacity());
+            }
         }
         // Even into a folder this operation made: the item came from
         // elsewhere, and going back it must leave before the folder goes.
@@ -701,7 +766,7 @@ impl OpContext {
 
     /// Walking a step: records `change` as not done, for the next walk.
     pub fn record_left(&self, change: Change) {
-        self.recorder.lock().left.push(change);
+        self.recorder.lock().push_left(change);
     }
 
     /// Hands the recorded changes to `journal` as `journaling` says.
@@ -719,7 +784,13 @@ impl OpContext {
                 });
             }
             Journaling::Walk { direction, step } => {
-                journal.finish_walk(direction, &step, recorder.changes, recorder.left);
+                journal.finish_walk_with_overflow(
+                    direction,
+                    &step,
+                    recorder.changes,
+                    recorder.left,
+                    recorder.overflow,
+                );
             }
         }
     }
@@ -874,6 +945,33 @@ mod tests {
         assert_eq!(reports[0].sources, req.sources);
         assert_eq!(reports.last().unwrap().sources, req.sources);
         assert!(reports[1..reports.len() - 1].iter().all(|r| r.sources.is_empty()));
+    }
+
+    #[test]
+    fn recorder_releases_tracking_after_overflow() {
+        let ctx = OpContext::detached(&request(OpKind::Copy));
+        ctx.recorder.lock().max_changes = 2;
+        for i in 0..=2 {
+            ctx.record_created(&PathBuf::from(format!("/item-{i}")));
+        }
+        let recorder = ctx.recorder.lock();
+        assert!(recorder.overflow);
+        assert!(recorder.changes.is_empty());
+        assert!(recorder.created.is_empty());
+        assert!(recorder.overwritten.is_empty());
+    }
+
+    #[test]
+    fn recorder_releases_tracking_when_owned_bytes_overflow() {
+        let ctx = OpContext::detached(&request(OpKind::Copy));
+        ctx.recorder.lock().max_bytes = 1024;
+        ctx.record_created(&PathBuf::from(format!("/{}", "x".repeat(700))));
+        ctx.record_overwritten(Path::new("/later"));
+        let recorder = ctx.recorder.lock();
+        assert!(recorder.overflow);
+        assert!(recorder.changes.is_empty());
+        assert!(recorder.created.is_empty());
+        assert!(recorder.overwritten.is_empty());
     }
 
     #[test]

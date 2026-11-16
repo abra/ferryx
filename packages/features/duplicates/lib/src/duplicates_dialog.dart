@@ -72,6 +72,7 @@ class _DuplicatesDialogState extends State<DuplicatesDialog> {
   int _unit = _units[0];
   bool _withOther = false;
   bool _hidden = false;
+  DuplicatesState? _previousState;
 
   DuplicatesCubit get _cubit => context.read<DuplicatesCubit>();
 
@@ -120,11 +121,16 @@ class _DuplicatesDialogState extends State<DuplicatesDialog> {
   }
 
   void _onState(BuildContext context, DuplicatesState state) {
-    if (state.rows.isEmpty) {
-      _rows.reset(0);
-    } else {
+    final previous = _previousState;
+    _previousState = state;
+    if (previous == null || identical(previous.rows, state.rows)) {
       _rows.count = state.rows.length;
+      return;
     }
+    _rows.remapRows(
+      state.rows.length,
+      (row) => state.movedRowFrom(previous, row),
+    );
   }
 
   List<String> _pathsOf(Iterable<int> rows) => [

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/painting.dart';
@@ -46,6 +47,75 @@ void main() {
     expect(cache.sizeOf('missing.png'), isNull);
     await tester.runAsync(() => cache.probe(['wide.png']));
     expect(reads.where((k) => k == 'wide.png'), hasLength(1));
+  });
+
+  test(
+    'bounds concurrent probes, coalesces duplicates and stops on dispose',
+    () async {
+      final pending = <Completer<Uint8List?>>[];
+      final started = <String>[];
+      final cache = BookImageCache(
+        read: (key) {
+          started.add(key);
+          final completer = Completer<Uint8List?>();
+          pending.add(completer);
+          return completer.future;
+        },
+      );
+      final first = cache.probe(List.generate(20, (i) => '$i'));
+      final duplicate = cache.probe(['0']);
+      await Future<void>.delayed(Duration.zero);
+      expect(started, hasLength(4));
+      expect(started.where((key) => key == '0'), hasLength(1));
+      cache.dispose();
+      for (final completer in pending) {
+        completer.complete(null);
+      }
+      await Future.wait([first, duplicate]);
+      expect(started, hasLength(4));
+    },
+  );
+
+  test(
+    'a completed probe starts one queued read and shares its result',
+    () async {
+      final pending = <String, Completer<Uint8List?>>{};
+      final cache = BookImageCache(
+        read: (key) {
+          return (pending[key] = Completer<Uint8List?>()).future;
+        },
+      );
+      addTearDown(cache.dispose);
+      final first = cache.probe(['0', '1', '2', '3', '4']);
+      final duplicate = cache.probe(['0']);
+      await Future<void>.delayed(Duration.zero);
+      expect(pending.keys, ['0', '1', '2', '3']);
+      pending['0']!.complete(files['small.png']);
+      final shared = await duplicate;
+      expect(shared['0'], const Size(20, 10));
+      await Future<void>.delayed(Duration.zero);
+      expect(pending.keys, ['0', '1', '2', '3', '4']);
+      for (final key in ['1', '2', '3', '4']) {
+        pending[key]!.complete(null);
+      }
+      expect((await first)['0'], const Size(20, 10));
+    },
+  );
+
+  test('queued probes continue after a read failure', () async {
+    final started = <String>[];
+    final cache = BookImageCache(
+      read: (key) async {
+        started.add(key);
+        if (key == '0') throw const FormatException('bad image');
+        return files['small.png'];
+      },
+    );
+    addTearDown(cache.dispose);
+    final result = await cache.probe(List.generate(10, (i) => '$i'));
+    expect(started, hasLength(10));
+    expect(result, hasLength(9));
+    expect(result['9'], const Size(20, 10));
   });
 
   testWidgets('decodes at the drawn width and tells listeners', (tester) async {

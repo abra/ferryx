@@ -73,6 +73,58 @@ void main() {
     await cubit.close();
   });
 
+  test(
+    'streamed snapshots keep stable ordering and indexed row boundaries',
+    () async {
+      final cubit = DuplicatesCubit(service: service);
+      await cubit.start(const DuplicatesRequest(roots: ['/a']));
+      final expected = <DuplicateGroup>[];
+      DuplicatesState? old;
+      for (var batch = 0; batch < 40; batch++) {
+        final incoming = List.generate(15, (i) {
+          final id = batch * 15 + i;
+          return DuplicateGroup(
+            size: (id * 17) % 23 + 1,
+            files: [
+              file('/a/$id-a', 1),
+              file('/a/$id-b', 2),
+              if (id % 3 == 0) file('/a/$id-c', 3),
+            ],
+          );
+        });
+        expected.addAll(incoming);
+        updates.add(
+          DuplicatesUpdate(taskId: 2, groups: incoming, done: batch == 39),
+        );
+        await flush();
+        old ??= cubit.state;
+      }
+      // Dart's List.sort is not stable, so include arrival order explicitly.
+      final sorted = expected.indexed.toList()
+        ..sort((a, b) {
+          final cmp = b.$2.wasted.compareTo(a.$2.wasted);
+          return cmp != 0 ? cmp : a.$1.compareTo(b.$1);
+        });
+      expect(cubit.state.groups.toList(), sorted.map((e) => e.$2).toList());
+      expect(old!.groups.length, 15);
+      var row = 0;
+      for (var group = 0; group < sorted.length; group++) {
+        expect((cubit.state.rows[row++] as GroupRow).group, group);
+        for (var f = 0; f < sorted[group].$2.files.length; f++) {
+          final item = cubit.state.rows[row] as FileRow;
+          expect((item.group, item.file), (group, f));
+          expect(
+            cubit.state.fileAt(row++)?.path,
+            sorted[group].$2.files[f].path,
+          );
+        }
+      }
+      expect(row, cubit.state.rows.length);
+      expect(cubit.state.running, isFalse);
+      await cubit.close();
+    },
+  );
+
   test('marks by hand: a click flips, several flip together', () async {
     final cubit = await started();
     cubit.toggleMarks([1]);

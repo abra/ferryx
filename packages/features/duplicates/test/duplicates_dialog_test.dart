@@ -161,6 +161,144 @@ void main() {
     expect(cubit.state.groups, isEmpty);
   });
 
+  testWidgets('streamed groups keep the selected file when inserted ahead', (
+    tester,
+  ) async {
+    final cubit = await pump(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    updates.add(
+      DuplicatesUpdate(
+        taskId: 1,
+        groups: [
+          DuplicateGroup(
+            size: 10,
+            files: [
+              DuplicateFile(path: '/home/selected'),
+              DuplicateFile(path: '/home/other'),
+            ],
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    updates.add(
+      DuplicatesUpdate(
+        taskId: 1,
+        groups: [
+          DuplicateGroup(
+            size: 100,
+            files: [
+              DuplicateFile(path: '/home/new'),
+              DuplicateFile(path: '/home/new2'),
+            ],
+          ),
+        ],
+        done: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.pump();
+    expect(cubit.state.marked, {'/home/selected'});
+  });
+
+  testWidgets('streaming preserves the range anchor for subsequent extension', (
+    tester,
+  ) async {
+    await pump(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    updates.add(
+      DuplicatesUpdate(
+        taskId: 1,
+        groups: [
+          DuplicateGroup(
+            size: 10,
+            files: [
+              for (var i = 0; i < 4; i++) DuplicateFile(path: '/home/old$i'),
+            ],
+          ),
+        ],
+      ),
+    );
+    await tester.pump();
+    final rows = tester.widget<AppRowList>(find.byType(AppRowList)).controller;
+    rows.moveTo(1);
+    rows.moveTo(2, extend: true);
+    updates.add(
+      DuplicatesUpdate(
+        taskId: 1,
+        groups: [
+          DuplicateGroup(
+            size: 100,
+            files: [
+              DuplicateFile(path: '/home/new1'),
+              DuplicateFile(path: '/home/new2'),
+            ],
+          ),
+        ],
+        done: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+    rows.moveTo(6, extend: true);
+    expect(rows.selected, {4, 5, 6});
+  });
+
+  testWidgets('streaming remaps a large selection with one notification', (
+    tester,
+  ) async {
+    await pump(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    updates.add(
+      DuplicatesUpdate(
+        taskId: 1,
+        groups: [
+          for (var i = 0; i < 100; i++)
+            DuplicateGroup(
+              size: 10,
+              files: [
+                DuplicateFile(path: '/home/$i-a'),
+                DuplicateFile(path: '/home/$i-b'),
+              ],
+            ),
+        ],
+      ),
+    );
+    await tester.pump();
+    final rows = tester.widget<AppRowList>(find.byType(AppRowList)).controller;
+    rows.moveTo(1);
+    rows.selectAll();
+    var notifications = 0;
+    void count() => notifications++;
+    rows.addListener(count);
+    updates.add(
+      DuplicatesUpdate(
+        taskId: 1,
+        groups: [
+          DuplicateGroup(
+            size: 100,
+            files: [
+              DuplicateFile(path: '/home/new1'),
+              DuplicateFile(path: '/home/new2'),
+            ],
+          ),
+        ],
+        done: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+    rows.removeListener(count);
+    expect(notifications, 1);
+    expect(rows.lead, 4);
+    expect(rows.selected, {for (var i = 3; i < 303; i++) i});
+  });
+
   testWidgets('marking every copy warns before trashing', (tester) async {
     final cubit = await pump(tester);
     await search(tester);

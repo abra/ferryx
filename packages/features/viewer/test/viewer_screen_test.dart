@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:file_repository/file_repository.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
@@ -296,6 +298,17 @@ void main() {
         await menu(tester);
         await pick(tester, en.cmdViewerFind);
         await tester.enterText(find.byType(AppSearchField), marker);
+        // A large-window query coalesces in fake time, then searches in a
+        // real isolate. Wait for its state before asserting rendered matches.
+        await tester.pump(const Duration(milliseconds: 120));
+        final cubit = tester.element(find.byType(TextView)).read<ViewerCubit>();
+        for (var i = 0; i < 100 && cubit.state.findSearching; i++) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 20)),
+          );
+          await tester.pump(const Duration(milliseconds: 20));
+        }
+        expect(cubit.state.findSearching, isFalse);
         await tester.pumpAndSettle();
         expect(find.text(en.viewerMatches(1, 1)), findsOneWidget);
         expectBoundedRendering();
@@ -433,6 +446,95 @@ void main() {
     expect(tester.widget<RawImage>(find.byType(RawImage)).image, isNotNull);
     await tester.pumpAndSettle();
   }
+
+  testWidgets(
+    'raster preview decodes to the viewport instead of native dimensions',
+    (tester) async {
+      bytes = File('test/fixtures/large_dimensions.png').readAsBytesSync();
+      await open(
+        tester,
+        width: 900,
+        location: const Location.native('/tmp/large.png'),
+        startInPreview: true,
+      );
+      await settleImage(tester);
+      final image = tester.widget<RawImage>(find.byType(RawImage)).image!;
+      expect(image.width, lessThanOrEqualTo(900));
+      expect(image.height, lessThanOrEqualTo(600));
+      final provider = tester.widget<Image>(find.byType(Image)).image;
+      final firstKey = await provider.obtainKey(ImageConfiguration.empty);
+      expect(PaintingBinding.instance.imageCache.containsKey(firstKey), isTrue);
+      tester.view.devicePixelRatio = 2;
+      tester.view.physicalSize = const Size(1800, 1200);
+      await tester.pump();
+      await settleImage(tester);
+      final retina = tester.widget<RawImage>(find.byType(RawImage)).image!;
+      expect(retina.width, greaterThan(image.width));
+      expect(retina.width, lessThanOrEqualTo(1800));
+      expect(retina.height, lessThanOrEqualTo(1200));
+      expect(
+        PaintingBinding.instance.imageCache.containsKey(firstKey),
+        isFalse,
+      );
+      final resized = tester.widget<Image>(find.byType(Image)).image;
+      final resizedKey = await resized.obtainKey(ImageConfiguration.empty);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+      expect(
+        PaintingBinding.instance.imageCache.containsKey(resizedKey),
+        isFalse,
+      );
+    },
+  );
+
+  testWidgets('small raster previews keep their intrinsic pixel dimensions', (
+    tester,
+  ) async {
+    bytes = base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+    );
+    await open(
+      tester,
+      location: const Location.native('/tmp/tiny.png'),
+      startInPreview: true,
+    );
+    await settleImage(tester);
+    final image = tester.widget<RawImage>(find.byType(RawImage)).image!;
+    expect(image.width, 1);
+    expect(image.height, 1);
+  });
+
+  for (final aspect in ['wide', 'tall']) {
+    testWidgets('$aspect raster keeps a positive decoded minor dimension', (
+      tester,
+    ) async {
+      bytes = File('test/fixtures/${aspect}_dimensions.png').readAsBytesSync();
+      await open(
+        tester,
+        location: const Location.native('/tmp/extreme.png'),
+        startInPreview: true,
+      );
+      await settleImage(tester);
+      final image = tester.widget<RawImage>(find.byType(RawImage)).image!;
+      expect(image.width, inInclusiveRange(1, 900));
+      expect(image.height, inInclusiveRange(1, 600));
+      expect(aspect == 'wide' ? image.height : image.width, 1);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('source search labels capped results instead of an exact total', (
+    tester,
+  ) async {
+    bytes = Uint8List.fromList(utf8.encode('a' * 20000));
+    await open(tester);
+    await menu(tester);
+    await pick(tester, en.cmdViewerFind);
+    await tester.enterText(find.byType(EditableText), 'a');
+    await tester.pumpAndSettle();
+    expect(find.text(en.viewerMatchesCapped(1, 10000)), findsOneWidget);
+    expect(find.text(en.viewerMatches(1, 10000)), findsNothing);
+  });
 
   for (final brightness in Brightness.values) {
     for (final location in [

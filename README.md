@@ -208,7 +208,9 @@ Same-volume drops move; cross-volume drops copy. macOS Option forces copy
 and Command forces move. Windows modifiers are not reported by the drag
 plugin, so the volume rule applies. Archive members drag within Ferryx only.
 
-Undo retains the last **100 steps in memory**. Created items go to Trash,
+Undo retains up to **100 steps**, within a shared **64 MiB** memory budget
+for undo and redo. Older steps expire when the budget is reached; an operation
+too large to record is identified as unavailable for undo. Created items go to Trash,
 moved items move back and trashed items are restored. A preflight check
 reports missing items, metadata changes and conflicting paths. Items Ferryx
 trashes on macOS do not have Finder Put Back.
@@ -332,6 +334,9 @@ Large text files load in 2 MiB parts. Very long lines, including minified
 JSON, render in visible fragments with wrapping or horizontal scrolling.
 Find searches the loaded part; use **Next part**, **Previous part** or
 **Go to Offset** to move through the file.
+Text/Hex search retains the first 10,000 matches per part and displays
+`10,000+` when there are more. Searches in large parts run in the background;
+changing the query or closing preview cancels the previous search.
 
 Markdown, tables and formatted text open in **Preview**. **⌘F** searches
 rendered Markdown, HTML, Office documents, other formatted text and CSV/TSV.

@@ -62,6 +62,32 @@ class AppRowListController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Keeps row identities when streamed results move them, publishing one
+  /// coherent selection update. A removed range anchor falls back to the lead.
+  void remapRows(int count, int? Function(int index) mapIndex) {
+    RangeError.checkNotNegative(count, 'count');
+    int mapped(int index) {
+      if (index < 0) return -1;
+      final next = mapIndex(index);
+      return next != null && next >= 0 && next < count ? next : -1;
+    }
+
+    final lead = mapped(_lead);
+    final anchor = mapped(_anchor);
+    final selected = <int>{};
+    for (final index in _selected) {
+      final next = mapped(index);
+      if (next >= 0) selected.add(next);
+    }
+    _count = count;
+    _lead = lead;
+    _anchor = anchor >= 0 ? anchor : lead;
+    _selected
+      ..clear()
+      ..addAll(selected);
+    notifyListeners();
+  }
+
   /// The lead to [index]: alone selected, or with [extend] the rows from
   /// the anchor to it (as ⇧ with the arrows or a click does).
   void moveTo(int index, {bool extend = false}) {

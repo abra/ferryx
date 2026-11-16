@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart' as archive;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pagecraft/all_formats.dart';
+import 'package:pagecraft/epub.dart';
 
 import 'package:pagecraft/testing.dart';
 
@@ -286,6 +287,112 @@ void main() {
       expect(await zip.read(zip.entries.single, maxBytes: page.length), page);
     });
 
+    test('stops inflation when actual output exceeds declared size', () async {
+      final zip = await open(
+        ZipBuilder()
+            .addEntry(
+              ZipBuilderEntry(
+                'forged',
+                List.filled(1024 * 1024, 0),
+                deflate: true,
+                declaredUncompressedSize: 1,
+              ),
+            )
+            .build(),
+      );
+      await expectLater(
+        zip.read(zip.entries.single, maxBytes: 2),
+        throwsA(
+          isA<PagecraftException>().having(
+            (e) => e.message,
+            'message',
+            contains('exceeds'),
+          ),
+        ),
+      );
+    });
+
+    test('rejects forged stored size before reading its payload', () async {
+      final zip = await open(
+        ZipBuilder()
+            .addEntry(
+              ZipBuilderEntry(
+                'forged',
+                List.filled(1000, 7),
+                declaredUncompressedSize: 1,
+              ),
+            )
+            .build(),
+      );
+      expect(
+        () => zip.read(zip.entries.single, maxBytes: 2),
+        throwsA(
+          isA<PagecraftException>().having(
+            (e) => e.message,
+            'message',
+            contains('exceeds'),
+          ),
+        ),
+      );
+    });
+
+    test('deflated output accepts the exact byte limit', () async {
+      final zip = await open(
+        ZipBuilder().add('chapter', text, deflate: true).build(),
+      );
+      expect(await zip.read(zip.entries.single, maxBytes: text.length), text);
+      expect(
+        () => zip.read(zip.entries.single, maxBytes: text.length - 1),
+        throwsA(isA<PagecraftException>()),
+      );
+    });
+
+    test('default input and output limits reject oversized metadata', () async {
+      final zip = await open(ZipBuilder().add('x', [1]).build());
+      ZipEntry entry(int compressed, int uncompressed) => ZipEntry(
+        name: 'x',
+        compression: ZipCompression.deflate,
+        compressedSize: compressed,
+        uncompressedSize: uncompressed,
+        localHeaderOffset: 0,
+        crc32: 0,
+        isEncrypted: false,
+      );
+      expect(
+        () => zip.read(entry(1, ZipArchive.maxEntryBytes + 1)),
+        throwsA(isA<PagecraftException>()),
+      );
+      expect(
+        () => zip.read(entry(ZipArchive.maxCompressedEntryBytes + 1, 1)),
+        throwsA(isA<PagecraftException>()),
+      );
+    });
+
+    test('EPUB text applies a smaller limit than its blob reads', () async {
+      final zip = await open(
+        ZipBuilder()
+            .addEntry(
+              ZipBuilderEntry(
+                'chapter',
+                [1],
+                declaredUncompressedSize: ZipEpubFiles.maxTextBytes + 1,
+              ),
+            )
+            .build(),
+      );
+      final files = ZipEpubFiles(zip);
+      await expectLater(
+        files.readText('chapter'),
+        throwsA(
+          isA<PagecraftException>().having(
+            (e) => e.message,
+            'message',
+            contains('too large'),
+          ),
+        ),
+      );
+    });
+
     test('refuses reads after close', () async {
       final zip = await ZipArchive.open(
         await write(ZipBuilder().add('x.txt', text).build()),
@@ -310,6 +417,24 @@ void main() {
       for (var i = 0; i < 40; i++) {
         expect(reads[i], expected['$i.bin'], reason: 'entry $i');
       }
+    });
+
+    test('close waits for queued reads and rejects new ones', () async {
+      final zip = await ZipArchive.open(
+        await write(
+          ZipBuilder()
+              .add('first', text, deflate: true)
+              .add('second', page, deflate: true)
+              .build(),
+        ),
+      );
+      final first = zip.read(zip.entries[0]);
+      final second = zip.read(zip.entries[1]);
+      final close = zip.close();
+      expect(() => zip.read(zip.entries[0]), throwsStateError);
+      expect(await first, text);
+      expect(await second, page);
+      await close;
     });
 
     test('a failed read does not block later reads', () async {

@@ -208,7 +208,7 @@ struct Staged {
 /// cannot be done is reported and recorded as left.
 pub fn run(ctx: &OpContext, step: &Step) -> Result<(), Abort> {
     if step.truncated {
-        ctx.record_error(Path::new(&step.first_name), "too many items changed to undo".to_string());
+        ctx.record_error(Path::new(&step.first_name), "operation too large to record for undo".to_string());
         return Err(Abort::Stopped);
     }
     let changes: Vec<&Change> = step.changes.iter().rev().collect();

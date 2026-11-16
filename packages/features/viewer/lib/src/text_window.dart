@@ -91,9 +91,16 @@ bool looksBinary(Uint8List bytes) {
   return nulls > 0 && (nulls >= 4 || nulls * 200 > sample);
 }
 
-/// Every place [query] appears in [lines], case-insensitively.
-List<ViewerMatch> findInLines(List<String> lines, String query) {
-  if (query.isEmpty) return const [];
+/// Retained matches per window; the UI reports when more were found.
+const maxWindowMatches = 10000;
+
+/// The first bounded places [query] appears, case-insensitively.
+List<ViewerMatch> findInLines(
+  List<String> lines,
+  String query, {
+  int maxMatches = maxWindowMatches,
+}) {
+  if (query.isEmpty || maxMatches <= 0) return const [];
   final needle = query.toLowerCase();
   final out = <ViewerMatch>[];
   for (var i = 0; i < lines.length; i++) {
@@ -103,6 +110,7 @@ List<ViewerMatch> findInLines(List<String> lines, String query) {
       final at = line.indexOf(needle, from);
       if (at < 0) break;
       out.add(ViewerMatch(line: i, start: at, end: at + needle.length));
+      if (out.length == maxMatches) return out;
       from = at + needle.length;
     }
   }
@@ -116,23 +124,35 @@ List<ViewerMatch> findInBytes(
   Uint8List bytes,
   String query, {
   int rowLength = 16,
+  int maxMatches = maxWindowMatches,
 }) {
-  if (query.isEmpty) return const [];
+  if (query.isEmpty || maxMatches <= 0) return const [];
   final needle = utf8.encode(query);
   if (needle.isEmpty || needle.length > bytes.length) return const [];
-  final out = <ViewerMatch>[];
-  final last = bytes.length - needle.length;
-  for (var i = 0; i <= last; i++) {
-    var hit = true;
-    for (var j = 0; j < needle.length; j++) {
-      if (_fold(bytes[i + j]) != _fold(needle[j])) {
-        hit = false;
-        break;
-      }
+  for (var i = 0; i < needle.length; i++) {
+    needle[i] = _fold(needle[i]);
+  }
+  // KMP reuses the matched prefix, keeping repeated data linear in the
+  // window and query lengths. Overlapping matches remain visible in Hex.
+  final prefixes = Int32List(needle.length);
+  for (var i = 1, matched = 0; i < needle.length; i++) {
+    while (matched > 0 && needle[i] != needle[matched]) {
+      matched = prefixes[matched - 1];
     }
-    if (!hit) continue;
-    final row = i ~/ rowLength;
-    final start = i % rowLength;
+    if (needle[i] == needle[matched]) matched++;
+    prefixes[i] = matched;
+  }
+  final out = <ViewerMatch>[];
+  for (var i = 0, matched = 0; i < bytes.length; i++) {
+    final byte = _fold(bytes[i]);
+    while (matched > 0 && byte != needle[matched]) {
+      matched = prefixes[matched - 1];
+    }
+    if (byte == needle[matched]) matched++;
+    if (matched != needle.length) continue;
+    final at = i + 1 - needle.length;
+    final row = at ~/ rowLength;
+    final start = at % rowLength;
     final end = start + needle.length;
     out.add(
       ViewerMatch(
@@ -141,6 +161,8 @@ List<ViewerMatch> findInBytes(
         end: end > rowLength ? rowLength : end,
       ),
     );
+    if (out.length == maxMatches) return out;
+    matched = prefixes[matched - 1];
   }
   return out;
 }

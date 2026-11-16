@@ -851,8 +851,14 @@ class _FindBar extends StatelessWidget {
     final current = count == 0 ? 0 : state.currentMatch + 1;
     final status = state.findQuery.isEmpty
         ? ''
+        : state.findSearching
+        ? l10n.previewSearching
+        : state.findFailed
+        ? l10n.viewerSearchFailed
         : count == 0
         ? l10n.viewerNoMatch
+        : state.findCapped
+        ? l10n.viewerMatchesCapped(current, count)
         : l10n.viewerMatches(current, count);
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -878,7 +884,9 @@ class _FindBar extends StatelessWidget {
                       maxWidth: AppSizes.titleBarSearchWidth,
                     ),
                     child: AppSearchField(
-                      hintText: l10n.viewerFindHint,
+                      hintText: state.windowed
+                          ? l10n.viewerWindowFindHint
+                          : l10n.viewerFindHint,
                       controller: controller,
                       focusNode: focusNode,
                       onChanged: onChanged,
@@ -896,7 +904,10 @@ class _FindBar extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: context.text.bodySmall?.copyWith(
-                        color: count == 0 && state.findQuery.isNotEmpty
+                        color:
+                            count == 0 &&
+                                state.findQuery.isNotEmpty &&
+                                !state.findSearching
                             ? colors.danger
                             : colors.textMuted,
                         fontFeatures: const [FontFeature.tabularFigures()],

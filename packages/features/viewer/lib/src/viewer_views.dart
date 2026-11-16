@@ -12,6 +12,7 @@ import 'text_layout.dart';
 import 'text_window.dart';
 import 'source_syntax.dart';
 import 'source_spans.dart';
+import 'raster_preview_image.dart';
 import 'viewer_source.dart';
 
 /// Monospace with compact leading; byte grids can supply their own height.
@@ -567,6 +568,9 @@ class PreviewView extends StatefulWidget {
 
 class _PreviewViewState extends State<PreviewView> {
   Future<Uint8List>? _bytes;
+  ImageProvider? _provider;
+  (Uint8List, int, int)? _imageKey;
+  static const _maxDecodeSide = 4096;
 
   @override
   void initState() {
@@ -585,7 +589,41 @@ class _PreviewViewState extends State<PreviewView> {
   }
 
   void _read() {
+    _evict();
     _bytes = widget.previewable ? widget.source.read(0, widget.size) : null;
+  }
+
+  ImageProvider _imageFor(Uint8List bytes, BoxConstraints box, double ratio) {
+    final width = box.hasBoundedWidth
+        ? (box.maxWidth * ratio).ceil().clamp(1, _maxDecodeSide)
+        : _maxDecodeSide;
+    final height = box.hasBoundedHeight
+        ? (box.maxHeight * ratio).ceil().clamp(1, _maxDecodeSide)
+        : _maxDecodeSide;
+    final key = (bytes, width, height);
+    if (_imageKey != key) {
+      _evict();
+      _imageKey = key;
+      _provider = RasterPreviewImage(
+        bytes,
+        maxWidth: width,
+        maxHeight: height,
+      );
+    }
+    return _provider!;
+  }
+
+  void _evict() {
+    final provider = _provider;
+    _provider = null;
+    _imageKey = null;
+    if (provider != null) unawaited(provider.evict());
+  }
+
+  @override
+  void dispose() {
+    _evict();
+    super.dispose();
   }
 
   @override
@@ -602,15 +640,23 @@ class _PreviewViewState extends State<PreviewView> {
       builder: (context, snapshot) {
         if (snapshot.hasError) return none;
         final data = snapshot.data;
-        if (data == null) return const DelayedSpinner();
+        if (data == null || snapshot.connectionState != ConnectionState.done) {
+          return const DelayedSpinner();
+        }
         return Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
-          child: Center(
-            child: Image.memory(
-              data,
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.medium,
-              errorBuilder: (context, error, stackTrace) => none,
+          child: LayoutBuilder(
+            builder: (context, box) => Center(
+              child: Image(
+                image: _imageFor(
+                  data,
+                  box,
+                  MediaQuery.devicePixelRatioOf(context),
+                ),
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.medium,
+                errorBuilder: (context, error, stackTrace) => none,
+              ),
             ),
           ),
         );

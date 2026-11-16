@@ -1362,6 +1362,17 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   }
 
   @override
+  String viewerMatchesCapped(int current, int total) {
+    return '$current of $total+';
+  }
+
+  @override
+  String get viewerSearchFailed => 'Search could not finish';
+
+  @override
+  String get viewerWindowFindHint => 'Find in this window';
+
+  @override
   String get viewerLoadNext => 'Next part';
 
   @override
@@ -3274,7 +3285,8 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
       'Items cannot be put back from the Trash here';
 
   @override
-  String get undoIssueTruncated => 'Too many items changed to undo';
+  String get undoIssueTruncated =>
+      'This operation was too large to record for undo';
 
   @override
   String undoMoreIssues(int count) {

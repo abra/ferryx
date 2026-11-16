@@ -2174,6 +2174,24 @@ abstract class FerryxLocalizations {
   /// **'{current} of {total}'**
   String viewerMatches(int current, int total);
 
+  /// No description provided for @viewerMatchesCapped.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {total}+'**
+  String viewerMatchesCapped(int current, int total);
+
+  /// No description provided for @viewerSearchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Search could not finish'**
+  String get viewerSearchFailed;
+
+  /// No description provided for @viewerWindowFindHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Find in this window'**
+  String get viewerWindowFindHint;
+
   /// No description provided for @viewerLoadNext.
   ///
   /// In en, this message translates to:
@@ -5495,7 +5513,7 @@ abstract class FerryxLocalizations {
   /// No description provided for @undoIssueTruncated.
   ///
   /// In en, this message translates to:
-  /// **'Too many items changed to undo'**
+  /// **'This operation was too large to record for undo'**
   String get undoIssueTruncated;
 
   /// No description provided for @undoMoreIssues.

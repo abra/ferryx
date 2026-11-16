@@ -1401,6 +1401,17 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   }
 
   @override
+  String viewerMatchesCapped(int current, int total) {
+    return '$current из $total+';
+  }
+
+  @override
+  String get viewerSearchFailed => 'Не удалось завершить поиск';
+
+  @override
+  String get viewerWindowFindHint => 'Найти в текущем фрагменте';
+
+  @override
   String get viewerLoadNext => 'Следующая часть';
 
   @override
@@ -3338,7 +3349,7 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get undoIssueTruncated =>
-      'Изменено слишком много объектов, чтобы отменить';
+      'Операция слишком велика для сохранения в истории отмены';
 
   @override
   String undoMoreIssues(int count) {

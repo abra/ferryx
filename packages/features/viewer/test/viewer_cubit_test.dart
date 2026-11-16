@@ -11,6 +11,7 @@ import 'package:viewer_feature/src/text_preview_data.dart';
 import 'package:viewer_feature/src/text_preview_format.dart';
 import 'package:viewer_feature/src/source_syntax.dart';
 import 'package:viewer_feature/src/text_window.dart';
+import 'package:viewer_feature/src/window_search.dart';
 
 /// A file held in memory.
 class FakeSource implements ViewerSource {
@@ -64,6 +65,26 @@ class DeferredSource extends FakeSource {
   }
 }
 
+class DeferredWindowSearcher implements WindowSearcher {
+  final entered = Completer<void>();
+  final result = Completer<WindowSearchResult?>();
+
+  @override
+  Future<WindowSearchResult?> search({
+    required List<String> lines,
+    required Uint8List bytes,
+    required String query,
+    required bool hex,
+  }) {
+    if (!entered.isCompleted) entered.complete();
+    return result.future;
+  }
+
+  // A retiring backend can still deliver a reply; the cubit must reject it.
+  @override
+  void cancel() {}
+}
+
 class OversizedOfficeSource extends FakeSource {
   OversizedOfficeSource() : super(Uint8List(0), name: 'large.docx');
   @override
@@ -88,6 +109,99 @@ class ConvertedSource extends FakeSource implements ConvertedDocumentSource {
 
 void main() {
   group('ViewerCubit', () {
+    for (final transition in ['query', 'window', 'mode', 'close']) {
+      test('an already-started search cannot replace $transition', () async {
+        final search = DeferredWindowSearcher();
+        final cubit = ViewerCubit(
+          source: FakeSource(text('a' * (256 * 1024))),
+          wrap: false,
+          windowSize: 128 * 1024,
+          searcher: search,
+        );
+        await cubit.load();
+        cubit.setFindQuery('old');
+        await search.entered.future;
+        switch (transition) {
+          case 'query':
+            cubit.setFindQuery('new');
+          case 'window':
+            await cubit.loadNext();
+          case 'mode':
+            cubit.setMode(ViewerMode.preview);
+            if (cubit.state.loading) {
+              await cubit.stream.firstWhere((state) => !state.loading);
+            }
+          case 'close':
+            await cubit.close();
+        }
+        final settled = cubit.state;
+        search.result.complete(
+          const WindowSearchResult([
+            ViewerMatch(line: 0, start: 0, end: 3),
+          ], false),
+        );
+        await Future<void>.delayed(Duration.zero);
+        expect(cubit.state, same(settled));
+        expect(cubit.state.matches, isEmpty);
+        if (!cubit.isClosed) await cubit.close();
+      });
+    }
+
+    test('large search reports truncation and mode changes invalidate pending results', () async {
+      final cubit = ViewerCubit(
+        source: FakeSource(text('a' * (256 * 1024))),
+        wrap: false,
+      );
+      addTearDown(cubit.close);
+      await cubit.load();
+      final found = cubit.stream.firstWhere((state) => state.findCapped);
+      cubit.setFindQuery('a');
+      expect(cubit.state.findSearching, isTrue);
+      final result = await found;
+      expect(result.matches, hasLength(10000));
+      expect(result.findSearching, isFalse);
+      cubit.setFindQuery('aa');
+      expect(cubit.state.findSearching, isTrue);
+      cubit.setMode(ViewerMode.preview);
+      expect(cubit.state.findSearching, isFalse);
+      expect(cubit.state.findCapped, isFalse);
+      expect(cubit.state.matches, isEmpty);
+      cubit.hideFind();
+      expect(cubit.state.findQuery, isEmpty);
+    });
+
+    test('closing a viewer cancels pending large search without later state updates', () async {
+      final cubit = ViewerCubit(
+        source: FakeSource(text('a' * (256 * 1024))),
+        wrap: true,
+      );
+      await cubit.load();
+      cubit.setFindQuery('a');
+      await cubit.close();
+      expect(cubit.isClosed, isTrue);
+      expect(cubit.state.matches, isEmpty);
+    });
+
+    test('large searches yield before publishing matches and keep the latest query', () async {
+      final cubit = ViewerCubit(
+        source: FakeSource(text('${'a' * (256 * 1024)}b')),
+        wrap: false,
+      );
+      addTearDown(cubit.close);
+      await cubit.load();
+      cubit.setFindQuery('a');
+      expect(cubit.state.matches, isEmpty);
+      final complete = cubit.stream.firstWhere(
+        (state) => state.findQuery == 'b' && state.matches.isNotEmpty,
+      );
+      cubit.setFindQuery('b');
+      final result = await complete;
+      expect(result.matches, [
+        const ViewerMatch(line: 0, start: 262144, end: 262145),
+      ]);
+      expect(result.currentMatch, 0);
+    });
+
     for (final transition in ['refresh', 'preview', 'close']) {
       test('late window decoding cannot replace $transition', () async {
         final entered = Completer<void>();

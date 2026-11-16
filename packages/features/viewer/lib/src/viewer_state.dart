@@ -30,6 +30,9 @@ class ViewerState extends Equatable {
     this.syntaxRevision = 0,
     this.findShown = false,
     this.findQuery = '',
+    this.findSearching = false,
+    this.findCapped = false,
+    this.findFailed = false,
     this.matches = const [],
     this.matchesByLine = const {},
     this.currentMatch = -1,
@@ -62,6 +65,9 @@ class ViewerState extends Equatable {
   final int syntaxRevision;
   final bool findShown;
   final String findQuery;
+  final bool findSearching;
+  final bool findCapped;
+  final bool findFailed;
   final List<ViewerMatch> matches;
   final Map<int, List<ViewerMatch>> matchesByLine;
 
@@ -101,6 +107,9 @@ class ViewerState extends Equatable {
     int? syntaxRevision,
     bool? findShown,
     String? findQuery,
+    bool? findSearching,
+    bool? findCapped,
+    bool? findFailed,
     List<ViewerMatch>? matches,
     Map<int, List<ViewerMatch>>? matchesByLine,
     int? currentMatch,
@@ -123,6 +132,9 @@ class ViewerState extends Equatable {
     syntaxRevision: syntaxRevision ?? this.syntaxRevision,
     findShown: findShown ?? this.findShown,
     findQuery: findQuery ?? this.findQuery,
+    findSearching: findSearching ?? this.findSearching,
+    findCapped: findCapped ?? this.findCapped,
+    findFailed: findFailed ?? this.findFailed,
     matches: matches ?? this.matches,
     matchesByLine: matchesByLine ?? this.matchesByLine,
     currentMatch: currentMatch ?? this.currentMatch,
@@ -144,6 +156,9 @@ class ViewerState extends Equatable {
     window.binary,
     findShown,
     findQuery,
+    findSearching,
+    findCapped,
+    findFailed,
     matches,
     currentMatch,
     loading,
