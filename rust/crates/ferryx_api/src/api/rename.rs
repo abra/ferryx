@@ -4,6 +4,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use ferryx_core::batch_rename::{self, RenameItem, RenameProblem};
+use ferryx_ops::journal::{Change, StepKind};
 use ferryx_vfs::native;
 
 use crate::api::types::{
@@ -73,12 +74,14 @@ pub fn batch_rename_apply(pairs: Vec<RenamePairView>) -> Vec<RenameFailureView> 
     let pairs: Vec<(PathBuf, String)> =
         pairs.into_iter().map(|p| (PathBuf::from(p.path), p.new_name)).collect();
     let (failures, done) = ferryx_ops::rename::apply_recorded(&pairs);
-    let renamed: Vec<PathBuf> = done.iter().map(|(from, _)| from.clone()).collect();
-    crate::tasks::record(
-        ferryx_ops::journal::StepKind::Rename,
-        &renamed,
-        done.into_iter().map(|(from, to)| ferryx_ops::journal::Change::Moved { from, to }).collect(),
-    );
+    let renamed: Vec<PathBuf> = done
+        .iter()
+        .filter_map(|change| match change {
+            Change::Moved { from, .. } => Some(from.clone()),
+            _ => None,
+        })
+        .collect();
+    crate::tasks::record(StepKind::Rename, &renamed, done);
     failures
         .into_iter()
         .map(|f| RenameFailureView { path: f.path.to_string_lossy().into_owned(), message: f.message })

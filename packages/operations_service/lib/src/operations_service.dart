@@ -104,6 +104,12 @@ class OperationsService {
     ),
   );
 
+  /// Captures the local items before confirmation or a delayed deletion.
+  Future<List<String>> captureDeleteIdentities(List<String> paths) =>
+      rust.FerryxBackend.guard(
+        () => rust.captureDeleteIdentities(paths: paths),
+      );
+
   /// Starts [request]; its progress follows on [progress]. One with a
   /// server on a side ([OperationRequest.crossesNetwork]) goes over the
   /// network: a copy, a move, a delete or folder sizes, never journaled.
@@ -258,5 +264,17 @@ class OperationsService {
     await _subscription?.cancel();
     await _progress.close();
     await _journal.close();
+  }
+}
+
+extension OperationCompletion on OperationsService {
+  /// The terminal report, including operations that finished before their
+  /// start call returned. Keep this alongside the service's progress cache.
+  Future<OperationProgress> waitForCompletion(int id) {
+    final known = current[id];
+    if (known != null && known.state.isFinished) return Future.value(known);
+    return progress.firstWhere(
+      (report) => report.id == id && report.state.isFinished,
+    );
   }
 }

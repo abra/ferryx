@@ -1,7 +1,23 @@
 //! File operations in the background; progress arrives as events.
 
-use crate::api::types::{AnswerView, OpRequestView, ProgressView};
+use std::path::Path;
+
+use ferryx_ops::identity::FileIdentity;
+use ferryx_vfs::error::VfsError;
+
+use crate::api::types::{AnswerView, ApiResult, OpRequestView, ProgressView};
 use crate::app;
+
+/// Identifies local items in order before asking the user to delete them.
+pub fn capture_delete_identities(paths: Vec<String>) -> ApiResult<Vec<String>> {
+    paths
+        .iter()
+        .map(|path| {
+            let path = Path::new(path);
+            FileIdentity::of(path).map(FileIdentity::token).map_err(|e| VfsError::io(&e, path).into())
+        })
+        .collect()
+}
 
 /// Starts the operation and answers its id; every change of its progress
 /// comes as an `OperationProgress` event.
@@ -36,5 +52,7 @@ pub fn list_operations() -> Vec<ProgressView> {
 
 /// Forgets a finished operation.
 pub fn forget_operation(id: i64) {
-    app::runner().remove(id as u64);
+    if app::runner().remove(id as u64) {
+        crate::tasks::take_differences(id);
+    }
 }

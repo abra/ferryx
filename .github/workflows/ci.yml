@@ -125,3 +125,58 @@ jobs:
           path: test/ui/snapshots/
           if-no-files-found: ignore
           retention-days: 7
+
+  macos-release:
+    runs-on: macos-15
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    env:
+      MAKEFLAGS: FLUTTER=flutter DART=dart CARGO=cargo
+    steps:
+      - uses: actions/checkout@v4
+      - name: Flutter version pinned in .fvmrc
+        id: pin
+        run: |
+          version=$(sed -n 's/.*"flutter": *"\([^"]*\)".*/\1/p' .fvmrc)
+          echo "flutter=$version" >> "$GITHUB_OUTPUT"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ steps.pin.outputs.flutter }}
+          cache: true
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            rust
+            packages/pagecraft/rust
+          cache-on-failure: true
+      - run: flutter pub get
+      - name: Universal release build
+        run: |
+          make build-macos
+          lipo build/macos/Build/Products/Release/Ferryx.app/Contents/MacOS/Ferryx -verify_arch arm64 x86_64
+      - name: Start the release build
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          app = subprocess.Popen(["build/macos/Build/Products/Release/Ferryx.app/Contents/MacOS/Ferryx"])
+          try:
+              code = app.wait(timeout=10)
+          except subprocess.TimeoutExpired:
+              app.terminate()
+              app.wait(timeout=15)
+          else:
+              raise SystemExit(f"Ferryx exited during startup ({code})")
+          PY
+      - name: Verify packaged preview engines
+        run: |
+          flutter build macos --release --no-pub --target test/support/macos_packaged_preview.dart
+          tools/macos/check-previews.sh
+      - name: Native window tests
+        run: |
+          flutter build macos --debug --no-pub
+          make test-macos

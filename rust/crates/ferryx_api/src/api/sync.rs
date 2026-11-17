@@ -314,13 +314,15 @@ pub fn start_content_compare(pairs: Vec<ContentPairView>) -> i64 {
         new_name: None,
         options: OpOptions::default(),
     };
-    let differing = std::sync::Arc::new(parking_lot::Mutex::new(Vec::new()));
-    let found = differing.clone();
-    let job: Job = Box::new(move |ctx| ops_sync::compare_pairs(ctx, &pairs, &found));
-    let id = app::runner().start_job(request, Journaling::Off, job) as i64;
-    // Kept under the id before Dart learns it, so it is there to take.
-    tasks::keep_differences(id, differing);
-    id
+    let job: Job = Box::new(move |ctx| {
+        let differing = parking_lot::Mutex::new(Vec::new());
+        ops_sync::compare_pairs(ctx, &pairs, &differing)?;
+        ctx.check()?;
+        // The runner reports completion after the job returns.
+        tasks::keep_differences(ctx.id() as i64, differing.into_inner());
+        Ok(())
+    });
+    app::runner().start_job(request, Journaling::Off, job) as i64
 }
 
 /// The indexes of the pairs the content comparison `op_id` found

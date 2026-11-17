@@ -12,7 +12,7 @@ rust-version = "1.85"
 crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
-ferryx_core.workspace = true
+ferryx_core = { workspace = true, features = ["text-preview"] }
 ferryx_vfs.workspace = true
 ferryx_ops.workspace = true
 ferryx_term.workspace = true

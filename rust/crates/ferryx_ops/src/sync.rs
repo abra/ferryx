@@ -189,7 +189,10 @@ impl TreeWalk<'_> {
         };
         let mut items = Vec::new();
         for entry in read.filter_map(Result::ok) {
-            let name = entry.file_name().to_string_lossy().into_owned();
+            let Ok(name) = entry.file_name().into_string() else {
+                (self.on_error)(entry.path().display().to_string(), "the name is not valid Unicode".into());
+                continue;
+            };
             if !self.request.include_hidden && name.starts_with('.') {
                 continue;
             }
@@ -507,13 +510,16 @@ fn ends(plan: &SyncPlan, item: &SyncItem) -> (PathBuf, PathBuf, Option<SideInfo>
 
 /// What is at `path` now, as a [`SideInfo`].
 fn side_now(path: &Path) -> Option<SideInfo> {
-    let meta = fs::symlink_metadata(path).ok()?;
-    Some(SideInfo {
+    fs::symlink_metadata(path).ok().as_ref().map(side_of)
+}
+
+fn side_of(meta: &fs::Metadata) -> SideInfo {
+    SideInfo {
         size: if meta.is_dir() { 0 } else { meta.len() },
         modified_ms: meta.modified().ok().and_then(ferryx_vfs::native::system_time_ms),
         is_dir: meta.is_dir(),
         is_symlink: meta.file_type().is_symlink(),
-    })
+    }
 }
 
 /// Whether `now` is still what the comparison saw (a folder's time and
@@ -522,7 +528,12 @@ fn unchanged(seen: Option<SideInfo>, now: Option<SideInfo>) -> bool {
     match (seen, now) {
         (None, None) => true,
         (Some(a), Some(b)) if a.is_dir && b.is_dir => true,
-        (Some(a), Some(b)) => a.size == b.size && a.modified_ms == b.modified_ms && a.is_dir == b.is_dir,
+        (Some(a), Some(b)) => {
+            a.size == b.size
+                && a.modified_ms == b.modified_ms
+                && a.is_dir == b.is_dir
+                && a.is_symlink == b.is_symlink
+        }
         _ => false,
     }
 }
@@ -557,11 +568,9 @@ pub fn run_sync(ctx: &OpContext, plan: &SyncPlan) -> Result<(), Abort> {
         copies.iter().map(|i| ends(plan, i).2.filter(|s| !s.is_dir).map(|s| s.size).unwrap_or(0)).sum();
     ctx.set_totals(bytes, plan.items.len() as u64);
     let options = OpOptions {
-        conflicts: ConflictPolicy::Ask,
         preserve_attributes: plan.preserve_attributes,
         verify: plan.verify,
-        password: None,
-        into_folders: false,
+        ..Default::default()
     };
     for item in copies {
         ctx.check()?;
@@ -574,13 +583,16 @@ fn copy_one(ctx: &OpContext, plan: &SyncPlan, item: &SyncItem, options: &OpOptio
     let (source, target, seen_source, seen_target) = ends(plan, item);
     copy::check_destination(ctx, &source, &target)?;
     ctx.set_current(&source);
-    if !unchanged(seen_source, side_now(&source)) {
+    let source_meta = fs::symlink_metadata(&source).ok();
+    if !unchanged(seen_source, source_meta.as_ref().map(side_of)) {
         ctx.ask_error(&source, &changed_error(&source))?;
         ctx.item_done();
         return Ok(());
     }
-    let now_target = side_now(&target);
-    if now_target.is_some() {
+    if let Ok(target_meta) = fs::symlink_metadata(&target) {
+        let now_target = Some(side_of(&target_meta));
+        let target_is_dir = target_meta.is_dir();
+        let existing = copy::ExistingTarget::new(&target, target_meta);
         let planned = seen_target.is_some() && unchanged(seen_target, now_target);
         let overwrite = if planned {
             // The user saw it and chose to replace it.
@@ -602,14 +614,15 @@ fn copy_one(ctx: &OpContext, plan: &SyncPlan, item: &SyncItem, options: &OpOptio
             ctx.item_done();
             return Ok(());
         }
-        if !(item.is_dir && plan.recursive && now_target.is_some_and(|s| s.is_dir)) {
-            match remove(&target) {
-                Ok(()) => ctx.record_overwritten(&target),
-                Err(e) => {
-                    ctx.ask_error(&target, &e)?;
-                    ctx.item_done();
-                    return Ok(());
-                }
+        if let Some(meta) = &source_meta {
+            if meta.is_dir() != target_is_dir {
+                copy::refuse_directory_replacement(ctx, &target)?;
+                ctx.item_done();
+                return Ok(());
+            }
+            if !meta.is_dir() {
+                copy::copy_leaf(ctx, &source, target, meta, options, Some(existing), copy::CopyMode::Copy)?;
+                return Ok(());
             }
         }
     }
@@ -642,15 +655,6 @@ fn make_parents(ctx: &OpContext, path: &Path) {
         if let Some(top) = top {
             ctx.record_created(&top);
         }
-    }
-}
-
-fn remove(path: &Path) -> Result<(), VfsError> {
-    let meta = fs::symlink_metadata(path).map_err(|e| VfsError::io(&e, path))?;
-    if meta.is_dir() {
-        fs::remove_dir_all(path).map_err(|e| VfsError::io(&e, path))
-    } else {
-        fs::remove_file(path).map_err(|e| VfsError::io(&e, path))
     }
 }
 
@@ -1007,6 +1011,64 @@ mod tests {
         run_sync(&ctx, &plan).unwrap();
         assert_eq!(fs::read_to_string(t.right.join("only/deep/x.txt")).unwrap(), "x");
         assert!(ctx.recorded().contains(&Change::Overwritten { path: t.right.join("only/deep/x.txt") }));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_sync_copy_failure_preserves_the_destination() {
+        use std::os::unix::fs::PermissionsExt;
+        let t = trees();
+        let source = t.left.join("newer.txt");
+        let target = t.right.join("newer.txt");
+        fs::set_permissions(&source, fs::Permissions::from_mode(0o000)).unwrap();
+        if fs::File::open(&source).is_ok() {
+            return; // This process can read files without permissions.
+        }
+        let found = rows(&request(&t.left, &t.right));
+        let mut plan =
+            plan_of(&t, &found, |r| (r.left_rel == "newer.txt").then_some(SyncAction::CopyToRight));
+        plan.preserve_attributes = false;
+        let ctx = detached();
+        run_sync(&ctx, &plan).unwrap();
+        assert_eq!(ctx.snapshot().errors.len(), 1);
+        assert_eq!(fs::read(&target).unwrap(), b"old");
+        assert!(ctx.recorded().is_empty());
+    }
+
+    #[test]
+    fn sync_refuses_replacement_between_a_directory_and_a_file() {
+        let t = trees();
+        let left = t.left.join("kind");
+        let right = t.right.join("kind");
+        fs::write(left.join("child"), b"directory contents").unwrap();
+        let found = rows(&request(&t.left, &t.right));
+        for action in [SyncAction::CopyToRight, SyncAction::CopyToLeft] {
+            let plan = plan_of(&t, &found, |r| (r.left_rel == "kind").then_some(action));
+            let ctx = detached();
+            run_sync(&ctx, &plan).unwrap();
+            assert_eq!(fs::read(&right).unwrap(), b"file");
+            assert_eq!(fs::read(left.join("child")).unwrap(), b"directory contents");
+            assert_eq!(ctx.snapshot().errors.len(), 1);
+            assert!(ctx.recorded().is_empty());
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_sync_copy_publishes_a_relative_symlink() {
+        let t = trees();
+        let source = t.left.join("link");
+        let target = t.right.join("link");
+        let value = Path::new("sub/diff.txt");
+        std::os::unix::fs::symlink(value, &source).unwrap();
+        fs::write(&target, b"existing").unwrap();
+        let found = rows(&request(&t.left, &t.right));
+        let plan = plan_of(&t, &found, |r| (r.left_rel == "link").then_some(SyncAction::CopyToRight));
+        let ctx = detached();
+        run_sync(&ctx, &plan).unwrap();
+        assert_eq!(fs::read_link(&target).unwrap(), value);
+        assert!(ctx.snapshot().errors.is_empty());
+        assert_eq!(ctx.recorded(), vec![Change::Overwritten { path: target }]);
     }
 
     #[test]

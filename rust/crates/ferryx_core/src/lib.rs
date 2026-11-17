@@ -11,4 +11,5 @@ pub mod collation;
 pub mod entry;
 pub mod mask;
 pub mod sorting;
+#[cfg(feature = "text-preview")]
 pub mod text_document;

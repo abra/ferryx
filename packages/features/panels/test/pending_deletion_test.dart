@@ -250,10 +250,35 @@ void main() {
   );
 
   testWidgets(
+    'repeated delete commands wait for the same captured batch',
+    (tester) async {
+      final capture = Completer<List<String>>();
+      when(() => h.operations.captureDeleteIdentities(['/home/docs/a.txt']))
+          .thenAnswer((_) => capture.future);
+      await h.pump(tester);
+      select(panel(tester, PanelSide.left), {'a.txt'});
+      await trash(tester);
+      await trash(tester);
+      verify(() => h.operations.captureDeleteIdentities(['/home/docs/a.txt']))
+          .called(1);
+      expect(find.byType(PendingDeletionCard), findsNothing);
+      capture.complete(['original']);
+      await tester.pump(); // Resume the suspended capture.
+      await tester.pump();
+      expect(find.byType(PendingDeletionCard), findsOneWidget);
+      await press(tester, LogicalKeyboardKey.escape);
+      expect(h.started, isEmpty);
+    },
+  );
+
+  testWidgets(
     'permanent deletion still requires confirmation before the grace period',
     (
       tester,
     ) async {
+      var identity = 'original';
+      when(() => h.operations.captureDeleteIdentities(['/home/docs/a.txt']))
+          .thenAnswer((_) async => [identity]);
       await h.pump(tester);
       select(panel(tester, PanelSide.left), {'a.txt'});
       expect(
@@ -268,6 +293,7 @@ void main() {
       expect(find.byType(PendingDeletionCard), findsNothing);
       await tester.pump(const Duration(seconds: 6));
       expect(h.started, isEmpty);
+      identity = 'replacement';
       await tester.tap(
         find.widgetWithText(OutlinedButton, en.deletePermanently),
       );
@@ -277,6 +303,7 @@ void main() {
       await tester.pump(const Duration(seconds: 5));
       expect(h.started.single.kind, OpKind.delete);
       expect(h.started.single.sources, ['/home/docs/a.txt']);
+      expect(h.started.single.sourceIdentities, ['original']);
     },
   );
 

@@ -57,6 +57,7 @@ fn request(kind: OpKindView, sources: Vec<String>, destination: Option<String>) 
     OpRequestView {
         kind,
         sources,
+        source_identities: None,
         archive: None,
         destination,
         new_name: None,
@@ -153,6 +154,64 @@ fn move_undo_redo() {
 }
 
 #[test]
+fn undo_and_redo_leave_a_replacement_at_the_recorded_move_path() {
+    let _guard = serial();
+    let dir = tempfile::tempdir().unwrap();
+    let original = dir.path().join("original");
+    let moved = dir.path().join("moved");
+    let saved = dir.path().join("saved");
+
+    for (redo, live, absent) in [(false, &moved, &original), (true, &original, &moved)] {
+        reset_for_tests();
+        fs::write(&original, b"original").unwrap();
+        files::rename_item(s(&original), "moved".to_string()).unwrap();
+        if redo {
+            assert_eq!(finish(walk_journal_step(false, undo_step()).unwrap()).state, OpStateView::Done);
+        }
+        let check = check_journal_step(redo).unwrap();
+        assert_eq!(check.doable, 1);
+
+        // Replacing the path after the dialog's check must also be caught by the walk.
+        fs::rename(live, &saved).unwrap();
+        fs::write(live, b"new file").unwrap();
+        let blocked = check_journal_step(redo).unwrap();
+        assert_eq!(blocked.doable, 0);
+        assert_eq!(blocked.issues[0].kind, UndoIssueKindView::Replaced);
+        assert!(blocked.issues[0].blocks);
+        let result = finish(walk_journal_step(redo, check.step.id).unwrap());
+        assert_eq!(result.state, OpStateView::DoneWithErrors);
+        assert_eq!(fs::read(live).unwrap(), b"new file");
+        assert_eq!(fs::read(&saved).unwrap(), b"original");
+        assert!(!absent.exists());
+        fs::remove_file(live).unwrap();
+        fs::remove_file(&saved).unwrap();
+    }
+}
+
+#[test]
+fn a_delayed_delete_skips_a_replaced_item_and_deletes_the_original_items() {
+    let _guard = serial();
+    let dir = tempfile::tempdir().unwrap();
+    let replaced = dir.path().join("replaced");
+    let original = dir.path().join("original");
+    let saved = dir.path().join("saved");
+    fs::write(&replaced, b"old").unwrap();
+    fs::write(&original, b"to delete").unwrap();
+    let mut requested = request(OpKindView::Delete, vec![s(&replaced), s(&original)], None);
+    requested.source_identities = Some(ops::capture_delete_identities(requested.sources.clone()).unwrap());
+    fs::rename(&replaced, &saved).unwrap();
+    fs::write(&replaced, b"new").unwrap();
+    // A change to the selected file's contents preserves its identity.
+    fs::write(&original, b"edited").unwrap();
+    let result = finish(ops::start_operation(requested));
+    assert_eq!(result.state, OpStateView::DoneWithErrors);
+    assert_eq!(result.errors.len(), 1);
+    assert_eq!(fs::read(&replaced).unwrap(), b"new");
+    assert_eq!(fs::read(&saved).unwrap(), b"old");
+    assert!(!original.exists());
+}
+
+#[test]
 fn a_taken_place_is_reported_before_undo() {
     let _guard = serial();
     let dir = tempfile::tempdir().unwrap();
@@ -191,6 +250,9 @@ fn renames_undo_including_swaps() {
     assert_eq!(fs::read(&a).unwrap(), b"A");
     assert_eq!(fs::read(&b).unwrap(), b"B");
     assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 2);
+    assert_eq!(finish(walk_journal_step(true, redo_step()).unwrap()).state, OpStateView::Done);
+    assert_eq!(fs::read(&a).unwrap(), b"B");
+    assert_eq!(fs::read(&b).unwrap(), b"A");
 
     // A single rename, and a new step empties redo.
     let renamed = files::rename_item(s(&a), "c".into()).unwrap();
@@ -340,6 +402,12 @@ fn compares_and_synchronizes_folders() {
     assert_eq!(finish(op).kind, OpKindView::CompareContents);
     assert_eq!(take_content_differences(op), vec![1]);
     assert!(take_content_differences(op).is_empty());
+
+    let dismissed =
+        start_content_compare(vec![ContentPairView { left: s(&left.join("b")), right: s(&right.join("b")) }]);
+    assert_eq!(finish(dismissed).state, OpStateView::Done);
+    ops::forget_operation(dismissed);
+    assert!(take_content_differences(dismissed).is_empty());
     // A comparison is not a step.
     assert_eq!(journal_summary().undo.unwrap().kind, StepKindView::Synchronize);
 }

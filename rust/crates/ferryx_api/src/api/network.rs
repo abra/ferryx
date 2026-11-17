@@ -557,6 +557,7 @@ pub fn start_network_operation(request: NetworkOpRequestView) -> ApiResult<i64> 
     let shown = OpRequestView {
         kind: request.kind,
         sources: Vec::new(),
+        source_identities: None,
         archive: None,
         destination: None,
         new_name: None,

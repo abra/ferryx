@@ -225,6 +225,7 @@ class WorkspaceScreen extends StatefulWidget {
     required this.savedActive,
     required this.fallbackLocation,
     required this.onSnapshot,
+    this.flushSnapshots,
     required this.frecency,
     this.sideStorage,
     this.find,
@@ -261,6 +262,7 @@ class WorkspaceScreen extends StatefulWidget {
   /// Where a panel opens when it has nothing saved: the home folder.
   final Location fallbackLocation;
   final ValueChanged<WorkspaceSnapshot> onSnapshot;
+  final Listenable? flushSnapshots;
 
   /// The folders the panels showed, counted as they show them, for Jump
   /// to Folder.
@@ -355,6 +357,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     );
     _left = _panel(PanelSide.left);
     _right = _panel(PanelSide.right);
+    widget.flushSnapshots?.addListener(_snapshotNow);
     _initTerminal();
     unawaited(
       Future.wait([
@@ -407,6 +410,15 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   }
 
   @override
+  void didUpdateWidget(WorkspaceScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.flushSnapshots != widget.flushSnapshots) {
+      oldWidget.flushSnapshots?.removeListener(_snapshotNow);
+      widget.flushSnapshots?.addListener(_snapshotNow);
+    }
+  }
+
+  @override
   void dispose() {
     unawaited(
       _savedWorkspaces?.then(
@@ -420,6 +432,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     _changes?.cancel();
     _shelfCheck?.cancel();
     _native.dispose();
+    widget.flushSnapshots?.removeListener(_snapshotNow);
     _snapshotTimer?.cancel();
     _snapshotNow();
     _disposeTerminal();
@@ -1153,6 +1166,7 @@ class _KeyHintsLine extends StatelessWidget {
                       vim: vim,
                       hasRegister: hasShelf,
                       hasMultipleTabs: state.tabs.length > 1 && !typing,
+                      deletionPending: deletions.pendingFor(panel.side) != null,
                       screenItems: panel.geometry.rowsPerPage,
                     ),
                   ],

@@ -406,6 +406,13 @@ The copy unit tests force the cross-volume branch on a single disk to
 exercise skips, verification failures, concurrent arrivals, cancellation
 and undo/redo without requiring an extra mount.
 
+Local paths in file actions must round-trip through the Unicode bridge.
+The native directory reader retains the original OS path to check this.
+The API excludes unrepresentable paths and marks ordinary listings with
+`omitted_names` for the panel footer. A watcher batch containing such a
+name reads the folder again so the warning tracks changes. Flat and Find
+views, duplicate groups and synchronization plans exclude these paths.
+
 ### Archives
 
 `ferryx_vfs::archive` reads zip (jar, apk, ipa, whl), tar alone or with
@@ -908,12 +915,16 @@ bounded byte-window behavior.
 
 ### The panels
 
-Panel deletion has a separate pre-execution stage:
-`PendingDeletionsController` captures immutable paths, location and side,
-then owns one five-second timer per panel. It calls the normal operation
-service only after the deadline. Cancel/disposal drops the timer without
-calling Rust. A duplicate request on the same panel neither replaces nor
-extends the batch. Confirmation dialogs still run before scheduling.
+Panel deletion has a separate pre-execution stage. Before confirmation,
+the operation service captures local file identities through Rust using
+the selected paths. `PendingDeletionsController` freezes the paths,
+identities, location and side with one five-second timer per panel. The
+timer starts the deletion job at expiry. Cancel/disposal drops the timer
+without starting a job. A duplicate request on the same panel neither
+replaces nor extends the batch. Local workers check the selected entry
+before Trash and permanent deletion, including retries and writes under
+a selected directory. Server deletion uses paths because network
+protocols do not consistently expose entry identities.
 The card animates its monotonic remaining time locally; no periodic timer
 rebuilds the file lists. `_PanelOperationsHost` keeps pending and subsequent
 progress cards in the source slot, outside the file/viewer subtree.
@@ -1469,6 +1480,11 @@ A question opens `showQuestionDialog` once per operation/question pair;
 an answer returned after disposal or after the question changed is ignored.
 Disposal cancels the subscription and timers. Panels refresh through their
 repository and operation subscriptions; completion also rechecks the shelf.
+OperationsService retains the latest progress report from the bridge.
+The panel consumes it when it receives the ID of a folder-size operation,
+so completion before the start reply is still applied. Content comparisons
+publish their result on completion and its operation owns the lifetime:
+taking the result or forgetting the finished operation drops it.
 
 ### The desktop's own services
 
@@ -1587,7 +1603,8 @@ saved checksum file) record through `tasks::record`. A step is a list of
 | `Created` (a copy, a new folder, an archive, an extraction) | moving it to the trash | putting it back |
 | `Moved` (a move, a rename) | the move back (a rename, across volumes a copy and a delete) | the move again |
 | `Trashed` (with the trash's receipt) | putting it back | trashing it again |
-| `FolderRemoved` (a move emptied it) | making it again | trashing it (empty) |
+| `FolderRemoved` (a move emptied it) | making it again | removing it when empty |
+| `MoveFolderCreated` (a move needed it) | removing it when empty | making it again |
 | `Overwritten` | nothing: its contents are gone | nothing |
 
 Undoing walks the step last change first and records what it did as the
@@ -1597,8 +1614,10 @@ cannot be restored. A copy records only the topmost item it made
 (its contents need no separate record); a merge records each item it made
 inside the folder that was there. Across volumes each file or link becomes a `Moved` record only
 after its source is removed; emptied source folders get `FolderRemoved`
-records after their children. Undo therefore recreates the source folders
-before moving files back, including after a skip, error or cancellation.
+records after their children. The destinations created for a move are
+recorded individually and removed only when empty. Undo recreates the
+source folders before moving files back, including after a skip, error or
+cancellation. Replacements and files added to those folders stay put.
 Names that swapped (a batch rename) go back through temporary names. A
 step keeps up to 200 000 changes, beyond that it is on record as too big
 to undo; undo and redo share limits of 200 000 retained changes, 64 MiB of
@@ -1609,10 +1628,15 @@ tracking allocations. The history stays in memory for the process lifetime;
 a new step empties redo. Permanent deletion and server operations are
 never recorded.
 
-Before a walk, `undo::check` compares every change with the disk: an item
-gone (`Missing`), a place taken (`Occupied`), an item no longer in the
-trash, putting back not possible here; and as warnings an item changed
-since (by its size and time) or overwritten (`Lost`). The panels ask
+Before a walk, `undo::check` compares every change with the disk. It
+blocks a missing item, occupied destination, unverified move source, or
+unavailable Trash restore. Size/time changes and overwrites are warnings.
+Move records carry the destination's local identity. The walk rechecks it
+before mutation, carries it through same-volume moves and staging, and
+records new identities when a cross-volume move copies entries. Identity
+checks concern each recorded entry (the root of a recorded directory),
+with a narrow race between a native check and a path-based filesystem
+mutation. Directory contents can change independently. The panels ask
 `OperationsService.checkStep`, then walk at once when nothing is in the
 way, or show `UndoDialog` with each issue by path: "Undo the rest" or, when
 nothing is left, "Forget Step". A walk is an operation (`OpKind.undo` /
@@ -1860,13 +1884,18 @@ batch rename and the names editor, the shelf, Find Files.
 `main.dart` → `starter()` (error zone, bloc observer; `configureWindow()`
 picks the `WindowFrame`) → `AppBootstrap` → `composeDependencies()` (bridge
 init, preferences, the file repository and the services) → `AppScopes` →
-`FerryxApp` (router, theme, locale, global shortcuts); `showWindow` then
-shows the window and `WindowStateSaver` starts. A failure shows
+`FerryxApp` (router, theme, locale, global shortcuts). `WindowStateSaver`
+starts before `showWindow` applies the saved frame. A failure shows
 `InitializationFailedScreen` with retry; the `ResourceDisposer` rolls back
 partially created resources in reverse order, including a failure while
 handing completed dependencies to the UI. Repeated retry clicks share one
 in-flight bootstrap. The logger and successfully initialized Rust bridge
 survive a failed attempt; per-attempt listeners and services are disposed.
+
+`AppLifecycle` handles cancelable close and quit requests. It asks the
+workspace and window saver for their current state and waits for the
+preferences write before allowing exit. A write failure keeps the app open
+and asks the user to retry after checking storage.
 
 ## Tests
 

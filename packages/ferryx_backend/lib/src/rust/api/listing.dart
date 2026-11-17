@@ -10,7 +10,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'tags.dart';
 import 'types.dart';
 
-// These functions are ignored because they are not marked as `pub`: `commit`, `diff`, `flat_elsewhere`, `fresh`, `header_view`, `kept`, `listing_mut`, `merge`, `not_open`, `of`, `read_names`, `read`, `sort_rows`, `superseded`, `turn_of`, `view`, `watcher_for`, `with_capacity`
+// These functions are ignored because they are not marked as `pub`: `bridgeable_rows`, `commit`, `diff`, `flat_elsewhere`, `fresh`, `header_view`, `kept`, `listing_mut`, `merge`, `not_open`, `of`, `read_names`, `read`, `sort_rows`, `superseded`, `turn_of`, `view`, `watcher_for`, `with_capacity`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Footer`, `Update`
 
 /// Opens `location` as the listing `listing_id` (a panel's tab), replacing

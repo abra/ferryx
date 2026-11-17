@@ -274,6 +274,9 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   }
 
   @override
+  String get panelUnrepresentableNames => 'Имена вне Unicode пропущены';
+
+  @override
   String panelCursorPosition(String position, String count) {
     return '$position / $count';
   }
@@ -1267,6 +1270,10 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
 
   @override
   String get noticeOpenFailed => 'Не удалось открыть объект';
+
+  @override
+  String get noticeExitSaveFailed =>
+      'Не удалось сохранить сеанс. Проверьте место на диске и права доступа, затем попробуйте закрыть приложение снова.';
 
   @override
   String get documentFontSizeLabel => 'Размер шрифта книг';
@@ -3336,6 +3343,10 @@ class FerryxLocalizationsRu extends FerryxLocalizations {
   @override
   String get undoIssueChanged =>
       'Изменился с тех пор; всё равно отправится в Корзину';
+
+  @override
+  String get undoIssueReplaced =>
+      'Объект из журнала заменён или его не удалось проверить';
 
   @override
   String get undoIssueLost =>

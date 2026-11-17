@@ -1,6 +1,7 @@
 //! Runs operations on threads and holds their state.
 
 use std::collections::{HashMap, HashSet};
+use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
@@ -10,6 +11,7 @@ use std::time::{Duration, Instant, SystemTime};
 use ferryx_vfs::VfsError;
 use parking_lot::{Condvar, Mutex, MutexGuard};
 
+use crate::identity::FileIdentity;
 use crate::journal::{Change, Direction, Fingerprint, Journal, Step, StepKind, StepRecord};
 use crate::types::*;
 use crate::{compress, copy, delete, extract, sizes};
@@ -148,11 +150,13 @@ impl Runner {
     }
 
     /// Forgets a finished operation.
-    pub fn remove(&self, id: u64) {
+    pub fn remove(&self, id: u64) -> bool {
         let mut ops = self.ops.lock();
         if ops.get(&id).map(|op| op.snapshot().state.is_finished()).unwrap_or(false) {
             ops.remove(&id);
+            return true;
         }
+        false
     }
 
     fn get(&self, id: u64) -> Option<Arc<OpContext>> {
@@ -399,6 +403,10 @@ impl OpContext {
     /// The whole progress, its lists complete.
     pub fn snapshot(&self) -> Progress {
         self.progress.lock().progress.clone()
+    }
+
+    pub fn id(&self) -> u64 {
+        self.progress.lock().progress.id
     }
 
     // ─── Controls ───
@@ -701,18 +709,43 @@ impl OpContext {
     /// inside an item the operation made. Called once the item is complete
     /// (attributes set), so its fingerprint is the final one.
     pub fn record_created(&self, path: &Path) {
+        self.record_creation(path, false);
+    }
+
+    pub(crate) fn record_move_folder(&self, path: &Path) {
+        self.record_creation(path, true);
+    }
+
+    pub(crate) fn refresh_move_folder(&self, mark: usize, path: &Path) {
+        let Ok(current) = FileIdentity::of(path) else { return };
         let mut recorder = self.recorder.lock();
-        if recorder.overflow
-            || recorder.created.contains(path)
-            || recorder.overwritten.contains(path)
-            || recorder.inside_created(path)
+        if let Some(Change::MoveFolderCreated { path: recorded, identity: Some(identity) }) =
+            recorder.changes.get_mut(mark)
         {
+            if recorded == path && identity.same_entry(current) {
+                *identity = current;
+            }
+        }
+    }
+
+    fn record_creation(&self, path: &Path, move_folder: bool) {
+        let mut recorder = self.recorder.lock();
+        if recorder.overflow || recorder.created.contains(path) || recorder.overwritten.contains(path) {
             return;
         }
-        let tracked = path.to_path_buf();
-        recorder.tracking_bytes = recorder.tracking_bytes.saturating_add(tracked.capacity());
-        recorder.created.insert(tracked);
-        recorder.push(Change::Created { path: path.to_path_buf(), fingerprint: Fingerprint::of(path) });
+        if !recorder.inside_created(path) {
+            let tracked = path.to_path_buf();
+            recorder.tracking_bytes = recorder.tracking_bytes.saturating_add(tracked.capacity());
+            recorder.created.insert(tracked);
+        } else if !move_folder {
+            return;
+        }
+        let change = if move_folder {
+            Change::MoveFolderCreated { path: path.to_path_buf(), identity: FileIdentity::of(path).ok() }
+        } else {
+            Change::Created { path: path.to_path_buf(), fingerprint: Fingerprint::of(path) }
+        };
+        recorder.push(change);
     }
 
     /// Records the item at `path` as replaced: its earlier contents are
@@ -731,7 +764,8 @@ impl OpContext {
     /// Records the item at `from` as renamed to `to` (what it replaced is
     /// on record already, as overwritten).
     pub fn record_moved(&self, from: &Path, to: &Path) {
-        self.recorder.lock().push(Change::Moved { from: from.to_path_buf(), to: to.to_path_buf() });
+        let change = Change::moved(from, to);
+        self.recorder.lock().push(change);
     }
 
     /// Where the record stands: a move across volumes takes it before its
@@ -743,7 +777,13 @@ impl OpContext {
     /// After a copied file or link is removed from its source, replace
     /// its creation with a move. Keep any overwrite on record. Folders
     /// have their own creation/removal records, even for a partial move.
-    pub(crate) fn record_moved_by_copy(&self, mark: usize, from: &Path, to: &Path) {
+    pub(crate) fn record_moved_by_copy(
+        &self,
+        mark: usize,
+        from: &Path,
+        to: &Path,
+        identity: Option<FileIdentity>,
+    ) {
         let mut recorder = self.recorder.lock();
         if recorder.overflow {
             return;
@@ -761,7 +801,7 @@ impl OpContext {
         }
         // Even into a folder this operation made: the item came from
         // elsewhere, and going back it must leave before the folder goes.
-        recorder.push(Change::Moved { from: from.to_path_buf(), to: to.to_path_buf() });
+        recorder.push(Change::Moved { from: from.to_path_buf(), to: to.to_path_buf(), identity });
     }
 
     /// Walking a step: records `change` as not done, for the next walk.
@@ -840,11 +880,10 @@ impl OpContext {
 }
 
 /// `name 2.ext`, `name 3.ext`… the first that is free in `dir`.
-pub fn free_name(dir: &Path, name: &str) -> PathBuf {
-    let (stem, ext) = ferryx_core::entry::split_name(name);
+pub fn free_name(dir: &Path, name: impl AsRef<OsStr>) -> PathBuf {
+    let name = name.as_ref();
     for n in 2.. {
-        let candidate = if ext.is_empty() { format!("{stem} {n}") } else { format!("{stem} {n}.{ext}") };
-        let path = dir.join(&candidate);
+        let path = dir.join(name_with_suffix(name, &format!(" {n}")));
         if !path.exists() && path.symlink_metadata().is_err() {
             return path;
         }
@@ -853,21 +892,30 @@ pub fn free_name(dir: &Path, name: &str) -> PathBuf {
 }
 
 /// `name copy.ext`, `name copy 2.ext`… as Finder names a duplicate.
-pub fn copy_name(dir: &Path, name: &str) -> PathBuf {
-    let (stem, ext) = ferryx_core::entry::split_name(name);
-    let first = if ext.is_empty() { format!("{stem} copy") } else { format!("{stem} copy.{ext}") };
-    if dir.join(&first).symlink_metadata().is_err() {
-        return dir.join(first);
+pub fn copy_name(dir: &Path, name: impl AsRef<OsStr>) -> PathBuf {
+    let name = name.as_ref();
+    let first = dir.join(name_with_suffix(name, " copy"));
+    if first.symlink_metadata().is_err() {
+        return first;
     }
     for n in 2.. {
-        let candidate =
-            if ext.is_empty() { format!("{stem} copy {n}") } else { format!("{stem} copy {n}.{ext}") };
-        let path = dir.join(&candidate);
+        let path = dir.join(name_with_suffix(name, &format!(" copy {n}")));
         if path.symlink_metadata().is_err() {
             return path;
         }
     }
     unreachable!()
+}
+
+fn name_with_suffix(name: &OsStr, suffix: &str) -> OsString {
+    let path = Path::new(name);
+    let mut candidate = path.file_stem().unwrap_or(name).to_os_string();
+    candidate.push(suffix);
+    if let Some(ext) = path.extension().filter(|ext| !ext.is_empty()) {
+        candidate.push(".");
+        candidate.push(ext);
+    }
+    candidate
 }
 
 #[cfg(test)]
@@ -983,23 +1031,23 @@ mod tests {
         // Each successfully copied and removed file records its move.
         let mark = ctx.record_mark();
         ctx.record_created(&to.join("new"));
-        ctx.record_moved_by_copy(mark, &from.join("new"), &to.join("new"));
+        ctx.record_moved_by_copy(mark, &from.join("new"), &to.join("new"), None);
         let mark = ctx.record_mark();
         ctx.record_overwritten(&to.join("old"));
-        ctx.record_moved_by_copy(mark, &from.join("old"), &to.join("old"));
+        ctx.record_moved_by_copy(mark, &from.join("old"), &to.join("old"), None);
         ctx.record_created(&to.join("deep"));
         let mark = ctx.record_mark();
         ctx.record_created(&to.join("deep/inner"));
-        ctx.record_moved_by_copy(mark, &from.join("deep/inner"), &to.join("deep/inner"));
+        ctx.record_moved_by_copy(mark, &from.join("deep/inner"), &to.join("deep/inner"), None);
         assert_eq!(
             ctx.recorded(),
             vec![
-                Change::Moved { from: PathBuf::from("/v2/a"), to: PathBuf::from("/v2/dest/a") },
-                Change::Moved { from: from.join("new"), to: to.join("new") },
+                Change::moved(Path::new("/v2/a"), Path::new("/v2/dest/a")),
+                Change::moved(&from.join("new"), &to.join("new")),
                 Change::Overwritten { path: to.join("old") },
-                Change::Moved { from: from.join("old"), to: to.join("old") },
+                Change::moved(&from.join("old"), &to.join("old")),
                 Change::Created { path: to.join("deep"), fingerprint: None },
-                Change::Moved { from: from.join("deep/inner"), to: to.join("deep/inner") },
+                Change::moved(&from.join("deep/inner"), &to.join("deep/inner")),
             ]
         );
 
@@ -1009,12 +1057,12 @@ mod tests {
         ctx.record_created(Path::new("/v2/made"));
         let mark = ctx.record_mark();
         ctx.record_created(Path::new("/v2/made/x"));
-        ctx.record_moved_by_copy(mark, Path::new("/v1/x"), Path::new("/v2/made/x"));
+        ctx.record_moved_by_copy(mark, Path::new("/v1/x"), Path::new("/v2/made/x"), None);
         assert_eq!(
             ctx.recorded(),
             vec![
                 Change::Created { path: PathBuf::from("/v2/made"), fingerprint: None },
-                Change::Moved { from: PathBuf::from("/v1/x"), to: PathBuf::from("/v2/made/x") },
+                Change::moved(Path::new("/v1/x"), Path::new("/v2/made/x")),
             ]
         );
     }
@@ -1040,7 +1088,7 @@ mod tests {
                 let name = format!("f{i}");
                 let mark = ctx.record_mark();
                 ctx.record_created(&to.join(&name));
-                ctx.record_moved_by_copy(mark, &from.join(&name), &to.join(&name));
+                ctx.record_moved_by_copy(mark, &from.join(&name), &to.join(&name), None);
             }
             println!("{n} moves across volumes recorded: {:?}", start.elapsed());
         }

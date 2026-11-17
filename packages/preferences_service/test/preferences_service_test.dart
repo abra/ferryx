@@ -181,6 +181,20 @@ void main() {
   });
 
   group('PreferencesService', () {
+    test('flush retries a failed write of the current preferences', () async {
+      final storage = _TemporarilyUnavailableStorage();
+      final service = await PreferencesService.create(storage: storage);
+      addTearDown(service.dispose);
+
+      await service.update((p) => p.copyWith(splitFraction: 0.65));
+      expect(await storage.load(), isNull);
+      await expectLater(service.flush(), throwsStateError);
+
+      storage.available = true;
+      await service.flush();
+      expect((await storage.load())?.splitFraction, 0.65);
+    });
+
     test('book size persists independently from the text viewer', () async {
       final storage = InMemoryPreferencesStorage();
       final service = await PreferencesService.create(storage: storage);
@@ -232,4 +246,14 @@ void main() {
       await service.dispose();
     });
   });
+}
+
+class _TemporarilyUnavailableStorage extends InMemoryPreferencesStorage {
+  bool available = false;
+
+  @override
+  Future<void> save(Preferences preferences) async {
+    if (!available) throw StateError('Storage unavailable');
+    await super.save(preferences);
+  }
 }

@@ -58,6 +58,20 @@ void main() {
       if (hint is CommandHint) hint.command,
   ];
 
+  test('pending deletion only hides the repeat delete hint', () {
+    final current = tab(cursor: 1, selected: {'a.txt'});
+    final hints = commands(
+      hintsFor(
+        tab: current,
+        vim: true,
+        hasRegister: false,
+        deletionPending: true,
+      ),
+    );
+    expect(hints, isNot(contains(AppCommand.moveToTrash)));
+    expect(hints, contains(AppCommand.copyItemName));
+  });
+
   test('with nothing in the panel: how to get to the other one', () {
     expect(
       commands(

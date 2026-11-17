@@ -43,21 +43,23 @@ pub fn open_listing(
 ) -> ApiResult<ListingView> {
     let location = location.to_location();
     let current = app::begin_read(&listing_id);
-    let mut rows = read(&location, &options, &current.stop)?;
+    let (mut rows, omitted_names) = read(&location, &options, &current.stop)?;
     sort_rows(&mut rows, &options.sort.to_core());
     let watcher = match &location {
         Location::Native(path) => watcher_for(&listing_id, path),
         Location::Archive { archive, .. } => watcher_for(&listing_id, archive.parent().unwrap_or(archive)),
         Location::Remote { .. } => None,
     };
-    let footer = Footer::of(&location);
+    let mut footer = Footer::of(&location);
+    footer.omitted_names = omitted_names;
     let entries = rows.iter().map(EntryView::from).collect();
     let mut state = app::state().lock();
     if state.reads.get(&listing_id).map(|r| r.generation) != Some(current.generation) {
         // A later read of this listing took over.
         return Err(superseded());
     }
-    let open = OpenListing::new(location, options, rows, watcher, None);
+    let mut open = OpenListing::new(location, options, rows, watcher, None);
+    open.omitted_names = omitted_names;
     let view = footer.view(&open.location, entries, None, 0, open.version, open.watcher.is_some());
     state.listings.insert(listing_id, open);
     Ok(view)
@@ -69,7 +71,7 @@ pub fn open_listing(
 pub fn refresh_listing(listing_id: String) -> ApiResult<ListingView> {
     let turn = turn_of(&listing_id)?;
     let _turn = turn.lock();
-    let (location, options, base, before, changes) = {
+    let (location, options, base, before, omitted_names, changes) = {
         let mut state = app::state().lock();
         let open = listing_mut(&mut state, &listing_id)?;
         (
@@ -77,21 +79,28 @@ pub fn refresh_listing(listing_id: String) -> ApiResult<ListingView> {
             open.options,
             open.version,
             open.rows.clone(),
+            open.omitted_names,
             std::mem::take(&mut open.changes),
         )
     };
     let current = app::current_read(&listing_id);
     let sort = options.sort.to_core();
-    let (update, untagged) = match (&location, changes) {
-        (Location::Native(dir), Changes::Names(names)) => {
+    let (update, untagged, omitted_names) = match (&location, changes) {
+        (Location::Native(dir), Changes::Names(names))
+            if names.iter().all(|name| name.to_str().is_some()) =>
+        {
             let changed = read_names(dir, &names, &options);
             let untagged = changed.iter().map(|(name, _)| name.clone()).collect();
-            (merge(&before, changed, &sort), Untagged::Names(untagged))
+            (merge(&before, changed, &sort), Untagged::Names(untagged), omitted_names)
         }
-        _ => (diff(&before, read(&location, &options, &current.stop)?, &sort), Untagged::All),
+        _ => {
+            let (rows, omitted_names) = read(&location, &options, &current.stop)?;
+            (diff(&before, rows, &sort), Untagged::All, omitted_names)
+        }
     };
     drop(before);
-    let footer = Footer::of(&location);
+    let mut footer = Footer::of(&location);
+    footer.omitted_names = omitted_names;
     let mut state = app::state().lock();
     if state.reads.get(&listing_id).map(|r| r.generation) != Some(current.generation) {
         return Err(superseded());
@@ -105,6 +114,7 @@ pub fn refresh_listing(listing_id: String) -> ApiResult<ListingView> {
         Untagged::All => open.untagged = Untagged::All,
         Untagged::Names(names) => open.untagged.add(names),
     }
+    open.omitted_names = omitted_names;
     Ok(update.commit(open, &footer))
 }
 
@@ -135,26 +145,29 @@ pub fn resort_listing(listing_id: String, options: ListingOptionsView) -> ApiRes
         update.kept(at, before[at].clone());
     }
     drop(before);
-    let footer = Footer::of(&location);
+    let mut footer = Footer::of(&location);
     let mut state = app::state().lock();
     let open = listing_mut(&mut state, &listing_id)?;
     if open.version != base {
         return Err(superseded());
     }
     open.options = options;
+    footer.omitted_names = open.omitted_names;
     Ok(update.commit(open, &footer))
 }
 
 /// All the rows of the listing as last sent, under their number: for a
 /// panel that missed an update (its answers came out of turn).
 pub fn listing_rows(listing_id: String) -> ApiResult<ListingView> {
-    let (location, rows, version, watched) = {
+    let (location, rows, version, watched, omitted_names) = {
         let mut state = app::state().lock();
         let open = listing_mut(&mut state, &listing_id)?;
-        (open.location.clone(), open.rows.clone(), open.version, open.watcher.is_some())
+        (open.location.clone(), open.rows.clone(), open.version, open.watcher.is_some(), open.omitted_names)
     };
     let entries = rows.iter().map(EntryView::from).collect();
-    Ok(Footer::of(&location).view(&location, entries, None, 0, version, watched))
+    let mut footer = Footer::of(&location);
+    footer.omitted_names = omitted_names;
+    Ok(footer.view(&location, entries, None, 0, version, watched))
 }
 
 /// Forgets the listing and stops watching its folder (and reading it).
@@ -180,7 +193,7 @@ pub fn peek_listing(location: LocationView, show_hidden: bool) -> ApiResult<Vec<
             collation: crate::api::types::CollationView::Natural,
         },
     };
-    let mut rows = read(&location, &options, &AtomicBool::new(false))?;
+    let (mut rows, _) = read(&location, &options, &AtomicBool::new(false))?;
     sort_rows(&mut rows, &options.sort.to_core());
     Ok(rows.iter().map(EntryView::from).collect())
 }
@@ -309,20 +322,21 @@ fn read_names(
     let mut owners = native::Names::default();
     names
         .iter()
-        .map(|name| {
-            let shown = name.to_string_lossy().into_owned();
+        .filter_map(|name| {
+            let shown = name.to_str()?.to_owned();
             let path = dir.join(name);
             let row = std::fs::symlink_metadata(&path)
                 .ok()
                 .map(|meta| native::entry_from_metadata(shown.clone(), path, &meta, &mut owners))
                 .filter(|row| options.show_hidden || !row.is_hidden);
-            (shown, row)
+            Some((shown, row))
         })
         .collect()
 }
 
 /// What a listing's footer shows of its volume.
 struct Footer {
+    omitted_names: bool,
     free_bytes: Option<i64>,
     total_bytes: Option<i64>,
     volume_name: Option<String>,
@@ -334,16 +348,20 @@ impl Footer {
             Location::Native(path) => {
                 let volume = volumes::volume_holding(path);
                 Footer {
+                    omitted_names: false,
                     free_bytes: native::free_space(path).map(|b| b as i64),
                     total_bytes: volume.as_ref().map(|v| v.total_bytes as i64),
                     volume_name: volume.map(|v| v.name),
                 }
             }
-            Location::Archive { .. } => Footer { free_bytes: None, total_bytes: None, volume_name: None },
+            Location::Archive { .. } => {
+                Footer { omitted_names: false, free_bytes: None, total_bytes: None, volume_name: None }
+            }
             // The server's address names its "volume"; its free space is
             // not asked for (only some servers answer, at a round trip a
             // read).
             Location::Remote { server, .. } => Footer {
+                omitted_names: false,
                 free_bytes: None,
                 total_bytes: None,
                 volume_name: Some(
@@ -363,6 +381,7 @@ impl Footer {
         watched: bool,
     ) -> ListingView {
         ListingView {
+            omitted_names: self.omitted_names,
             location: LocationView::from(location),
             entries,
             order,
@@ -405,20 +424,25 @@ fn superseded() -> FerryxError {
     FerryxError::new(FerryxErrorKind::Cancelled, "a later read of the listing took over")
 }
 
-fn read(location: &Location, options: &ListingOptionsView, stop: &AtomicBool) -> ApiResult<Vec<Entry>> {
+fn read(
+    location: &Location,
+    options: &ListingOptionsView,
+    stop: &AtomicBool,
+) -> ApiResult<(Vec<Entry>, bool)> {
     match location {
         Location::Native(path) => {
             // Let the directory read preserve NotFound, NotADirectory and
             // PermissionDenied instead of collapsing them into a boolean.
-            Ok(native::list_dir_until(
+            let rows = native::list_dir_until(
                 path,
                 &ListOptions { show_hidden: options.show_hidden, show_parent: options.show_parent },
                 &|| stop.load(Ordering::SeqCst),
-            )?)
+            )?;
+            Ok(bridgeable_rows(rows))
         }
         Location::Archive { archive, inner } => {
             let index = app::archive_index(archive)?;
-            Ok(index.list(inner, options.show_parent, options.show_hidden)?)
+            Ok((index.list(inner, options.show_parent, options.show_hidden)?, false))
         }
         Location::Remote { server, path } => {
             let server = remote::connection::get(server)?;
@@ -431,9 +455,16 @@ fn read(location: &Location, options: &ListingOptionsView, stop: &AtomicBool) ->
                     rows.insert(0, Entry::parent(PathBuf::from(parent)));
                 }
             }
-            Ok(rows)
+            Ok((rows, false))
         }
     }
+}
+
+fn bridgeable_rows(mut rows: Vec<Entry>) -> (Vec<Entry>, bool) {
+    let count = rows.len();
+    rows.retain(|e| e.path.to_str().is_some());
+    let omitted = rows.len() != count;
+    (rows, omitted)
 }
 
 pub(crate) fn watcher_for(listing_id: &str, path: &Path) -> Option<FolderWatcher> {
@@ -445,6 +476,17 @@ pub(crate) fn watcher_for(listing_id: &str, path: &Path) -> Option<FolderWatcher
 mod tests {
     use super::*;
     use ferryx_core::entry::EntryKind;
+
+    #[cfg(unix)]
+    #[test]
+    fn a_local_name_that_would_alias_a_valid_path_is_omitted() {
+        use std::os::unix::ffi::OsStringExt;
+        let valid = Entry::parent(PathBuf::from("entry-\u{fffd}"));
+        let raw = Entry::parent(PathBuf::from(OsString::from_vec(b"entry-\xff".to_vec())));
+        let (rows, omitted) = bridgeable_rows(vec![valid.clone(), raw]);
+        assert!(omitted);
+        assert_eq!(rows, vec![valid]);
+    }
 
     fn row(name: &str, size: u64) -> Entry {
         Entry { size: Some(size), ..Entry::parent(PathBuf::from(format!("/f/{name}"))) }.named(name)

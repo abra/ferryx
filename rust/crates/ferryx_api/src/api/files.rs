@@ -97,11 +97,7 @@ pub fn create_file(path: String) -> ApiResult<()> {
 pub fn rename_item(path: String, new_name: String) -> ApiResult<String> {
     let from = PathBuf::from(&path);
     let to = native::rename(&from, &new_name)?;
-    crate::tasks::record(
-        StepKind::Rename,
-        std::slice::from_ref(&from),
-        vec![Change::Moved { from: from.clone(), to: to.clone() }],
-    );
+    crate::tasks::record(StepKind::Rename, std::slice::from_ref(&from), vec![Change::moved(&from, &to)]);
     Ok(to.to_string_lossy().into_owned())
 }
 
@@ -128,14 +124,20 @@ pub fn edit_symlink(link: String, target: String) -> ApiResult<()> {
 }
 
 pub fn read_symlink(link: String) -> ApiResult<String> {
-    Ok(links::read_symlink(Path::new(&link))?.to_string_lossy().into_owned())
+    unicode_path(&links::read_symlink(Path::new(&link))?)
 }
 
 /// `path` with every symlink followed, for Follow (⌘→).
 pub fn resolve_path(path: String) -> ApiResult<String> {
     let resolved = std::fs::canonicalize(Path::new(&path))
         .map_err(|e| ferryx_vfs::VfsError::io(&e, Path::new(&path)))?;
-    Ok(resolved.to_string_lossy().into_owned())
+    unicode_path(&resolved)
+}
+
+fn unicode_path(path: &Path) -> ApiResult<String> {
+    path.to_str()
+        .map(str::to_owned)
+        .ok_or_else(|| FerryxError::new(FerryxErrorKind::Unsupported, "the path is not valid Unicode"))
 }
 
 /// The first free name in `dir` for a new item: `name`, else `name 2`…

@@ -45,6 +45,7 @@ class ViewerRouteArguments {
 GoRouter buildRouter({
   required DependenciesContainer deps,
   required WindowTitle windowTitle,
+  required Listenable flushSnapshots,
 }) {
   final rootNavigator = GlobalKey<NavigatorState>(debugLabel: 'root');
   return GoRouter(
@@ -60,8 +61,11 @@ GoRouter buildRouter({
       ),
       GoRoute(
         path: AppRoutes.workspace,
-        builder: (context, state) =>
-            _WorkspaceRoute(deps: deps, windowTitle: windowTitle),
+        builder: (context, state) => _WorkspaceRoute(
+          deps: deps,
+          windowTitle: windowTitle,
+          flushSnapshots: flushSnapshots,
+        ),
       ),
       GoRoute(
         path: AppRoutes.viewer,
@@ -132,10 +136,15 @@ Future<void> openSettings(
 /// The workspace route: the two panels over the file system, wired to the
 /// app's services and to the routes it opens.
 class _WorkspaceRoute extends StatelessWidget {
-  const _WorkspaceRoute({required this.deps, required this.windowTitle});
+  const _WorkspaceRoute({
+    required this.deps,
+    required this.windowTitle,
+    required this.flushSnapshots,
+  });
 
   final DependenciesContainer deps;
   final WindowTitle windowTitle;
+  final Listenable flushSnapshots;
 
   @override
   Widget build(BuildContext context) {
@@ -223,6 +232,7 @@ class _WorkspaceRoute extends StatelessWidget {
               onToggleFullWindow: view.onToggleFullWindow,
             ),
           ),
+          flushSnapshots: flushSnapshots,
           onSnapshot: (snapshot) {
             windowTitle.location =
                 (snapshot.active == PanelSide.left

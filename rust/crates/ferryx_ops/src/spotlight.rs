@@ -185,7 +185,7 @@ fn read_paths(stdout: impl Read, tx: &mpsc::SyncSender<PathBuf>) {
             Ok(_) if raw.last() != Some(&0) => break,
             Ok(_) => {}
         }
-        let text = String::from_utf8_lossy(&raw[..raw.len() - 1]).into_owned();
+        let Ok(text) = std::str::from_utf8(&raw[..raw.len() - 1]) else { continue };
         if !text.is_empty() && tx.send(PathBuf::from(text)).is_err() {
             return;
         }
@@ -242,7 +242,7 @@ mod tests {
     #[test]
     fn paths_split_on_nul() {
         let (tx, rx) = mpsc::sync_channel(QUEUED_PATHS);
-        read_paths(&b"/a/one\0/b/two words\0\0/c"[..], &tx);
+        read_paths(&b"/a/one\0/b/two words\0\xff\0\0/c"[..], &tx);
         drop(tx);
         let got: Vec<PathBuf> = rx.iter().collect();
         assert_eq!(got, [PathBuf::from("/a/one"), PathBuf::from("/b/two words")]);

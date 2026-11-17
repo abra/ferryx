@@ -38,7 +38,15 @@ pub fn put_back_supported() -> bool {
 /// Moves each of `paths` to the trash; answers a receipt or the error of
 /// each, in order.
 pub fn trash_items(paths: &[PathBuf]) -> Vec<VfsResult<TrashReceipt>> {
-    platform::trash_items(paths)
+    trash_items_when(paths, |_, _| true).into_iter().flatten().collect()
+}
+
+/// Checks each path just before moving it. Rejected items have no receipt or error.
+pub fn trash_items_when(
+    paths: &[PathBuf],
+    mut ready: impl FnMut(usize, &Path) -> bool,
+) -> Vec<Option<VfsResult<TrashReceipt>>> {
+    platform::trash_items(paths.iter().enumerate().map(|(i, path)| ready(i, path).then_some(path.as_path())))
 }
 
 /// Whether the item of `receipt` is still in the trash.
@@ -130,7 +138,7 @@ fn crate_error(error: trash::Error, path: &Path) -> VfsError {
 
 #[cfg(target_os = "macos")]
 mod platform {
-    use std::path::{Path, PathBuf};
+    use std::path::Path;
 
     use objc2::rc::{autoreleasepool, Retained};
     use objc2_foundation::{NSFileManager, NSString, NSURL};
@@ -140,8 +148,10 @@ mod platform {
 
     pub const SUPPORTED: bool = true;
 
-    pub fn trash_items(paths: &[PathBuf]) -> Vec<VfsResult<TrashReceipt>> {
-        paths.iter().map(|path| trash_one(path)).collect()
+    pub fn trash_items<'a>(
+        paths: impl Iterator<Item = Option<&'a Path>>,
+    ) -> Vec<Option<VfsResult<TrashReceipt>>> {
+        paths.map(|path| path.map(trash_one)).collect()
     }
 
     fn trash_one(path: &Path) -> VfsResult<TrashReceipt> {
@@ -189,7 +199,7 @@ mod platform {
 mod platform {
     use std::collections::HashMap;
     use std::ffi::OsString;
-    use std::path::PathBuf;
+    use std::path::Path;
 
     use trash::os_limited;
     use trash::TrashItem;
@@ -199,13 +209,16 @@ mod platform {
 
     pub const SUPPORTED: bool = true;
 
-    pub fn trash_items(paths: &[PathBuf]) -> Vec<VfsResult<TrashReceipt>> {
+    pub fn trash_items<'a>(
+        paths: impl Iterator<Item = Option<&'a Path>>,
+    ) -> Vec<Option<VfsResult<TrashReceipt>>> {
         let started = now_seconds();
-        let moved: Vec<VfsResult<PathBuf>> = paths
-            .iter()
+        let moved: Vec<_> = paths
             .map(|path| {
-                let original = canonical(path);
-                trash::delete(path).map(|()| original).map_err(|e| crate_error(e, path))
+                path.map(|path| {
+                    let original = canonical(path);
+                    trash::delete(path).map(|()| original).map_err(|e| crate_error(e, path))
+                })
             })
             .collect();
         // One look at the trash finds every item just moved there.
@@ -213,16 +226,20 @@ mod platform {
         moved
             .into_iter()
             .map(|result| {
-                result.map(|original| {
-                    let found = listed
-                        .iter()
-                        .filter(|item| item.original_path() == original && item.time_deleted >= started - 1)
-                        .max_by_key(|item| item.time_deleted);
-                    TrashReceipt {
-                        token: found.map(|item| item.id.to_string_lossy().into_owned()),
-                        time_deleted: found.map(|item| item.time_deleted).unwrap_or(started),
-                        original,
-                    }
+                result.map(|result| {
+                    result.map(|original| {
+                        let found = listed
+                            .iter()
+                            .filter(|item| {
+                                item.original_path() == original && item.time_deleted >= started - 1
+                            })
+                            .max_by_key(|item| item.time_deleted);
+                        TrashReceipt {
+                            token: found.map(|item| item.id.to_string_lossy().into_owned()),
+                            time_deleted: found.map(|item| item.time_deleted).unwrap_or(started),
+                            original,
+                        }
+                    })
                 })
             })
             .collect()
@@ -267,21 +284,24 @@ mod platform {
     all(unix, not(target_os = "macos"), not(target_os = "ios"), not(target_os = "android"))
 )))]
 mod platform {
-    use std::path::PathBuf;
+    use std::path::Path;
 
     use super::{canonical, crate_error, not_in_trash, now_seconds, TrashReceipt};
     use crate::error::VfsResult;
 
     pub const SUPPORTED: bool = false;
 
-    pub fn trash_items(paths: &[PathBuf]) -> Vec<VfsResult<TrashReceipt>> {
+    pub fn trash_items<'a>(
+        paths: impl Iterator<Item = Option<&'a Path>>,
+    ) -> Vec<Option<VfsResult<TrashReceipt>>> {
         paths
-            .iter()
             .map(|path| {
-                let original = canonical(path);
-                trash::delete(path)
-                    .map(|()| TrashReceipt { original, token: None, time_deleted: now_seconds() })
-                    .map_err(|e| crate_error(e, path))
+                path.map(|path| {
+                    let original = canonical(path);
+                    trash::delete(path)
+                        .map(|()| TrashReceipt { original, token: None, time_deleted: now_seconds() })
+                        .map_err(|e| crate_error(e, path))
+                })
             })
             .collect()
     }

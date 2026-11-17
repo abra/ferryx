@@ -9,6 +9,10 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 import 'types.dart';
 
+/// Identifies local items in order before asking the user to delete them.
+Future<List<String>> captureDeleteIdentities({required List<String> paths}) =>
+    FerryxRustLib.instance.api.crateApiOpsCaptureDeleteIdentities(paths: paths);
+
 /// Starts the operation and answers its id; every change of its progress
 /// comes as an `OperationProgress` event.
 Future<PlatformInt64> startOperation({required OpRequestView request}) =>

@@ -52,6 +52,9 @@ pub struct OpOptions {
     pub password: Option<String>,
     /// Extract whole archives: each into a folder named after it.
     pub into_folders: bool,
+    /// Local delete or trash: the identities captured with the source paths.
+    #[serde(default)]
+    pub source_identities: Option<Vec<String>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

@@ -138,7 +138,7 @@ fn build_entry(name: String, path: PathBuf, meta: &Metadata, names: &mut Names) 
 
 /// A symbolic link's kind, whether it leads to a folder, and its target.
 fn symlink_entry(path: &Path) -> (EntryKind, bool, Option<String>) {
-    let target = fs::read_link(path).ok().map(|t| t.to_string_lossy().into_owned());
+    let target = fs::read_link(path).ok().and_then(|t| t.to_str().map(str::to_owned));
     let points_to_dir = fs::metadata(path).map(|m| m.is_dir()).unwrap_or(false);
     (EntryKind::Symlink, points_to_dir, target)
 }

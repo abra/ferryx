@@ -45,6 +45,7 @@ fn request(kind: OpKindView, sources: Vec<String>, destination: Option<String>) 
     OpRequestView {
         kind,
         sources,
+        source_identities: None,
         archive: None,
         destination,
         new_name: None,
@@ -156,6 +157,31 @@ fn listings_sort_resort_and_follow_changes() {
     assert!(listing::refresh_listing("left".into()).is_err());
     assert!(listing::open_listing("x".into(), LocationView::native(&dir.path().join("b2.txt")), options())
         .is_err());
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn local_listing_reports_unrepresentable_names_without_aliasing_them() {
+    use std::os::unix::ffi::OsStrExt;
+
+    let _guard = serial();
+    reset_for_tests();
+    let dir = tempfile::tempdir().unwrap();
+    let valid = dir.path().join("sample-\u{fffd}");
+    let raw = dir.path().join(std::ffi::OsStr::from_bytes(b"sample-\xff"));
+    fs::write(&valid, b"visible").unwrap();
+    fs::write(&raw, b"omitted").unwrap();
+
+    let id = "native-names";
+    let view = listing::open_listing(id.into(), LocationView::native(dir.path()), options()).unwrap();
+    assert!(view.omitted_names);
+    assert_eq!(names(&view), ["..", "sample-\u{fffd}"]);
+    assert_eq!(view.entries[1].size, Some(7));
+    assert!(listing::resort_listing(id.into(), options()).unwrap().omitted_names);
+
+    fs::remove_file(raw).unwrap();
+    assert!(!listing::refresh_listing(id.into()).unwrap().omitted_names);
+    listing::close_listing(id.into());
 }
 
 /// What a panel holds of a listing, as the interface keeps it.

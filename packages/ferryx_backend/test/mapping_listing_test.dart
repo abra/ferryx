@@ -26,6 +26,7 @@ rust.ListingView view(
   List<int>? order,
   int base = 0,
   int version = 1,
+  bool omittedNames = false,
 }) => rust.ListingView(
   location: const rust.LocationView(
     kind: rust.LocationKind.native,
@@ -36,9 +37,15 @@ rust.ListingView view(
   base: base,
   version: version,
   watched: true,
+  omittedNames: omittedNames,
 );
 
 void main() {
+  test('a skipped native name is reported with the remaining rows', () {
+    final listing = rust.listingFromView(view([], omittedNames: true));
+    expect(listing.omittedNames, isTrue);
+    expect(listing.copyWith(entries: []).omittedNames, isTrue);
+  });
   test('an update keeps the rows it names by index and makes only the '
       'rows it sends', () {
     final before = rust

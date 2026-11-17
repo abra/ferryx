@@ -85,6 +85,8 @@ dependency_overrides:
     path: packages/pdfium_dart
 
 dev_dependencies:
+  pagecraft:
+    path: packages/pagecraft
   flutter_test:
     sdk: flutter
   # Tests load the host dylib directly.

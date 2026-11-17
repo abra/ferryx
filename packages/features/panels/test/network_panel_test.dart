@@ -113,6 +113,7 @@ void main() {
     when(() => files.closeListing(any())).thenAnswer((_) async {});
     when(() => files.isArchive(any())).thenReturn(false);
     when(() => operations.progress).thenAnswer((_) => progress.stream);
+    when(() => operations.current).thenReturn({});
     when(() => operations.start(any())).thenAnswer((_) async => 7);
     when(() => operations.forget(any())).thenAnswer((_) async {});
     cubit = PanelCubit(
@@ -291,6 +292,31 @@ void main() {
       await settle();
       expect(tab().folderSizes, {'www': 4096});
     });
+
+    test(
+      'a size report that completes before the start reply is applied',
+      () async {
+        await cubit.start(null, home);
+        await cubit.open(srv);
+        const report = OperationProgress(
+          id: 7,
+          kind: OpKind.calcSizes,
+          state: OpState.done,
+          sizes: [FolderSize(path: '$box/srv/www', bytes: 4096)],
+        );
+        when(() => operations.start(any())).thenAnswer((_) async {
+          when(() => operations.current).thenReturn({7: report});
+          progress.add(report);
+          await settle();
+          return 7;
+        });
+
+        await cubit.calcSizes();
+
+        expect(tab().folderSizes, {'www': 4096});
+        verify(() => operations.forget(7)).called(1);
+      },
+    );
 
     test('renaming in place goes to the server', () async {
       when(() => files.renameAt(any(), any())).thenAnswer(

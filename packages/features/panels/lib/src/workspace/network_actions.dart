@@ -101,9 +101,11 @@ extension _NetworkActions on _WorkspaceScreenState {
     final server = request.location.server;
     final network = _network;
     if (server == null || network == null) return;
+    final operations = widget.operations;
     await _guarded(() async {
       final folder = await network.tempFolder(server);
-      final id = await widget.operations.start(
+      if (!mounted) return;
+      final id = await operations.start(
         OperationRequest(
           kind: OpKind.copy,
           sources: [request.location.path],
@@ -112,7 +114,7 @@ extension _NetworkActions on _WorkspaceScreenState {
           conflicts: ConflictPolicy.overwrite,
         ),
       );
-      final done = await _whenFinished(id);
+      final done = await operations.waitForCompletion(id);
       if (!mounted || done.state != OpState.done) return;
       final copy = '$folder/${request.entry.name}';
       if (app == null) {

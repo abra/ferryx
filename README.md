@@ -42,6 +42,10 @@ If a folder cannot be opened, the current files and marks stay in place.
 **Retry** tries the requested folder again; **Esc** or the message's close
 button dismisses the error without clearing marks.
 
+Local names outside Unicode are omitted from listings and file search
+results. The folder's status bar marks this when such names are present.
+Transfers to a server report an error for folders containing these names.
+
 An accent outline identifies the area receiving keyboard input: a file
 panel, the terminal or preview. It follows focus after a click or Tab;
 opening a menu keeps the last area indicated. In file panels it surrounds
@@ -142,6 +146,9 @@ Deep changes by other programs may require Refresh (⌘R).
 
 Copy and move jobs run in the background with progress, pause/stop controls
 and conflict questions. Their dialogs let you change the destination.
+When a local copy replaces an existing file, Ferryx keeps the destination
+until the incoming file has been copied and checked. To copy a file beside
+a same-named folder, choose **Keep Both**.
 
 Deleting from a file panel starts with a **5-second countdown** in that
 panel. Files stay in place until it ends. **Cancel**, or **Esc** while a
@@ -151,6 +158,9 @@ change the captured targets. Closing the window cancels pending batches.
 Permanent/server deletion and the optional Trash confirmation still ask
 first; the countdown follows confirmation. Once work starts, **Stop**
 stops further processing; local Trash operations can be undone with ⌘Z.
+Ferryx checks that each local deletion still targets the original file or
+folder. Server deletion targets the selected paths because servers may omit
+stable file identifiers.
 
 | Tool | Purpose |
 |---|---|
@@ -212,7 +222,8 @@ Undo retains up to **100 steps**, within a shared **64 MiB** memory budget
 for undo and redo. Older steps expire when the budget is reached; an operation
 too large to record is identified as unavailable for undo. Created items go to Trash,
 moved items move back and trashed items are restored. A preflight check
-reports missing items, metadata changes and conflicting paths. Items Ferryx
+reports missing items, replaced move targets, metadata changes and conflicting
+paths. Undo and Redo leave replacements at recorded move locations in place. Items Ferryx
 trashes on macOS do not have Finder Put Back.
 
 </details>
@@ -610,9 +621,10 @@ archiver profiles.
 <summary>Saved data, host keys and temporary copies</summary>
 
 Preferences remember tabs/locations, modes, favorites, application profiles,
-shortcuts, terminal choices and archiver settings. Visited-folder rankings
-and recent commands/server addresses are stored separately. Recent/saved
-server addresses contain no passwords.
+shortcuts, terminal choices and archiver settings. Closing Ferryx saves the
+current tabs, panel split and window frame before it exits. Visited-folder
+rankings and recent commands/server addresses are stored separately.
+Recent/saved server addresses contain no passwords.
 
 Accepted SSH host keys are written to Ferryx's own file; the user's/system's
 OpenSSH files are read without being modified:

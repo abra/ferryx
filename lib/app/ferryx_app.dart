@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:component_library/component_library.dart';
+import 'package:ferryx/app/app_lifecycle.dart';
 import 'package:ferryx/app/app_menu_bar.dart';
 import 'package:ferryx/app/context_guidance.dart';
 import 'package:ferryx/app/dependency_scope.dart';
@@ -19,7 +20,9 @@ import 'package:shortcuts/shortcuts.dart';
 ///
 /// Stateful so the router is created once and survives theme/locale changes.
 class FerryxApp extends StatefulWidget {
-  const FerryxApp({super.key});
+  const FerryxApp({required this.lifecycle, super.key});
+
+  final AppLifecycle lifecycle;
 
   @override
   State<FerryxApp> createState() => _FerryxAppState();
@@ -38,11 +41,22 @@ class _FerryxAppState extends State<FerryxApp> {
     _router = buildRouter(
       deps: DependenciesScope.of(context),
       windowTitle: _title,
+      flushSnapshots: widget.lifecycle,
     );
+    widget.lifecycle.onExitSaveFailure = _showExitSaveFailure;
+  }
+
+  void _showExitSaveFailure() {
+    final context =
+        _router.routerDelegate.navigatorKey.currentState?.overlay?.context;
+    if (context != null) {
+      showAppNotice(context, context.l10n.noticeExitSaveFailed);
+    }
   }
 
   @override
   void dispose() {
+    widget.lifecycle.onExitSaveFailure = null;
     _router.dispose();
     _title.dispose();
     _focusHighlight.dispose();

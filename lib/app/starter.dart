@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ferryx/app/app_bootstrap.dart';
+import 'package:ferryx/app/app_lifecycle.dart';
 import 'package:ferryx/app/app_scopes.dart';
 import 'package:ferryx/app/bloc/app_bloc_observer.dart';
 import 'package:ferryx/app/screens/initialization_failed_screen.dart';
@@ -36,17 +37,16 @@ Future<void> starter() async {
     Bloc.observer = AppBlocObserver(logger);
 
     final bootstrap = AppBootstrap(logger: logger, windowFrame: windowFrame);
-    WindowStateSaver? windowState;
+    final lifecycle = AppLifecycle(logger);
+    await lifecycle.install();
     Future<void> composeAndRun() => bootstrap.run(
       onReady: (dependencies) async {
-        runApp(AppScopes(dependencies: dependencies));
-        windowState?.dispose();
-        windowState = WindowStateSaver(dependencies.preferencesService);
-        await showWindow(dependencies.preferencesService.current);
+        final saver = lifecycle.useSession(dependencies);
+        runApp(AppScopes(dependencies: dependencies, lifecycle: lifecycle));
+        await showWindow(dependencies.preferencesService.current, saver: saver);
       },
       onFailure: (error, stackTrace) async {
-        windowState?.dispose();
-        windowState = null;
+        lifecycle.useSession(null);
         runApp(
           InitializationFailedScreen(
             error: error,

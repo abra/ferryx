@@ -47,6 +47,7 @@ d.UndoIssueKind undoIssueKindFromView(rust.UndoIssueKindView kind) =>
       rust.UndoIssueKindView.missing => d.UndoIssueKind.missing,
       rust.UndoIssueKindView.occupied => d.UndoIssueKind.occupied,
       rust.UndoIssueKindView.changed => d.UndoIssueKind.changed,
+      rust.UndoIssueKindView.replaced => d.UndoIssueKind.replaced,
       rust.UndoIssueKindView.lost => d.UndoIssueKind.lost,
       rust.UndoIssueKindView.notInTrash => d.UndoIssueKind.notInTrash,
       rust.UndoIssueKindView.unsupported => d.UndoIssueKind.unsupported,

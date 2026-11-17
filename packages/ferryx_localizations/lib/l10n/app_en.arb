@@ -92,6 +92,7 @@
   "panelLoading": "Reading…",
   "panelFolderSize": "Folder",
   "panelItemsCount": "{count, plural, =0{no items} =1{1 item} other{{count} items}}",
+  "panelUnrepresentableNames": "Non-Unicode names omitted",
   "@panelItemsCount": {"placeholders": {"count": {"type": "int"}}},
   "panelCursorPosition": "{position} / {count}",
   "@panelCursorPosition": {"description": "Current position among shown items in a Vim panel; excludes the parent-folder row. Numbers are formatted through FerryxFormatting.", "placeholders": {"position": {"type": "String"}, "count": {"type": "String"}}},
@@ -396,6 +397,7 @@
   "noticeNoEditor": "No editor is set up for this file; see Settings → Editors",
   "noticeNoVolume": "Nothing to eject here",
   "noticeOpenFailed": "Could not open the item",
+  "noticeExitSaveFailed": "Could not save your session. Check disk space and permissions, then try closing again.",
 
   "documentFontSizeLabel": "Book font size",
   "documentFontDecrease": "Decrease Font Size",
@@ -1074,6 +1076,7 @@
   "undoIssueMissing": "No longer there",
   "undoIssueOccupied": "Its place is taken",
   "undoIssueChanged": "Changed since; it goes to the Trash all the same",
+  "undoIssueReplaced": "The recorded item was replaced or could not be verified",
   "undoIssueLost": "Overwritten: its earlier contents are gone, it stays as it is",
   "undoIssueNotInTrash": "No longer in the Trash",
   "undoIssueUnsupported": "Items cannot be put back from the Trash here",

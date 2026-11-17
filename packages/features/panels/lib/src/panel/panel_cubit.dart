@@ -166,6 +166,7 @@ class PanelCubit extends Cubit<PanelState> {
     final tabs = saved?.tabs ?? [SavedTab(location: fallback, layoutIndex: 2)];
     final states = <PanelTabState>[];
     for (final tab in tabs) {
+      final search = tab.search;
       states.add(
         PanelTabState(
           id: _newTabId(),
@@ -173,6 +174,14 @@ class PanelCubit extends Cubit<PanelState> {
           sort: tab.sort,
           layoutIndex: tab.layoutIndex,
           loading: true,
+          search: search == null || _find == null
+              ? null
+              : PanelSearchState(
+                  request: search,
+                  generation: 0,
+                  label: tab.searchLabel,
+                  running: false,
+                ),
         ),
       );
     }
@@ -1451,7 +1460,10 @@ class PanelCubit extends Cubit<PanelState> {
         sourceServer: tab.location.server,
       ),
     );
+    if (isClosed) return;
     _sizeOperations.add(id);
+    // A small folder can finish on the Rust worker before start replies.
+    if (_operations.current[id] case final known?) _onSizeProgress(known);
   }
 
   void _onProgress(OperationProgress progress) {
@@ -1464,8 +1476,15 @@ class PanelCubit extends Cubit<PanelState> {
       _walkFlatViewsUnder(progress);
       _refreshServersTouched(progress);
     }
+    if (progress.kind == OpKind.calcSizes) _onSizeProgress(progress);
+  }
+
+  void _onSizeProgress(OperationProgress progress) {
     if (!_sizeOperations.contains(progress.id)) return;
-    if (progress.state.isFinished) _sizeOperations.remove(progress.id);
+    if (progress.state.isFinished) {
+      _sizeOperations.remove(progress.id);
+      unawaited(_operations.forget(progress.id));
+    }
     if (progress.sizes.isEmpty) return;
     for (var i = 0; i < state.tabs.length; i++) {
       final tab = state.tabs[i];
@@ -1489,7 +1508,6 @@ class PanelCubit extends Cubit<PanelState> {
         emit(state.withTab(i, _withListing(tab.copyWith(folderSizes: sizes))));
       }
     }
-    if (progress.state.isFinished) unawaited(_operations.forget(progress.id));
   }
 
   // ─── Tabs ───

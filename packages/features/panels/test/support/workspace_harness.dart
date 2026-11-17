@@ -215,6 +215,12 @@ class WorkspaceHarness {
     when(() => operations.progress).thenAnswer((_) => progress.stream);
     when(() => operations.current).thenReturn(const {});
     when(() => operations.forget(any())).thenAnswer((_) async {});
+    when(() => operations.captureDeleteIdentities(any())).thenAnswer(
+      (call) async => [
+        for (final path in call.positionalArguments[0] as List<String>)
+          'identity:$path',
+      ],
+    );
     when(() => operations.start(any())).thenAnswer((call) async {
       started.add(call.positionalArguments[0] as OperationRequest);
       return _nextOperation++;
@@ -253,8 +259,10 @@ class WorkspaceHarness {
     WorkspacePreview? preview,
     WorkspaceTerminal? terminal,
     ArchiverDiscovery? loadArchivers,
+    FolderSyncService? folderSync,
     Future<void> Function(BuildContext, Location, Location)? onCompare,
     ValueChanged<WorkspaceSnapshot>? onSnapshot,
+    Listenable? flushSnapshots,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -298,7 +306,7 @@ class WorkspaceHarness {
           shortcutMap: map,
           windowDecor: decor,
           platformServices: desktop,
-          folderSync: _MockFolderSync(),
+          folderSync: folderSync ?? _MockFolderSync(),
           preview: preview,
           terminal: terminal,
           loadArchivers: loadArchivers,
@@ -328,6 +336,7 @@ class WorkspaceHarness {
           savedActive: PanelSide.left,
           fallbackLocation: const Location.native(home),
           onSnapshot: onSnapshot ?? (_) {},
+          flushSnapshots: flushSnapshots,
           frecency: frecency,
           sideStorage: sideStorage,
         ),

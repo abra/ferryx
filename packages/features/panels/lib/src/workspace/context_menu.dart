@@ -6,6 +6,12 @@ import 'package:shortcuts/shortcuts.dart';
 
 import 'panel_actions.dart';
 
+/// In an archive, Copy is the short route to extraction.
+AppCommand rowMenuCapability(AppCommand command, Location location) =>
+    location.kind == LocationKind.archive && command == AppCommand.copyTo
+    ? AppCommand.extractTo
+    : command;
+
 /// What a right click on a row offers; every item is a command the
 /// window handles, so the menu and the keys never disagree. Every item
 /// carries an icon, so the labels line up.
@@ -163,9 +169,7 @@ List<AppMenuEntry<AppCommand>> rowMenuEntries(
     if (entry case AppMenuAction<AppCommand>(:final value)) {
       // Copy from an archive is the existing immediate extraction alias;
       // the full picker offers Extract To with an explicit destination.
-      final capability = !native && !remote && value == AppCommand.copyTo
-          ? AppCommand.extractTo
-          : value;
+      final capability = rowMenuCapability(value, location);
       if (!map.isAvailable(value) ||
           (available != null && !available.contains(capability))) {
         continue;

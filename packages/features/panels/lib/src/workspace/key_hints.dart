@@ -78,6 +78,7 @@ List<PanelHint> hintsFor({
   required bool vim,
   required bool hasRegister,
   bool hasMultipleTabs = false,
+  bool deletionPending = false,
   int screenItems = 20,
 }) {
   final proposed = _hintsFor(
@@ -89,7 +90,12 @@ List<PanelHint> hintsFor({
   );
   final location = tab?.location;
   final hints = [
-    for (final hint in proposed)
+    for (final hint in proposed.where(
+      (hint) =>
+          !deletionPending ||
+          hint is! CommandHint ||
+          hint.command != AppCommand.moveToTrash,
+    ))
       if (location == null || hint is! CommandHint)
         hint
       else if (location.isNative)

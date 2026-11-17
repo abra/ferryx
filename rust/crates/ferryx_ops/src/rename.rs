@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 use ferryx_vfs::error::{IoAt, VfsError};
 use serde::{Deserialize, Serialize};
 
+use crate::journal::Change;
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RenameFailure {
     pub path: PathBuf,
@@ -21,15 +23,14 @@ pub fn apply(pairs: &[(PathBuf, String)]) -> Vec<RenameFailure> {
     apply_recorded(pairs).0
 }
 
-/// [`apply`], answering also each rename done, as `(old path, new path)`,
-/// for the journal.
-pub fn apply_recorded(pairs: &[(PathBuf, String)]) -> (Vec<RenameFailure>, Vec<(PathBuf, PathBuf)>) {
+/// [`apply`], also recording the items renamed for the journal.
+pub fn apply_recorded(pairs: &[(PathBuf, String)]) -> (Vec<RenameFailure>, Vec<Change>) {
     let mut done = Vec::new();
     let failures = apply_inner(pairs, &mut done);
     (failures, done)
 }
 
-fn apply_inner(pairs: &[(PathBuf, String)], done: &mut Vec<(PathBuf, PathBuf)>) -> Vec<RenameFailure> {
+fn apply_inner(pairs: &[(PathBuf, String)], done: &mut Vec<Change>) -> Vec<RenameFailure> {
     let mut failures = Vec::new();
     let active: Vec<&(PathBuf, String)> = pairs
         .iter()
@@ -41,7 +42,7 @@ fn apply_inner(pairs: &[(PathBuf, String)], done: &mut Vec<(PathBuf, PathBuf)>) 
     if !needs_staging {
         for ((path, _), target) in active.iter().zip(&targets) {
             match rename_checked(path, target) {
-                Ok(()) => done.push((path.clone(), target.clone())),
+                Ok(()) => done.push(Change::moved(path, target)),
                 Err(e) => failures.push(RenameFailure { path: path.clone(), message: e.message }),
             }
         }
@@ -58,7 +59,7 @@ fn apply_inner(pairs: &[(PathBuf, String)], done: &mut Vec<(PathBuf, PathBuf)>) 
     }
     for (original, temp, target) in staged {
         match rename_checked(&temp, &target) {
-            Ok(()) => done.push((original, target)),
+            Ok(()) => done.push(Change::moved(&original, &target)),
             Err(e) => {
                 // Back to the old name while it is free; never over another
                 // item. Taken meanwhile, it stays under the temporary name,

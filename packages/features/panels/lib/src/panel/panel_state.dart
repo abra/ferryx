@@ -181,8 +181,9 @@ class PanelTabState extends Equatable {
 
   /// Where [entry] is: under the tab's folder, in its own folder of a
   /// flat view.
-  Location locationOf(FileEntry entry) =>
-      search != null ? Location.native(entry.path) : location.join(entry.key);
+  Location locationOf(FileEntry entry) => location.isNative
+      ? Location.native(entry.path)
+      : location.join(entry.key);
 
   PanelTabState copyWith({
     Location? location,

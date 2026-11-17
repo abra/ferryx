@@ -113,7 +113,7 @@ pub fn walk(
     let walker = WalkDir::new(root).follow_links(false).min_depth(1).into_iter().filter_entry(move |e| {
         // A hidden folder is left out with what it holds; files are
         // judged below with their flags.
-        show_hidden || !e.file_type().is_dir() || !is_hidden_dir(e)
+        e.file_name().to_str().is_some() && (show_hidden || !e.file_type().is_dir() || !is_hidden_dir(e))
     });
     let mut end = FlatEnd::Done;
     for item in walker {
@@ -135,7 +135,8 @@ pub fn walk(
             .path()
             .parent()
             .and_then(|p| p.strip_prefix(root).ok())
-            .map(|p| p.to_string_lossy().replace('\\', "/"))
+            .and_then(Path::to_str)
+            .map(|p| if cfg!(windows) { p.replace(std::path::MAIN_SEPARATOR, "/") } else { p.to_owned() })
             .unwrap_or_default();
         batcher.push((entry, folder));
         if batcher.count() >= options.cap {
@@ -208,6 +209,18 @@ mod tests {
         let (hidden, _) = rows(dir.path(), &FlatOptions { show_hidden: true, ..Default::default() });
         assert!(hidden.contains(&(".hidden".to_string(), "secret".to_string())));
         assert!(hidden.contains(&("a".to_string(), ".dot".to_string())));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_literal_backslash_in_a_folder_is_not_a_path_separator() {
+        let dir = tree();
+        let root = dir.path();
+        fs::create_dir(root.join(r"a\b")).unwrap();
+        fs::write(root.join(r"a\b/two.txt"), b"distinct").unwrap();
+        let (all, _) = rows(root, &FlatOptions::default());
+        assert!(all.contains(&(r"a\b".to_owned(), "two.txt".to_owned())));
+        assert!(all.contains(&("a/b".to_owned(), "two.txt".to_owned())));
     }
 
     #[test]

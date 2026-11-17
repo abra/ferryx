@@ -128,7 +128,14 @@ impl Side {
                     let item = item.at(Path::new(dir))?;
                     let path = item.path();
                     let Ok(meta) = fs::symlink_metadata(&path) else { continue };
-                    out.push((item.file_name().to_string_lossy().into_owned(), native_meta(&path, &meta)));
+                    let name = item.file_name().into_string().map_err(|_| {
+                        VfsError::new(
+                            VfsErrorKind::Unsupported,
+                            Some(&path),
+                            "the file name is not valid Unicode",
+                        )
+                    })?;
+                    out.push((name, native_meta(&path, &meta)));
                 }
                 Ok(out)
             }

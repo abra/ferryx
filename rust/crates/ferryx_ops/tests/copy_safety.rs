@@ -121,6 +121,173 @@ fn a_dangling_link_is_recognized_through_a_parent_alias() {
     assert!(ctx.recorded().is_empty());
 }
 
+#[cfg(unix)]
+#[test]
+fn an_unreadable_source_leaves_the_replaced_file_in_place() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let source = dir.path().join("source");
+    let dest = dir.path().join("destination");
+    fs::create_dir(&dest).unwrap();
+    let target = dest.join("source");
+    fs::write(&source, b"incoming").unwrap();
+    fs::write(&target, b"existing").unwrap();
+    fs::set_permissions(&source, fs::Permissions::from_mode(0o000)).unwrap();
+    if fs::File::open(&source).is_ok() {
+        return; // This process can read files without permissions.
+    }
+    let mut req = request(OpKind::Copy, vec![source], &dest);
+    req.options.conflicts = ConflictPolicy::Overwrite;
+    let ctx = OpContext::detached(&req);
+    copy::run(&ctx, &req).unwrap();
+    assert_eq!(ctx.snapshot().errors.len(), 1);
+    assert_eq!(fs::read(&target).unwrap(), b"existing");
+    assert!(ctx.recorded().is_empty());
+    assert_eq!(fs::read_dir(&dest).unwrap().count(), 1);
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn local_copy_and_keep_both_preserve_native_names() {
+    use std::ffi::OsStr;
+    use std::os::unix::ffi::OsStrExt;
+    let dir = tempfile::tempdir().unwrap();
+    let name = OsStr::from_bytes(b"file\xff.txt");
+    let source = dir.path().join(name);
+    fs::write(&source, b"data").unwrap();
+    let dest = dir.path().join("destination");
+    let mut req = request(OpKind::Copy, vec![source.clone()], &dest);
+    req.options.conflicts = ConflictPolicy::KeepBoth;
+    copy::run(&OpContext::detached(&req), &req).unwrap();
+    copy::run(&OpContext::detached(&req), &req).unwrap();
+    assert_eq!(fs::read(dest.join(name)).unwrap(), b"data");
+    assert_eq!(fs::read(dest.join(OsStr::from_bytes(b"file\xff 2.txt"))).unwrap(), b"data");
+    let req = request(OpKind::Duplicate, vec![source], &dest);
+    copy::run(&OpContext::detached(&req), &req).unwrap();
+    assert_eq!(fs::read(dir.path().join(OsStr::from_bytes(b"file\xff copy.txt"))).unwrap(), b"data");
+}
+
+#[test]
+fn replacement_preserves_a_destination_changed_while_asking() {
+    let dir = tempfile::tempdir().unwrap();
+    let source = dir.path().join("source");
+    let dest = dir.path().join("destination");
+    fs::create_dir(&dest).unwrap();
+    let target = dest.join("source");
+    fs::write(&source, b"incoming").unwrap();
+    fs::write(&target, b"existing").unwrap();
+    let runner = Runner::new();
+    let (send, receive) = std::sync::mpsc::channel();
+    runner.set_listener(Arc::new(move |progress| {
+        if let Some(question) = progress.question {
+            send.send(question).unwrap();
+        }
+    }));
+    let id = runner.start(request(OpKind::Copy, vec![source], &dest));
+    let question = receive.recv_timeout(Duration::from_secs(5)).unwrap();
+    fs::write(&target, b"changed while asking").unwrap();
+    runner.answer(id, question.id, Answer::Overwrite);
+    let question = receive.recv_timeout(Duration::from_secs(5)).unwrap();
+    assert_eq!(question.kind, ferryx_ops::QuestionKind::Error);
+    runner.answer(id, question.id, Answer::Skip);
+    let start = Instant::now();
+    while !runner.progress(id).unwrap().state.is_finished() {
+        assert!(start.elapsed() < Duration::from_secs(5), "operation did not end");
+        std::thread::sleep(Duration::from_millis(5));
+    }
+    assert_eq!(fs::read(&target).unwrap(), b"changed while asking");
+    assert!(runner.journal().summary().undo.is_none());
+    assert_eq!(fs::read_dir(&dest).unwrap().count(), 1);
+}
+
+#[test]
+fn copying_a_file_onto_a_directory_preserves_the_directory() {
+    let dir = tempfile::tempdir().unwrap();
+    let source = dir.path().join("source");
+    let dest = dir.path().join("destination");
+    let target = dest.join("source");
+    fs::write(&source, b"incoming").unwrap();
+    fs::create_dir_all(&target).unwrap();
+    fs::write(target.join("child"), b"existing").unwrap();
+    let mut req = request(OpKind::Copy, vec![source], &dest);
+    req.options.conflicts = ConflictPolicy::Overwrite;
+    let ctx = OpContext::detached(&req);
+    copy::run(&ctx, &req).unwrap();
+    assert_eq!(ctx.snapshot().errors.len(), 1);
+    assert_eq!(fs::read(target.join("child")).unwrap(), b"existing");
+    assert!(ctx.recorded().is_empty());
+
+    req.options.conflicts = ConflictPolicy::KeepBoth;
+    copy::run(&OpContext::detached(&req), &req).unwrap();
+    assert_eq!(fs::read(dest.join("source 2")).unwrap(), b"incoming");
+    assert_eq!(fs::read(target.join("child")).unwrap(), b"existing");
+}
+
+#[test]
+fn copying_a_directory_onto_a_file_preserves_the_file() {
+    let dir = tempfile::tempdir().unwrap();
+    let source = dir.path().join("source");
+    let dest = dir.path().join("destination");
+    let target = dest.join("source");
+    fs::create_dir(&source).unwrap();
+    fs::write(source.join("child"), b"incoming").unwrap();
+    fs::create_dir(&dest).unwrap();
+    fs::write(&target, b"existing").unwrap();
+    let mut req = request(OpKind::Copy, vec![source], &dest);
+    req.options.conflicts = ConflictPolicy::Overwrite;
+    let ctx = OpContext::detached(&req);
+    copy::run(&ctx, &req).unwrap();
+    assert_eq!(fs::read(&target).unwrap(), b"existing");
+    assert_eq!(ctx.snapshot().errors.len(), 1);
+    assert!(ctx.recorded().is_empty());
+
+    req.options.conflicts = ConflictPolicy::KeepBoth;
+    copy::run(&OpContext::detached(&req), &req).unwrap();
+    assert_eq!(fs::read(dest.join("source 2/child")).unwrap(), b"incoming");
+    assert_eq!(fs::read(&target).unwrap(), b"existing");
+}
+
+#[cfg(unix)]
+#[test]
+fn a_failed_symlink_copy_keeps_the_destination_until_retry() {
+    let dir = tempfile::tempdir().unwrap();
+    let source = dir.path().join("source");
+    let dest = dir.path().join("destination");
+    let target = dest.join("source");
+    let link_value = Path::new("relative/target");
+    std::os::unix::fs::symlink(link_value, &source).unwrap();
+    fs::create_dir(&dest).unwrap();
+    fs::write(&target, b"existing").unwrap();
+    let runner = Runner::new();
+    let (send, receive) = std::sync::mpsc::channel();
+    runner.set_listener(Arc::new(move |progress| {
+        if let Some(question) = progress.question {
+            send.send(question).unwrap();
+        }
+    }));
+    let id = runner.start(request(OpKind::Copy, vec![source.clone()], &dest));
+    let question = receive.recv_timeout(Duration::from_secs(5)).unwrap();
+    fs::remove_file(&source).unwrap();
+    runner.answer(id, question.id, Answer::Overwrite);
+    let question = receive.recv_timeout(Duration::from_secs(5)).unwrap();
+    assert_eq!(question.kind, ferryx_ops::QuestionKind::Error);
+    assert_eq!(fs::read(&target).unwrap(), b"existing");
+    std::os::unix::fs::symlink(link_value, &source).unwrap();
+    runner.answer(id, question.id, Answer::Retry);
+    let start = Instant::now();
+    loop {
+        let progress = runner.progress(id).unwrap();
+        if progress.state.is_finished() {
+            assert_eq!(progress.state, OpState::Done);
+            break;
+        }
+        assert!(start.elapsed() < Duration::from_secs(5), "operation did not end");
+        std::thread::sleep(Duration::from_millis(5));
+    }
+    assert_eq!(fs::read_link(&target).unwrap(), link_value);
+    assert_eq!(fs::read_dir(&dest).unwrap().count(), 1);
+}
+
 #[test]
 fn merge_all_and_file_answers_remain_independent() {
     for kind in [OpKind::Copy, OpKind::Move] {

@@ -566,6 +566,12 @@ abstract class FerryxLocalizations {
   /// **'{count, plural, =0{no items} =1{1 item} other{{count} items}}'**
   String panelItemsCount(int count);
 
+  /// No description provided for @panelUnrepresentableNames.
+  ///
+  /// In en, this message translates to:
+  /// **'Non-Unicode names omitted'**
+  String get panelUnrepresentableNames;
+
   /// Current position among shown items in a Vim panel; excludes the parent-folder row. Numbers are formatted through FerryxFormatting.
   ///
   /// In en, this message translates to:
@@ -1951,6 +1957,12 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Could not open the item'**
   String get noticeOpenFailed;
+
+  /// No description provided for @noticeExitSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save your session. Check disk space and permissions, then try closing again.'**
+  String get noticeExitSaveFailed;
 
   /// No description provided for @documentFontSizeLabel.
   ///
@@ -5491,6 +5503,12 @@ abstract class FerryxLocalizations {
   /// In en, this message translates to:
   /// **'Changed since; it goes to the Trash all the same'**
   String get undoIssueChanged;
+
+  /// No description provided for @undoIssueReplaced.
+  ///
+  /// In en, this message translates to:
+  /// **'The recorded item was replaced or could not be verified'**
+  String get undoIssueReplaced;
 
   /// No description provided for @undoIssueLost.
   ///

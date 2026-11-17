@@ -85,6 +85,8 @@ extension _SavedWorkspaceActions on _WorkspaceScreenState {
 
   Future<void> _restoreWorkspace(SavedWorkspace saved) async {
     if (_restoringWorkspace) return;
+    // Keep the current complete snapshot while both panels are changing.
+    _snapshotNow();
     _setRestoringWorkspace(true);
     _closePreview();
     try {

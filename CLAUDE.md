@@ -52,7 +52,8 @@ Guidance for Claude Code when working in this repository.
 - `flutter_rust_bridge_codegen` 2.13.0 must match the `flutter_rust_bridge`
   version in `rust/Cargo.toml`, `pubspec.yaml` and
   `packages/ferryx_backend/pubspec.yaml`.
-- Text-document conversion lives in `ferryx_core::text_document`; changes to
+- Text-document conversion lives in `ferryx_core::text_document`. The bridge
+  enables the optional `text-preview` Cargo feature. Changes to
   its API require bridge codegen and `make core` before real-core Dart tests.
   Keep native converter dependency notices in `packages/ferryx_backend/LICENSE`
   so Flutter includes them in the application license bundle.
@@ -147,9 +148,12 @@ version bump; repeating the same commit's release replaces its DMG asset.
 The publishing script uploads macOS only.
 
 The [CI workflow](.github/workflows/ci.yml) checks, builds and smoke-launches
-Windows/Linux on pull requests, `ci/**` pushes and manual dispatch. There
-is no macOS CI job. A launch check does not validate document decoders;
-release validation must also open a document in the packaged app.
+Windows/Linux on pull requests, `ci/**` pushes and manual dispatch. The
+macOS job builds and launches the universal release, runs the AppKit window
+tests, and builds the same native bundle with a test entry point that reads
+EPUB, renders a PDF page and converts DOCX. Run that entry point locally with
+`fvm flutter build macos --release --target test/support/macos_packaged_preview.dart`
+and then `tools/macos/check-previews.sh`. Rebuild with `make dmg` for distribution.
 
 ## Architecture (strict)
 

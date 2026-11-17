@@ -4,6 +4,7 @@
 
 use std::fs::File;
 use std::os::fd::AsRawFd;
+use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 use std::ptr;
 
@@ -129,7 +130,8 @@ fn parse(item: &[u8], dir: &Path, opts: &ListOptions, names: &mut Names) -> Opti
     let start = name_at? + usize::try_from(reference.attr_dataoffset).ok()?;
     // The length counts the closing NUL.
     let end = start + (reference.attr_length as usize).checked_sub(1)?;
-    let name = String::from_utf8_lossy(item.get(start..end)?).into_owned();
+    let name_bytes = item.get(start..end)?;
+    let name = String::from_utf8_lossy(name_bytes).into_owned();
     let flags = flags_at.map(|p| read_at::<u32>(item, p)).unwrap_or(0);
     let is_hidden = name.starts_with('.') || flags & UF_HIDDEN != 0;
     if is_hidden && !opts.show_hidden {
@@ -137,7 +139,7 @@ fn parse(item: &[u8], dir: &Path, opts: &ListOptions, names: &mut Names) -> Opti
     }
 
     let object = kind_at.map(|p| read_at::<u32>(item, p)).unwrap_or(0);
-    let path = dir.join(&name);
+    let path = dir.join(std::ffi::OsStr::from_bytes(name_bytes));
     let (kind, is_dir, symlink_target) = match object {
         VDIR => (EntryKind::Directory, true, None),
         VREG => (EntryKind::File, false, None),

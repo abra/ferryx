@@ -83,6 +83,7 @@
   "panelLoading": "Чтение…",
   "panelFolderSize": "Папка",
   "panelItemsCount": "{count, plural, =0{нет объектов} one{{count} объект} few{{count} объекта} many{{count} объектов} other{{count} объекта}}",
+  "panelUnrepresentableNames": "Имена вне Unicode пропущены",
   "panelCursorPosition": "{position} / {count}",
   "panelCursorPositionCapped": "{position} / {count}+",
   "panelCursorPositionHelp": "Объект {position} из {count} в текущем списке",
@@ -330,6 +331,7 @@
   "noticeNoEditor": "Для этого файла не настроен редактор; см. Настройки → Редакторы",
   "noticeNoVolume": "Здесь нечего извлекать",
   "noticeOpenFailed": "Не удалось открыть объект",
+  "noticeExitSaveFailed": "Не удалось сохранить сеанс. Проверьте место на диске и права доступа, затем попробуйте закрыть приложение снова.",
 
   "documentFontSizeLabel": "Размер шрифта книг",
   "documentFontDecrease": "Уменьшить шрифт",
@@ -936,6 +938,7 @@
   "undoIssueMissing": "Больше нет на месте",
   "undoIssueOccupied": "Место уже занято",
   "undoIssueChanged": "Изменился с тех пор; всё равно отправится в Корзину",
+  "undoIssueReplaced": "Объект из журнала заменён или его не удалось проверить",
   "undoIssueLost": "Был заменён: прежнее содержимое утеряно, останется как есть",
   "undoIssueNotInTrash": "Больше нет в Корзине",
   "undoIssueUnsupported": "Здесь нельзя вернуть объекты из Корзины",

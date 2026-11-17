@@ -272,6 +272,9 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   }
 
   @override
+  String get panelUnrepresentableNames => 'Non-Unicode names omitted';
+
+  @override
   String panelCursorPosition(String position, String count) {
     return '$position / $count';
   }
@@ -1228,6 +1231,10 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
 
   @override
   String get noticeOpenFailed => 'Could not open the item';
+
+  @override
+  String get noticeExitSaveFailed =>
+      'Could not save your session. Check disk space and permissions, then try closing again.';
 
   @override
   String get documentFontSizeLabel => 'Book font size';
@@ -3272,6 +3279,10 @@ class FerryxLocalizationsEn extends FerryxLocalizations {
   @override
   String get undoIssueChanged =>
       'Changed since; it goes to the Trash all the same';
+
+  @override
+  String get undoIssueReplaced =>
+      'The recorded item was replaced or could not be verified';
 
   @override
   String get undoIssueLost =>

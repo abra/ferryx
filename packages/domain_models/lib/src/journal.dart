@@ -71,6 +71,9 @@ enum UndoIssueKind {
   /// It changed since; it still goes (a warning).
   changed,
 
+  /// The recorded moved item could not be verified.
+  replaced,
+
   /// The step overwrote it: its earlier contents are gone (a warning).
   lost,
 

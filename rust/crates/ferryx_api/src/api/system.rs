@@ -9,14 +9,16 @@ use crate::api::types::{ApiResult, StandardFoldersView, VolumeView};
 pub fn list_volumes() -> Vec<VolumeView> {
     volumes::list()
         .into_iter()
-        .map(|v| VolumeView {
-            name: v.name,
-            mount_point: v.mount_point.to_string_lossy().into_owned(),
-            total_bytes: v.total_bytes as i64,
-            available_bytes: v.available_bytes as i64,
-            file_system: v.file_system,
-            removable: v.removable,
-            is_root: v.is_root,
+        .filter_map(|v| {
+            Some(VolumeView {
+                name: v.name,
+                mount_point: v.mount_point.to_str()?.to_owned(),
+                total_bytes: v.total_bytes as i64,
+                available_bytes: v.available_bytes as i64,
+                file_system: v.file_system,
+                removable: v.removable,
+                is_root: v.is_root,
+            })
         })
         .collect()
 }
@@ -63,5 +65,8 @@ pub fn eject_volume(mount_point: String) -> ApiResult<()> {
 
 /// Applications that open files like `path` (macOS; empty elsewhere).
 pub fn applications_for(path: String) -> Vec<String> {
-    system::applications_for(Path::new(&path)).into_iter().map(|p| p.to_string_lossy().into_owned()).collect()
+    system::applications_for(Path::new(&path))
+        .into_iter()
+        .filter_map(|p| p.into_os_string().into_string().ok())
+        .collect()
 }

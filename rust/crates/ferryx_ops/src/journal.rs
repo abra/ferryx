@@ -20,6 +20,8 @@ use ferryx_vfs::trash::TrashReceipt;
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 
+use crate::identity::FileIdentity;
+
 /// What the user did, for "Undo Move of 3 items".
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum StepKind {
@@ -65,9 +67,11 @@ pub enum Change {
     /// by moving it to the trash.
     Created { path: PathBuf, fingerprint: Option<Fingerprint> },
     /// An item that moved or was renamed; undone by the move back.
-    Moved { from: PathBuf, to: PathBuf },
+    Moved { from: PathBuf, to: PathBuf, identity: Option<FileIdentity> },
     /// An item moved to the trash; undone by putting it back.
     Trashed { receipt: TrashReceipt },
+    /// A folder created to hold items during a move; removed only when empty.
+    MoveFolderCreated { path: PathBuf, identity: Option<FileIdentity> },
     /// An empty folder a move removed after taking its items; undone by
     /// making it again.
     FolderRemoved { path: PathBuf },
@@ -93,12 +97,17 @@ pub struct Step {
 }
 
 impl Change {
+    pub fn moved(from: &Path, to: &Path) -> Self {
+        Change::Moved { from: from.to_path_buf(), to: to.to_path_buf(), identity: FileIdentity::of(to).ok() }
+    }
+
     pub(crate) fn owned_bytes(&self) -> usize {
         match self {
-            Change::Created { path, .. } | Change::FolderRemoved { path } | Change::Overwritten { path } => {
-                path.capacity()
-            }
-            Change::Moved { from, to } => from.capacity().saturating_add(to.capacity()),
+            Change::Created { path, .. }
+            | Change::MoveFolderCreated { path, .. }
+            | Change::FolderRemoved { path }
+            | Change::Overwritten { path } => path.capacity(),
+            Change::Moved { from, to, .. } => from.capacity().saturating_add(to.capacity()),
             Change::Trashed { receipt } => {
                 receipt.original.capacity().saturating_add(receipt.token.as_ref().map_or(0, String::capacity))
             }

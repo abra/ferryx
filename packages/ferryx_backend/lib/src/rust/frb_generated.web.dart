@@ -564,6 +564,9 @@ abstract class FerryxRustLibApiImplPlatform
   UndoCheckView? dco_decode_opt_box_autoadd_undo_check_view(dynamic raw);
 
   @protected
+  List<String>? dco_decode_opt_list_String(dynamic raw);
+
+  @protected
   Int32List? dco_decode_opt_list_prim_i_32_strict(dynamic raw);
 
   @protected
@@ -1359,6 +1362,9 @@ abstract class FerryxRustLibApiImplPlatform
   UndoCheckView? sse_decode_opt_box_autoadd_undo_check_view(
     SseDeserializer deserializer,
   );
+
+  @protected
+  List<String>? sse_decode_opt_list_String(SseDeserializer deserializer);
 
   @protected
   Int32List? sse_decode_opt_list_prim_i_32_strict(SseDeserializer deserializer);
@@ -2368,6 +2374,9 @@ abstract class FerryxRustLibApiImplPlatform
     UndoCheckView? self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_opt_list_String(List<String>? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_list_prim_i_32_strict(

@@ -16,6 +16,7 @@ pub mod duplicates;
 pub mod extract;
 pub mod find;
 pub mod hashing;
+pub mod identity;
 pub mod journal;
 pub mod rename;
 pub mod runner;

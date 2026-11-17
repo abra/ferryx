@@ -175,6 +175,9 @@ enum UndoIssueKindView {
   /// It changed since (a warning).
   changed,
 
+  /// The recorded moved item could not be verified.
+  replaced,
+
   /// It was overwritten: its earlier contents are gone (a warning).
   lost,
 

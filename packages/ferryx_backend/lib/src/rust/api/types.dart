@@ -623,6 +623,8 @@ class ListingOptionsView {
 /// A panel's rows, sorted, with what the footer shows: all of them, or
 /// an update of the rows the panel was sent as `base`.
 class ListingView {
+  /// Local names that cannot be passed to a file action without loss.
+  final bool omittedNames;
   final LocationView location;
 
   /// Every row; with `order`, only the rows the panel has not got.
@@ -643,6 +645,7 @@ class ListingView {
   final bool watched;
 
   const ListingView({
+    required this.omittedNames,
     required this.location,
     required this.entries,
     this.order,
@@ -656,6 +659,7 @@ class ListingView {
 
   @override
   int get hashCode =>
+      omittedNames.hashCode ^
       location.hashCode ^
       entries.hashCode ^
       order.hashCode ^
@@ -671,6 +675,7 @@ class ListingView {
       identical(this, other) ||
       other is ListingView &&
           runtimeType == other.runtimeType &&
+          omittedNames == other.omittedNames &&
           location == other.location &&
           entries == other.entries &&
           order == other.order &&
@@ -765,6 +770,7 @@ enum OpKindView {
 class OpRequestView {
   final OpKindView kind;
   final List<String> sources;
+  final List<String>? sourceIdentities;
   final String? archive;
   final String? destination;
   final String? newName;
@@ -779,6 +785,7 @@ class OpRequestView {
   const OpRequestView({
     required this.kind,
     required this.sources,
+    this.sourceIdentities,
     this.archive,
     this.destination,
     this.newName,
@@ -793,6 +800,7 @@ class OpRequestView {
   int get hashCode =>
       kind.hashCode ^
       sources.hashCode ^
+      sourceIdentities.hashCode ^
       archive.hashCode ^
       destination.hashCode ^
       newName.hashCode ^
@@ -809,6 +817,7 @@ class OpRequestView {
           runtimeType == other.runtimeType &&
           kind == other.kind &&
           sources == other.sources &&
+          sourceIdentities == other.sourceIdentities &&
           archive == other.archive &&
           destination == other.destination &&
           newName == other.newName &&

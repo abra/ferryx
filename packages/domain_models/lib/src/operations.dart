@@ -38,6 +38,7 @@ class OperationRequest extends Equatable {
   const OperationRequest({
     required this.kind,
     required this.sources,
+    this.sourceIdentities,
     this.archive,
     this.destination,
     this.newName,
@@ -58,6 +59,9 @@ class OperationRequest extends Equatable {
   /// Paths on disk; for [OpKind.extract], member paths inside [archive],
   /// or archives on disk to extract whole when there is none.
   final List<String> sources;
+
+  /// Native identities in source order for a confirmed or delayed local deletion.
+  final List<String>? sourceIdentities;
   final String? archive;
 
   /// The folder written into (copy, move, extract, compress).
@@ -97,6 +101,7 @@ class OperationRequest extends Equatable {
   List<Object?> get props => [
     kind,
     sources,
+    sourceIdentities,
     archive,
     destination,
     newName,

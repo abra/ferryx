@@ -102,6 +102,7 @@ fn an_encrypted_archive_asks_once_and_extracts() {
     // the password kept.
     let dest = dir.path().join("out");
     let id = ops::start_operation(OpRequestView {
+        source_identities: None,
         kind: OpKindView::Extract,
         sources: vec![s(&archive)],
         archive: None,

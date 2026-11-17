@@ -21,6 +21,7 @@ use crate::frb_generated::StreamSink;
 pub struct OpenListing {
     pub location: Location,
     pub options: ListingOptionsView,
+    pub omitted_names: bool,
     /// The rows in the order last sent; a flat view's stay empty.
     pub rows: Arc<Vec<Entry>>,
     /// The number of the rows last sent: an update names the rows it
@@ -50,6 +51,7 @@ impl OpenListing {
         OpenListing {
             location,
             options,
+            omitted_names: false,
             rows: Arc::new(rows),
             version: next_version(),
             changes: Changes::Nothing,

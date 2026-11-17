@@ -83,22 +83,13 @@ pub fn expand(request: &ChecksumRequest, cancel: &AtomicBool) -> Vec<ChecksumFil
         if cancel.load(Ordering::Relaxed) {
             break;
         }
+        let Some(name) = relative(&request.base, path) else { continue };
         let Ok(meta) = std::fs::metadata(path) else {
-            out.push(ChecksumFile {
-                path: path.clone(),
-                name: relative(&request.base, path),
-                size: 0,
-                expected: None,
-            });
+            out.push(ChecksumFile { path: path.clone(), name, size: 0, expected: None });
             continue;
         };
         if !meta.is_dir() {
-            out.push(ChecksumFile {
-                path: path.clone(),
-                name: relative(&request.base, path),
-                size: meta.len(),
-                expected: None,
-            });
+            out.push(ChecksumFile { path: path.clone(), name, size: meta.len(), expected: None });
             continue;
         }
         let mut walker = WalkDir::new(path).follow_links(false).min_depth(1).sort_by_file_name();
@@ -106,9 +97,9 @@ pub fn expand(request: &ChecksumRequest, cancel: &AtomicBool) -> Vec<ChecksumFil
             walker = walker.max_depth(1);
         }
         let include_hidden = request.include_hidden;
-        let entries = walker
-            .into_iter()
-            .filter_entry(move |e| include_hidden || !e.file_name().to_string_lossy().starts_with('.'));
+        let entries = walker.into_iter().filter_entry(move |e| {
+            e.file_name().to_str().is_some_and(|name| include_hidden || !name.starts_with('.'))
+        });
         for (n, entry) in entries.enumerate() {
             if n % 256 == 0 && cancel.load(Ordering::Relaxed) {
                 break;
@@ -117,13 +108,9 @@ pub fn expand(request: &ChecksumRequest, cancel: &AtomicBool) -> Vec<ChecksumFil
             if !entry.file_type().is_file() {
                 continue;
             }
+            let Some(name) = relative(&request.base, entry.path()) else { continue };
             let size = entry.metadata().map(|m| m.len()).unwrap_or(0);
-            out.push(ChecksumFile {
-                name: relative(&request.base, entry.path()),
-                path: entry.into_path(),
-                size,
-                expected: None,
-            });
+            out.push(ChecksumFile { name, path: entry.into_path(), size, expected: None });
         }
     }
     out
@@ -131,14 +118,14 @@ pub fn expand(request: &ChecksumRequest, cancel: &AtomicBool) -> Vec<ChecksumFil
 
 /// `path` relative to `base` with `/`, or the whole path when it is not
 /// under it.
-pub fn relative(base: &Path, path: &Path) -> String {
+fn relative(base: &Path, path: &Path) -> Option<String> {
     let rest = path.strip_prefix(base).unwrap_or(path);
-    let text = rest.to_string_lossy();
-    if std::path::MAIN_SEPARATOR == '/' {
-        text.into_owned()
+    let text = rest.to_str()?;
+    Some(if std::path::MAIN_SEPARATOR == '/' {
+        text.to_owned()
     } else {
         text.replace(std::path::MAIN_SEPARATOR, "/")
-    }
+    })
 }
 
 /// Hashes `files` on a few workers. `on_outcome` gets each file's result
@@ -359,8 +346,8 @@ pub fn read_sums(path: &Path) -> Result<SumsFile, String> {
         return Err(format!("{} is too big for a checksum file", path.display()));
     }
     let bytes = std::fs::read(path).map_err(|e| ferryx_vfs::VfsError::io(&e, path).message)?;
-    let text = String::from_utf8_lossy(&bytes);
-    let (entries, bad_lines) = parse_sums(&text);
+    let text = std::str::from_utf8(&bytes).map_err(|_| format!("{} is not valid UTF-8", path.display()))?;
+    let (entries, bad_lines) = parse_sums(text);
     let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
     let algorithm =
         algorithm_of(&name, &entries).ok_or_else(|| format!("{} lists no checksums", path.display()))?;
@@ -458,6 +445,15 @@ nothinghex  x
         let (entries, bad) = parse_sums(&text);
         assert_eq!(bad, 0);
         assert_eq!(entries[1].name, "back\\slash\nbreak");
+    }
+
+    #[test]
+    fn a_sums_file_with_unrepresentable_names_is_rejected() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("MD5SUMS");
+        fs::write(&path, b"900150983cd24fb0d6963f7d28e17f72  sample-\xff\n").unwrap();
+        let error = read_sums(&path).expect_err("a replaced name must not be checked");
+        assert!(error.contains("not valid UTF-8"));
     }
 
     #[test]

@@ -5,6 +5,7 @@ import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -419,6 +420,30 @@ void main() {
     expect(find.text(l10n.contextActionsChanged), findsOneWidget);
     expect(h.started, isEmpty);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('an open row menu never retargets a changed selection', (
+    tester,
+  ) async {
+    final l10n = lookupFerryxLocalizations(const Locale('en'));
+    await h.pump(tester);
+    await select(tester, _Selection.ordinaryKeys);
+    final left = panel(tester);
+    final row = find.byWidgetPredicate(
+      (widget) => widget is AppMiddleEllipsis && widget.text == 'a.txt',
+    );
+    await tester.tap(row, buttons: kSecondaryMouseButton);
+    await tester.pumpAndSettle();
+    final copy = find.text(l10n.menuCopyNames);
+    expect(copy, findsOneWidget);
+    left.toggleSelectionAt(left.state.active!.firstItemIndex);
+    await tester.pump();
+    await tester.tap(copy);
+    await tester.pumpAndSettle();
+
+    expect(clipboard, isEmpty);
+    expect(left.state.active!.selected, {'b.txt'});
+    expect(find.text(l10n.contextActionsChanged), findsOneWidget);
   });
 }
 

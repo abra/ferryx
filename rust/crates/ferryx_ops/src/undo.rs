@@ -17,6 +17,7 @@ use ferryx_vfs::trash::{self, TrashReceipt};
 use serde::{Deserialize, Serialize};
 
 use crate::copy;
+use crate::identity::FileIdentity;
 use crate::journal::{Change, Direction, Fingerprint, Step};
 use crate::runner::{Job, Journaling, OpContext, Runner};
 use crate::types::*;
@@ -30,6 +31,8 @@ pub enum IssueKind {
     Occupied,
     /// The item changed since: it still goes, but the user should know.
     Changed,
+    /// The moved item at this path is no longer the recorded object.
+    Replaced,
     /// The step overwrote the item: its earlier contents are gone.
     Lost,
     /// The trashed item is no longer in the trash.
@@ -67,14 +70,48 @@ pub struct Check {
 /// Paths the walk empties (where an item leaves) and fills (where an item
 /// comes back).
 fn vacated(step: &Step) -> HashSet<&Path> {
-    step.changes
+    let mut paths: HashSet<_> = step
+        .changes
         .iter()
         .filter_map(|c| match c {
-            Change::Moved { to, .. } => Some(to.as_path()),
+            Change::Moved { to, identity, .. } | Change::MoveFolderCreated { path: to, identity }
+                if moved_issue(to, *identity).is_none() =>
+            {
+                Some(to.as_path())
+            }
             Change::Created { path, .. } => Some(path.as_path()),
             _ => None,
         })
-        .collect()
+        .collect();
+    for change in &step.changes {
+        if let Change::Moved { from, to, .. } = change {
+            if from.symlink_metadata().is_ok() && !paths.contains(from.as_path()) {
+                paths.remove(to.as_path());
+            }
+        }
+    }
+    // Children are recorded after the folder made to hold them. A folder
+    // stays if any current child is unrelated or cannot be moved out.
+    for change in step.changes.iter().rev() {
+        if let Change::MoveFolderCreated { path, .. } = change {
+            if paths.contains(path.as_path())
+                && !fs::read_dir(path).is_ok_and(|mut children| {
+                    children.all(|child| child.is_ok_and(|entry| paths.contains(entry.path().as_path())))
+                })
+            {
+                paths.remove(path.as_path());
+            }
+        }
+    }
+    paths
+}
+
+fn moved_issue(path: &Path, expected: Option<FileIdentity>) -> Option<IssueKind> {
+    match FileIdentity::of(path) {
+        Ok(identity) if expected == Some(identity) => None,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Some(IssueKind::Missing),
+        _ => Some(IssueKind::Replaced),
+    }
 }
 
 /// Looks at every change of `step` against the disk.
@@ -113,10 +150,10 @@ pub fn check(step: &Step) -> Check {
                     None
                 }
             }
-            Change::Moved { from, to } => {
+            Change::Moved { from, to, identity } => {
                 total += 1;
-                if to.symlink_metadata().is_err() {
-                    Some(Issue { kind: IssueKind::Missing, path: to.clone() })
+                if let Some(kind) = moved_issue(to, *identity) {
+                    Some(Issue { kind, path: to.clone() })
                 } else if taken(from) {
                     Some(Issue { kind: IssueKind::Occupied, path: from.clone() })
                 } else {
@@ -144,6 +181,12 @@ pub fn check(step: &Step) -> Check {
                     }
                     _ => None,
                 }
+            }
+            Change::MoveFolderCreated { path, identity } => {
+                total += 1;
+                let kind = moved_issue(path, *identity)
+                    .or_else(|| (!vacated.contains(path.as_path())).then_some(IssueKind::Occupied));
+                kind.map(|kind| Issue { kind, path: path.clone() })
             }
             Change::Overwritten { path } => {
                 issues.push(Issue { kind: IssueKind::Lost, path: path.clone() });
@@ -186,7 +229,9 @@ fn affected(step: &Step) -> Vec<PathBuf> {
     step.changes
         .iter()
         .filter_map(|c| match c {
-            Change::Created { path, .. } | Change::FolderRemoved { path } => Some(path.clone()),
+            Change::Created { path, .. }
+            | Change::MoveFolderCreated { path, .. }
+            | Change::FolderRemoved { path } => Some(path.clone()),
             Change::Moved { to, .. } => Some(to.clone()),
             Change::Trashed { receipt } => Some(receipt.original.clone()),
             Change::Overwritten { .. } => None,
@@ -201,6 +246,7 @@ struct Staged {
     temp: PathBuf,
     from: PathBuf,
     to: PathBuf,
+    identity: Option<FileIdentity>,
 }
 
 /// Walks `step` back: the inverse of each change, last first. What is done
@@ -214,7 +260,7 @@ pub fn run(ctx: &OpContext, step: &Step) -> Result<(), Abort> {
     let changes: Vec<&Change> = step.changes.iter().rev().collect();
     ctx.set_totals(0, changes.len() as u64);
     let vacated: HashSet<PathBuf> = vacated(step).into_iter().map(Path::to_path_buf).collect();
-    let mut walk = Walk { ctx, vacated, staged: Vec::new(), left: Vec::new(), next_temp: 0 };
+    let mut walk = Walk { ctx, vacated, staged: Vec::new(), left: Vec::new() };
     let outcome = walk.all(&changes);
     // Whatever stands aside goes to its place now, even on a stop.
     walk.land_staged();
@@ -231,7 +277,6 @@ struct Walk<'a> {
     staged: Vec<Staged>,
     /// Not done, in walk order.
     left: Vec<Change>,
-    next_temp: usize,
 }
 
 impl Walk<'_> {
@@ -362,9 +407,22 @@ impl Walk<'_> {
 
     fn one(&mut self, change: &Change) -> Result<(), Abort> {
         match change {
-            Change::Moved { from, to } => self.move_back(from, to, change)?,
+            Change::Moved { from, to, identity } => self.move_back(from, to, *identity, change)?,
+            Change::MoveFolderCreated { path, identity } => {
+                self.ctx.set_current(path);
+                if self.checked_move_source(path, *identity, change).is_some() {
+                    match fs::remove_dir(path) {
+                        Ok(()) => self.ctx.record(Change::FolderRemoved { path: path.clone() }),
+                        Err(error) => {
+                            self.ctx.record_error(path, VfsError::io(&error, path).message);
+                            self.left.push(change.clone());
+                        }
+                    }
+                }
+            }
             Change::FolderRemoved { path } => {
                 self.ctx.set_current(path);
+                self.make_parents(path);
                 match path.symlink_metadata() {
                     Ok(meta) if meta.is_dir() => {}
                     Ok(_) => {
@@ -376,8 +434,8 @@ impl Walk<'_> {
                         self.ctx.ask_error(path, &error)?;
                         self.left.push(change.clone());
                     }
-                    Err(_) => match fs::create_dir_all(path) {
-                        Ok(()) => self.ctx.record_created(path),
+                    Err(_) => match fs::create_dir(path) {
+                        Ok(()) => self.ctx.record_move_folder(path),
                         Err(e) => {
                             self.ctx.ask_error(path, &VfsError::io(&e, path))?;
                             self.left.push(change.clone());
@@ -393,24 +451,48 @@ impl Walk<'_> {
     }
 
     /// The item at `to` goes back to `from`.
-    fn move_back(&mut self, from: &Path, to: &Path, change: &Change) -> Result<(), Abort> {
+    fn move_back(
+        &mut self,
+        from: &Path,
+        to: &Path,
+        identity: Option<FileIdentity>,
+        change: &Change,
+    ) -> Result<(), Abort> {
         self.ctx.set_current(to);
-        if to.symlink_metadata().is_err() {
-            self.ctx.record_error(to, format!("{} no longer exists", to.display()));
-            return Ok(());
-        }
+        let Some(identity) = self.checked_move_source(to, identity, change) else { return Ok(()) };
         if from.symlink_metadata().is_ok() {
             if self.vacated.contains(from) {
                 // Another item of the step still stands there and leaves
                 // later: wait aside under a temporary name.
-                let temp =
-                    to.with_file_name(format!(".ferryx-undo-{}-{}", std::process::id(), self.next_temp));
-                self.next_temp += 1;
-                match fs::rename(to, &temp) {
-                    Ok(()) => {
-                        self.vacated.remove(to);
-                        self.staged.push(Staged { temp, from: from.to_path_buf(), to: to.to_path_buf() });
+                let parent = to.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new("."));
+                let mut builder = tempfile::Builder::new();
+                builder.prefix(".ferryx-undo-");
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    builder.permissions(fs::Permissions::from_mode(0o700));
+                }
+                let staging = builder.tempdir_in(parent);
+                let stage = staging.and_then(|dir| {
+                    let temp = dir.path().join("item");
+                    if moved_issue(to, Some(identity)).is_some() {
+                        return Ok(None);
                     }
+                    fs::rename(to, &temp)?;
+                    let _ = dir.keep();
+                    Ok(Some(temp))
+                });
+                match stage {
+                    Ok(Some(temp)) => {
+                        self.vacated.remove(to);
+                        self.staged.push(Staged {
+                            temp,
+                            from: from.to_path_buf(),
+                            to: to.to_path_buf(),
+                            identity: Some(identity),
+                        });
+                    }
+                    Ok(None) => self.note_unverified_move(to, change),
                     Err(e) => {
                         self.ctx.ask_error(to, &VfsError::io(&e, to))?;
                         self.left.push(change.clone());
@@ -433,10 +515,17 @@ impl Walk<'_> {
                 == ferryx_vfs::native::device_of(from.parent().unwrap_or(from));
         if same_device {
             loop {
-                match fs::rename(to, from) {
+                if self.checked_move_source(to, Some(identity), change).is_none() {
+                    return Ok(());
+                }
+                match rename_into_free_place(to, from) {
                     Ok(()) => {
                         self.vacated.remove(to);
-                        self.ctx.record(Change::Moved { from: to.to_path_buf(), to: from.to_path_buf() });
+                        self.ctx.record(Change::Moved {
+                            from: to.to_path_buf(),
+                            to: from.to_path_buf(),
+                            identity: Some(identity),
+                        });
                         return Ok(());
                     }
                     Err(e) => {
@@ -452,25 +541,59 @@ impl Walk<'_> {
         // which records itself.
         let options =
             OpOptions { conflicts: ConflictPolicy::Skip, preserve_attributes: true, ..Default::default() };
-        if copy::move_item(self.ctx, to, from, &options)? {
-            self.vacated.remove(to);
-        } else {
-            self.left.push(change.clone());
+        match copy::move_across_volumes(self.ctx, to, from, &options, identity) {
+            Ok(true) => {
+                self.vacated.remove(to);
+            }
+            Ok(false) => self.left.push(change.clone()),
+            Err(abort) => {
+                self.left.push(change.clone());
+                return Err(abort);
+            }
         }
         Ok(())
+    }
+
+    fn checked_move_source(
+        &mut self,
+        path: &Path,
+        identity: Option<FileIdentity>,
+        change: &Change,
+    ) -> Option<FileIdentity> {
+        match moved_issue(path, identity) {
+            Some(IssueKind::Missing) => {
+                self.vacated.remove(path);
+                self.ctx.record_error(path, format!("{} no longer exists", path.display()));
+                None
+            }
+            Some(_) => {
+                self.note_unverified_move(path, change);
+                None
+            }
+            None => identity,
+        }
+    }
+
+    fn note_unverified_move(&mut self, path: &Path, change: &Change) {
+        self.vacated.remove(path);
+        self.ctx.record_error(
+            path,
+            format!("the recorded item at {} was replaced or could not be verified", path.display()),
+        );
+        self.left.push(change.clone());
     }
 
     /// Makes the missing folders above `path`, on record so that the walk
     /// back removes them again.
     fn make_parents(&self, path: &Path) {
         let Some(parent) = path.parent() else { return };
-        if parent.exists() {
-            return;
-        }
-        let top = parent.ancestors().take_while(|a| !a.exists()).last().map(Path::to_path_buf);
-        if fs::create_dir_all(parent).is_ok() {
-            if let Some(top) = top {
-                self.ctx.record_created(&top);
+        let missing: Vec<_> =
+            parent.ancestors().take_while(|a| !a.as_os_str().is_empty() && !a.exists()).collect();
+        for path in missing.into_iter().rev() {
+            if fs::create_dir(path).is_ok() {
+                self.ctx.record_move_folder(path);
+            } else if !path.is_dir() {
+                break;
             }
         }
     }
@@ -478,17 +601,42 @@ impl Walk<'_> {
     /// The items set aside go to their places.
     fn land_staged(&mut self) {
         for staged in std::mem::take(&mut self.staged) {
-            let landed =
-                staged.from.symlink_metadata().is_err() && fs::rename(&staged.temp, &staged.from).is_ok();
-            if landed {
-                self.ctx.record(Change::Moved { from: staged.to, to: staged.from });
-            } else {
-                // Back where it stood, and on record as not done.
-                let _ = fs::rename(&staged.temp, &staged.to);
-                self.ctx.record_error(&staged.from, format!("{} already exists", staged.from.display()));
-                self.left.push(Change::Moved { from: staged.from, to: staged.to });
+            let parent = staged.temp.parent().unwrap();
+            if moved_issue(&staged.temp, staged.identity).is_some() {
+                self.ctx.record_error(&staged.temp, "the staged item could not be verified".into());
+                let _ = fs::remove_dir(parent);
+                continue;
             }
+            match rename_into_free_place(&staged.temp, &staged.from) {
+                Ok(()) => self.ctx.record(Change::Moved {
+                    from: staged.to,
+                    to: staged.from,
+                    identity: staged.identity,
+                }),
+                Err(error) => {
+                    let mut to = staged.to;
+                    if moved_issue(&staged.temp, staged.identity).is_none()
+                        && rename_into_free_place(&staged.temp, &to).is_ok()
+                    {
+                        self.ctx.record_error(&staged.from, VfsError::io(&error, &staged.from).message);
+                    } else {
+                        to = staged.temp.clone();
+                        self.ctx
+                            .record_error(&staged.from, format!("{error} (item left at {})", to.display()));
+                    }
+                    self.left.push(Change::Moved { from: staged.from, to, identity: staged.identity });
+                }
+            }
+            let _ = fs::remove_dir(parent);
         }
+    }
+}
+
+fn rename_into_free_place(from: &Path, to: &Path) -> std::io::Result<()> {
+    match to.symlink_metadata() {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => fs::rename(from, to),
+        Err(e) => Err(e),
+        Ok(_) => Err(std::io::Error::from(std::io::ErrorKind::AlreadyExists)),
     }
 }
 
@@ -524,7 +672,7 @@ mod tests {
     }
 
     fn moved(from: &Path, to: &Path) -> Change {
-        Change::Moved { from: from.to_path_buf(), to: to.to_path_buf() }
+        Change::moved(from, to)
     }
 
     #[test]
@@ -612,10 +760,15 @@ mod tests {
         outcome.unwrap();
         assert!(from.exists());
         // The folders made on the way are on record before the move, so a
-        // redo moves the item out first and then trashes the empty folders.
+        // redo moves the item out first and only removes empty folders.
         let recorded = ctx.recorded();
-        assert!(matches!(&recorded[0], Change::Created { path, .. } if path == &dir.path().join("gone")));
-        assert_eq!(recorded[1], moved(&to, &from));
+        assert!(
+            matches!(&recorded[0], Change::MoveFolderCreated { path, .. } if path == &dir.path().join("gone"))
+        );
+        assert!(
+            matches!(&recorded[1], Change::MoveFolderCreated { path, .. } if path == &dir.path().join("gone/deeper"))
+        );
+        assert_eq!(recorded[2], moved(&to, &from));
     }
 
     #[test]
@@ -643,7 +796,7 @@ mod tests {
         let (ctx, outcome) = walk(&s);
         outcome.unwrap();
         assert!(folder.is_dir());
-        assert!(matches!(&ctx.recorded()[0], Change::Created { path, .. } if path == &folder));
+        assert!(matches!(&ctx.recorded()[0], Change::MoveFolderCreated { path, .. } if path == &folder));
     }
 
     #[test]

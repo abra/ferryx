@@ -802,8 +802,18 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     if (picked == null) return;
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
-    final current = _tab;
     final action = actions.firstWhere((action) => action.command == picked);
+    if (_panelActionStillApplies(side, tab, action)) {
+      await _runPanelAction(picked);
+    }
+  }
+
+  bool _panelActionStillApplies(
+    PanelSide side,
+    PanelTabState tab,
+    PanelAction action,
+  ) {
+    final current = _tab;
     // Watcher updates may remove a marked file while the picker is open.
     // Never silently retarget an action to another row or panel.
     final sameItems = switch (action.target) {
@@ -821,11 +831,15 @@ extension _WorkspaceActions on _WorkspaceScreenState {
         !sameItems ||
         !panelActionsFor(
           _panelActionContext(),
-        ).any((action) => action.command == picked)) {
+        ).any(
+          (available) =>
+              available.command == action.command &&
+              available.target == action.target,
+        )) {
       showAppNotice(context, _l10n.contextActionsChanged);
-      return;
+      return false;
     }
-    await _runPanelAction(picked);
+    return true;
   }
 
   Future<void> _runPanelAction(AppCommand command, {Rect? anchor}) async {
@@ -845,12 +859,14 @@ extension _WorkspaceActions on _WorkspaceScreenState {
     final tab = _tab;
     final focused = tab?.focused;
     if (tab == null || focused == null || focused.isParent) return;
+    final side = _workspace.state.active;
+    final actionContext = _panelActionContext();
     final picked = await showAppMenu<AppCommand>(
       context: context,
       anchor: anchor,
       entries: rowMenuEntries(
         context,
-        actionContext: _panelActionContext(),
+        actionContext: actionContext,
         entry: focused,
         location: tab.location,
         severalSelected: tab.selected.length > 1,
@@ -865,6 +881,11 @@ extension _WorkspaceActions on _WorkspaceScreenState {
       await _showPanelActions();
       return;
     }
+    final capability = rowMenuCapability(picked, tab.location);
+    final action = panelActionsFor(actionContext).firstWhere(
+      (action) => action.command == capability,
+    );
+    if (!_panelActionStillApplies(side, tab, action)) return;
     await _runPanelAction(picked, anchor: anchor);
   }
 
@@ -1142,33 +1163,44 @@ extension _WorkspaceActions on _WorkspaceScreenState {
   Future<void> _delete({required bool trashDefault, required bool ask}) =>
       _guarded(() async {
         final side = _workspace.state.active;
-        if (_deletions.pendingFor(side) != null) return;
-        final tab = _tab;
-        final targets = _targetsOrNotice();
-        if (tab == null || targets.isEmpty) return;
-        if (tab.location.isRemote) {
-          await _deleteOnServer(side, tab, targets);
-          return;
-        }
-        final paths = _nativePaths(targets);
-        if (paths == null) return;
-        var choice = trashDefault ? DeleteChoice.trash : DeleteChoice.permanent;
-        if (ask) {
-          final picked = await showDeleteDialog(
-            context,
-            names: [for (final t in targets) t.name],
-            trashDefault: trashDefault,
-            trashAvailable: true,
+        if (!_deletions.beginCapture(side)) return;
+        try {
+          final tab = _tab;
+          final targets = _targetsOrNotice();
+          if (tab == null || targets.isEmpty) return;
+          if (tab.location.isRemote) {
+            await _deleteOnServer(side, tab, targets);
+            return;
+          }
+          final paths = _nativePaths(targets);
+          if (paths == null) return;
+          final identities = await widget.operations.captureDeleteIdentities(
+            paths,
           );
-          if (!mounted || picked == null) return;
-          choice = picked;
+          if (!mounted) return;
+          var choice = trashDefault
+              ? DeleteChoice.trash
+              : DeleteChoice.permanent;
+          if (ask) {
+            final picked = await showDeleteDialog(
+              context,
+              names: [for (final t in targets) t.name],
+              trashDefault: trashDefault,
+              trashAvailable: true,
+            );
+            if (!mounted || picked == null) return;
+            choice = picked;
+          }
+          _deletions.schedule(
+            side: side,
+            location: tab.location,
+            kind: choice == DeleteChoice.trash ? OpKind.trash : OpKind.delete,
+            paths: paths,
+            identities: identities,
+          );
+        } finally {
+          _deletions.endCapture(side);
         }
-        _deletions.schedule(
-          side: side,
-          location: tab.location,
-          kind: choice == DeleteChoice.trash ? OpKind.trash : OpKind.delete,
-          paths: paths,
-        );
       });
 
   Future<void> _executeDeletion(PendingDeletion deletion) => _guarded(() async {

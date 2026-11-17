@@ -25,6 +25,9 @@ void main() {
     location: location,
     kind: kind,
     paths: paths,
+    identities: location.isRemote
+        ? null
+        : [for (final path in paths) 'identity:$path'],
   );
 
   testWidgets('nothing executes before the deadline, then executes once', (
@@ -74,7 +77,24 @@ void main() {
     expect(executed.single.side, PanelSide.right);
     expect(executed.single.request.sources, ['/files/a.txt']);
     expect(executed.single.request.sourceServer, 'sftp://host');
+    expect(executed.single.request.sourceIdentities, isNull);
     expect(executed.single.request.kind, OpKind.delete);
+  });
+
+  testWidgets('freezes local identities until the request starts', (
+    tester,
+  ) async {
+    final identities = ['original'];
+    controller.schedule(
+      side: PanelSide.left,
+      location: const Location.native('/files'),
+      kind: OpKind.delete,
+      paths: const ['/files/a.txt'],
+      identities: identities,
+    );
+    identities[0] = 'replacement';
+    await tester.pump(const Duration(seconds: 5));
+    expect(executed.single.request.sourceIdentities, ['original']);
   });
 
   testWidgets('repeated requests neither replace nor extend a pending batch', (

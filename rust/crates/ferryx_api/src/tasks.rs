@@ -20,13 +20,10 @@ pub const BATCH: Duration = Duration::from_millis(80);
 /// Rows at most in one event.
 pub const BATCH_ROWS: usize = 500;
 
-/// Indexes of the pairs a content comparison found different.
-pub type Differences = Arc<Mutex<Vec<usize>>>;
-
 static NEXT: AtomicI64 = AtomicI64::new(1);
 static CANCELS: LazyLock<Mutex<HashMap<i64, Arc<AtomicBool>>>> = LazyLock::new(Default::default);
 /// The pairs found different by a content comparison, by operation id.
-static DIFFERENCES: LazyLock<Mutex<HashMap<i64, Differences>>> = LazyLock::new(Default::default);
+static DIFFERENCES: LazyLock<Mutex<HashMap<i64, Vec<usize>>>> = LazyLock::new(Default::default);
 
 /// A new task: its id and its cancel flag.
 pub fn begin() -> (i64, Arc<AtomicBool>) {
@@ -54,14 +51,14 @@ pub fn flag(id: i64) -> Option<Arc<AtomicBool>> {
 }
 
 /// Keeps where the content comparison `op` puts the pairs that differ.
-pub fn keep_differences(op: i64, differing: Differences) {
+pub fn keep_differences(op: i64, differing: Vec<usize>) {
     DIFFERENCES.lock().insert(op, differing);
 }
 
 /// The pairs operation `op` found different, once; empty for an unknown
 /// id.
 pub fn take_differences(op: i64) -> Vec<usize> {
-    DIFFERENCES.lock().remove(&op).map(|d| std::mem::take(&mut *d.lock())).unwrap_or_default()
+    DIFFERENCES.lock().remove(&op).unwrap_or_default()
 }
 
 pub fn reset() {

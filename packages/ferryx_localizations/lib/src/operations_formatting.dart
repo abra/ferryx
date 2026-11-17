@@ -31,6 +31,7 @@ extension OperationsFormatting on FerryxLocalizations {
     UndoIssueKind.missing => undoIssueMissing,
     UndoIssueKind.occupied => undoIssueOccupied,
     UndoIssueKind.changed => undoIssueChanged,
+    UndoIssueKind.replaced => undoIssueReplaced,
     UndoIssueKind.lost => undoIssueLost,
     UndoIssueKind.notInTrash => undoIssueNotInTrash,
     UndoIssueKind.unsupported => undoIssueUnsupported,

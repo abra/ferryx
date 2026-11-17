@@ -75,6 +75,34 @@ void main() {
   }
 
   test(
+    'a startup snapshot keeps the search waiting behind a folder load',
+    () async {
+      const home = Location.native('/root');
+      final folder = Completer<Listing>();
+      when(() => files.openListing(any(), home, any()))
+          .thenAnswer((_) => folder.future);
+
+      final starting = panel.start(
+        const SavedPanel(
+          tabs: [
+            SavedTab(location: home),
+            SavedTab(location: home, search: request, searchLabel: 'Notes'),
+          ],
+        ),
+        home,
+      );
+      final immediate = panel.saved();
+      folder.complete(
+        const Listing(location: home, entries: [], watched: false),
+      );
+      await starting;
+
+      expect(immediate.tabs.last.search?.name, '*.txt');
+      expect(immediate.tabs.last.searchLabel, 'Notes');
+    },
+  );
+
+  test(
     'a failed folder navigation keeps search results and the live task',
     () async {
       await panel.newSearchTab(request, label: 'Notes');

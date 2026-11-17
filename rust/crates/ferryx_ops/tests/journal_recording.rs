@@ -93,20 +93,19 @@ fn a_move_records_moves_and_the_folders_a_merge_emptied() {
     fs::create_dir_all(dest.join("src/sub")).unwrap();
     fs::write(dest.join("src/sub/b"), b"b").unwrap();
     let changes = recorded(&request(OpKind::Move, vec![src.clone()], Some(&dest)));
-    assert!(changes.contains(&Change::Moved { from: src.join("sub/a"), to: dest.join("src/sub/a") }));
+    assert!(changes.contains(&Change::moved(&src.join("sub/a"), &dest.join("src/sub/a"))));
     assert!(changes.contains(&Change::FolderRemoved { path: src.join("sub") }));
     assert!(changes.contains(&Change::FolderRemoved { path: src.clone() }));
     assert!(!src.exists());
 
     // Back: the folders come again, the item goes home; the item that was
-    // there before stays. (Redo would trash the folders made again: the
-    // trash is tested on its own, below.)
+    // there before stays.
     let inverse = walk(changes);
     assert_eq!(fs::read(src.join("sub/a")).unwrap(), b"a");
     assert!(dest.join("src/sub/b").exists());
     assert!(!dest.join("src/sub/a").exists());
-    assert!(made(&inverse, &src));
-    assert!(inverse.contains(&Change::Moved { from: dest.join("src/sub/a"), to: src.join("sub/a") }));
+    assert!(inverse.iter().any(|c| matches!(c, Change::MoveFolderCreated { path, .. } if path == &src)));
+    assert!(inverse.contains(&Change::moved(&dest.join("src/sub/a"), &src.join("sub/a"))));
 }
 
 #[test]
@@ -159,7 +158,7 @@ fn a_move_over_an_item_records_the_loss_and_the_move() {
         changes,
         vec![
             Change::Overwritten { path: dest.join("a") },
-            Change::Moved { from: dir.path().join("a"), to: dest.join("a") },
+            Change::moved(&dir.path().join("a"), &dest.join("a")),
         ]
     );
     walk(changes);

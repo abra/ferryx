@@ -52,6 +52,8 @@ pub enum UndoIssueKindView {
     Occupied,
     /// It changed since (a warning).
     Changed,
+    /// The recorded moved item could not be verified.
+    Replaced,
     /// It was overwritten: its earlier contents are gone (a warning).
     Lost,
     /// It is no longer in the trash.
@@ -133,6 +135,7 @@ fn issue_kind(kind: IssueKind) -> UndoIssueKindView {
         IssueKind::Missing => UndoIssueKindView::Missing,
         IssueKind::Occupied => UndoIssueKindView::Occupied,
         IssueKind::Changed => UndoIssueKindView::Changed,
+        IssueKind::Replaced => UndoIssueKindView::Replaced,
         IssueKind::Lost => UndoIssueKindView::Lost,
         IssueKind::NotInTrash => UndoIssueKindView::NotInTrash,
         IssueKind::Unsupported => UndoIssueKindView::Unsupported,

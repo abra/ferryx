@@ -89,15 +89,17 @@ extension _OperationsActions on _WorkspaceScreenState {
       return;
     }
     final count = comparison.candidates.length;
+    final operations = widget.operations;
+    final folderSync = widget.folderSync;
     showAppNotice(context, _l10n.compareContentsStarted(count));
     await _guarded(() async {
-      final id = await widget.folderSync.compareContents([
+      final id = await folderSync.compareContents([
         for (final c in comparison.candidates)
           ContentPair(left: c.left.path, right: c.right.path),
       ]);
-      final report = await _whenFinished(id);
+      final report = await operations.waitForCompletion(id);
       if (report.state == OpState.cancelled) return;
-      final differing = await widget.folderSync.takeContentDifferences(id);
+      final differing = await folderSync.takeContentDifferences(id);
       if (!mounted) return;
       // The panels moved on meanwhile: the result is for other folders.
       if (_left.state.active?.location != leftTab.location ||
@@ -125,15 +127,6 @@ extension _OperationsActions on _WorkspaceScreenState {
         _l10n.count(comparison.left.length),
         _l10n.count(comparison.right.length),
       ),
-    );
-  }
-
-  /// The last report of the operation [id], once it ended.
-  Future<OperationProgress> _whenFinished(int id) {
-    final known = widget.operations.current[id];
-    if (known != null && known.state.isFinished) return Future.value(known);
-    return widget.operations.progress.firstWhere(
-      (p) => p.id == id && p.state.isFinished,
     );
   }
 

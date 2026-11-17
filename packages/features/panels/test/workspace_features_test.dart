@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:component_library/component_library.dart';
 import 'package:domain_models/domain_models.dart';
 import 'package:ferryx_localizations/ferryx_localizations.dart';
@@ -6,10 +8,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:operations_service/operations_service.dart';
 import 'package:panels_feature/panels_feature.dart';
+import 'package:preferences_service/preferences_service.dart';
 import 'package:shortcuts/shortcuts.dart';
 
 import 'support/workspace_harness.dart';
+
+class _FolderSync extends Mock implements FolderSyncService {}
 
 void main() {
   setUpAll(WorkspaceHarness.registerFallbacks);
@@ -30,6 +36,74 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets(
+    'exit captures current tabs and split before the snapshot timer',
+    (
+      tester,
+    ) async {
+      final closing = ValueNotifier(false);
+      addTearDown(closing.dispose);
+      final snapshots = <WorkspaceSnapshot>[];
+      await h.pump(tester, onSnapshot: snapshots.add, flushSnapshots: closing);
+      final panel = left(tester);
+      await panel.newTab(location: const Location.native('/home/second'));
+      await tester.pump();
+      final splitter = tester.widget<AppSplitter>(find.byType(AppSplitter));
+      splitter.onAction(AppSplitterAction.right);
+      splitter.onAction(AppSplitterAction.done);
+      expect(snapshots, isEmpty);
+
+      closing.value = true;
+      expect(snapshots.single.left.tabs.last.location.path, '/home/second');
+      expect(snapshots.single.left.activeIndex, 1);
+      expect(snapshots.single.splitFraction, closeTo(0.52, 0.0001));
+      await tester.pump(const Duration(milliseconds: 401));
+      expect(snapshots, hasLength(1));
+    },
+  );
+
+  testWidgets('closing the workspace still takes a completed comparison', (
+    tester,
+  ) async {
+    final service = _FolderSync();
+    final started = Completer<void>();
+    final reply = Completer<int>();
+    h.addFolder('/compare-left', ['sample']);
+    h.addFolder('/compare-right', ['sample']);
+    await tester.runAsync(
+      () => h.preferences.update(
+        (p) => p.copyWith(
+          compareOptions: const CompareOptions(quickContents: true),
+        ),
+      ),
+    );
+    when(() => service.compareContents(any())).thenAnswer((_) {
+      started.complete();
+      return reply.future;
+    });
+    when(() => service.takeContentDifferences(42)).thenAnswer((_) async => [0]);
+    when(() => h.operations.current).thenReturn({
+      42: const OperationProgress(
+        id: 42,
+        kind: OpKind.compareContents,
+        state: OpState.done,
+      ),
+    });
+    await h.pump(
+      tester,
+      left: '/compare-left',
+      right: '/compare-right',
+      folderSync: service,
+    );
+    await command(tester, AppCommand.compareFolders);
+    expect(started.isCompleted, isTrue);
+    await tester.pumpWidget(const SizedBox());
+    reply.complete(42);
+    await tester.pumpAndSettle();
+    verify(() => service.takeContentDifferences(42)).called(1);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('named workspace restores tabs and view mode after navigation', (
     tester,

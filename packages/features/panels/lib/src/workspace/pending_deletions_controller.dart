@@ -37,6 +37,7 @@ class PendingDeletionsController extends ChangeNotifier {
   /// The workspace starts the captured request through its normal error path.
   final Future<void> Function(PendingDeletion deletion) onExecute;
   final _clock = Stopwatch()..start();
+  final _capturing = <PanelSide>{};
   final _pending = <PanelSide, PendingDeletion>{};
   final _timers = <PanelSide, Timer>{};
   int _nextId = 0;
@@ -45,6 +46,11 @@ class PendingDeletionsController extends ChangeNotifier {
   bool get hasPending => _pending.isNotEmpty;
 
   PendingDeletion? pendingFor(PanelSide side) => _pending[side];
+
+  bool beginCapture(PanelSide side) =>
+      !_disposed && !_pending.containsKey(side) && _capturing.add(side);
+
+  void endCapture(PanelSide side) => _capturing.remove(side);
 
   Duration remaining(PendingDeletion deletion) {
     final value = deletion.dueAt - _clock.elapsed;
@@ -56,9 +62,15 @@ class PendingDeletionsController extends ChangeNotifier {
     required Location location,
     required OpKind kind,
     required List<String> paths,
+    List<String>? identities,
   }) {
     assert(kind == OpKind.trash || kind == OpKind.delete);
     if (_disposed || _pending.containsKey(side) || paths.isEmpty) return false;
+    if (!location.isRemote && identities?.length != paths.length) {
+      throw ArgumentError(
+        'Each local deletion target requires a file identity',
+      );
+    }
     final deletion = PendingDeletion(
       id: _nextId++,
       side: side,
@@ -66,6 +78,9 @@ class PendingDeletionsController extends ChangeNotifier {
       request: OperationRequest(
         kind: kind,
         sources: List.unmodifiable(paths),
+        sourceIdentities: identities == null
+            ? null
+            : List.unmodifiable(identities),
         sourceServer: location.server,
       ),
       delay: gracePeriod,
@@ -101,6 +116,7 @@ class PendingDeletionsController extends ChangeNotifier {
       timer.cancel();
     }
     _timers.clear();
+    _capturing.clear();
     _pending.clear();
     _clock.stop();
     super.dispose();

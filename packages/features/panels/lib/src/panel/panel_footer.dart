@@ -98,6 +98,7 @@ class PanelFooter extends StatelessWidget {
     final flat = tab.flat;
     final right = [
       ?shelfNote,
+      if (tab.listing?.omittedNames == true) l10n.panelUnrepresentableNames,
       if (position != null)
         l10n.itemPosition(position, count, capped: flat?.capped == true)
       else if (flat == null)

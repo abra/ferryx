@@ -48,9 +48,10 @@ pub fn start_find(request: FindRequestView) -> i64 {
                 &ops_request,
                 &cancel,
                 &mut |hit| {
+                    let Some(path) = hit.path.to_str() else { return };
                     let mut b = batch.borrow_mut();
                     b.pending.push(FindHitView {
-                        path: hit.path.to_string_lossy().into_owned(),
+                        path: path.to_owned(),
                         is_dir: hit.is_dir,
                         size: hit.size as i64,
                         modified_ms: hit.modified_ms,

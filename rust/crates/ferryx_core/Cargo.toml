@@ -6,15 +6,24 @@ edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
+[features]
+text-preview = [
+    "dep:asciidoc-html5",
+    "dep:rst_parser",
+    "dep:rst_renderer",
+    "dep:rclip-rtf",
+    "dep:office_oxide",
+]
+
 [dependencies]
 chrono.workspace = true
 regex.workspace = true
 serde.workspace = true
-asciidoc-html5 = "0.2.3"
-rst_parser = "0.4.2"
-rst_renderer = "0.4.2"
-rclip-rtf = { version = "0.1.0", features = ["alloc", "codepage"] }
-office_oxide = { version = "=0.1.16", default-features = false }
+asciidoc-html5 = { version = "0.2.3", optional = true }
+rst_parser = { version = "0.4.2", optional = true }
+rst_renderer = { version = "0.4.2", optional = true }
+rclip-rtf = { version = "0.1.0", features = ["alloc", "codepage"], optional = true }
+office_oxide = { version = "=0.1.16", default-features = false, optional = true }
 
 [dev-dependencies]
 zip.workspace = true

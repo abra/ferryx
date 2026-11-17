@@ -317,6 +317,8 @@ pub struct ListingOptionsView {
 /// an update of the rows the panel was sent as `base`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ListingView {
+    /// Local names that cannot be passed to a file action without loss.
+    pub omitted_names: bool,
     pub location: LocationView,
     /// Every row; with `order`, only the rows the panel has not got.
     pub entries: Vec<EntryView>,
@@ -386,6 +388,7 @@ pub enum ConflictPolicyView {
 pub struct OpRequestView {
     pub kind: OpKindView,
     pub sources: Vec<String>,
+    pub source_identities: Option<Vec<String>>,
     pub archive: Option<String>,
     pub destination: Option<String>,
     pub new_name: Option<String>,
@@ -431,6 +434,7 @@ impl OpRequestView {
                 verify: self.verify,
                 password: self.password.clone(),
                 into_folders: self.into_folders,
+                source_identities: self.source_identities.clone(),
             },
         }
     }

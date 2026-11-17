@@ -75,18 +75,15 @@ fn emit(update: DuplicatesUpdateView) {
     app::emit(AppEvent { duplicates: Some(update), ..AppEvent::of(AppEventKind::DuplicatesProgress, None) });
 }
 
-fn group_view(group: DuplicateGroup) -> DuplicateGroupView {
-    DuplicateGroupView {
-        size: group.size as i64,
-        files: group
-            .files
-            .into_iter()
-            .map(|f| DuplicateFileView {
-                path: f.path.to_string_lossy().into_owned(),
-                modified_ms: f.modified_ms,
-            })
-            .collect(),
-    }
+fn group_view(group: DuplicateGroup) -> Option<DuplicateGroupView> {
+    let files: Vec<_> = group
+        .files
+        .into_iter()
+        .filter_map(|f| {
+            Some(DuplicateFileView { path: f.path.to_str()?.to_owned(), modified_ms: f.modified_ms })
+        })
+        .collect();
+    (files.len() > 1).then_some(DuplicateGroupView { size: group.size as i64, files })
 }
 
 /// Starts the search and answers its id.
@@ -115,8 +112,10 @@ pub fn start_duplicates(request: DuplicatesRequestView) -> i64 {
             &cancel,
             tasks::BATCH,
             &mut |group| {
-                pending.borrow_mut().groups.push(group_view(group));
-                flush(false);
+                if let Some(group) = group_view(group) {
+                    pending.borrow_mut().groups.push(group);
+                    flush(false);
+                }
             },
             &mut |progress| {
                 {

@@ -117,6 +117,7 @@ d.Listing listingFromView(
   totalBytes: view.totalBytes,
   volumeName: view.volumeName,
   watched: view.watched,
+  omittedNames: view.omittedNames,
 );
 
 /// The rows after an update ([view] with an `order`) of [before], the
@@ -237,6 +238,7 @@ rust.OpRequestView operationRequestToView(d.OperationRequest request) =>
     rust.OpRequestView(
       kind: opKindToView(request.kind),
       sources: request.sources,
+      sourceIdentities: request.sourceIdentities,
       archive: request.archive,
       destination: request.destination,
       newName: request.newName,

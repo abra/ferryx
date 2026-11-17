@@ -151,6 +151,7 @@ class Listing extends Equatable {
     this.totalBytes,
     this.volumeName,
     this.watched = false,
+    this.omittedNames = false,
   });
 
   final Location location;
@@ -161,6 +162,9 @@ class Listing extends Equatable {
 
   /// Whether the folder is watched for changes; an archive is not.
   final bool watched;
+
+  /// The core left out local names that do not round-trip through Unicode.
+  final bool omittedNames;
 
   /// The rows without the `..` one.
   Iterable<FileEntry> get items => entries.where((e) => !e.isParent);
@@ -174,6 +178,7 @@ class Listing extends Equatable {
     totalBytes: totalBytes,
     volumeName: volumeName,
     watched: watched,
+    omittedNames: omittedNames,
   );
 
   @override
@@ -184,5 +189,6 @@ class Listing extends Equatable {
     totalBytes,
     volumeName,
     watched,
+    omittedNames,
   ];
 }
